@@ -4,7 +4,11 @@ import { randomUUID } from 'node:crypto'
 import { once } from 'node:events'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { WebSocketServer } from 'ws'
-import { WS_MESSAGE_LIMIT } from '../../../../shared/httpWebSocket'
+import { emptyHttpCollection } from '../../../../shared/httpCollection'
+import {
+  WS_MESSAGE_LIMIT,
+  wsConnectSchema,
+} from '../../../../shared/httpWebSocket'
 import {
   commitHttpSession,
   getHttpSession,
@@ -23,14 +27,21 @@ const mocks = vi.hoisted(() => ({
   envId: 1 as number | null,
   vault: '/vault',
   pending: false,
+  folderId: null as number | null,
+  folders: [] as any[],
 }))
 vi.mock('../../../storage/providers/markdown/runtime/paths', () => ({
   getVaultPath: () => mocks.vault,
 }))
 vi.mock('../../../storage', () => ({
   useHttpStorage: () => ({
+    folders: { getFolders: () => mocks.folders },
     requests: {
-      getRequestById: () => ({ id: 1, pendingCloudDownload: mocks.pending }),
+      getRequestById: () => ({
+        id: 1,
+        folderId: mocks.folderId,
+        pendingCloudDownload: mocks.pending,
+      }),
     },
     environments: { getActiveEnvironmentId: () => mocks.envId },
   }),
@@ -69,6 +80,8 @@ beforeEach(async () => {
   mocks.envId = 1
   mocks.vault = '/vault'
   mocks.pending = false
+  mocks.folderId = null
+  mocks.folders = []
   resetHttpSession()
   server = new WebSocketServer({ host: '127.0.0.1', port: 0 })
   await once(server, 'listening')
@@ -84,6 +97,83 @@ afterEach(async () => {
 })
 
 describe('webSocket sessions', () => {
+  it.each(['header', 'query'] as const)(
+    'sends direct and inherited API keys in %s',
+    async (location) => {
+      const config = emptyHttpCollection()
+      config.auth = {
+        type: 'apikey',
+        key: 'X-QA-Key',
+        value: '{{token}}',
+        in: location,
+      }
+      mocks.folders = [{ id: 10, parentId: null, collectionConfig: config }]
+      mocks.folderId = 10
+      for (const inherited of [false, true]) {
+        const request = wsConnectSchema.parse({
+          ...input(),
+          url: `${url}?keep=1`,
+          auth: inherited ? { type: 'inherit' } : config.auth,
+        })
+        const connected = once(server, 'connection')
+        connectWebSocket(1, request)
+        const [, handshake] = await connected
+        const query = new URL(handshake.url, url).searchParams
+        expect(query.get('keep')).toBe('1')
+        expect(
+          location === 'header'
+            ? handshake.headers['x-qa-key']
+            : query.get('X-QA-Key'),
+        ).toBe('env-value')
+        disposeWebSocket(1)
+      }
+    },
+  )
+
+  it('uses the same inherited headers, credentials and variable precedence in the handshake', async () => {
+    const config = emptyHttpCollection()
+    config.headers = [{ key: 'X-Inherited', value: '{{collectionValue}}' }]
+    config.variables = [
+      { key: 'collectionValue', value: 'collection' },
+      { key: 'token', value: 'collection-token' },
+    ]
+    config.auth = { type: 'bearer', token: '{{token}}' }
+    mocks.folders = [
+      { id: 10, parentId: null, createdAt: 100, collectionConfig: config },
+    ]
+    mocks.folderId = 10
+    const session = getHttpSession('/vault', 1)
+    commitHttpSession(
+      session.generation,
+      new Map([['token', 'session-token']]),
+    )
+    const request = input()
+    request.auth = { type: 'inherit' }
+    request.headers = [
+      { key: 'x-inherited', value: 'disabled', enabled: false },
+    ]
+    const connected = once(server, 'connection')
+    connectWebSocket(1, request)
+    const [, handshake] = await connected
+    expect(handshake.headers['x-inherited']).toBe('collection')
+    expect(handshake.headers.authorization).toBe('Bearer session-token')
+  })
+
+  it('blocks invalid synced collection configuration before opening a socket', () => {
+    mocks.folders = [
+      {
+        id: 10,
+        parentId: null,
+        createdAt: 100,
+        collectionConfig: { version: 999 },
+      },
+    ]
+    mocks.folderId = 10
+    expect(() => connectWebSocket(1, input())).toThrow(
+      'HTTP_COLLECTION_INVALID',
+    )
+  })
+
   it('connects, sends text, receives echoes and closes', async () => {
     const request = input()
     connectWebSocket(1, request)

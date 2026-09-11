@@ -6,7 +6,12 @@ import type {
   HttpImportResult,
   HttpImportSelection,
 } from './types'
+import {
+  emptyHttpCollection,
+  httpCollectionSchema,
+} from '../../../shared/httpCollection'
 import { useHttpStorage } from '../../storage'
+import { getHttpCookieJar } from '../cookies/store'
 import { normalizeImportName } from './normalize'
 
 function parseStorageError(
@@ -35,6 +40,8 @@ function createUniqueFolder(
   storage: HttpStorageProvider,
   name: string,
   parentId: number | null,
+  description?: string,
+  collectionConfig?: HttpImportCollection['collectionConfig'],
 ): { id: number, name: string } {
   const baseName = normalizeImportName(name, 'Imported')
 
@@ -45,6 +52,15 @@ function createUniqueFolder(
         name: candidate,
         parentId,
       })
+      if (description || collectionConfig) {
+        storage.folders.updateFolder(id, {
+          collectionConfig: collectionConfig ?? {
+            ...emptyHttpCollection(),
+            auth: { type: parentId === null ? 'none' : 'inherit' },
+            documentation: description ?? '',
+          },
+        })
+      }
       return { id, name: candidate }
     }
     catch (error) {
@@ -91,6 +107,8 @@ function createUniqueRequest(
         storage.requests.updateRuntime(id, request.runtime, revision)
       }
 
+      if (request.disableCookies === true)
+        getHttpCookieJar().setEnabled(id, false)
       return id
     }
     catch (error) {
@@ -150,6 +168,13 @@ export function persistHttpImportResult(
     result.environments,
     selection.selectedEnvironmentIndexes,
   )
+  // Validate every selected scope before creating the first folder.
+  for (const collection of collections) {
+    for (const scope of [collection, ...collection.folders]) {
+      if (scope.collectionConfig)
+        httpCollectionSchema.parse(scope.collectionConfig)
+    }
+  }
   const summary: HttpImportPersistSummary = {
     collections: 0,
     createdCollectionNames: [],
@@ -160,7 +185,13 @@ export function persistHttpImportResult(
   }
 
   for (const collection of collections) {
-    const root = createUniqueFolder(storage, collection.name, null)
+    const root = createUniqueFolder(
+      storage,
+      collection.name,
+      null,
+      collection.description,
+      collection.collectionConfig,
+    )
     const folderIds = new Map<string, number>()
     summary.collections += 1
     summary.folders += 1
@@ -171,7 +202,13 @@ export function persistHttpImportResult(
         = folder.parentId !== null
           ? (folderIds.get(folder.parentId) ?? root.id)
           : root.id
-      const created = createUniqueFolder(storage, folder.name, parentId)
+      const created = createUniqueFolder(
+        storage,
+        folder.name,
+        parentId,
+        folder.description,
+        folder.collectionConfig,
+      )
       folderIds.set(folder.id, created.id)
       summary.folders += 1
     }

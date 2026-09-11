@@ -1,14 +1,9 @@
-export interface HttpFolderTreeItem {
-  id: number
-  name: string
-  icon: string | null
-  createdAt: number
-  updatedAt: number
-  parentId: number | null
-  isOpen: number
-  orderIndex: number
-  children: HttpFolderTreeItem[]
-}
+import type { HttpFoldersTreeResponse as ApiHttpFoldersTreeResponse } from '@/services/api/generated'
+
+export type HttpFolderTreeItem = Omit<
+  ApiHttpFoldersTreeResponse[number],
+  'children'
+> & { children: HttpFolderTreeItem[] }
 
 export type HttpFoldersTreeResponse = HttpFolderTreeItem[]
 

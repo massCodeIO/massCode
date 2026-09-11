@@ -6,6 +6,13 @@ async function setup() {
 
   Object.assign(globalThis, { watch: vi.fn() })
 
+  const bottomOpen = ref(true)
+  const inspectorOpen = ref(false)
+  const httpState = { activePanel: 'request' }
+  const toggleHttpSidebar = vi.fn()
+  vi.doMock('@/composables/spaces/http/useHttpPanels', () => ({
+    useHttpPanels: () => ({ bottomOpen, inspectorOpen }),
+  }))
   const ipcHandlers = new Map<string, (...args: any[]) => void>()
   const navigateBack = vi.fn(async () => undefined)
   const navigateForward = vi.fn(async () => undefined)
@@ -75,7 +82,8 @@ async function setup() {
     }),
     useHttpApp: () => ({
       setHttpLayoutMode: vi.fn(),
-      toggleHttpSidebar: vi.fn(),
+      toggleHttpSidebar,
+      httpState,
     }),
     useHttpExecute: () => ({
       executeCurrentRequest,
@@ -137,6 +145,10 @@ async function setup() {
   registerMainMenuListeners()
 
   return {
+    bottomOpen,
+    inspectorOpen,
+    httpState,
+    toggleHttpSidebar,
     ipcHandlers,
     currentDraft,
     createNoteAndSelect,
@@ -264,4 +276,21 @@ describe('registerMainMenuListeners', () => {
     expect(context.getNotes).not.toHaveBeenCalled()
     expect(context.getHttpRequests).not.toHaveBeenCalled()
   })
+})
+
+it('toggles HTTP panels and ignores unavailable panels and other spaces', async () => {
+  const state = await setup()
+  const toggle = state.ipcHandlers.get('main-menu:toggle-http-panel')!
+  toggle({}, 'bottom')
+  expect(state.bottomOpen.value).toBe(true)
+  state.getActiveSpaceId.mockReturnValue('http')
+  toggle({}, 'bottom')
+  toggle({}, 'inspector')
+  toggle({}, 'sidebar')
+  expect(state.bottomOpen.value).toBe(false)
+  expect(state.inspectorOpen.value).toBe(true)
+  expect(state.toggleHttpSidebar).toHaveBeenCalledOnce()
+  state.httpState.activePanel = 'folder'
+  toggle({}, 'bottom')
+  expect(state.bottomOpen.value).toBe(false)
 })

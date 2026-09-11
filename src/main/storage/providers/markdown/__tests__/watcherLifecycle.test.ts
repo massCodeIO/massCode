@@ -48,6 +48,7 @@ async function setup() {
     (): { paths: typeof notesPaths } | null => null,
   )
   const syncHttpRuntimeWithDisk = vi.fn()
+  const wasRecentAppFileChange = vi.fn(() => false)
   const resetCloudDownloads = vi.fn()
   const flushPendingStateWritesOrThrow = vi.fn()
   const resetStateWriter = vi.fn()
@@ -146,7 +147,7 @@ async function setup() {
   }))
 
   vi.doMock('../runtime/shared/appChanges', () => ({
-    wasRecentAppFileChange: vi.fn(() => false),
+    wasRecentAppFileChange,
   }))
 
   vi.doMock('../runtime/shared/cloudFiles', () => ({
@@ -202,6 +203,7 @@ async function setup() {
     watch,
     watcher,
     watcherHandlers,
+    wasRecentAppFileChange,
   }
 }
 
@@ -210,6 +212,32 @@ beforeEach(() => {
 })
 
 describe('markdown watcher cloud bootstrap', () => {
+  it.each(['addDir', 'unlinkDir'])(
+    'skips own history %s events but syncs external changes',
+    async (event) => {
+      const context = await setup()
+      context.startMarkdownWatcher()
+      await flushImmediate()
+      context.syncHttpRuntimeWithDisk.mockClear()
+      vi.useFakeTimers()
+      try {
+        context.wasRecentAppFileChange.mockReturnValue(true)
+        context.watcherHandlers.get(event)?.('/vault/http/.history/42')
+        await vi.advanceTimersByTimeAsync(300)
+        expect(context.syncHttpRuntimeWithDisk).not.toHaveBeenCalled()
+
+        context.wasRecentAppFileChange.mockReturnValue(false)
+        context.watcherHandlers.get(event)?.('/vault/http/.history/42')
+        await vi.advanceTimersByTimeAsync(300)
+        expect(context.syncHttpRuntimeWithDisk).toHaveBeenCalledTimes(1)
+      }
+      finally {
+        context.stopMarkdownWatcher()
+        vi.useRealTimers()
+      }
+    },
+  )
+
   it('broadcasts an asset hydrated before the watcher starts', async () => {
     const context = await setup()
 

@@ -27,3 +27,14 @@ export function interpolateHttpVariables(
       : match
   })
 }
+
+export function interpolateHttpFormBody(
+  template: string,
+  variables: Record<string, string>,
+): string {
+  return template.replace(HTTP_VARIABLE_PATTERN, (match, key: string) => {
+    return Object.prototype.hasOwnProperty.call(variables, key)
+      ? encodeURIComponent(variables[key])
+      : match
+  })
+}

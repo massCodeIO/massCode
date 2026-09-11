@@ -2,9 +2,11 @@ import type { HttpRequestDraft } from '@/composables'
 import { describe, expect, it, vi } from 'vitest'
 import {
   buildCurlPreview,
+  buildHarRequest,
   buildHttpPreview,
   buildRequestPreview,
   getRequestPreviewWarnings,
+  resolveHttpPreviewUrl,
 } from '../requestPreview'
 
 function createDraft(
@@ -26,6 +28,85 @@ function createDraft(
 }
 
 describe('request preview', () => {
+  it('keeps encoded query bytes in URL lookup and generated previews when encoding is off', () => {
+    const draft = createDraft({ query: [{ key: 'q', value: 'a%20b+c' }] })
+    const options = { encodeUrl: false }
+    expect(resolveHttpPreviewUrl(draft, options)).toBe(
+      'https://api.example.com/users?q=a%20b+c',
+    )
+    expect(buildHarRequest(draft, options).url).toBe(
+      'https://api.example.com/users?q=a%20b+c',
+    )
+    for (const format of ['http', 'curl', 'fetch', 'axios'] as const) {
+      expect(buildRequestPreview(draft, format, options)).toContain(
+        'q=a%20b+c',
+      )
+    }
+    expect(resolveHttpPreviewUrl(draft)).toContain('q=a%2520b%2Bc')
+  })
+  it('resolves the cookie lookup URL without interpreting the request body', () => {
+    expect(
+      resolveHttpPreviewUrl(
+        createDraft({
+          url: '{{baseUrl}}/api',
+          bodyType: 'binary',
+          body: 'file',
+        }),
+        { variables: { baseUrl: 'https://example.com' } },
+      ),
+    ).toBe('https://example.com/api')
+  })
+
+  it('merges automatic cookies with enabled manual headers across preview formats', () => {
+    const draft = createDraft({
+      headers: [
+        { key: 'Cookie', value: 'manual=one' },
+        { key: 'cookie', value: 'second=two' },
+        { key: 'Cookie', value: 'disabled=three', enabled: false },
+      ],
+    })
+    const options = { automaticCookie: 'session=abc' }
+    for (const output of [
+      buildHttpPreview(draft, options),
+      buildCurlPreview(draft, options),
+      buildRequestPreview(draft, 'fetch', options),
+      buildRequestPreview(draft, 'axios', options),
+    ]) {
+      expect(output).toContain('session=abc; manual=one; second=two')
+      expect(output).not.toContain('disabled=three')
+    }
+    expect(buildHarRequest(draft, options).headers).toContainEqual({
+      name: 'Cookie',
+      value: 'session=abc; manual=one; second=two',
+    })
+    expect(buildHttpPreview(draft)).not.toContain('session=abc')
+    expect(draft.headers).toHaveLength(3)
+  })
+
+  it('previews every duplicate header value and safely interpolates encoded forms', () => {
+    const draft = createDraft({
+      method: 'POST',
+      headers: [
+        { key: 'X-QA', value: 'first' },
+        { key: 'x-qa', value: 'second' },
+      ],
+      bodyType: 'form-urlencoded',
+      body: 'special=a%26b%3Dc%2Bd%25&variable={{value}}',
+    })
+    const options = { variables: { value: 'a&b=c+d% Привет' } }
+    const preview = buildHttpPreview(draft, options)
+    expect(preview).toContain('X-QA: first, second')
+    expect(new URLSearchParams(preview.split('\n\n')[1]).get('variable')).toBe(
+      options.variables.value,
+    )
+    expect(buildCurlPreview(draft, options)).toContain('X-QA: first, second')
+    for (const format of ['fetch', 'axios'] as const) {
+      expect(buildRequestPreview(draft, format, options)).toContain(
+        'first, second',
+      )
+    }
+  })
+
   it('builds raw HTTP preview with query, headers, auth, and body', () => {
     const preview = buildHttpPreview(
       createDraft({

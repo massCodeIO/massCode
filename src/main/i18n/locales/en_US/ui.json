@@ -50,11 +50,29 @@
       "newNotesFolder": "New notes folder",
       "newNotesFolderSubtitle": "Create a folder in Notes",
       "newHttpFolder": "New HTTP folder",
-      "newHttpFolderSubtitle": "Create a folder in HTTP",
+      "newHttpFolderSubtitle": "Create a folder inside the current HTTP collection or folder",
       "importHttpCollection": "Import HTTP collection",
       "importHttpCollectionSubtitle": "Import OpenAPI, Postman, or Bruno collection files",
       "openPreferences": "Open preferences",
-      "openPreferencesSubtitle": "Change massCode settings"
+      "openPreferencesSubtitle": "Change massCode settings",
+      "newHttpCollection": "New HTTP collection",
+      "newHttpCollectionSubtitle": "Create a collection for requests and folders",
+      "newHttpWebSocket": "New WebSocket request",
+      "newHttpWebSocketSubtitle": "Create a WebSocket connection request",
+      "openHttpSettings": "HTTP client settings",
+      "openHttpSettingsSubtitle": "Open transport, interface, and history preferences",
+      "openHttpEnvironments": "Manage HTTP environments",
+      "openHttpEnvironmentsSubtitle": "Manage environments and their variables",
+      "openHttpConsole": "Open HTTP console",
+      "openHttpConsoleSubtitle": "Inspect network requests and script logs",
+      "openHttpTerminal": "Open HTTP terminal",
+      "openHttpTerminalSubtitle": "Show the terminal in the HTTP workspace",
+      "openHttpCookies": "Manage HTTP cookies",
+      "openHttpCookiesSubtitle": "Inspect and edit stored cookies",
+      "openHttpRunner": "Open HTTP collection runner",
+      "openHttpRunnerSubtitle": "Prepare requests in the current collection or folder for a run",
+      "openHttpRequestSettings": "Current HTTP request settings",
+      "openHttpRequestSettingsSubtitle": "Open transport overrides for the current request"
     },
     "fallbacks": {
       "createSnippet": "Create snippet \"{{- query}}\"",
@@ -217,6 +235,18 @@
       "noSelected": "No drawing selected"
     },
     "http": {
+      "history": {
+        "title": "History",
+        "empty": "No saved executions for this request.",
+        "loading": "Loading snapshot…",
+        "failed": "Could not load the snapshot.",
+        "unavailable": "No snapshot is available for this entry. Older history contains execution details only.",
+        "request": "Request",
+        "response": "Response",
+        "masked": "Known secrets and credential fields are redacted in saved snapshots.",
+        "truncated": "The body was truncated. History stores up to 1 MiB per body.",
+        "binary": "Binary response bodies are not stored."
+      },
       "websocket": {
         "title": "WebSocket",
         "requestType": "Request type",
@@ -253,7 +283,7 @@
       },
       "runner": {
         "runFolder": "Run folder",
-        "title": "Folder runner",
+        "title": "Runner",
         "description": "Run saved requests, including nested folders. Changes made after opening this runner are not included. Run variables and results stay in memory; closing stops the run.",
         "environment": "Environment",
         "orderHint": "Requests run top to bottom. Drag a row to change this run’s order.",
@@ -289,6 +319,12 @@
           "HTTP_CONTEXT_CHANGED": "The environment or vault changed. Prepare a new run.",
           "HTTP_REQUEST_RUNNING": "Another HTTP request or run is already active.",
           "unknown": "Could not prepare or run this folder. Prepare a new run and try again."
+        },
+        "closeHint": "Closing stops the run.",
+        "help": {
+          "title": "Collection runner help",
+          "requests": "Runs saved requests, including nested folders. Changes made after opening the runner are not included.",
+          "results": "Run variables and results are stored in memory."
         }
       },
       "runtime": {
@@ -399,6 +435,26 @@
           "invalidJson": "Response is not valid JSON",
           "unavailableBody": "Response body unavailable or truncated",
           "mismatch": "Assertion did not match"
+        },
+        "help": {
+          "extraction": {
+            "title": "Response extraction help",
+            "pointer": "For JSON, use a JSON Pointer. For example, read the id field inside user:",
+            "header": "For headers, enter the header name:",
+            "reuse": "Save it as userId, then reference it in the next request:"
+          },
+          "assertions": {
+            "title": "Assertions help",
+            "pointer": "For a JSON response, select a value using JSON Pointer:",
+            "expected": "Expected values must be valid JSON. Wrap strings in double quotes; use an array for “in” and “not in”:",
+            "example": "Example: select Status code and Equals, then enter:"
+          },
+          "session": {
+            "title": "Session variables help",
+            "lifecycle": "Session values are stored in memory. They are cleared when you change the environment or vault, or restart the app.",
+            "priority": "Session variables override environment variables with the same name.",
+            "usage": "Reference a variable in a subsequent request:"
+          }
         }
       },
       "label": "HTTP",
@@ -469,15 +525,19 @@
         },
         "scriptTrustNotice": "Imported scripts require local trust before they can run. Review the code in Scripts. Blocked scripts also require manual adaptation.",
         "runtimeWarnings": {
+          "invalidVariableName": "A variable with an invalid name was retained but disabled. Rename it before enabling it.",
+          "duplicateVariable": "Duplicate variables were retained; only the last enabled value remains active.",
+          "graphqlVariables": "GraphQL variables could not be parsed as a JSON object. The original value was kept; adapt it before sending.",
           "disabled": "Disabled rule or event was not imported.",
           "unsupportedScript": "Unsupported or malformed script: all scripts for this request are blocked. Original code is retained as comments for manual adaptation.",
-          "variables": "Temporary variables use massCode Session or isolated Runner variables. Only strings are supported; reads also see the selected environment. Source collection/environment scopes are not reproduced.",
+          "variables": "Temporary writes use massCode Session or isolated Runner variables. Reads resolve Session/Runner, environment, then collection variables; explicit scope getters read their own scope. Only string values are supported. Persistent environment and collection writes are unsupported.",
           "sourceLimit": "Script input or generated code exceeds import limits. The request is blocked. Keep the original file: its full code may not fit in the imported request.",
           "unsupportedAssertion": "Unsupported, dynamic, malformed, or excess assertion was not imported. Keep the source file and recreate this rule manually.",
           "depthLimit": "Folder nesting exceeds the import limit; nested items were not imported.",
           "scopedVariables": "Request/folder variables or runtime actions are not supported. Dependent scripts are blocked.",
           "fileLimit": "Import exceeds the supported file count or size.",
-          "invalidArchive": "The archive is damaged or exceeds the unpacked size limit."
+          "invalidArchive": "The archive is damaged or exceeds the unpacked size limit.",
+          "transport": "An invalid transport setting was ignored."
         }
       },
       "editor": {
@@ -490,9 +550,13 @@
           "headers": "Headers",
           "body": "Body",
           "auth": "Auth",
-          "description": "Description"
+          "description": "Description",
+          "settings": "Settings"
         },
         "keyValue": {
+          "bulkEdit": "Bulk Edit",
+          "keyValueEdit": "Key-Value Edit",
+          "bulkHint": "One key:value pair per line. Prefix a row with // to disable it.",
           "key": "Key",
           "value": "Value",
           "description": "Description",
@@ -511,7 +575,10 @@
             "file": "File"
           },
           "filePlaceholder": "Select file path",
-          "jsonInvalid": "Invalid JSON"
+          "jsonInvalid": "Invalid JSON",
+          "fileUnavailable": "The body file is unavailable. Select an existing local file or update its path.",
+          "chooseFile": "Choose file",
+          "typeBinary": "Binary file"
         },
         "auth": {
           "typeNone": "No Auth",
@@ -523,7 +590,14 @@
           "usernamePlaceholder": "Enter username",
           "password": "Password",
           "passwordPlaceholder": "Enter password",
-          "plainTextHint": "Auth values are stored in the vault as plain text. For sensitive data create a secret environment variable and reference it as {{API_KEY}}."
+          "plainTextHint": "Auth values are stored in the vault as plain text. For sensitive data create a secret environment variable and reference it as {{API_KEY}}.",
+          "typeInherit": "Inherit from parent",
+          "typeApiKey": "API Key",
+          "apiKeyHeader": "Header",
+          "apiKeyQuery": "Query parameter",
+          "inheritedNone": "No authentication is configured in the parent.",
+          "inheritedFrom": "{{type}} → from “{{name}}”",
+          "inheritedUnavailable": "Could not resolve authentication. Check the parent folder settings."
         },
         "description": {
           "placeholder": "Add a description for this request"
@@ -601,6 +675,7 @@
           "language": "Language",
           "interpolate": "Interpolate variables",
           "error": "Unable to generate code for this request.",
+          "binaryUnsupported": "Preview is unavailable for binary files. Send reads the file from the specified local path.",
           "multipartFilesUnsupported": "File uploads are not supported by this generator. Use cURL, JavaScript, Node.js, Swift or Python Requests.",
           "urlTemplateUnsupported": "Resolve the base URL or protocol variable, or use Python Requests to keep it as a template."
         },
@@ -625,14 +700,14 @@
       "scripts": {
         "title": "Scripts",
         "preRequest": "Pre-request",
-        "postResponse": "Post-response & tests",
+        "postResponse": "Post-response",
         "trusted": "Trusted on this device",
         "untrusted": "Scripts require local trust",
         "trust": "Trust this code",
         "revoke": "Revoke trust",
         "unavailable": "Script service unavailable. Start the updated app and try again.",
         "notice": "Review both scripts before trusting them. They can read request, response and environment secrets, change session variables, and send data to this request’s server. Trust applies to this code on this device only. Editing code requires trust again.",
-        "api": "API: mc.request, mc.response, mc.variables.get/set/unset, mc.test(name, fn), mc.assert(condition). Synchronous JavaScript only; no network, files, imports or console. Limits: 500 ms, 16 MiB heap, 64 KiB output.",
+        "api": "API: mc.request, mc.response.json(), mc.variables.get/set/unset, mc.test(name, fn), mc.assert(condition). Synchronous JavaScript only; no network, files or imports. console.log/info/warn/error/clear are available. Limits: 500 ms, 16 MiB heap, 64 KiB output.",
         "cancel": "Cancel request",
         "failed": "Script workflow failed. See Tests for details.",
         "errors": {
@@ -642,6 +717,13 @@
           "limit": "Script exceeded an input, memory or output limit.",
           "exception": "Script failed. Check syntax, supported API and memory limits. Exception text is hidden to protect secrets.",
           "destination": "Pre-request variables changed the destination origin. Request blocked."
+        },
+        "help": {
+          "title": "Scripts help",
+          "apiTitle": "Available API",
+          "limitsTitle": "Limits",
+          "limits": "Synchronous JavaScript only; no network, files or imports. Limits: 500 ms, 16 MiB heap, 64 KiB output.",
+          "exampleTitle": "Example · Post-response"
         }
       },
       "graphql": {
@@ -671,7 +753,217 @@
           "errors": "GraphQL errors",
           "invalid": "Invalid or truncated GraphQL response"
         },
-        "noNamedOperations": "No named operations"
+        "noNamedOperations": "No named operations",
+        "helpTitle": "GraphQL help"
+      },
+      "sidebar": {
+        "unfiled": "Unfiled"
+      },
+      "folderPanel": {
+        "runCollection": "Run collection",
+        "name": "Name",
+        "contents": "Contents",
+        "saveFailed": "Could not save the folder. Try again."
+      },
+      "tree": {
+        "title": "HTTP tree prototype",
+        "prototypeOnly": "Test data · changes stay in this prototype",
+        "collections": "Collections",
+        "search": "Search by name, method or URL",
+        "empty": "No matches",
+        "emptyContainer": "This container is empty",
+        "open": "Open",
+        "rename": "Rename",
+        "move": "Move to…",
+        "cancel": "Cancel",
+        "apply": "Apply",
+        "name": "Name",
+        "destination": "Destination",
+        "selected": "Selected: {{count}}",
+        "expand": "Expand {{name}}",
+        "collapse": "Collapse {{name}}",
+        "back": "Back to HTTP",
+        "reset": "Reset test data",
+        "reveal": "Reveal in tree",
+        "overview": "Open a request or a nested folder from the tree or this overview.",
+        "requestPreview": "Request preview for testing navigation. Sending and editing will be connected in the next stage.",
+        "help": "Open collections, folders and requests. Use the context menu to rename or move items. Drag into a container to move, or between rows to reorder. Search temporarily disables dragging.",
+        "keyboard": "Arrow keys move focus; Enter opens a document; Space selects. Cmd/Ctrl-click toggles selection; Shift selects a range; F2 renames. The chevron only expands the container.",
+        "moved": "Moved. The active document is preserved.",
+        "errors": {
+          "invalid": "Choose a collection or folder as the destination.",
+          "cycle": "An item cannot be moved into itself or its descendants.",
+          "collection": "Collections stay at the top level; folders and requests stay inside collections.",
+          "conflict": "The destination contains an item with the same name.",
+          "name": "Enter a name.",
+          "sorted": "Requests follow the app sort order. Drop inside a folder or collection to move.",
+          "unavailable": "Wait until the operation or cloud download completes."
+        },
+        "newCollection": "New collection",
+        "moveFailed": "Some items could not be moved. The tree has been refreshed.",
+        "loadFailed": "Could not load requests. Click to retry."
+      },
+      "collection": {
+        "missing": "This collection is no longer available. Your unsaved draft is preserved: you can edit or copy it, or wait for the collection to return before saving.",
+        "tabs": {
+          "overview": "Overview",
+          "headers": "Headers",
+          "vars": "Variables",
+          "auth": "Auth",
+          "script": "Scripts",
+          "tests": "Assertions"
+        },
+        "version": "Version",
+        "documentation": "Documentation",
+        "requestCount": "Requests: {{count}}",
+        "unsaved": "Unsaved changes",
+        "invalid": "Settings are invalid. Restore the metadata before editing.",
+        "saveFailed": "Could not save settings. Your changes are preserved.",
+        "validation": "Check the fields before saving.",
+        "leaveTitle": "Save changes?",
+        "leaveDescription": "There are unsaved changes to these settings.",
+        "sources": {
+          "collection": "Collection",
+          "request": "Request"
+        },
+        "edit": "Edit",
+        "done": "Done",
+        "notSet": "Not set",
+        "documentationEmpty": "Describe the purpose of this collection, its endpoints and how to use them. Markdown is supported.",
+        "dashboard": {
+          "editDescription": "Click anywhere in this description to start editing.",
+          "descriptionGuide": "# A starting point for your API\n\nKeep the context next to your requests. Describe what this collection does and what someone needs to know before running it. **Click anywhere in this description to start editing.**\n\n## Before the first request\n\n- Which environment and base URL should be used?\n- How do you get credentials and configure authorization?\n- Which variables need values before sending a request?\n\n## A useful path through the collection\n\nDescribe the main workflow: where to start, which requests depend on earlier responses, and what a successful result looks like. Include common errors when they need an explanation.\n\n## Keep the details close\n\nAdd sample payloads, response notes, or links to related notes and snippets. Use Markdown headings, lists, tables, and code blocks to make the important parts easy to find.",
+          "requests": "Requests",
+          "folders": "Folders",
+          "lastRun": "Last available run · this session",
+          "noRun": "No run result available for this collection in this session.",
+          "description": "Description",
+          "recent": "Recent requests",
+          "noHistory": "No request history for this collection yet.",
+          "loading": "Loading history…",
+          "loadFailed": "Could not load request history.",
+          "error": "Error",
+          "duration": "{{value}} ms",
+          "passed": "{{count}} of {{total}} requests passed"
+        }
+      },
+      "inspector": {
+        "sidebar": "Sidebar",
+        "bottom": "Preview, response and history",
+        "close": "Close inspector",
+        "search": "Search variables",
+        "showUsed": "Show used variables",
+        "showAll": "Show all available variables",
+        "hint": "Current values before scripts run. Scripts may change them before sending.",
+        "empty": "Empty value",
+        "missing": "Not defined",
+        "collection": "Collection",
+        "folder": "Folder",
+        "environment": "Environment",
+        "session": "Temporary",
+        "overrides": "Overrides: {{count}}",
+        "sessionHint": "Session values are temporary and masked. Cleared when switching environment or restarting the app.",
+        "openSource": "Open source",
+        "inRequest": "Variables in request",
+        "allVariables": "All variables",
+        "noUsed": "No variables used in this request."
+      },
+      "devtools": {
+        "console": "Console",
+        "terminal": "Terminal",
+        "cookies": "Cookies",
+        "demo": "Demo",
+        "restore": "Restore panel",
+        "maximize": "Maximize panel",
+        "close": "Close panel",
+        "filter": "Filter logs",
+        "errors": "Errors only",
+        "reset": "Reset demo data",
+        "clear": "Clear",
+        "noLogs": "No logs to display",
+        "logScript": "Script: userId saved to variables",
+        "newTerminal": "New terminal",
+        "removeTerminal": "Close terminal",
+        "command": "Command input",
+        "terminalHint": "UI preview — commands are not executed.",
+        "commandDemo": "Demo command received. No shell is connected.",
+        "cookiesHint": "Cookies are stored locally for this vault and sent with matching HTTP requests.",
+        "domains": "Domains",
+        "addDomain": "Add domain",
+        "name": "Name",
+        "value": "Value",
+        "path": "Path",
+        "secure": "Secure",
+        "httpOnly": "HttpOnly",
+        "deleteCookie": "Delete cookie",
+        "noCookies": "No cookies for this domain",
+        "addCookie": "Add cookie",
+        "done": "Done",
+        "sessions": "Sessions",
+        "terminalError": "Unable to use terminal.",
+        "exited": "Process exited with code {{code}}",
+        "replayTruncated": "Earlier terminal output was truncated.",
+        "copied": "Copied",
+        "copyAll": "Copy all logs",
+        "copy": "Copy",
+        "detach": "Open console in new window",
+        "pending": "Sending…",
+        "raw": "Raw log",
+        "truncated": "Log details truncated",
+        "timestamps": "Show timestamps",
+        "hideNetwork": "Hide network",
+        "allLogs": "All logs",
+        "customLogs": "Custom",
+        "logLevels": "Log levels",
+        "level": {
+          "log": "Log",
+          "info": "Info",
+          "warn": "Warning",
+          "error": "Error"
+        },
+        "details": {
+          "requestBody": "Request Body",
+          "requestHeaders": "Request Headers",
+          "responseHeaders": "Response Headers",
+          "responseBody": "Response Body",
+          "network": "Network",
+          "error": "Error",
+          "args": "Arguments",
+          "phase": "Script phase",
+          "source": "Source",
+          "requestBodyEncoding": "Request body encoding",
+          "responseBodyEncoding": "Response body encoding",
+          "requestBodyBytes": "Request body bytes",
+          "responseBodyBytes": "Response body bytes",
+          "requestBodyTruncated": "Request preview truncated",
+          "responseBodyTruncated": "Response preview truncated",
+          "responseTruncated": "Response truncated",
+          "sizeBytes": "Response size",
+          "bodyKind": "Body format"
+        },
+        "cookieError": "Could not update cookies. Check the domain and cookie attributes, then try again.",
+        "enableCookieJar": "Use cookies for this request",
+        "searchCookies": "Search by name or domain",
+        "refreshCookies": "Refresh cookies",
+        "deleteDomain": "Delete domain and its cookies",
+        "cookieString": "Cookie string",
+        "cookieAttributes": "Supported attributes: Domain, Path, Expires, Max-Age, Secure, HttpOnly. Omit Expires and Max-Age for a session cookie.",
+        "cancelCookie": "Cancel",
+        "saveCookie": "Save",
+        "clearAllCookies": "Clear all cookies",
+        "editCookie": "Edit cookie",
+        "domain": "Domain",
+        "expires": "Expires",
+        "maxAge": "Max-Age (seconds)",
+        "hostOnly": "Exact host only",
+        "sessionCookie": "Session",
+        "cookieFields": "Fields",
+        "cookieRaw": "Raw",
+        "cookieExpiryHint": "Expires uses your local time. Leave Expires and Max-Age empty for a session cookie. Max-Age takes precedence. Exact host only excludes subdomains.",
+        "currentRequest": "Current request",
+        "cookieJarHint": "Automatically send and save cookies. When off, stored cookies remain; manual Cookie headers are still sent.",
+        "cookieTime": "Time (local)",
+        "clearExpiry": "Clear expiration date"
       }
     },
     "tools": {
@@ -896,6 +1188,7 @@
     "next": "Next"
   },
   "action": {
+    "rowActions": "Row actions",
     "close": "Close",
     "clearSearch": "Clear Search",
     "defaultLanguage": "Default Language",

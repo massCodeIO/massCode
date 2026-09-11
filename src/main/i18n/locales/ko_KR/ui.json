@@ -45,7 +45,6 @@
       "newNotesFolder": "새 노트 폴더",
       "newNotesFolderSubtitle": "노트에 폴더 만들기",
       "newHttpFolder": "새 HTTP 폴더",
-      "newHttpFolderSubtitle": "HTTP에 폴더 만들기",
       "importHttpCollection": "HTTP 컬렉션 가져오기",
       "importHttpCollectionSubtitle": "OpenAPI, Postman 또는 Bruno 컬렉션 파일을 가져옵니다",
       "openPreferences": "환경설정 열기",

@@ -1,5 +1,6 @@
 import { Readable } from 'node:stream'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { emptyHttpCollection } from '../../../../shared/httpCollection'
 import {
   cancelHttpRun,
   disposeHttpRun,
@@ -23,6 +24,9 @@ const mocks = vi.hoisted(() => ({
   folders: [] as any[],
   records: [] as any[],
   env: { id: 1, name: 'Local', variables: { host: 'example.test' } },
+}))
+vi.mock('../../cookies/store', () => ({
+  getHttpCookieJar: () => ({ enabled: () => false }),
 }))
 vi.mock('undici', () => ({ Agent: class {}, request: mocks.request }))
 vi.mock('../../secrets', () => ({ getEnvironmentSecrets: () => ({}) }))
@@ -142,6 +146,70 @@ describe('folder runner', () => {
     expect(() => prepareHttpRun(7, 1)).toThrow('HTTP_RUN_TOO_LARGE')
   })
 
+  it('freezes collection settings during prepare, including inherited credentials and variables', async () => {
+    const config = emptyHttpCollection()
+    config.headers = [{ key: 'X-Collection', value: '{{collectionValue}}' }]
+    config.variables = [
+      { key: 'collectionValue', value: 'before' },
+      { key: 'host', value: 'collection.test' },
+    ]
+    config.auth = { type: 'bearer', token: '{{collectionValue}}' }
+    mocks.folders[0].collectionConfig = config
+    mocks.records[0].auth = { type: 'inherit' }
+    const view = prepareHttpRun(7, 1)
+    config.variables[0].value = 'after'
+    config.headers[0].key = 'X-Changed'
+    const result = await start(view)
+    expect(result.state).toBe('passed')
+    expect(mocks.request.mock.calls[0][0]).toBe('https://example.test/test')
+    expect(mocks.request.mock.calls[0][1].headers).toMatchObject({
+      'X-Collection': 'before',
+      'Authorization': 'Bearer before',
+    })
+    expect(mocks.request.mock.calls[1][1].headers).toMatchObject({
+      'X-Collection': 'before',
+    })
+    expect(mocks.request.mock.calls[0][1].headers).not.toHaveProperty(
+      'X-Changed',
+    )
+  })
+
+  it('freezes nested folder overrides separately for requests in each folder', async () => {
+    const config = emptyHttpCollection()
+    config.headers = [{ key: 'X-Scope', value: 'root' }]
+    mocks.folders[0].collectionConfig = config
+    const child = emptyHttpCollection()
+    child.auth = { type: 'inherit' }
+    child.headers = [{ key: 'X-Scope', value: 'child' }]
+    mocks.folders[1].collectionConfig = child
+    const view = prepareHttpRun(7, 1)
+    child.headers[0].value = 'changed'
+    const result = await start(view)
+    expect(result.state).toBe('passed')
+    const scopes = mocks.request.mock.calls.map(
+      call => call[1].headers['X-Scope'],
+    )
+    expect(scopes).toContain('root')
+    expect(scopes).toContain('child')
+    expect(scopes).not.toContain('changed')
+  })
+
+  it('rejects combined collection rule overflow before any network request', () => {
+    const config = emptyHttpCollection()
+    config.runtime.assertions = Array.from({ length: 100 }, () => ({
+      name: 'status',
+      source: 'status',
+      operator: 'eq',
+      expected: 200,
+    }))
+    mocks.folders[0].collectionConfig = config
+    mocks.records[0].runtime.assertions = [
+      { name: 'local', source: 'status', operator: 'eq', expected: 200 },
+    ]
+    expect(() => prepareHttpRun(7, 1)).toThrow('HTTP_COLLECTION_RULE_LIMIT')
+    expect(mocks.request).not.toHaveBeenCalled()
+  })
+
   it('uses immutable request and environment snapshots with isolated run variables', async () => {
     mocks.records[0].runtime.extractions.push({
       name: 'token',
@@ -166,7 +234,10 @@ describe('folder runner', () => {
       manualOnly: 'private',
     })
     expect(JSON.stringify(result)).not.toContain('run-secret')
-    expect(mocks.history).not.toHaveBeenCalled()
+    expect(mocks.history).toHaveBeenCalledTimes(2)
+    expect(JSON.stringify(mocks.history.mock.calls)).not.toContain(
+      'run-secret',
+    )
     expect(result.state).toBe('passed')
     expect(result.steps.map(step => step.state)).toEqual([
       'passed',
@@ -232,7 +303,7 @@ describe('folder runner', () => {
         'skipped',
       ])
       expect(mocks.request).toHaveBeenCalledTimes(1)
-      expect(mocks.history).not.toHaveBeenCalled()
+      expect(mocks.history).toHaveBeenCalledTimes(1)
     },
   )
 

@@ -162,7 +162,7 @@ export function resolveAuthConflict(
   source: string,
   warnings: HttpImportWarning[],
 ): HttpAuth {
-  if (auth.type === 'none') {
+  if (auth.type === 'none' || auth.type === 'apikey') {
     return auth
   }
 

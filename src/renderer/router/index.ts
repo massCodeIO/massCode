@@ -45,6 +45,11 @@ export const RouterName = {
 
 const routes = [
   {
+    path: '/http-console',
+    name: 'http-console',
+    component: () => import('@/views/HttpConsole.vue'),
+  },
+  {
     path: '/',
     name: RouterName.main,
     component: () => import('@/views/Main.vue'),

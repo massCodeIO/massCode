@@ -6,6 +6,10 @@ import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
 import { i18n } from '@/electron'
 
 const props = defineProps<{
+  context?: Pick<
+    ReturnType<typeof useHttpRuntime>,
+    'fieldError' | 'touchField'
+  >
   group: 'extractions' | 'assertions'
   index: number
   field: 'name' | 'path' | 'expected'
@@ -14,7 +18,7 @@ const props = defineProps<{
 }>()
 const model = defineModel<string | number>()
 const id = useId()
-const { fieldError, touchField } = useHttpRuntime()
+const { fieldError, touchField } = props.context ?? useHttpRuntime()
 const error = computed(() => {
   const code = fieldError(props.group, props.index, props.field)
   return code ? i18n.t(`spaces.http.runtime.validation.${code}`) : undefined

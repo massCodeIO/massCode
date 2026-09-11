@@ -12,6 +12,7 @@ const httpMethod = t.Union([
 
 const httpHistoryItem = t.Object({
   id: t.Number(),
+  hasResponse: t.Boolean(),
   requestId: t.Union([t.Number(), t.Null()]),
   method: httpMethod,
   url: t.String(),

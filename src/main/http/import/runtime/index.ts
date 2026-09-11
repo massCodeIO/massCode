@@ -163,11 +163,22 @@ export function buildImportedRuntime(
     runtimeWarning(warnings, source, 'variables')
   const code = { preRequest: '', postResponse: '' }
   for (const phase of ['preRequest', 'postResponse'] as const) {
-    code[phase] = active
-      .flatMap((script, index) =>
-        script.phase === phase ? [translated[index]] : [],
-      )
-      .join('\n')
+    const parts = active.flatMap((script, index) =>
+      script.phase === phase ? [translated[index]] : [],
+    )
+    // Separate lexical scopes are needed only when combining multiple source scripts.
+    code[phase]
+      = parts.length > 1
+        ? parts
+            .map(
+              part =>
+                `{\n${part
+                  .split('\n')
+                  .map(line => `  ${line}`)
+                  .join('\n')}\n}`,
+            )
+            .join('\n\n')
+        : (parts[0] ?? '')
     if (code[phase].length > 65536) {
       blocked = true
       runtimeWarning(warnings, source, 'sourceLimit')

@@ -8,9 +8,24 @@ import {
   httpAssertionOperators as operators,
 } from '~/shared/httpRuntime'
 
-defineProps<{ disabled: boolean }>()
+const props = withDefaults(
+  defineProps<{
+    fill?: boolean
+    disabled: boolean
+    context?: Pick<
+      ReturnType<typeof useHttpRuntime>,
+      | 'draft'
+      | 'expectedInputs'
+      | 'setExpected'
+      | 'removeAssertion'
+      | 'fieldError'
+      | 'touchField'
+    >
+  }>(),
+  { fill: true },
+)
 const { draft, expectedInputs, setExpected, removeAssertion }
-  = useHttpRuntime()
+  = props.context ?? useHttpRuntime()
 const sources = ['status', 'json', 'header', 'durationMs'] as const
 
 function expectedPlaceholder(operator: string) {
@@ -29,16 +44,81 @@ function expectedPlaceholder(operator: string) {
       : 'spaces.http.runtime.expected',
   )
 }
+const rowsElement = useTemplateRef<HTMLElement>('rows')
+async function addAssertion() {
+  draft.value.assertions.push({
+    name: '',
+    source: 'status',
+    operator: 'eq',
+    expected: 200,
+  })
+  await nextTick()
+  rowsElement.value?.lastElementChild?.scrollIntoView({
+    block: 'nearest',
+    inline: 'nearest',
+  })
+}
 </script>
 
 <template>
-  <section class="flex h-full min-h-0 flex-col">
-    <div class="mb-1 flex h-7 shrink-0 items-center">
+  <section
+    class="flex min-h-0 flex-col"
+    :class="{ 'h-full': fill }"
+  >
+    <div class="mb-1 flex h-7 shrink-0 items-center justify-between gap-2">
       <UiText variant="sm">
         {{ i18n.t("spaces.http.runtime.assertions") }}
       </UiText>
+      <UiHelpButton
+        :label="i18n.t('spaces.http.runtime.help.assertions.title')"
+      >
+        <UiText
+          as="p"
+          variant="xs"
+          muted
+        >
+          {{ i18n.t("spaces.http.runtime.hint") }}
+        </UiText><UiText
+          as="p"
+          variant="xs"
+          muted
+        >
+          {{ i18n.t("spaces.http.runtime.help.assertions.pointer") }}
+        </UiText><code
+          class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+        >/user/id</code><UiText
+          as="p"
+          variant="xs"
+          muted
+        >
+          {{ i18n.t("spaces.http.runtime.help.assertions.expected") }}
+        </UiText>
+        <div class="flex flex-wrap gap-2">
+          <code
+            class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+          >200</code><code
+            class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+          >"ok"</code><code
+            class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+          >true</code><code
+            class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+          >[200, 201]</code>
+        </div>
+        <UiText
+          as="p"
+          variant="xs"
+          muted
+        >
+          {{ i18n.t("spaces.http.runtime.help.assertions.example") }}
+        </UiText><code
+          class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+        >200</code>
+      </UiHelpButton>
     </div>
-    <div class="scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto">
+    <div
+      ref="rows"
+      class="scrollbar min-h-0 space-y-2 overflow-y-auto"
+    >
       <template
         v-for="(rule, index) in draft.assertions"
         :key="index"
@@ -47,6 +127,7 @@ function expectedPlaceholder(operator: string) {
           <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
             <HttpRuntimeInput
               v-model="rule.name"
+              :context="context"
               group="assertions"
               :index="index"
               field="name"
@@ -86,6 +167,7 @@ function expectedPlaceholder(operator: string) {
             <HttpRuntimeInput
               v-if="rule.source === 'json' || rule.source === 'header'"
               v-model="rule.path"
+              :context="context"
               group="assertions"
               :index="index"
               field="path"
@@ -120,6 +202,7 @@ function expectedPlaceholder(operator: string) {
             </Select.Select>
             <HttpRuntimeInput
               v-if="httpOperatorNeedsExpected(rule.operator)"
+              :context="context"
               group="assertions"
               :index="index"
               field="expected"
@@ -134,17 +217,12 @@ function expectedPlaceholder(operator: string) {
         </div>
       </template>
     </div>
-    <HttpAddRowButton
-      :label="i18n.t('spaces.http.runtime.addAssertion')"
-      :disabled="disabled || draft.assertions.length >= 100"
-      @click="
-        draft.assertions.push({
-          name: '',
-          source: 'status',
-          operator: 'eq',
-          expected: 200,
-        })
-      "
-    />
+    <UiEditableTableFooter>
+      <HttpAddRowButton
+        :label="i18n.t('spaces.http.runtime.addAssertion')"
+        :disabled="disabled || draft.assertions.length >= 100"
+        @click="addAssertion"
+      />
+    </UiEditableTableFooter>
   </section>
 </template>

@@ -9,7 +9,7 @@ defineProps<{ label: string }>()
   <Button
     type="button"
     variant="ghost"
-    class="text-muted-foreground hover:text-foreground mt-1 h-7 w-fit shrink-0 gap-1 rounded px-2 text-xs font-normal"
+    class="text-muted-foreground hover:text-foreground h-7 w-fit shrink-0 gap-1 px-2 text-xs font-normal"
   >
     <Plus class="size-3.5" />
     {{ label }}

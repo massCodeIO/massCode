@@ -1,9 +1,11 @@
 <script setup lang="ts" generic="T extends Entry = Entry">
 import type { Entry } from './keyValueTable'
+import { Button } from '@/components/ui/shadcn/button'
 import { Checkbox } from '@/components/ui/shadcn/checkbox'
 import * as Popover from '@/components/ui/shadcn/popover'
 import { i18n } from '@/electron'
 import { Copy, MoreHorizontal, Trash2 } from 'lucide-vue-next'
+import { parseBulkEntries, serializeBulkEntries } from './keyValueTable'
 
 interface Column {
   key: string
@@ -16,6 +18,8 @@ type RowActionMode = 'delete' | 'menu' | 'none'
 
 const props = withDefaults(
   defineProps<{
+    bulkEdit?: boolean
+    fill?: boolean
     columns?: Column[]
     showEnabled?: boolean
     actions?: RowActionMode
@@ -27,6 +31,8 @@ const props = withDefaults(
     beforeRemove?: (entry: T, index: number) => boolean | Promise<boolean>
   }>(),
   {
+    bulkEdit: false,
+    fill: true,
     columns: () => [
       {
         key: 'key',
@@ -57,6 +63,33 @@ const props = withDefaults(
 
 const model = defineModel<T[]>({ required: true })
 
+const isBulkEditing = ref(false)
+const bulkText = ref('')
+let lastBulkSerialized = ''
+
+function toggleBulkEdit() {
+  if (!isBulkEditing.value)
+    bulkText.value = serializeBulkEntries(model.value)
+  isBulkEditing.value = !isBulkEditing.value
+}
+
+function updateBulkText(value: string) {
+  bulkText.value = value
+  const entries = parseBulkEntries(value, model.value, props.createEntry)
+  lastBulkSerialized = serializeBulkEntries(entries)
+  model.value = entries
+}
+
+watch(
+  model,
+  (value) => {
+    const serialized = serializeBulkEntries(value)
+    if (isBulkEditing.value && serialized !== lastBulkSerialized)
+      bulkText.value = serialized
+  },
+  { deep: true },
+)
+
 const resolvedGridTemplateColumns = computed(() => {
   if (props.gridTemplateColumns)
     return props.gridTemplateColumns
@@ -64,11 +97,35 @@ const resolvedGridTemplateColumns = computed(() => {
   const parts = [
     props.showEnabled ? '20px' : '',
     ...props.columns.map(column => column.width ?? '1fr'),
-    props.actions !== 'none' ? '24px' : '',
+    props.bulkEdit ? '11rem' : props.actions !== 'none' ? '24px' : '',
   ].filter(Boolean)
 
   return parts.join(' ')
 })
+
+const tableRows = computed(() =>
+  model.value.map((entry, index) => ({ entry, index })),
+)
+const tableColumns = computed(() => [
+  ...(props.showEnabled
+    ? [{ key: '__enabled', label: '', width: '20px' }]
+    : []),
+  ...props.columns,
+  ...(props.bulkEdit || props.actions !== 'none'
+    ? [{ key: '__actions', label: '', width: '24px' }]
+    : []),
+])
+const revealRowKey = ref<number>()
+const rowIds = new WeakMap<Entry, number>()
+let nextRowId = 0
+function rowKey(row: { entry: T }) {
+  if (!rowIds.has(row.entry))
+    rowIds.set(row.entry, ++nextRowId)
+  return rowIds.get(row.entry)!
+}
+function rowClass(row: { entry: T }) {
+  return props.showEnabled && !isEnabled(row.entry) ? 'opacity-50' : ''
+}
 
 function isEnabled(entry: T): boolean {
   return entry.enabled !== false
@@ -92,6 +149,7 @@ function addRow() {
       } as T)
 
   model.value.push(entry)
+  revealRowKey.value = rowKey({ entry: model.value[model.value.length - 1]! })
 }
 
 async function removeRow(index: number) {
@@ -119,122 +177,197 @@ function duplicateRow(index: number) {
   if (!entry)
     return
   model.value.splice(index + 1, 0, { ...entry })
+  revealRowKey.value = rowKey({ entry: model.value[index + 1]! })
 }
 </script>
 
 <template>
-  <div class="flex h-full min-h-0 flex-col">
+  <div
+    class="flex min-h-0 flex-col"
+    :class="{ 'h-full': fill }"
+  >
     <div
-      class="text-muted-foreground border-border grid items-center gap-2 border-b px-2 py-1 text-[10px] font-semibold tracking-wider uppercase"
-      :style="{ gridTemplateColumns: resolvedGridTemplateColumns }"
+      v-if="bulkEdit && isBulkEditing"
+      class="flex shrink-0 items-center gap-2 border-b border-transparent px-2 py-1"
     >
-      <span v-if="showEnabled" />
-      <span
+      <UiText
+        variant="caption"
+        muted
+        class="min-w-0 flex-1 truncate"
+        :title="i18n.t('spaces.http.editor.keyValue.bulkHint')"
+      >
+        {{ i18n.t("spaces.http.editor.keyValue.bulkHint") }}
+      </UiText>
+      <Button
+        type="button"
+        variant="ghost"
+        class="h-6 w-auto shrink-0 font-normal tracking-normal normal-case"
+        :aria-pressed="isBulkEditing"
+        @click="toggleBulkEdit"
+      >
+        <UiText variant="caption">
+          {{
+            i18n.t(
+              isBulkEditing
+                ? "spaces.http.editor.keyValue.keyValueEdit"
+                : "spaces.http.editor.keyValue.bulkEdit",
+            )
+          }}
+        </UiText>
+      </Button>
+    </div>
+    <template v-if="isBulkEditing">
+      <HttpBodyEditor
+        :model-value="bulkText"
+        class="mb-2 min-h-0 flex-1"
+        @update:model-value="updateBulkText"
+      />
+    </template>
+    <UiEditableTable
+      v-else
+      :class="{ 'h-full': fill }"
+      :fill="fill"
+      :rows="tableRows"
+      :columns="tableColumns"
+      :row-key="rowKey"
+      :reveal-row-key="revealRowKey"
+      :row-class="rowClass"
+      :grid-template-columns="resolvedGridTemplateColumns"
+      :empty-text="emptyText"
+      :label="i18n.t('spaces.http.editor.keyValue.key')"
+    >
+      <template
         v-for="column in columns"
         :key="column.key"
+        #[`header-${column.key}`]
       >
-        {{ column.label }}
-      </span>
-      <span v-if="actions !== 'none'" />
-    </div>
-
-    <div class="scrollbar min-h-0 flex-1 overflow-y-auto">
-      <div
-        v-if="model.length === 0 && emptyText"
-        class="text-muted-foreground px-2 py-2 text-xs"
+        <div class="truncate border border-transparent px-2">
+          {{ column.label }}
+        </div>
+      </template>
+      <template
+        v-if="bulkEdit"
+        #header-__actions
       >
-        {{ emptyText }}
-      </div>
-      <div
-        v-for="(entry, index) in model"
-        :key="index"
-        class="border-border hover:bg-accent-hover grid min-h-7 items-center gap-2 border-b px-2 py-0.5"
-        :class="{ 'opacity-50': showEnabled && !isEnabled(entry) }"
-        :style="{ gridTemplateColumns: resolvedGridTemplateColumns }"
+        <div class="flex justify-end">
+          <Button
+            type="button"
+            variant="ghost"
+            class="h-6 w-auto font-normal tracking-normal normal-case"
+            :aria-pressed="false"
+            @click="toggleBulkEdit"
+          >
+            <UiText variant="caption">
+              {{ i18n.t("spaces.http.editor.keyValue.bulkEdit") }}
+            </UiText>
+          </Button>
+        </div>
+      </template>
+      <template
+        v-if="showEnabled"
+        #cell-__enabled="{ row: { entry, index } }"
       >
         <Checkbox
-          v-if="showEnabled"
           :model-value="isEnabled(entry)"
           @update:model-value="(v) => setEnabled(index, !!v)"
         />
-
-        <template
-          v-for="column in columns"
-          :key="column.key"
-        >
-          <slot
-            :name="`cell-${column.key}`"
-            :entry="entry"
-            :index="index"
-            :column="column"
-          >
-            <UiInput
-              v-model="entry[column.key]"
-              class="!h-6"
-              variant="ghost"
-              :placeholder="column.placeholder ?? column.label"
-            />
-          </slot>
-        </template>
-
-        <Popover.Popover v-if="actions === 'menu'">
-          <Popover.PopoverTrigger as-child>
-            <button
-              type="button"
-              class="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-6 items-center justify-center rounded"
-            >
-              <MoreHorizontal class="h-3.5 w-3.5" />
-            </button>
-          </Popover.PopoverTrigger>
-          <Popover.PopoverContent
-            align="end"
-            class="w-max max-w-(--reka-popover-content-available-width) min-w-[min(10rem,var(--reka-popover-content-available-width))] p-1"
-          >
-            <button
-              v-if="duplicateRows"
-              type="button"
-              class="hover:bg-accent flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm"
-              @click="duplicateRow(index)"
-            >
-              <Copy class="h-3.5 w-3.5 shrink-0" />
-              <UiText class="min-w-0 truncate leading-5 text-inherit">
-                {{ i18n.t("action.duplicate") }}
-              </UiText>
-            </button>
-            <button
-              type="button"
-              class="hover:bg-accent flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm"
-              @click="removeRow(index)"
-            >
-              <Trash2 class="h-3.5 w-3.5 shrink-0" />
-              <UiText class="min-w-0 truncate leading-5 text-inherit">
-                {{ i18n.t("action.delete.common") }}
-              </UiText>
-            </button>
-          </Popover.PopoverContent>
-        </Popover.Popover>
-
+      </template>
+      <template
+        v-for="column in columns"
+        :key="column.key"
+        #[`cell-${column.key}`]="{ row: { entry, index } }"
+      >
         <slot
-          v-else-if="actions === 'delete'"
-          name="delete-action"
+          :name="`cell-${column.key}`"
           :entry="entry"
           :index="index"
-          :remove-row="() => removeRow(index)"
+          :column="column"
         >
-          <button
-            type="button"
-            class="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-6 items-center justify-center rounded"
-            @click="removeRow(index)"
-          >
-            <Trash2 class="size-3.5" />
-          </button>
+          <UiInput
+            v-model="entry[column.key]"
+            class="!h-6"
+            variant="ghost"
+            :placeholder="column.placeholder ?? column.label"
+          />
         </slot>
-      </div>
-    </div>
+      </template>
 
-    <HttpAddRowButton
-      :label="addLabel"
-      @click="addRow"
-    />
+      <template #cell-__actions="{ row: { entry, index } }">
+        <div class="flex justify-end">
+          <Popover.Popover v-if="actions === 'menu'">
+            <Popover.PopoverTrigger as-child>
+              <Button
+                type="button"
+                variant="icon"
+                size="icon"
+                class="size-6"
+                :aria-label="i18n.t('action.rowActions')"
+              >
+                <MoreHorizontal class="h-3.5 w-3.5" />
+              </Button>
+            </Popover.PopoverTrigger>
+            <Popover.PopoverContent
+              align="end"
+              class="w-max max-w-(--reka-popover-content-available-width) min-w-[min(10rem,var(--reka-popover-content-available-width))] p-1"
+            >
+              <Button
+                v-if="duplicateRows"
+                type="button"
+                variant="ghost"
+                class="w-full justify-start"
+                @click="duplicateRow(index)"
+              >
+                <Copy class="h-3.5 w-3.5 shrink-0" />
+                <UiText class="min-w-0 truncate leading-5 text-inherit">
+                  {{ i18n.t("action.duplicate") }}
+                </UiText>
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                class="w-full justify-start"
+                @click="removeRow(index)"
+              >
+                <Trash2 class="h-3.5 w-3.5 shrink-0" />
+                <UiText class="min-w-0 truncate leading-5 text-inherit">
+                  {{ i18n.t("action.delete.common") }}
+                </UiText>
+              </Button>
+            </Popover.PopoverContent>
+          </Popover.Popover>
+
+          <slot
+            v-else-if="actions === 'delete'"
+            name="delete-action"
+            :entry="entry"
+            :index="index"
+            :remove-row="() => removeRow(index)"
+          >
+            <Button
+              type="button"
+              variant="icon"
+              size="icon"
+              class="size-6"
+              :aria-label="i18n.t('action.delete.common')"
+              @click="removeRow(index)"
+            >
+              <Trash2 class="size-3.5" />
+            </Button>
+          </slot>
+        </div>
+      </template>
+
+      <template #footer-actions>
+        <slot
+          name="footer-actions"
+          :add-row="addRow"
+        >
+          <HttpAddRowButton
+            :label="addLabel"
+            @click="addRow"
+          />
+        </slot>
+      </template>
+    </UiEditableTable>
   </div>
 </template>

@@ -17,12 +17,20 @@ export function hasHttpScripts(scripts?: HttpScripts) {
   return !!(scripts?.preRequest.trim() || scripts?.postResponse.trim())
 }
 
-export const scriptTrustSchema = z
-  .object({
-    requestId: z.number().int().positive(),
-    scripts: httpScriptsSchema,
-  })
-  .strict()
+export const scriptTrustSchema = z.union([
+  z
+    .object({
+      requestId: z.number().int().positive(),
+      scripts: httpScriptsSchema,
+    })
+    .strict(),
+  z
+    .object({
+      collectionId: z.number().int().positive(),
+      scripts: httpScriptsSchema,
+    })
+    .strict(),
+])
 export const scriptOutputSchema = z
   .object({
     variables: z.record(
@@ -45,6 +53,7 @@ export type HttpScriptError =
   | 'exception'
   | 'destination'
 export interface HttpScriptResult {
+  source?: 'request' | 'collection'
   phase: 'preRequest' | 'postResponse'
   error?: HttpScriptError
   tests: { name: string, ok: boolean }[]

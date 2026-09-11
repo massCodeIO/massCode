@@ -568,6 +568,115 @@ export interface HttpFoldersAdd {
 }
 
 export type HttpFoldersResponse = {
+  collectionConfig?: {
+    postResponseOrder?: "parent-first" | "child-first";
+    /** @maxLength 1048576 */
+    documentation: string;
+    /** @maxLength 256 */
+    version: string;
+    /** @maxItems 1000 */
+    headers: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    /** @maxItems 1000 */
+    variables: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    auth: {
+      type: "none" | "inherit" | "basic" | "bearer" | "apikey";
+      key?: string;
+      value?: string;
+      in?: "header" | "query";
+      token?: string;
+      username?: string;
+      password?: string;
+    };
+    runtime: {
+      scripts?: {
+        /** @maxLength 65536 */
+        preRequest: string;
+        /** @maxLength 65536 */
+        postResponse: string;
+      };
+      version: 1 | 2;
+      /** @maxItems 100 */
+      extractions: {
+        name: string;
+        source: "json" | "header";
+        path: string;
+      }[];
+      /** @maxItems 100 */
+      assertions: {
+        name: string;
+        source: "json" | "header" | "status" | "durationMs";
+        path?: string;
+        operator:
+          | "eq"
+          | "neq"
+          | "exists"
+          | "contains"
+          | "gt"
+          | "gte"
+          | "lt"
+          | "lte"
+          | "notContains"
+          | "startsWith"
+          | "endsWith"
+          | "matches"
+          | "notMatches"
+          | "length"
+          | "between"
+          | "in"
+          | "notIn"
+          | "isString"
+          | "isNumber"
+          | "isBoolean"
+          | "isArray"
+          | "isObject"
+          | "isNull";
+        expected?:
+          | string
+          | number
+          | boolean
+          | null
+          | (string | number | boolean | null)[];
+      }[];
+      transport?: {
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 2147483647
+         */
+        timeoutMs?: number;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 9007199254740991
+         */
+        maxResponseBytes?: number;
+        protocolVersion?: "http1" | "auto" | "http2";
+        encodeUrl?: boolean;
+        followOriginalHttpMethod?: boolean;
+        followAuthorizationHeader?: boolean;
+        removeRefererHeaderOnRedirect?: boolean;
+        followRedirects?: boolean;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 100
+         */
+        maxRedirects?: number;
+        skipCertificateVerification?: boolean;
+      };
+    };
+  } | null;
+  collectionConfigState?: "ready" | "invalid";
   id: number;
   name: string;
   icon: string | null;
@@ -579,6 +688,115 @@ export type HttpFoldersResponse = {
 }[];
 
 export type HttpFoldersTreeResponse = {
+  collectionConfig?: {
+    postResponseOrder?: "parent-first" | "child-first";
+    /** @maxLength 1048576 */
+    documentation: string;
+    /** @maxLength 256 */
+    version: string;
+    /** @maxItems 1000 */
+    headers: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    /** @maxItems 1000 */
+    variables: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    auth: {
+      type: "none" | "inherit" | "basic" | "bearer" | "apikey";
+      key?: string;
+      value?: string;
+      in?: "header" | "query";
+      token?: string;
+      username?: string;
+      password?: string;
+    };
+    runtime: {
+      scripts?: {
+        /** @maxLength 65536 */
+        preRequest: string;
+        /** @maxLength 65536 */
+        postResponse: string;
+      };
+      version: 1 | 2;
+      /** @maxItems 100 */
+      extractions: {
+        name: string;
+        source: "json" | "header";
+        path: string;
+      }[];
+      /** @maxItems 100 */
+      assertions: {
+        name: string;
+        source: "json" | "header" | "status" | "durationMs";
+        path?: string;
+        operator:
+          | "eq"
+          | "neq"
+          | "exists"
+          | "contains"
+          | "gt"
+          | "gte"
+          | "lt"
+          | "lte"
+          | "notContains"
+          | "startsWith"
+          | "endsWith"
+          | "matches"
+          | "notMatches"
+          | "length"
+          | "between"
+          | "in"
+          | "notIn"
+          | "isString"
+          | "isNumber"
+          | "isBoolean"
+          | "isArray"
+          | "isObject"
+          | "isNull";
+        expected?:
+          | string
+          | number
+          | boolean
+          | null
+          | (string | number | boolean | null)[];
+      }[];
+      transport?: {
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 2147483647
+         */
+        timeoutMs?: number;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 9007199254740991
+         */
+        maxResponseBytes?: number;
+        protocolVersion?: "http1" | "auto" | "http2";
+        encodeUrl?: boolean;
+        followOriginalHttpMethod?: boolean;
+        followAuthorizationHeader?: boolean;
+        removeRefererHeaderOnRedirect?: boolean;
+        followRedirects?: boolean;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 100
+         */
+        maxRedirects?: number;
+        skipCertificateVerification?: boolean;
+      };
+    };
+  } | null;
+  collectionConfigState?: "ready" | "invalid";
   id: number;
   name: string;
   icon: string | null;
@@ -591,6 +809,114 @@ export type HttpFoldersTreeResponse = {
 }[];
 
 export interface HttpFoldersUpdate {
+  collectionConfig?: {
+    postResponseOrder?: "parent-first" | "child-first";
+    /** @maxLength 1048576 */
+    documentation: string;
+    /** @maxLength 256 */
+    version: string;
+    /** @maxItems 1000 */
+    headers: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    /** @maxItems 1000 */
+    variables: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    auth: {
+      type: "none" | "inherit" | "basic" | "bearer" | "apikey";
+      key?: string;
+      value?: string;
+      in?: "header" | "query";
+      token?: string;
+      username?: string;
+      password?: string;
+    };
+    runtime: {
+      scripts?: {
+        /** @maxLength 65536 */
+        preRequest: string;
+        /** @maxLength 65536 */
+        postResponse: string;
+      };
+      version: 1 | 2;
+      /** @maxItems 100 */
+      extractions: {
+        name: string;
+        source: "json" | "header";
+        path: string;
+      }[];
+      /** @maxItems 100 */
+      assertions: {
+        name: string;
+        source: "json" | "header" | "status" | "durationMs";
+        path?: string;
+        operator:
+          | "eq"
+          | "neq"
+          | "exists"
+          | "contains"
+          | "gt"
+          | "gte"
+          | "lt"
+          | "lte"
+          | "notContains"
+          | "startsWith"
+          | "endsWith"
+          | "matches"
+          | "notMatches"
+          | "length"
+          | "between"
+          | "in"
+          | "notIn"
+          | "isString"
+          | "isNumber"
+          | "isBoolean"
+          | "isArray"
+          | "isObject"
+          | "isNull";
+        expected?:
+          | string
+          | number
+          | boolean
+          | null
+          | (string | number | boolean | null)[];
+      }[];
+      transport?: {
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 2147483647
+         */
+        timeoutMs?: number;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 9007199254740991
+         */
+        maxResponseBytes?: number;
+        protocolVersion?: "http1" | "auto" | "http2";
+        encodeUrl?: boolean;
+        followOriginalHttpMethod?: boolean;
+        followAuthorizationHeader?: boolean;
+        removeRefererHeaderOnRedirect?: boolean;
+        followRedirects?: boolean;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 100
+         */
+        maxRedirects?: number;
+        skipCertificateVerification?: boolean;
+      };
+    };
+  };
   name?: string;
   icon?: string | null;
   parentId?: number | null;
@@ -652,6 +978,33 @@ export interface HttpRuntime {
       | null
       | (string | number | boolean | null)[];
   }[];
+  transport?: {
+    /**
+     * @min 0
+     * @multipleOf 1
+     * @max 2147483647
+     */
+    timeoutMs?: number;
+    /**
+     * @min 0
+     * @multipleOf 1
+     * @max 9007199254740991
+     */
+    maxResponseBytes?: number;
+    protocolVersion?: "http1" | "auto" | "http2";
+    encodeUrl?: boolean;
+    followOriginalHttpMethod?: boolean;
+    followAuthorizationHeader?: boolean;
+    removeRefererHeaderOnRedirect?: boolean;
+    followRedirects?: boolean;
+    /**
+     * @min 0
+     * @multipleOf 1
+     * @max 100
+     */
+    maxRedirects?: number;
+    skipCertificateVerification?: boolean;
+  };
 }
 
 export interface HttpRuntimeSave {
@@ -705,6 +1058,33 @@ export interface HttpRuntimeSave {
         | null
         | (string | number | boolean | null)[];
     }[];
+    transport?: {
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 2147483647
+       */
+      timeoutMs?: number;
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 9007199254740991
+       */
+      maxResponseBytes?: number;
+      protocolVersion?: "http1" | "auto" | "http2";
+      encodeUrl?: boolean;
+      followOriginalHttpMethod?: boolean;
+      followAuthorizationHeader?: boolean;
+      removeRefererHeaderOnRedirect?: boolean;
+      followRedirects?: boolean;
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 100
+       */
+      maxRedirects?: number;
+      skipCertificateVerification?: boolean;
+    };
   };
   expectedRevision: string;
 }
@@ -765,6 +1145,33 @@ export interface HttpRequestItemResponse {
         | null
         | (string | number | boolean | null)[];
     }[];
+    transport?: {
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 2147483647
+       */
+      timeoutMs?: number;
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 9007199254740991
+       */
+      maxResponseBytes?: number;
+      protocolVersion?: "http1" | "auto" | "http2";
+      encodeUrl?: boolean;
+      followOriginalHttpMethod?: boolean;
+      followAuthorizationHeader?: boolean;
+      removeRefererHeaderOnRedirect?: boolean;
+      followRedirects?: boolean;
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 100
+       */
+      maxRedirects?: number;
+      skipCertificateVerification?: boolean;
+    };
   } | null;
   runtimeState: "ready" | "pending" | "invalid" | "unsupported";
   id: number;
@@ -791,15 +1198,21 @@ export interface HttpRequestItemResponse {
     | "graphql"
     | "text"
     | "form-urlencoded"
-    | "multipart";
+    | "multipart"
+    | "binary";
   body: string | null;
   formData: {
+    enabled?: boolean;
+    description?: string;
     key: string;
     type: "text" | "file";
     value: string;
   }[];
   auth: {
-    type: "none" | "bearer" | "basic";
+    type: "inherit" | "none" | "bearer" | "apikey" | "basic";
+    key?: string;
+    value?: string;
+    in?: "header" | "query";
     token?: string;
     username?: string;
     password?: string;
@@ -873,14 +1286,20 @@ export type HttpRequestsResponse = {
     | "graphql"
     | "text"
     | "form-urlencoded"
-    | "multipart";
+    | "multipart"
+    | "binary";
   formData: {
+    enabled?: boolean;
+    description?: string;
     key: string;
     type: "text" | "file";
     value: string;
   }[];
   auth: {
-    type: "none" | "bearer" | "basic";
+    type: "inherit" | "none" | "bearer" | "apikey" | "basic";
+    key?: string;
+    value?: string;
+    in?: "header" | "query";
     token?: string;
     username?: string;
     password?: string;
@@ -928,15 +1347,21 @@ export interface HttpRequestsUpdate {
     | "graphql"
     | "text"
     | "form-urlencoded"
-    | "multipart";
+    | "multipart"
+    | "binary";
   body?: string | null;
   formData?: {
+    enabled?: boolean;
+    description?: string;
     key: string;
     type: "text" | "file";
     value: string;
   }[];
   auth?: {
-    type: "none" | "bearer" | "basic";
+    type: "inherit" | "none" | "bearer" | "apikey" | "basic";
+    key?: string;
+    value?: string;
+    in?: "header" | "query";
     token?: string;
     username?: string;
     password?: string;
@@ -983,6 +1408,7 @@ export interface HttpEnvironmentsUpdate {
 
 export interface HttpHistoryItemResponse {
   id: number;
+  hasResponse: boolean;
   requestId: number | null;
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
   url: string;
@@ -995,6 +1421,7 @@ export interface HttpHistoryItemResponse {
 
 export type HttpHistoryResponse = {
   id: number;
+  hasResponse: boolean;
   requestId: number | null;
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
   url: string;

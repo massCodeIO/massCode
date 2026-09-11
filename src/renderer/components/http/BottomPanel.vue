@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { HttpRequestPreviewOptions } from './requestPreview'
 import type {
   HttpRequestPreviewFormat,
   HttpSnippetPayload,
@@ -10,23 +11,40 @@ import {
   useDonations,
   useHttpEnvironments,
   useHttpExecute,
+  useHttpFolders,
   useHttpRequests,
   useHttpSettings,
 } from '@/composables'
+import { useHttpCookieRevision } from '@/composables/spaces/http/devtools/useHttpCookieRevision'
+import { flattenFolderTree } from '@/composables/spaces/http/useHttpFolderTree'
+import { useHttpHistory } from '@/composables/spaces/http/useHttpHistory'
+import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
 import { i18n, ipc } from '@/electron'
 import { Copy } from 'lucide-vue-next'
+import { resolveHttpFolderConfig } from '~/shared/httpCollection'
 import {
   buildHarRequest,
   buildRequestPreview,
   getRequestPreviewWarnings,
+  resolveHttpPreviewUrl,
 } from './requestPreview'
 
-type BottomPanelTab = 'preview' | 'response'
+type BottomPanelTab = 'preview' | 'response' | 'history'
 
 const { currentDraft, currentRequest } = useHttpRequests()
+const { history, getHttpHistory } = useHttpHistory()
+const historyCount = computed(
+  () =>
+    history.value.filter(
+      entry => entry.requestId === currentRequest.value?.id,
+    ).length,
+)
+onMounted(getHttpHistory)
+const { folders } = useHttpFolders()
 const { activeEnvironmentVariables } = useHttpEnvironments()
 const { isExecuting, lastError, lastResponse } = useHttpExecute()
 const { settings } = useHttpSettings()
+const { draft: runtimeDraft } = useHttpRuntime()
 const copy = useCopyToClipboard()
 const { incrementCopy } = useDonations()
 
@@ -44,14 +62,19 @@ const previewErrorKey = ref('error')
 const previewPending = ref(false)
 const displayedFormat = ref(previewFormat.value)
 const interpolateVariables = ref(true)
+const cookieRevision = useHttpCookieRevision()
 
 watch(
   [
+    folders,
     currentDraft,
     previewFormat,
     activeEnvironmentVariables,
     interpolateVariables,
     currentRequest,
+    cookieRevision,
+    runtimeDraft,
+    () => settings.transport,
   ],
   async (_, __, onCleanup) => {
     let cancelled = false
@@ -66,12 +89,33 @@ watch(
     }
     previewPending.value = true
     try {
-      const options = {
+      const options: HttpRequestPreviewOptions = {
+        encodeUrl:
+          runtimeDraft.value.transport?.encodeUrl
+          ?? settings.transport?.encodeUrl
+          ?? true,
         name: currentRequest.value?.name,
+        collection: resolveHttpFolderConfig(
+          flattenFolderTree(folders.value),
+          currentRequest.value?.folderId,
+        ),
         variables: interpolateVariables.value
           ? activeEnvironmentVariables.value
           : undefined,
       }
+      const url = resolveHttpPreviewUrl(currentDraft.value, {
+        ...options,
+        variables: activeEnvironmentVariables.value,
+      })
+      options.automaticCookie = (await ipc.invoke(
+        'spaces:http:cookies:preview',
+        {
+          requestId: currentRequest.value?.id ?? null,
+          url,
+        },
+      )) as string
+      if (cancelled)
+        return
       const format = previewFormat.value
       const content
         = format === 'http'
@@ -96,12 +140,19 @@ watch(
       if (!cancelled) {
         previewErrorKey.value
           = error instanceof Error
-            && error.message.includes('HTTP_PREVIEW_MULTIPART_FILES_UNSUPPORTED')
-            ? 'multipartFilesUnsupported'
+            && error.message.includes('HTTP_PREVIEW_BINARY_UNSUPPORTED')
+            ? 'binaryUnsupported'
             : error instanceof Error
-              && error.message.includes('HTTP_PREVIEW_URL_TEMPLATE_UNSUPPORTED')
-              ? 'urlTemplateUnsupported'
-              : 'error'
+              && error.message.includes(
+                'HTTP_PREVIEW_MULTIPART_FILES_UNSUPPORTED',
+              )
+              ? 'multipartFilesUnsupported'
+              : error instanceof Error
+                && error.message.includes(
+                  'HTTP_PREVIEW_URL_TEMPLATE_UNSUPPORTED',
+                )
+                ? 'urlTemplateUnsupported'
+                : 'error'
         previewContent.value = ''
         previewError.value = true
       }
@@ -187,8 +238,21 @@ function copyPreview() {
         <Tabs.TabsTrigger value="preview">
           {{ i18n.t("spaces.http.editor.panels.preview") }}
         </Tabs.TabsTrigger>
-        <Tabs.TabsTrigger value="response">
+        <Tabs.TabsTrigger
+          value="response"
+          :class="{ 'text-destructive': lastError }"
+        >
           {{ i18n.t("spaces.http.editor.panels.response") }}
+          <span
+            v-if="lastError"
+            class="sr-only"
+          >{{
+            i18n.t("spaces.http.editor.response.error")
+          }}</span>
+        </Tabs.TabsTrigger>
+        <Tabs.TabsTrigger value="history">
+          {{ i18n.t("spaces.http.history.title") }}
+          <HttpTabCount :count="historyCount" />
         </Tabs.TabsTrigger>
       </Tabs.TabsList>
 
@@ -265,21 +329,27 @@ function copyPreview() {
           v-model="previewFormat"
           class="border-border border-b px-3 py-2"
         />
-        <UiText
-          v-for="warning in previewWarnings"
-          :key="warning"
-          variant="caption"
-          class="border-border border-b px-3 py-2"
+        <UiAlert
+          v-if="previewWarnings.length"
+          variant="warning"
+          layout="panel"
         >
-          {{ i18n.t(`spaces.http.editor.preview.warnings.${warning}`) }}
-        </UiText>
-        <UiText
+          <ul class="space-y-1">
+            <li
+              v-for="warning in previewWarnings"
+              :key="warning"
+            >
+              {{ i18n.t(`spaces.http.editor.preview.warnings.${warning}`) }}
+            </li>
+          </ul>
+        </UiAlert>
+        <UiAlert
           v-if="previewError"
-          variant="caption"
-          class="text-destructive px-3 py-2"
+          variant="error"
+          layout="panel"
         >
           {{ i18n.t(`spaces.http.editor.preview.${previewErrorKey}`) }}
-        </UiText>
+        </UiAlert>
         <HttpRequestPreviewPanel
           v-else
           class="min-h-0 flex-1"
@@ -294,6 +364,12 @@ function copyPreview() {
         class="m-0 h-full"
       >
         <HttpResponsePanel />
+      </Tabs.TabsContent>
+      <Tabs.TabsContent
+        value="history"
+        class="scrollbar m-0 h-full overflow-auto px-3 py-2"
+      >
+        <HttpRequestHistory />
       </Tabs.TabsContent>
     </div>
   </Tabs.Tabs>

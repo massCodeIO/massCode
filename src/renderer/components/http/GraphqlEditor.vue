@@ -40,12 +40,15 @@ const operations = computed(() => {
     return []
   }
 })
+const deferredValidation = computed(
+  () => query.value.includes('{{') || variables.value.includes('{{'),
+)
 const validation = computed(() => {
   if (!query.value.trim())
     return ''
   try {
     // Interpolated values are validated again by main after environment/session/scripts resolution.
-    if (query.value.includes('{{') || variables.value.includes('{{'))
+    if (deferredValidation.value)
       return i18n.t('spaces.http.graphql.validationOnSend')
     buildGraphqlBody(JSON.stringify(draft.value))
     return ''
@@ -60,10 +63,23 @@ const validation = computed(() => {
 </script>
 
 <template>
-  <div class="scrollbar flex min-h-0 flex-1 flex-col gap-2 overflow-auto">
-    <UiText variant="caption">
-      {{ i18n.t("spaces.http.graphql.query") }}
-    </UiText>
+  <div
+    class="scrollbar -mx-1 flex min-h-0 flex-1 flex-col gap-2 overflow-auto p-1"
+  >
+    <div class="flex shrink-0 items-center justify-between gap-2">
+      <UiText variant="caption">
+        {{ i18n.t("spaces.http.graphql.query") }}
+      </UiText>
+      <UiHelpButton :label="i18n.t('spaces.http.graphql.helpTitle')">
+        <UiText
+          as="p"
+          variant="xs"
+          muted
+        >
+          {{ i18n.t("spaces.http.graphql.schemaLimit") }}
+        </UiText>
+      </UiHelpButton>
+    </div>
     <HttpBodyEditor
       v-model="query"
       language="graphql"
@@ -115,18 +131,11 @@ const validation = computed(() => {
       language="json"
       :wrap-lines="settings.wrapLines"
     />
-    <UiText
+    <UiAlert
       v-if="validation"
-      variant="caption"
-      class="text-destructive"
+      :variant="deferredValidation ? 'info' : 'error'"
     >
       {{ validation }}
-    </UiText>
-    <UiText
-      variant="caption"
-      class="text-muted-foreground"
-    >
-      {{ i18n.t("spaces.http.graphql.schemaLimit") }}
-    </UiText>
+    </UiAlert>
   </div>
 </template>

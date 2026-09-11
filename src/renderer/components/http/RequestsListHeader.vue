@@ -1,115 +1,129 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
+import * as Popover from '@/components/ui/shadcn/popover'
+import { Separator } from '@/components/ui/shadcn/separator'
 import {
   useHttpApp,
   useHttpFolders,
+  useHttpImportDialog,
   useHttpRequests,
   useHttpSearch,
 } from '@/composables'
-import { LibraryFilter } from '@/composables/types'
 import { i18n } from '@/electron'
-import { Plus, Search, X } from 'lucide-vue-next'
+import { Layers, Plus, Search, Send, Star, Upload, X } from 'lucide-vue-next'
 
+const favorites = defineModel<boolean>('favorites', { default: false })
 const { httpState, isFocusedSearch } = useHttpApp()
 const { createHttpRequestAndSelect } = useHttpRequests()
-const { folders, getFolderByIdFromTree } = useHttpFolders()
-const {
-  searchQuery,
-  clearSearch,
-  search,
-  searchSelectedIndex,
-  selectSearchRequest,
-  displayedRequests,
-  isSearch,
-} = useHttpSearch()
+const { searchQuery } = useHttpSearch()
+const { createHttpFolderAndSelect } = useHttpFolders()
+const isCreateMenuOpen = ref(false)
+const { openHttpImportDialog } = useHttpImportDialog()
 
-const libraryFilterLabels = computed<Record<string, string>>(() => ({
-  [LibraryFilter.Inbox]: i18n.t('common.inbox'),
-  [LibraryFilter.Favorites]: i18n.t('common.favorites'),
-  [LibraryFilter.All]: i18n.t('spaces.http.allRequests'),
-  [LibraryFilter.Trash]: i18n.t('common.trash'),
-}))
-
-const searchContextLabel = computed(() => {
-  if (httpState.folderId) {
-    return getFolderByIdFromTree(folders.value, httpState.folderId)?.name
-  }
-
-  return httpState.libraryFilter
-    ? libraryFilterLabels.value[httpState.libraryFilter]
-    : undefined
-})
-
-const searchPlaceholder = computed(() =>
-  searchContextLabel.value
-    ? i18n.t('placeholder.searchIn', { context: searchContextLabel.value })
-    : i18n.t('placeholder.search'),
-)
-
-watch(searchQuery, (v) => {
-  if (v) {
-    search()
-  }
-  else {
-    clearSearch(true)
-  }
-})
-
-async function onCreateRequest() {
-  await createHttpRequestAndSelect({
-    folderId: httpState.folderId ?? null,
-  })
+function openImport() {
+  isCreateMenuOpen.value = false
+  openHttpImportDialog()
 }
 
-function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'ArrowDown') {
-    event.preventDefault()
-    const nextIndex = Math.min(
-      searchSelectedIndex.value + 1,
-      (displayedRequests.value?.length || 0) - 1,
-    )
-    selectSearchRequest(nextIndex)
-  }
-  else if (event.key === 'ArrowUp') {
-    event.preventDefault()
-    const prevIndex = Math.max(searchSelectedIndex.value - 1, 0)
-    selectSearchRequest(prevIndex)
-  }
-  if (event.key === 'Escape') {
-    event.preventDefault()
-    clearSearch(true)
-  }
+async function create(kind: 'collection' | 'request') {
+  isCreateMenuOpen.value = false
+  if (kind === 'collection')
+    await createHttpFolderAndSelect()
+  else
+    await createHttpRequestAndSelect({ folderId: httpState.folderId ?? null })
 }
 </script>
 
 <template>
-  <div class="border-border mt-[var(--content-top-offset)] mb-2 border-b pb-1">
-    <div class="flex items-center px-1">
-      <Search class="text-muted-foreground ml-1 h-4 w-4 shrink-0" />
-      <div class="min-w-0 flex-grow">
-        <UiInput
-          v-model="searchQuery"
-          :placeholder="searchPlaceholder"
+  <div
+    class="flex h-[calc(40px-var(--content-top-offset))] shrink-0 items-center gap-0.5 border-b px-1 pb-1"
+  >
+    <Search class="text-muted-foreground ml-1 size-4 shrink-0" />
+    <UiInput
+      v-model="searchQuery"
+      :placeholder="i18n.t('placeholder.search')"
+      variant="ghost"
+      class="min-w-0 flex-1 truncate"
+      :focus="isFocusedSearch"
+      @blur="isFocusedSearch = false"
+      @keydown.esc="searchQuery = ''"
+    />
+    <UiActionButton
+      v-if="searchQuery"
+      :tooltip="i18n.t('action.clearSearch')"
+      @click="searchQuery = ''"
+    >
+      <X class="size-4" />
+    </UiActionButton>
+    <UiActionButton
+      :tooltip="i18n.t('common.favorites')"
+      :aria-pressed="favorites"
+      :class="{ 'bg-accent text-primary': favorites }"
+      @click="favorites = !favorites"
+    >
+      <Star
+        class="size-4"
+        :class="{ 'fill-current': favorites }"
+      />
+    </UiActionButton>
+    <Popover.Popover v-model:open="isCreateMenuOpen">
+      <Popover.PopoverTrigger as-child>
+        <UiActionButton :tooltip="i18n.t('action.createOptions')">
+          <Plus class="size-4" />
+        </UiActionButton>
+      </Popover.PopoverTrigger>
+      <Popover.PopoverContent
+        align="end"
+        class="flex w-max flex-col p-1"
+        @close-auto-focus="(event) => event.preventDefault()"
+      >
+        <Button
           variant="ghost"
-          class="truncate"
-          :focus="isFocusedSearch"
-          @blur="isFocusedSearch = false"
-          @keydown="onKeydown"
-        />
-      </div>
-      <UiActionButton
-        v-if="searchQuery"
-        :tooltip="i18n.t('action.clearSearch')"
-        @click="clearSearch(true)"
-      >
-        <X class="h-4 w-4" />
-      </UiActionButton>
-      <UiActionButton
-        v-else-if="!isSearch"
-        :tooltip="i18n.t('spaces.http.action.newRequest')"
-        @click="onCreateRequest"
-      >
-        <Plus class="h-4 w-4" />
-      </UiActionButton>
-    </div>
+          size="sm"
+          class="justify-start"
+          @click="create('collection')"
+        >
+          <Layers class="size-4" />
+          <UiText
+            variant="base"
+            weight="medium"
+            class="leading-5 text-inherit"
+          >
+            {{ i18n.t("spaces.http.tree.newCollection") }}
+          </UiText>
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          class="justify-start"
+          @click="create('request')"
+        >
+          <Send class="size-4" />
+          <UiText
+            variant="base"
+            weight="medium"
+            class="leading-5 text-inherit"
+          >
+            {{ i18n.t("spaces.http.action.newRequest") }}
+          </UiText>
+        </Button>
+        <Separator class="my-1" />
+        <Button
+          variant="ghost"
+          size="sm"
+          class="justify-start"
+          @click="openImport"
+        >
+          <Upload class="size-4" />
+          <UiText
+            variant="base"
+            weight="medium"
+            class="leading-5 text-inherit"
+          >
+            {{ i18n.t("spaces.http.action.import") }}
+          </UiText>
+        </Button>
+      </Popover.PopoverContent>
+    </Popover.Popover>
   </div>
 </template>

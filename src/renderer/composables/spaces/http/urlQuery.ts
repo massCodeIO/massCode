@@ -29,34 +29,61 @@ function combineUrl(parts: {
   )
 }
 
-function parseQueryString(qs: string): Array<{ key: string, value: string }> {
+function parseQueryString(
+  qs: string,
+  encodeUrl: boolean,
+): Array<{ key: string, value: string }> {
   if (!qs)
     return []
-  return qs.split('&').map((part) => {
-    const eqIdx = part.indexOf('=')
-    if (eqIdx === -1)
-      return { key: part, value: '' }
-    return { key: part.slice(0, eqIdx), value: part.slice(eqIdx + 1) }
-  })
+  if (!encodeUrl) {
+    return qs.split('&').map((part) => {
+      const separator = part.indexOf('=')
+      return separator < 0
+        ? { key: part, value: '' }
+        : { key: part.slice(0, separator), value: part.slice(separator + 1) }
+    })
+  }
+  return [...new URLSearchParams(qs)].map(([key, value]) => ({ key, value }))
 }
 
-function buildQueryString(query: HttpUrlQueryItem[]): string {
+function encodeQueryComponent(value: string): string {
+  // Keep interpolation tokens readable while escaping literal separators.
+  return value
+    .split(/(\{\{[^{}]*\}\})/g)
+    .map(part =>
+      part.startsWith('{{') && part.endsWith('}}')
+        ? part
+        : encodeURIComponent(part),
+    )
+    .join('')
+}
+
+function buildQueryString(
+  query: HttpUrlQueryItem[],
+  encodeUrl: boolean,
+): string {
   const enabled = query.filter(q => q.enabled !== false && q.key)
   if (!enabled.length)
     return ''
-  return enabled.map(q => `${q.key}=${q.value}`).join('&')
+  const encode = encodeUrl ? encodeQueryComponent : (value: string) => value
+  return enabled.map(q => `${encode(q.key)}=${encode(q.value)}`).join('&')
 }
 
 export function applyQueryToUrl(
   url: string,
   query: HttpUrlQueryItem[],
+  encodeUrl = true,
 ): string {
   const parts = splitUrl(url)
-  return combineUrl({ ...parts, query: buildQueryString(query) })
+  return combineUrl({ ...parts, query: buildQueryString(query, encodeUrl) })
 }
 
-export function getDisplayUrl(url: string, query: HttpUrlQueryItem[]): string {
-  return query.length > 0 ? applyQueryToUrl(url, query) : url
+export function getDisplayUrl(
+  url: string,
+  query: HttpUrlQueryItem[],
+  encodeUrl = true,
+): string {
+  return query.length > 0 ? applyQueryToUrl(url, query, encodeUrl) : url
 }
 
 export function stripQueryFromUrl(url: string): string {
@@ -74,8 +101,9 @@ export function getPersistedUrl(
 export function applyUrlToQuery<T extends HttpUrlQueryItem>(
   url: string,
   existingQuery: T[],
+  encodeUrl = true,
 ): T[] {
-  const parsed = parseQueryString(splitUrl(url).query)
+  const parsed = parseQueryString(splitUrl(url).query, encodeUrl)
   const enabledExisting = existingQuery.filter(q => q.enabled !== false)
   const disabledExisting = existingQuery.filter(q => q.enabled === false)
 

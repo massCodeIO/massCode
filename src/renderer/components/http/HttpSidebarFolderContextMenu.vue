@@ -105,11 +105,12 @@ async function onRemoveCustomIcon() {
       </ContextMenu.ContextMenuItem>
     </template>
     <template v-else>
+      <slot />
       <ContextMenu.ContextMenuItem
         :disabled="running || preparing"
         @click="openRunner(Number(contextNode.id))"
       >
-        {{ i18n.t("spaces.http.runner.runFolder") }}
+        {{ i18n.t("spaces.http.runner.title") }}
       </ContextMenu.ContextMenuItem>
       <ContextMenu.ContextMenuSeparator />
       <ContextMenu.ContextMenuItem @click="onCreateChildRequest">

@@ -100,6 +100,19 @@ function syncSelectedFoldersWithTree() {
 
   const orderedIds = flatFolderList.value.map(folder => folder.id)
 
+  // Tree refresh changes highlights, never the active collection document.
+  // Its editor retains an unavailable owner's draft until explicit navigation.
+  if (httpState.activePanel === 'folder') {
+    selectedFolderIds.value = sortFolderIdsByTreeOrder(selectedFolderIds.value)
+    if (
+      lastSelectedFolderId.value !== undefined
+      && !folderOrderMap.value.has(lastSelectedFolderId.value)
+    ) {
+      lastSelectedFolderId.value = undefined
+    }
+    return
+  }
+
   if (!orderedIds.length) {
     clearFolderSelection()
     return
@@ -108,6 +121,21 @@ function syncSelectedFoldersWithTree() {
   const filteredSelection = selectedFolderIds.value.filter(id =>
     folderOrderMap.value.has(id),
   )
+
+  // Refresh updates the selection highlight, never the active document.
+  if (
+    httpState.folderId !== undefined
+    && folderOrderMap.value.has(httpState.folderId)
+  ) {
+    selectedFolderIds.value = sortFolderIdsByTreeOrder(filteredSelection)
+    if (
+      lastSelectedFolderId.value !== undefined
+      && !folderOrderMap.value.has(lastSelectedFolderId.value)
+    ) {
+      lastSelectedFolderId.value = httpState.folderId
+    }
+    return
+  }
 
   if (!filteredSelection.length) {
     const fallbackId
@@ -148,6 +176,7 @@ function clearFolderSelection() {
   isApplyingFolderSelection = true
   selectedFolderIds.value = []
   httpState.folderId = undefined
+  httpState.activePanel = 'request'
   // requestId намеренно не сбрасывается: иначе список и редактор запроса
   // мигают пустым состоянием при переходах Library, пока загружается список.
   // Вызывающие реселектят через selectFirstRequest/selectHttpRequest либо
@@ -266,10 +295,12 @@ async function ensureSelectedFolderIsVisible() {
 }
 
 async function getHttpFolders(shouldEnsureVisibility = true) {
+  const hadFolders = folders.value.length > 0
   try {
     const { data } = await api.httpFolders.getHttpFoldersTree()
     folders.value = data as HttpFoldersTreeResponse
-    syncSelectedFoldersWithTree()
+    if (folders.value.length || hadFolders)
+      syncSelectedFoldersWithTree()
 
     if (shouldEnsureVisibility) {
       await ensureSelectedFolderIsVisible()
@@ -305,7 +336,8 @@ async function createHttpFolder(parentId?: number) {
 async function createHttpFolderAndSelect(parentId?: number) {
   const id = await createHttpFolder(parentId)
   if (id) {
-    await selectHttpFolder(id)
+    if (!(await openHttpFolder(id)))
+      return
     renameFolderId.value = id
   }
 }
@@ -315,9 +347,11 @@ async function updateHttpFolder(folderId: number, data: HttpFoldersUpdate) {
     markPersistedStorageMutation()
     await api.httpFolders.patchHttpFoldersById(String(folderId), data)
     await getHttpFolders(false)
+    return true
   }
   catch (error) {
     console.error(error)
+    return false
   }
 }
 
@@ -325,7 +359,8 @@ async function deleteHttpFolder(folderId: number, shouldRefresh = true) {
   if (!(await httpRuntimeNavigation.confirmLeave()))
     return
   try {
-    const { currentRequest, getHttpRequests, requests } = useHttpRequests()
+    const { currentRequest, getHttpRequests, getAllHttpRequests, allRequests }
+      = useHttpRequests()
     const selectedRequestId = currentRequest.value?.id
 
     markPersistedStorageMutation()
@@ -335,13 +370,15 @@ async function deleteHttpFolder(folderId: number, shouldRefresh = true) {
       httpState.folderId = undefined
     }
 
-    await getHttpRequests()
+    await Promise.all([getHttpRequests(), getAllHttpRequests()])
 
     if (
       selectedRequestId !== undefined
-      && !requests.value.some(request => request.id === selectedRequestId)
+      && !allRequests.value.some(request => request.id === selectedRequestId)
     ) {
-      await selectHttpRequest(undefined)
+      await selectHttpRequest(undefined, false, {
+        preservePanel: httpState.activePanel === 'folder',
+      })
     }
 
     if (shouldRefresh) {
@@ -399,15 +436,9 @@ async function deleteSelectedHttpFolders(fallbackFolderId?: number) {
   await Promise.all(targetIds.map(id => deleteHttpFolder(id, false)))
   await getHttpFolders(false)
 
-  // Выбранный запрос мог принадлежать удалённой папке: выбор чистится через
-  // общий selection-поток — он сначала сохраняет dirty draft (запись уехала
-  // в trash, правка сохранится в ней), а прямое обнуление httpState.requestId
-  // рассинхронизировало бы его с currentRequest и молча глушило autosave.
-  await selectHttpRequest(undefined)
-
   const fallbackId = selectedFolderIds.value[0]
   if (fallbackId) {
-    await selectHttpFolder(fallbackId)
+    await openHttpFolder(fallbackId)
     scrollToElement(`[id="${fallbackId}"]`)
   }
   else {
@@ -445,6 +476,27 @@ async function selectHttpFolder(
   }
 }
 
+async function openHttpFolder(folderId: number) {
+  const token = ++httpRuntimeNavigation.transitionToken
+  if (
+    !(await httpRuntimeNavigation.confirmLeave())
+    || token !== httpRuntimeNavigation.transitionToken
+  ) {
+    return false
+  }
+  if (!getFolderByIdFromTree(folders.value, folderId))
+    return false
+  const { currentRequest, isCurrentRequestLoading } = useHttpRequests()
+  if (isCurrentRequestLoading.value)
+    httpState.requestId = currentRequest.value?.id
+  httpState.activePanel = 'folder'
+  await selectHttpFolder(folderId)
+  if (token !== httpRuntimeNavigation.transitionToken)
+    return false
+  await useHttpRequests().getHttpRequests({ folderId })
+  return token === httpRuntimeNavigation.transitionToken
+}
+
 function resetHttpFoldersState() {
   folders.value = []
   renameFolderId.value = null
@@ -466,6 +518,7 @@ export function useHttpFolders() {
     resetHttpFoldersState,
     selectedFolderIds,
     selectHttpFolder,
+    openHttpFolder,
     setFolderSelection,
     updateHttpFolder,
   }

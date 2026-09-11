@@ -13,8 +13,7 @@ auto-imports.d.ts
 .env
 .env.*
 electron-builder.env
-docs/superpowers
-docs/releases
-docs/website/.vitepress/cache
-docs/website/.vitepress/dist
-docs/strategy
+
+docs/*
+!docs/website/
+docs/website/.vitepress/cache/

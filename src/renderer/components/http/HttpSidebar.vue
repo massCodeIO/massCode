@@ -1,79 +1,119 @@
 <script setup lang="ts">
-import type { TreeNode as TreeNodeType } from '@/components/ui/tree/types'
-import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { Tree as UiTree } from '@/components/ui/tree'
+import type { AppStore } from '~/main/store/types'
 import {
-  useDeleteShortcut,
   useHttpApp,
   useHttpEnvironments,
-  useHttpFolderDragDrop,
   useHttpFolders,
   useHttpImportDialog,
   useHttpRequests,
   useHttpSearch,
   useResizeHandle,
 } from '@/composables'
-import { httpRuntimeNavigation } from '@/composables/spaces/http/runtimeNavigation'
+import { LibraryFilter } from '@/composables/types'
 import { i18n, store } from '@/electron'
-import {
-  getEntryNameConflictMessage,
-  getEntryNameValidationMessage,
-} from '@/utils'
-import { Folder, Plus, Upload } from 'lucide-vue-next'
-import { LAYOUT_DEFAULTS } from '~/main/store/constants'
+import { useElementSize } from '@vueuse/core'
+import { Trash2 } from 'lucide-vue-next'
 
-const ENVIRONMENTS_PANEL_DEFAULTS
-  = LAYOUT_DEFAULTS.http.environmentsPanel ?? LAYOUT_DEFAULTS.tags
-
+const { httpState } = useHttpApp()
+const { getHttpFolders } = useHttpFolders()
 const {
-  highlightedFolderIds,
-  highlightedRequestIds,
-  focusedFolderId,
-  httpState,
-} = useHttpApp()
-const {
-  createHttpFolderAndSelect,
-  deleteSelectedHttpFolders,
-  folders,
-  getHttpFolders,
-  updateHttpFolder,
-  getFolderByIdFromTree,
-  selectedFolderIds,
-  selectHttpFolder,
-} = useHttpFolders()
-const { getHttpRequests, isRestoreStateBlocked, selectFirstRequest }
-  = useHttpRequests()
-const { getHttpEnvironments } = useHttpEnvironments()
-const { clearSearch } = useHttpSearch()
-const { onDragNode, onExternalDrop } = useHttpFolderDragDrop()
-const { isHttpImportDialogOpen, openHttpImportDialog } = useHttpImportDialog()
-
-const environmentsHandleRef = ref<HTMLElement>()
-
-function normalizeEnvironmentsHeight(value: number | undefined) {
-  if (
-    typeof value !== 'number'
-    || Number.isNaN(value)
-    || value < ENVIRONMENTS_PANEL_DEFAULTS.min
-  ) {
-    return ENVIRONMENTS_PANEL_DEFAULTS.height
-  }
-  return value
+  getHttpRequests,
+  getAllHttpRequests,
+  emptyTrash,
+  currentRequest,
+  trashRequests,
+} = useHttpRequests()
+const { getHttpEnvironments, environments } = useHttpEnvironments()
+const { searchQuery, resetHttpSearchState } = useHttpSearch()
+const { isHttpImportDialogOpen } = useHttpImportDialog()
+const layout = store.app.get('http.layout') as AppStore['http']['layout']
+const collectionsOpen = ref(layout.collectionsOpen !== false)
+const environmentsOpen = ref(layout.environmentsOpen !== false)
+const trashOpen = ref(layout.trashOpen === true)
+const unfiledOpen = ref(layout.unfiledOpen !== false)
+const favorites = ref(
+  layout.favoritesOnly === true
+  || httpState.libraryFilter === LibraryFilter.Favorites,
+)
+if (
+  httpState.libraryFilter === LibraryFilter.Favorites
+  || httpState.libraryFilter === LibraryFilter.All
+) {
+  httpState.libraryFilter = undefined
 }
-
 const environmentsHeight = ref(
-  normalizeEnvironmentsHeight(
-    store.app.get('http.layout.environmentsListHeight') as number | undefined,
+  Math.max(80, layout.environmentsListHeight || 220),
+)
+const trashHeight = ref(Math.max(80, layout.trashHeight || 160))
+const sections = ref<HTMLElement>()
+const collectionsSection = ref<HTMLElement>()
+const environmentsSection = ref<HTMLElement>()
+const trashSection = ref<HTMLElement>()
+const { height } = useElementSize(sections)
+const environmentsHandle = ref<HTMLElement>()
+const trashHandle = ref<HTMLElement>()
+const resizeClass
+  = 'before:bg-border hover:before:bg-primary data-[resizing]:before:bg-primary relative z-10 h-0 shrink-0 cursor-row-resize before:absolute before:inset-x-0 before:top-0 before:h-px after:absolute after:inset-x-0 after:-top-1 after:h-3'
+const available = computed(() => Math.max(0, height.value - 108))
+const trashSize = computed(() =>
+  Math.min(
+    trashHeight.value,
+    Math.max(
+      40,
+      available.value
+      - (collectionsOpen.value ? 60 : 0)
+      - (environmentsOpen.value ? 60 : 0),
+    ),
+  ),
+)
+const environmentSize = computed(() =>
+  Math.min(
+    environmentsHeight.value,
+    Math.max(
+      40,
+      available.value - (trashOpen.value ? trashSize.value : 0) - 60,
+    ),
   ),
 )
 
-useResizeHandle(environmentsHandleRef, {
+// Measure the visible pair: a section can fill the remaining space when its
+// preceding sections are collapsed, regardless of its persisted height.
+let resizeUpper = 0
+let resizeLower = 0
+let resizeOffset = 0
+function startResize(
+  upper: HTMLElement | undefined,
+  lower: HTMLElement | undefined,
+) {
+  resizeUpper = Math.max(0, (upper?.getBoundingClientRect().height ?? 36) - 36)
+  resizeLower = Math.max(0, (lower?.getBoundingClientRect().height ?? 36) - 36)
+  resizeOffset = 0
+}
+function resizeDelta(dy: number, upperMinimum: number) {
+  resizeOffset += dy
+  return Math.max(
+    Math.min(0, upperMinimum - resizeUpper),
+    Math.min(Math.max(0, resizeLower - 80), resizeOffset),
+  )
+}
+
+watch(
+  [collectionsOpen, environmentsOpen, trashOpen, unfiledOpen, favorites],
+  () => {
+    store.app.set('http.layout.collectionsOpen', collectionsOpen.value)
+    store.app.set('http.layout.environmentsOpen', environmentsOpen.value)
+    store.app.set('http.layout.trashOpen', trashOpen.value)
+    store.app.set('http.layout.unfiledOpen', unfiledOpen.value)
+    store.app.set('http.layout.favoritesOnly', favorites.value)
+  },
+)
+useResizeHandle(environmentsHandle, {
   direction: 'vertical',
+  onStart() {
+    startResize(collectionsSection.value, environmentsSection.value)
+  },
   onMove(dy) {
-    environmentsHeight.value = Math.max(
-      ENVIRONMENTS_PANEL_DEFAULTS.min,
-      environmentsHeight.value - dy,
-    )
+    environmentsHeight.value = resizeLower - resizeDelta(dy, 60)
   },
   onEnd() {
     store.app.set(
@@ -82,272 +122,170 @@ useResizeHandle(environmentsHandleRef, {
     )
   },
 })
-
-function mapToTreeNode(folder: any): TreeNodeType {
-  return {
-    id: folder.id,
-    label: folder.name,
-    isExpanded: Boolean(folder.isOpen),
-    children: folder.children?.map(mapToTreeNode) || [],
-  }
-}
-
-const treeData = computed(() => folders.value?.map(mapToTreeNode) || [])
-
-const selectedIds = computed({
-  get: () => selectedFolderIds.value as (string | number)[],
-  set: (val) => {
-    selectedFolderIds.value = val as number[]
+useResizeHandle(trashHandle, {
+  direction: 'vertical',
+  onStart() {
+    startResize(
+      environmentsOpen.value
+        ? environmentsSection.value
+        : collectionsSection.value,
+      trashSection.value,
+    )
   },
-})
-
-const editableId = ref<string | number | null>(null)
-
-const focusedId = computed({
-  get: () => focusedFolderId.value as string | number | undefined,
-  set: (val) => {
-    focusedFolderId.value = val as number | undefined
+  onMove(dy) {
+    const delta = resizeDelta(dy, environmentsOpen.value ? 80 : 60)
+    trashHeight.value = resizeLower - delta
+    if (environmentsOpen.value)
+      environmentsHeight.value = resizeUpper + delta
   },
-})
-
-const highlightedIds = computed({
-  get: () => highlightedFolderIds.value as Set<string | number>,
-  set: (val) => {
-    highlightedFolderIds.value.clear()
-    val.forEach(id => highlightedFolderIds.value.add(id as number))
-  },
-})
-
-const contextNode = ref<any>(null)
-
-function flattenFolders(nodes: any[], acc: any[] = []): any[] {
-  for (const folder of nodes) {
-    acc.push(folder)
-    if (folder.children?.length) {
-      flattenFolders(folder.children, acc)
+  onEnd() {
+    store.app.set('http.layout.trashHeight', trashHeight.value)
+    if (environmentsOpen.value) {
+      store.app.set(
+        'http.layout.environmentsListHeight',
+        environmentsHeight.value,
+      )
     }
-  }
-  return acc
-}
-
-function hasSiblingFolderConflict(node: TreeNodeType, value: string): boolean {
-  const folderId = Number(node.id)
-  const folder = getFolderByIdFromTree(folders.value, folderId)
-  if (!folder)
-    return false
-
-  const normalized = value.trim().toLowerCase()
-  if (!normalized || normalized === folder.name.toLowerCase())
-    return false
-
-  const parentId = folder.parentId ?? null
-  return flattenFolders(folders.value || []).some(
-    sibling =>
-      sibling.id !== folderId
-      && (sibling.parentId ?? null) === parentId
-      && sibling.name.toLowerCase() === normalized,
-  )
-}
-
-function getFolderValidationMessage(node: TreeNodeType, value: string) {
-  const message = getEntryNameValidationMessage(value, i18n.t.bind(i18n))
-  if (message)
-    return message
-
-  if (hasSiblingFolderConflict(node, value)) {
-    return getEntryNameConflictMessage('folder', i18n.t.bind(i18n))
-  }
-
-  return ''
-}
-
-async function onClickNode({
-  node,
-  event,
-}: {
-  node: TreeNodeType
-  event?: MouseEvent
-}) {
-  highlightedFolderIds.value.clear()
-
-  const id = Number(node.id)
-
-  if (event?.shiftKey) {
-    await selectHttpFolder(id, { mode: 'range', ensureVisibility: false })
-    return
-  }
-
-  if (event && (event.metaKey || event.ctrlKey)) {
-    await selectHttpFolder(id, { mode: 'toggle', ensureVisibility: false })
-    return
-  }
-
-  if (httpState.folderId === id && selectedFolderIds.value.length === 1)
-    return
-
-  if (!(await httpRuntimeNavigation.confirmLeave()))
-    return
-
-  isRestoreStateBlocked.value = true
-  clearSearch()
-
-  await selectHttpFolder(id)
-  await getHttpRequests()
-  selectFirstRequest({ folderId: id })
-}
-
-function onDblclickNode(node: TreeNodeType) {
-  setTimeout(() => {
-    editableId.value = node.id
-  }, 100)
-}
-
-function onToggleNode(node: TreeNodeType) {
-  const folderNode = getFolderByIdFromTree(folders.value, Number(node.id))
-  if (folderNode) {
-    updateHttpFolder(Number(node.id), {
-      isOpen: !folderNode.isOpen ? 1 : 0,
-    })
-  }
-}
-
-function onContextMenu({
-  node,
-}: {
-  node: TreeNodeType
-  selectedNodes: TreeNodeType[]
-}) {
-  contextNode.value = getFolderByIdFromTree(folders.value, Number(node.id))
-  highlightedRequestIds.value.clear()
-}
-
-function onUpdateLabel({ node, value }: { node: TreeNodeType, value: string }) {
-  updateHttpFolder(Number(node.id), { name: value })
-  editableId.value = null
-}
-
-function onCancelEdit() {
-  editableId.value = null
-}
-
-async function onImported() {
-  await getHttpFolders(false)
-  await getHttpRequests()
-  await getHttpEnvironments()
-}
-
-useDeleteShortcut({
-  rootSelector: '[data-http-folders-tree]',
-  isEnabled: () => focusedFolderId.value !== undefined,
-  onDelete: () => deleteSelectedHttpFolders(focusedFolderId.value),
+  },
 })
+watch(
+  () => currentRequest.value?.id,
+  () => {
+    if (currentRequest.value?.isDeleted) {
+      trashOpen.value = true
+    }
+    else if (currentRequest.value) {
+      collectionsOpen.value = true
+      if (currentRequest.value.folderId === null)
+        unfiledOpen.value = true
+    }
+  },
+  { immediate: true },
+)
+watch(
+  () => httpState.activePanel,
+  (panel) => {
+    if (panel === 'folder')
+      collectionsOpen.value = true
+  },
+)
+watch([searchQuery, favorites], () => {
+  if (searchQuery.value || favorites.value)
+    collectionsOpen.value = true
+  const query = searchQuery.value.trim().toLocaleLowerCase()
+  if (
+    query
+    && environments.value.some(env =>
+      env.name.toLocaleLowerCase().includes(query),
+    )
+  ) {
+    environmentsOpen.value = true
+  }
+  if (
+    query
+    && trashRequests.value.some(request =>
+      `${request.name} ${request.method} ${request.url}`
+        .toLocaleLowerCase()
+        .includes(query),
+    )
+  ) {
+    trashOpen.value = true
+  }
+})
+resetHttpSearchState()
+async function onImported() {
+  await Promise.allSettled([
+    getHttpFolders(false),
+    getHttpRequests(),
+    getAllHttpRequests(),
+    getHttpEnvironments(),
+  ])
+}
 </script>
 
 <template>
-  <div
-    class="flex h-full flex-col px-1"
-    style="
-      padding-top: calc(var(--content-top-offset) + var(--header-gap, 0px));
-    "
-  >
-    <SidebarHeader
-      :title="i18n.t('spaces.http.title')"
-      :section-title="i18n.t('common.library')"
+  <div class="flex h-full min-h-0 flex-col px-1 pt-[var(--content-top-offset)]">
+    <HttpRequestsListHeader v-model:favorites="favorites" />
+    <div
+      ref="sections"
+      class="flex min-h-0 flex-1 flex-col"
     >
-      <template #actions>
-        <UiActionButton
-          :tooltip="i18n.t('spaces.http.action.import')"
-          @click="openHttpImportDialog"
+      <section
+        ref="collectionsSection"
+        class="flex min-h-0 flex-col"
+        :class="collectionsOpen ? 'flex-1' : 'shrink-0'"
+      >
+        <SidebarSectionHeader
+          v-model:open="collectionsOpen"
+          collapsible
+          :title="i18n.t('spaces.http.tree.collections')"
+          class="shrink-0"
+        />
+        <HttpTreeLive
+          v-show="collectionsOpen"
+          v-model:unfiled-open="unfiledOpen"
+          :query="searchQuery"
+          :favorites="favorites"
+        />
+      </section>
+      <div
+        v-if="collectionsOpen && environmentsOpen"
+        ref="environmentsHandle"
+        :class="resizeClass"
+      />
+      <section
+        ref="environmentsSection"
+        class="min-h-0 overflow-hidden border-t"
+        :class="!collectionsOpen && environmentsOpen ? 'flex-1' : 'shrink-0'"
+        :style="{
+          height: environmentsOpen ? `${environmentSize + 36}px` : '36px',
+        }"
+      >
+        <HttpEnvironmentsPanel
+          v-model:open="environmentsOpen"
+          :query="searchQuery"
+        />
+      </section>
+      <div
+        v-if="trashOpen && (collectionsOpen || environmentsOpen)"
+        ref="trashHandle"
+        :class="resizeClass"
+      />
+      <section
+        ref="trashSection"
+        class="flex min-h-0 flex-col border-t"
+        :class="
+          !collectionsOpen && !environmentsOpen && trashOpen
+            ? 'flex-1'
+            : 'shrink-0'
+        "
+        :style="{ height: trashOpen ? `${trashSize + 36}px` : '36px' }"
+      >
+        <SidebarSectionHeader
+          v-model:open="trashOpen"
+          collapsible
+          :title="i18n.t('common.trash')"
+          class="shrink-0"
         >
-          <Upload class="h-4 w-4" />
-        </UiActionButton>
-      </template>
-    </SidebarHeader>
+          <template #action>
+            <UiActionButton
+              :tooltip="i18n.t('action.delete.trash')"
+              @click="emptyTrash"
+            >
+              <Trash2 class="size-4" />
+            </UiActionButton>
+          </template>
+        </SidebarSectionHeader>
+        <HttpTreeLive
+          v-show="trashOpen"
+          trash
+          :query="searchQuery"
+        />
+      </section>
+    </div>
     <HttpImportDialog
       v-model:open="isHttpImportDialogOpen"
       @imported="onImported"
     />
-    <HttpSidebarLibrary />
-    <div class="flex min-h-0 flex-1 flex-col">
-      <SidebarSectionHeader :title="i18n.t('common.folders')">
-        <template #action>
-          <UiActionButton
-            :tooltip="i18n.t('action.new.folder')"
-            @click="createHttpFolderAndSelect()"
-          >
-            <Plus class="h-4 w-4" />
-          </UiActionButton>
-        </template>
-      </SidebarSectionHeader>
-      <div
-        data-http-folders-tree
-        class="scrollbar min-h-0 flex-1 overflow-y-auto"
-      >
-        <ContextMenu.ContextMenu>
-          <ContextMenu.ContextMenuTrigger as-child>
-            <UiTree
-              v-if="treeData.length"
-              :model-value="treeData"
-              :selected-ids="selectedIds"
-              :editable-id="editableId"
-              :focused-id="focusedId"
-              :highlighted-ids="highlightedIds"
-              :get-validation-message="getFolderValidationMessage"
-              class="h-full px-0.5 pb-1"
-              @click-node="onClickNode"
-              @dblclick-node="onDblclickNode"
-              @toggle-node="onToggleNode"
-              @drag-node="onDragNode"
-              @external-drop="onExternalDrop"
-              @context-menu="onContextMenu"
-              @update-label="onUpdateLabel"
-              @cancel-edit="onCancelEdit"
-              @update:selected-ids="selectedIds = $event"
-              @update:editable-id="editableId = $event"
-              @update:focused-id="focusedId = $event"
-              @update:highlighted-ids="highlightedIds = $event"
-            >
-              <template #icon="{ node }">
-                <div class="mr-1.5 flex flex-shrink-0 items-center">
-                  <UiFolderIcon
-                    v-if="getFolderByIdFromTree(folders, Number(node.id))?.icon"
-                    :folder-id="Number(node.id)"
-                    :name="
-                      getFolderByIdFromTree(folders, Number(node.id))!.icon!
-                    "
-                    space-id="http"
-                  />
-                  <Folder
-                    v-else
-                    class="h-4 w-4"
-                  />
-                </div>
-              </template>
-            </UiTree>
-          </ContextMenu.ContextMenuTrigger>
-          <UiEmptyPlaceholder
-            v-if="!treeData.length"
-            :text="i18n.t('placeholder.emptyFoldersList')"
-          />
-          <HttpSidebarFolderContextMenu
-            :context-node="contextNode"
-            :editable-id="editableId"
-            @update:editable-id="editableId = $event"
-          />
-        </ContextMenu.ContextMenu>
-      </div>
-
-      <div
-        ref="environmentsHandleRef"
-        class="before:bg-border hover:before:bg-primary data-[resizing]:before:bg-primary relative z-10 flex h-px shrink-0 cursor-row-resize items-center justify-center bg-transparent before:absolute before:inset-x-0 before:top-1/2 before:h-px before:-translate-y-1/2 before:transition-[background-color,height] before:duration-150 before:content-[''] after:absolute after:inset-x-0 after:top-1/2 after:h-3 after:-translate-y-1/2 after:content-[''] hover:before:h-0.5 hover:before:delay-200 data-[resizing]:before:h-0.5"
-      />
-
-      <div
-        :style="{ height: `${environmentsHeight}px` }"
-        class="shrink-0 overflow-hidden"
-      >
-        <HttpEnvironmentsPanel />
-      </div>
-    </div>
   </div>
 </template>

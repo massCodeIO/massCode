@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { useHttpRequests, useResizeHandle } from '@/composables'
+import { useHttpPanels } from '@/composables/spaces/http/useHttpPanels'
 import { useHttpWebSocket } from '@/composables/spaces/http/useHttpWebSocket'
 import { i18n, store } from '@/electron'
 
 const { currentRequest, isCurrentRequestLoadingVisible } = useHttpRequests()
 
+const { bottomOpen } = useHttpPanels()
 const { isWebSocket } = useHttpWebSocket()
 
 const RESPONSE_PANEL_DEFAULT_HEIGHT = 300
@@ -88,25 +90,28 @@ useResizeHandle(responseHandleRef, {
     <div
       class="min-h-0 flex-1"
       :class="{
-        'basis-3/5': currentRequest && responsePanelHeight === undefined,
+        'basis-3/5':
+          bottomOpen && currentRequest && responsePanelHeight === undefined,
       }"
     >
       <HttpRequestEditor />
     </div>
     <div
       v-if="currentRequest"
+      v-show="bottomOpen"
       ref="responseHandleRef"
       class="before:bg-border hover:before:bg-primary data-[resizing]:before:bg-primary relative z-10 flex h-px shrink-0 cursor-row-resize items-center justify-center bg-transparent before:absolute before:inset-x-0 before:top-1/2 before:h-px before:-translate-y-1/2 before:transition-[background-color,height] before:duration-150 before:content-[''] after:absolute after:inset-x-0 after:top-1/2 after:h-3 after:-translate-y-1/2 after:content-[''] hover:before:h-0.5 hover:before:delay-200 data-[resizing]:before:h-0.5"
     />
     <div
       v-if="currentRequest"
+      v-show="bottomOpen"
       ref="responsePanelRef"
       :style="
         responsePanelHeight === undefined
           ? undefined
           : { height: `${responsePanelHeight}px` }
       "
-      class="min-h-0 overflow-hidden"
+      class="max-h-[60%] min-h-0 overflow-hidden"
       :class="
         responsePanelHeight === undefined ? 'flex-1 basis-2/5' : 'shrink-0'
       "

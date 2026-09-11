@@ -100,6 +100,7 @@ describe('hTTP runtime editor state', () => {
       if (choice === 'busy')
         runtime.saving.value = true
       const pending = listener(undefined, { id: 42 })
+      await Promise.resolve()
       expect(send).not.toHaveBeenCalled()
       if (choice !== 'busy') {
         expect(runtime.leaveDialogOpen.value).toBe(true)
@@ -187,6 +188,7 @@ describe('hTTP runtime editor state', () => {
       const { httpRuntimeNavigation } = await import('../runtimeNavigation')
       isCurrentRequestDirty.value = true
       const pending = httpRuntimeNavigation.confirmLeave()
+      await Promise.resolve()
       expect(runtime.leaveDialogOpen.value).toBe(true)
       await runtime.resolveNavigation(choice)
       expect(await pending).toBe(choice !== 'cancel')
@@ -243,10 +245,13 @@ describe('hTTP runtime editor state', () => {
         expected: 200,
       })
       const pending = httpRuntimeNavigation.confirmLeave()
-      expect(httpRuntimeNavigation.confirmLeave()).toBe(pending)
+      await Promise.resolve()
+      const repeated = httpRuntimeNavigation.confirmLeave()
+      await Promise.resolve()
       expect(runtime.leaveDialogOpen.value).toBe(true)
       await runtime.resolveNavigation(choice)
       expect(await pending).toBe(choice !== 'cancel')
+      expect(await repeated).toBe(choice !== 'cancel')
       expect(runtime.dirty.value).toBe(choice === 'cancel')
       expect(putRuntime).toHaveBeenCalledTimes(choice === 'save' ? 1 : 0)
     },
@@ -262,6 +267,7 @@ describe('hTTP runtime editor state', () => {
       expected: 200,
     })
     const invalid = httpRuntimeNavigation.confirmLeave()
+    await Promise.resolve()
     await runtime.resolveNavigation('save')
     expect(await invalid).toBe(false)
     expect(runtime.dirty.value).toBe(true)
@@ -269,6 +275,7 @@ describe('hTTP runtime editor state', () => {
     runtime.draft.value.assertions[0]!.name = 'Status'
     putRuntime.mockRejectedValueOnce({ response: { status: 409 } })
     const conflict = httpRuntimeNavigation.confirmLeave()
+    await Promise.resolve()
     await runtime.resolveNavigation('save')
     expect(await conflict).toBe(false)
     expect(runtime.conflict.value).toBe(true)
@@ -284,6 +291,7 @@ describe('hTTP runtime editor state', () => {
       path: '',
     })
     const pending = httpRuntimeNavigation.confirmLeave()
+    await Promise.resolve()
     currentRequest.value = null
     expect(await pending).toBe(false)
     expect(runtime.leaveDialogOpen.value).toBe(false)

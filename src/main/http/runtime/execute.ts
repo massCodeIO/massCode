@@ -1,5 +1,6 @@
 import type { IncomingHttpHeaders } from 'node:http'
 import type { Dispatcher } from 'undici'
+import type { HttpHistorySnapshot } from '../../../shared/httpHistory'
 import type { HttpScriptResult } from '../../../shared/httpScripts'
 import type {
   HttpAuth,
@@ -13,10 +14,18 @@ import type {
   HttpQueryEntry,
   HttpResponseBodyKind,
 } from '../../types/http'
+import type { ResolvedHttpCollection } from '../collection'
 import { Buffer } from 'node:buffer'
+import { randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { basename } from 'node:path'
-import { Agent, request as undiciRequest } from 'undici'
+import { applyHttpApiKey } from '../../../shared/httpAuth'
+import {
+  applyHttpCollection,
+  collectionVariables,
+  mergeHttpCollectionRuntime,
+} from '../../../shared/httpCollection'
+import { buildHttpFormBody } from '../../../shared/httpForm'
 import {
   buildGraphqlBody,
   graphqlResponseState,
@@ -26,6 +35,7 @@ import {
   httpRuntimeSchema,
 } from '../../../shared/httpRuntime'
 import { hasHttpScripts } from '../../../shared/httpScripts'
+import { resolveHttpTransport } from '../../../shared/httpTransport'
 import {
   HTTP_SECRET_MASK,
   interpolateHttpVariables,
@@ -33,6 +43,12 @@ import {
 } from '../../../shared/httpVariables'
 import { useHttpStorage } from '../../storage'
 import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
+import { resolveHttpCollection } from '../collection'
+import { getHttpCookieJar } from '../cookies/store'
+import { withHttpCookies } from '../cookies/transport'
+import { httpConsole } from '../devtools/console'
+import { captureHttpNetwork, finishHttpNetwork } from '../devtools/network'
+import { createHistorySnapshot } from '../historySnapshot'
 import { executeScript } from '../scripts/execute'
 import { scriptsTrusted } from '../scripts/trust'
 import { getEnvironmentSecrets } from '../secrets'
@@ -42,15 +58,8 @@ import {
   getHttpSession,
   isHttpSessionCurrent,
 } from './session'
+import { getHttpDispatcher, requestWithRedirects } from './transport'
 import { variableScopeLimit } from './variables'
-
-const RESPONSE_BODY_CAP_BYTES = 10 * 1024 * 1024
-const DEFAULT_TIMEOUT_MS = 30_000
-const insecureCertificateDispatcher = new Agent({
-  connect: {
-    rejectUnauthorized: false,
-  },
-})
 
 export function interpolate(
   template: string,
@@ -64,7 +73,7 @@ function interpolateAuth(
   variables: Record<string, string>,
 ): HttpAuth {
   return {
-    type: auth.type,
+    ...auth,
     token:
       auth.token !== undefined
         ? interpolate(auth.token, variables)
@@ -84,6 +93,7 @@ function interpolateRequest(
   request: HttpExecuteRequest,
   variables: Record<string, string>,
 ): HttpExecuteRequest {
+  request = applyHttpApiKey(request, variables)
   return {
     method: request.method,
     url: interpolate(request.url, variables),
@@ -97,17 +107,24 @@ function interpolateRequest(
     })),
     bodyType: request.bodyType,
     body:
-      request.body !== null && request.bodyType !== 'graphql'
-        ? interpolate(request.body, variables)
-        : request.body,
-    formData: request.formData.map(entry => ({
-      key: entry.key,
-      type: entry.type,
-      value:
-        entry.type === 'text'
-          ? interpolate(entry.value, variables)
-          : entry.value,
-    })),
+      request.bodyType === 'form-urlencoded'
+        ? buildHttpFormBody(request.body, request.formData, variables)
+        : request.body !== null
+          && request.bodyType !== 'graphql'
+          && request.bodyType !== 'binary'
+          ? interpolate(request.body, variables)
+          : request.body,
+    formData: request.formData
+      .filter(entry => entry.enabled !== false)
+      .map(entry => ({
+        ...entry,
+        key: interpolate(entry.key, variables),
+        type: entry.type,
+        value:
+          entry.type === 'text'
+            ? interpolate(entry.value, variables)
+            : entry.value,
+      })),
     auth: interpolateAuth(request.auth, variables),
   }
 }
@@ -136,7 +153,33 @@ export function applyAuth(
   return headers
 }
 
-function buildUrl(rawUrl: string, query: HttpQueryEntry[]): string {
+function buildUrl(
+  rawUrl: string,
+  query: HttpQueryEntry[],
+  encode = true,
+): string {
+  if (!encode) {
+    const base = rawUrl.split('#')[0]
+    const result = query.length
+      ? base.split('?')[0]
+      + (query.some(entry => entry.enabled !== false && entry.key)
+        ? `?${query
+          .filter(entry => entry.enabled !== false && entry.key)
+          .map(entry => `${entry.key}=${entry.value}`)
+          .join('&')}`
+        : '')
+      : base
+    const parsed = new URL(result)
+    const rawPath = result.replace(/^https?:\/\/[^/?#]+/i, '') || '/'
+    if (
+      /[^\x21-\x7E]/.test(result)
+      || parsed.pathname + parsed.search
+      !== (rawPath.startsWith('?') ? `/${rawPath}` : rawPath)
+    ) {
+      throw new Error('HTTP_URL_ENCODING_REQUIRED')
+    }
+    return result
+  }
   const url = new URL(rawUrl)
   if (query.length > 0) {
     url.search = ''
@@ -169,12 +212,26 @@ interface BuiltBody {
   contentType?: string
 }
 
+function readBodyFile(path: string) {
+  try {
+    return readFileSync(path)
+  }
+  catch {
+    throw new Error('HTTP_BODY_FILE_UNAVAILABLE')
+  }
+}
+
 export function buildBody(
   bodyType: HttpBodyType,
   body: string | null,
   formData: HttpFormDataEntry[],
 ): BuiltBody {
   switch (bodyType) {
+    case 'binary':
+      return {
+        body: readBodyFile(body ?? ''),
+        contentType: 'application/octet-stream',
+      }
     case 'none':
       return { body: undefined }
     case 'graphql':
@@ -185,16 +242,16 @@ export function buildBody(
       return { body: body ?? '', contentType: 'text/plain' }
     case 'form-urlencoded':
       return {
-        body: body ?? '',
+        body: buildHttpFormBody(body, formData),
         contentType: 'application/x-www-form-urlencoded',
       }
     case 'multipart': {
       const fd = new FormData()
       for (const entry of formData) {
-        if (!entry.key)
+        if (!entry.key || entry.enabled === false)
           continue
         if (entry.type === 'file' && entry.value) {
-          const buffer = readFileSync(entry.value)
+          const buffer = readBodyFile(entry.value)
           const blob = new Blob([buffer])
           fd.append(entry.key, blob, basename(entry.value))
         }
@@ -366,7 +423,7 @@ async function readBodyCapped(
 
   for await (const chunk of body as AsyncIterable<Buffer>) {
     const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
-    if (received + buf.length > cap) {
+    if (cap > 0 && received + buf.length > cap) {
       const remaining = cap - received
       if (remaining > 0) {
         chunks.push(buf.subarray(0, remaining))
@@ -466,6 +523,7 @@ export function resolveEnvironment(
 }
 
 export interface HttpRunContext {
+  collection?: ResolvedHttpCollection | null
   environment: ResolvedEnvironment
   variables: Record<string, string>
   signal: AbortSignal
@@ -477,6 +535,8 @@ export async function executeHttpRequest(
   run?: HttpRunContext,
   signal?: AbortSignal,
 ): Promise<HttpExecuteResult> {
+  const executionId = randomUUID()
+  const networkIds: string[] = []
   const vaultPath = getVaultPath()
   const storage = useHttpStorage()
   const saved
@@ -493,11 +553,20 @@ export async function executeHttpRequest(
   if (storage.environments.getActiveEnvironmentId() !== payload.environmentId)
     throw new Error('HTTP_CONTEXT_CHANGED')
   // Execute an isolated draft without persisting it. Older callers may omit it.
-  const runtime = httpRuntimeSchema.parse(
+  const requestRuntime = httpRuntimeSchema.parse(
     payload.runtime === undefined
       ? (saved?.runtime ?? emptyHttpRuntime())
       : payload.runtime,
   )
+  const collection = run
+    ? run.collection
+    : resolveHttpCollection(saved?.folderId)
+  const config = collection?.config
+  const runtime = mergeHttpCollectionRuntime(requestRuntime, config?.runtime)
+  payload = {
+    ...payload,
+    request: applyHttpCollection(payload.request, config),
+  }
   const session = run
     ? {
         generation: -1,
@@ -514,9 +583,18 @@ export async function executeHttpRequest(
     && getVaultPath() === vaultPath
     && storage.environments.getActiveEnvironmentId() === payload.environmentId
   const sessionSecrets = Object.values(session.variables).filter(Boolean)
-  const { maskedVariables, secretValues, variables } = run
+  const environment = run
     ? structuredClone(run.environment)
     : resolveEnvironment(payload.environmentId)
+  const variables = {
+    ...collectionVariables(config),
+    ...environment.variables,
+  }
+  const maskedVariables = {
+    ...collectionVariables(config),
+    ...environment.maskedVariables,
+  }
+  const secretValues = environment.secretValues
   const commitValues = (values: Map<string, string | null>) => {
     if (!run) {
       commitHttpSession(session.generation, values)
@@ -536,7 +614,48 @@ export async function executeHttpRequest(
   )
   secretValues.push(...sessionSecrets)
   let interpolated = interpolateRequest(payload.request, variables)
-  const scripted = hasHttpScripts(runtime.scripts)
+  const subjects = [
+    ...(collection?.scopes ?? [{ id: collection?.id ?? null, config }]).map(
+      scope => ({
+        source: 'collection' as const,
+        id: scope.id,
+        scripts: scope.config?.runtime.scripts,
+      }),
+    ),
+    {
+      source: 'request' as const,
+      id: payload.requestId,
+      scripts: requestRuntime.scripts,
+    },
+  ]
+  const scripted = subjects.some(subject => hasHttpScripts(subject.scripts))
+  const allTrusted = () =>
+    subjects.every(
+      subject =>
+        !hasHttpScripts(subject.scripts)
+        || scriptsTrusted(subject.id, subject.scripts, subject.source),
+    )
+  const labelResults = (results: {
+    assertions: import('../../../shared/httpRuntime').HttpRuntimeResult[]
+    extractions: import('../../../shared/httpRuntime').HttpRuntimeResult[]
+  }) => {
+    if (!config)
+      return results
+    const requestNames = new Set(
+      requestRuntime.extractions.map(rule => rule.name),
+    )
+    const collectionExtractions = config.runtime.extractions.filter(
+      rule => !requestNames.has(rule.name),
+    ).length
+    results.assertions.forEach((result, index) => {
+      result.source
+        = index < config.runtime.assertions.length ? 'collection' : 'request'
+    })
+    results.extractions.forEach((result, index) => {
+      result.source = index < collectionExtractions ? 'collection' : 'request'
+    })
+    return results
+  }
   const scriptResults: HttpScriptResult[] = []
   const pendingValues = new Map<string, string | null>()
   const scriptRequest = {
@@ -584,55 +703,148 @@ export async function executeHttpRequest(
   }
 
   let finalUrl = ''
-  const timeoutMs = payload.timeoutMs ?? DEFAULT_TIMEOUT_MS
+  const transport = resolveHttpTransport(
+    {
+      timeoutMs: payload.timeoutMs,
+      skipCertificateVerification: payload.skipCertificateVerification,
+      ...payload.transport,
+    },
+    requestRuntime.transport,
+    scripted || interpolated.bodyType === 'graphql',
+  )
+  const { timeoutMs } = transport
   const controller = new AbortController()
   const abort = () => controller.abort()
   signal?.addEventListener('abort', abort, { once: true })
   if (signal?.aborted)
     abort()
-  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  const timer
+    = timeoutMs > 0 ? setTimeout(() => controller.abort(), timeoutMs) : undefined
   const contextTimer = setInterval(() => {
     if (!current())
       controller.abort()
   }, 100)
   const phase = async (
     name: 'preRequest' | 'postResponse',
+    subject: (typeof subjects)[number],
     response: unknown = null,
   ) => {
-    const code = runtime.scripts?.[name]
+    const code = subject.scripts?.[name]
     if (!code?.trim())
       return true
-    if (!scriptsTrusted(payload.requestId, runtime.scripts)) {
-      scriptResults.push({ phase: name, tests: [], error: 'untrusted' })
+    if (!allTrusted()) {
+      scriptResults.push({
+        source: subject.source,
+        phase: name,
+        tests: [],
+        error: 'untrusted',
+      })
       return false
     }
     const execution = await executeScript(
       code,
-      { request: scriptRequest, response, variables },
+      {
+        request: scriptRequest,
+        response,
+        variables,
+        environment: environment.variables,
+        collectionVariables: collectionVariables(config),
+      },
       controller.signal,
+      (message) => {
+        if (message.level === 'clear') {
+          httpConsole.clear()
+          return
+        }
+        httpConsole.append({
+          kind: 'script',
+          level: message.level,
+          executionId,
+          message: message.args
+            .map(value =>
+              typeof value === 'string' ? value : JSON.stringify(value),
+            )
+            .join(' '),
+          details: { phase: name, source: subject.source, args: message.args },
+        })
+      },
     )
     if (execution.error) {
-      scriptResults.push({ phase: name, tests: [], error: execution.error })
+      httpConsole.append({
+        kind: 'script',
+        level: 'error',
+        executionId,
+        message: execution.error,
+        details: { phase: name, source: subject.source },
+      })
+      scriptResults.push({
+        source: subject.source,
+        phase: name,
+        tests: [],
+        error: execution.error,
+      })
       return false
     }
     if (applyValues(execution.output.variables)) {
-      scriptResults.push({ phase: name, tests: [], error: 'limit' })
+      scriptResults.push({
+        source: subject.source,
+        phase: name,
+        tests: [],
+        error: 'limit',
+      })
       return false
     }
     const tests = execution.output.tests.map(test => ({
       ...test,
       name: maskSecretValues(test.name, secretValues),
     }))
-    scriptResults.push({ phase: name, tests })
+    scriptResults.push({ source: subject.source, phase: name, tests })
     return tests.every(test => test.ok)
   }
+  let sentRequest: Parameters<typeof createHistorySnapshot>[0] | undefined
+  function snapshotResult(result: HttpExecuteResult) {
+    if (!sentRequest)
+      return undefined
+    try {
+      return createHistorySnapshot(sentRequest, result, [
+        ...secretValues,
+        interpolated.auth.token ?? '',
+        interpolated.auth.password ?? '',
+        interpolated.auth.value ?? '',
+      ])
+    }
+    catch {
+      // A history failure must not change the outcome of the request.
+      return undefined
+    }
+  }
+
   const startedAt = Date.now()
   const startedAtPerf = performance.now()
 
   try {
     if (scripted) {
-      if (!scriptsTrusted(payload.requestId, runtime.scripts)) {
+      if (
+        subjects.some(subject =>
+          subject.scripts?.preRequest.startsWith(
+            'mc.assert(false); // IMPORT_REQUIRES_ADAPTATION',
+          ),
+        )
+      ) {
         scriptResults.push({
+          phase: 'preRequest',
+          tests: [],
+          error: 'exception',
+        })
+        throw new Error('HTTP_SCRIPT_FAILED')
+      }
+      if (!allTrusted()) {
+        scriptResults.push({
+          source: subjects.find(
+            subject =>
+              hasHttpScripts(subject.scripts)
+              && !scriptsTrusted(subject.id, subject.scripts, subject.source),
+          )?.source,
           phase: runtime.scripts?.preRequest.trim()
             ? 'preRequest'
             : 'postResponse',
@@ -641,9 +853,11 @@ export async function executeHttpRequest(
         })
         throw new Error('HTTP_SCRIPT_FAILED')
       }
-      if (!(await phase('preRequest')))
-        throw new Error('HTTP_SCRIPT_FAILED')
-      if (!scriptsTrusted(payload.requestId, runtime.scripts)) {
+      for (const subject of subjects) {
+        if (!(await phase('preRequest', subject)))
+          throw new Error('HTTP_SCRIPT_FAILED')
+      }
+      if (!allTrusted()) {
         scriptResults.push({
           phase: 'preRequest',
           tests: [],
@@ -686,26 +900,71 @@ export async function executeHttpRequest(
       interpolated.body,
       interpolated.formData,
     )
+    if (built.body instanceof FormData) {
+      // Encode once: the logged bytes and the sent multipart boundary must match.
+      const encoded = new Response(built.body)
+      built.body = Buffer.from(await encoded.arrayBuffer())
+      built.contentType = encoded.headers.get('content-type') ?? undefined
+    }
     const hasContentType = Object.keys(headersObj).some(
       k => k.toLowerCase() === 'content-type',
     )
     if (!hasContentType && built.contentType)
       headersObj['Content-Type'] = built.contentType
-    finalUrl = buildUrl(interpolated.url, interpolated.query)
-    const response = await undiciRequest(finalUrl, {
+    finalUrl = buildUrl(
+      interpolated.url,
+      interpolated.query,
+      transport.encodeUrl,
+    )
+    sentRequest = {
       method: interpolated.method,
-      headers: headersObj,
-      body: built.body as Dispatcher.DispatchOptions['body'],
-      signal: controller.signal,
-      maxRedirections: scripted || interpolated.bodyType === 'graphql' ? 0 : 5,
-      ...(payload.skipCertificateVerification
-        ? { dispatcher: insecureCertificateDispatcher }
-        : {}),
-    })
+      url: finalUrl,
+      headers: Object.entries(headersObj).map(([key, value]) => ({
+        key,
+        value,
+      })),
+      body:
+        typeof built.body === 'string'
+          ? built.body
+          : interpolated.bodyType === 'multipart'
+            ? JSON.stringify(
+                interpolated.formData.map(field => ({
+                  ...field,
+                  value:
+                    field.type === 'file' ? basename(field.value) : field.value,
+                })),
+              )
+            : '',
+    }
+    const cookieJar = getHttpCookieJar()
+    const response = await withHttpCookies(
+      cookieJar.enabled(payload.requestId) ? cookieJar : undefined,
+      () =>
+        captureHttpNetwork(
+          { executionId, ids: networkIds, body: sentRequest?.body ?? '' },
+          () =>
+            requestWithRedirects(
+              finalUrl,
+              {
+                method: interpolated.method,
+                headers: headersObj,
+                body: built.body as Dispatcher.DispatchOptions['body'],
+                signal: controller.signal,
+                headersTimeout: timeoutMs,
+                bodyTimeout: timeoutMs,
+                maxRedirections: transport.followRedirects
+                  ? transport.maxRedirects
+                  : 0,
+                dispatcher: getHttpDispatcher(transport),
+              },
+              transport,
+            ),
+        ),
+    )
 
     const { buffer, sizeBytes, truncated } = await readBodyCapped(
       response.body as unknown as NodeJS.ReadableStream,
-      RESPONSE_BODY_CAP_BYTES,
+      transport.maxResponseBytes,
     )
 
     const durationMs = Math.round(performance.now() - startedAtPerf)
@@ -728,6 +987,16 @@ export async function executeHttpRequest(
       truncated,
     }
 
+    finishHttpNetwork(
+      networkIds.at(-1),
+      {
+        bodyKind,
+        sizeBytes,
+        responseTruncated: truncated,
+      },
+      durationMs,
+    )
+
     if (!current())
       return { ...result, body: '', headers: [], discarded: true }
     const evaluated = evaluateHttpRuntime(
@@ -735,21 +1004,30 @@ export async function executeHttpRequest(
       result,
       new Map([...Object.entries(session.variables), ...pendingValues]),
     )
-    result.runtimeResults = evaluated.results
+    result.runtimeResults = labelResults(evaluated.results)
     if (evaluated.limit) {
       result.scriptResults = scripted ? scriptResults : undefined
       result.sessionNames = session.names
     }
     else if (scripted) {
       applyValues(Object.fromEntries(evaluated.values))
-      const completed = await phase('postResponse', {
+      const scriptResponse = {
         status: result.status,
         headers: result.headers,
         body: result.body,
         bodyKind: result.bodyKind,
         truncated: result.truncated,
         durationMs: result.durationMs,
-      })
+      }
+      let completed = true
+      const postSubjects
+        = config?.postResponseOrder === 'parent-first'
+          ? subjects
+          : [...subjects].reverse()
+      for (const subject of postSubjects) {
+        const success = await phase('postResponse', subject, scriptResponse)
+        completed = success && completed
+      }
       result.scriptResults = scriptResults
       if (!current()) {
         return {
@@ -760,7 +1038,7 @@ export async function executeHttpRequest(
           discarded: true,
         }
       }
-      if (!scriptsTrusted(payload.requestId, runtime.scripts)) {
+      if (!allTrusted()) {
         scriptResults.push({
           phase: 'postResponse',
           tests: [],
@@ -779,15 +1057,18 @@ export async function executeHttpRequest(
       result.sessionNames = commitValues(evaluated.values)
     }
 
-    if (!run) {
+    {
+      const snapshot = snapshotResult(result)
       appendHistory(
         payload,
-        buildHistoryUrl(),
+        snapshot?.request.url ?? buildHistoryUrl(),
         interpolated.method,
         response.statusCode,
         durationMs,
         sizeBytes,
         startedAt,
+        undefined,
+        snapshot,
       )
     }
 
@@ -797,6 +1078,19 @@ export async function executeHttpRequest(
     const durationMs = Math.round(performance.now() - startedAtPerf)
     const message = formatHttpRequestError(error)
     const isAbort = error instanceof Error && error.name === 'AbortError'
+    if (!networkIds.length) {
+      httpConsole.append({
+        kind: 'network',
+        level: 'error',
+        executionId,
+        message: `${interpolated.method} ${finalUrl || interpolated.url}`,
+        durationMs,
+        details: { error: message },
+      })
+    }
+    else {
+      finishHttpNetwork(networkIds.at(-1), { error: message }, durationMs)
+    }
 
     if (!current()) {
       return {
@@ -822,23 +1116,6 @@ export async function executeHttpRequest(
       secretValues,
     )
 
-    if (!run) {
-      appendHistory(
-        payload,
-        historyUrl,
-        interpolated.method,
-        null,
-        durationMs,
-        0,
-        startedAt,
-        isAbort
-          ? `Timeout after ${timeoutMs}ms`
-          : secretValues.length > 0
-            ? HTTP_SECRET_MASK
-            : historyError,
-      )
-    }
-
     const result: HttpExecuteResult = {
       status: null,
       statusText: '',
@@ -851,7 +1128,8 @@ export async function executeHttpRequest(
       error: isAbort
         ? `Timeout after ${timeoutMs}ms`
         : message === 'HTTP_SCRIPT_FAILED'
-          ? 'HTTP_SCRIPT_FAILED'
+          || message === 'HTTP_BODY_FILE_UNAVAILABLE'
+          ? message
           : secretValues.length
             ? HTTP_SECRET_MASK
             : message,
@@ -862,9 +1140,21 @@ export async function executeHttpRequest(
     }
     else {
       const evaluated = evaluateHttpRuntime(runtime, result)
-      result.runtimeResults = evaluated.results
+      result.runtimeResults = labelResults(evaluated.results)
       result.sessionNames = commitValues(evaluated.values)
     }
+    const snapshot = snapshotResult(result)
+    appendHistory(
+      payload,
+      snapshot?.request.url ?? historyUrl,
+      interpolated.method,
+      null,
+      durationMs,
+      0,
+      startedAt,
+      snapshot?.response.error ?? historyError,
+      snapshot,
+    )
     return result
   }
   finally {
@@ -883,11 +1173,13 @@ function appendHistory(
   sizeBytes: number,
   requestedAt: number,
   error?: string,
+  snapshot?: HttpHistorySnapshot,
 ): void {
   try {
     const storage = useHttpStorage()
     storage.history.appendEntry({
       requestId: payload.requestId,
+      snapshot,
       method,
       url,
       status,
@@ -897,7 +1189,8 @@ function appendHistory(
       ...(error ? { error } : {}),
     })
   }
-  catch {
-    // history is best-effort; never fail the response
+  catch (error) {
+    // History is best-effort; retain diagnostics without failing the response.
+    console.warn('HTTP history entry could not be saved', error)
   }
 }

@@ -1,3 +1,5 @@
+import type { HttpCollectionConfig } from '../../shared/httpCollection'
+import type { HttpHistorySnapshot } from '../../shared/httpHistory'
 import type { HttpRuntime, HttpRuntimeRead } from '../../shared/httpRuntime'
 import type {
   HttpAuth,
@@ -368,6 +370,7 @@ export interface HttpFolderCreateInput {
 }
 
 export interface HttpFolderUpdateInput {
+  collectionConfig?: HttpCollectionConfig
   name?: string
   icon?: string | null
   parentId?: number | null
@@ -437,6 +440,7 @@ export interface HttpEnvironmentUpdateResult {
 }
 
 export interface HttpHistoryAppendInput {
+  snapshot?: HttpHistorySnapshot
   requestId: number | null
   method: HttpMethod
   url: string
@@ -498,6 +502,7 @@ export interface HttpEnvironmentsStorage {
 }
 
 export interface HttpHistoryStorage {
+  getSnapshot: (id: number) => HttpHistorySnapshot | null
   appendEntry: (input: HttpHistoryAppendInput) => { id: number }
   clear: () => void
   getEntries: () => HttpHistoryRecord[]

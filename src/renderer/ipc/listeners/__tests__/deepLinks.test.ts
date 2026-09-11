@@ -108,7 +108,7 @@ async function setup(options: SetupOptions = {}) {
 
   const initCodeSpace = vi.fn(async () => undefined)
   const initNotesSpace = vi.fn(async () => undefined)
-  const initHttpSpace = vi.fn(async () => undefined)
+  const initHttpSpace = vi.fn(async (): Promise<void> => undefined)
   const isAppLoading = ref(false)
   const isCodeSpaceInitialized = ref(false)
   const isHttpSpaceInitialized = ref(false)
@@ -365,6 +365,29 @@ describe('deepLinks', () => {
     expect(context.isHttpSpaceInitialized.value).toBe(true)
   })
 
+  it('finishes HTTP initialization before opening the route and selecting a link target', async () => {
+    const context = await setup({ snippetRouteName: 'notes-space' })
+    let finishInit!: () => void
+    context.initHttpSpace.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishInit = resolve
+        }),
+    )
+
+    const navigation = context.module.openHttpRequestDeepLink(8)
+    await vi.waitFor(() =>
+      expect(context.initHttpSpace).toHaveBeenCalledTimes(1),
+    )
+    expect(context.router.push).not.toHaveBeenCalled()
+    expect(context.selectHttpRequest).not.toHaveBeenCalled()
+
+    finishInit()
+    await navigation
+    expect(context.router.push).toHaveBeenCalledWith({ name: 'http-space' })
+    expect(context.selectHttpRequest).toHaveBeenLastCalledWith(8)
+  })
+
   it('opens root HTTP request links without a folder selection', async () => {
     const context = await setup({
       httpRequestResponse: {
@@ -438,6 +461,22 @@ describe('deepLinks', () => {
     })
     expect(context.router.push).toHaveBeenCalledWith({ name: 'notes-space' })
     expect(context.selectNote).toHaveBeenCalledWith(15)
+    expect(context.isNavigatingHistory.value).toBe(false)
+  })
+
+  it('restores an HTTP collection or folder on back navigation', async () => {
+    const context = await setup({ snippetRouteName: 'notes-space' })
+    context.goBack.mockReturnValue({
+      id: 4,
+      name: 'Catalog',
+      type: 'http-folder',
+    })
+    await context.module.navigateBack()
+    expect(context.router.push).toHaveBeenCalledWith({ name: 'http-space' })
+    expect(context.getHttpFolders).toHaveBeenCalledOnce()
+    expect(context.selectHttpFolder).toHaveBeenCalledWith(4)
+    expect(context.selectHttpRequest).not.toHaveBeenCalled()
+    expect(context.selectNote).not.toHaveBeenCalled()
     expect(context.isNavigatingHistory.value).toBe(false)
   })
 

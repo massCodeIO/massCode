@@ -215,9 +215,12 @@ export async function openHttpRequestDeepLink(
   if (!(await httpRuntimeNavigation.confirmLeave()))
     return
   clearHttpNavigationState()
-  await ensureHttpRoute()
 
   try {
+    // Finish restoring the previous selection before mounting the HTTP space:
+    // its initialization must not race with the explicit link target.
+    await initHttpSpace()
+    await ensureHttpRoute()
     const { data: request } = await api.httpRequests.getHttpRequestsById(
       String(requestId),
     )
@@ -309,6 +312,14 @@ async function restoreNavigationTarget(
 
     if (target.type === 'route') {
       await router.push({ name: target.routeName })
+      return
+    }
+
+    if (target.type === 'http-folder') {
+      await ensureHttpRoute()
+      await getHttpFolders()
+      await selectHttpFolder(target.id)
+      httpState.activePanel = 'folder'
       return
     }
 

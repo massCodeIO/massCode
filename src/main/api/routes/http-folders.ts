@@ -1,10 +1,35 @@
+import type {
+  HttpFolderRecord,
+  HttpFolderTreeRecord,
+} from '../../storage/providers/markdown/http/runtime/types'
 import type { HttpFoldersResponse, HttpFoldersTree } from '../dto/http-folders'
 import { Elysia } from 'elysia'
+import { httpCollectionSchema } from '../../../shared/httpCollection'
 import { useHttpStorage } from '../../storage'
 import { commonAddResponse } from '../dto/common/response'
 import { httpFoldersDTO } from '../dto/http-folders'
 
 const app = new Elysia({ prefix: '/http-folders' })
+
+function projectFolder(folder: HttpFolderRecord | HttpFolderTreeRecord): any {
+  const parsed
+    = folder.collectionConfig === undefined
+      ? undefined
+      : httpCollectionSchema.safeParse(folder.collectionConfig)
+  const valid = !parsed || parsed.success
+  return {
+    ...folder,
+    ...(parsed
+      ? {
+          collectionConfig: valid && parsed.success ? parsed.data : null,
+          collectionConfigState: valid ? 'ready' : 'invalid',
+        }
+      : {}),
+    ...('children' in folder
+      ? { children: folder.children.map(projectFolder) }
+      : {}),
+  }
+}
 
 function parseStorageError(
   error: unknown,
@@ -51,7 +76,9 @@ function mapStorageError(status: unknown, error: unknown): never {
   }
 
   if (
-    parsedError.code === 'INVALID_NAME'
+    parsedError.code === 'HTTP_COLLECTION_INVALID'
+    || parsedError.code === 'HTTP_COLLECTION_ROOT_ONLY'
+    || parsedError.code === 'INVALID_NAME'
     || parsedError.code === 'RESERVED_NAME'
   ) {
     return setStatus(400, { message: parsedError.message })
@@ -70,7 +97,7 @@ app
       const storage = useHttpStorage()
       const result = storage.folders.getFolders()
 
-      return result as HttpFoldersResponse
+      return result.map(projectFolder) as HttpFoldersResponse
     },
     {
       response: 'httpFoldersResponse',
@@ -84,7 +111,9 @@ app
     (): any => {
       const storage = useHttpStorage()
 
-      return storage.folders.getFoldersTree() as HttpFoldersTree
+      return storage.folders
+        .getFoldersTree()
+        .map(projectFolder) as HttpFoldersTree
     },
     {
       response: 'httpFoldersTreeResponse',

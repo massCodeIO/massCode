@@ -17,8 +17,9 @@ export type HttpBodyType =
   | 'text'
   | 'form-urlencoded'
   | 'multipart'
+  | 'binary'
 
-export type HttpAuthType = 'none' | 'bearer' | 'basic'
+export type HttpAuthType = 'inherit' | 'none' | 'bearer' | 'basic' | 'apikey'
 
 export interface HttpHeaderEntry {
   key: string
@@ -35,12 +36,17 @@ export interface HttpQueryEntry {
 }
 
 export interface HttpFormDataEntry {
+  enabled?: boolean
+  description?: string
   key: string
   type: 'text' | 'file'
   value: string
 }
 
 export interface HttpAuth {
+  key?: string
+  value?: string
+  in?: 'header' | 'query'
   type: HttpAuthType
   token?: string
   username?: string
@@ -65,6 +71,7 @@ export interface HttpExecutePayload {
   environmentId: number | null
   skipCertificateVerification?: boolean
   timeoutMs?: number
+  transport?: import('../../shared/httpTransport').HttpTransport
 }
 
 export interface HttpSecretPayload {

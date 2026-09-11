@@ -228,7 +228,8 @@ async function init() {
   checkVaultHealth()
 }
 
-init()
+if (window.location.hash !== '#/http-console')
+  init()
 </script>
 
 <template>

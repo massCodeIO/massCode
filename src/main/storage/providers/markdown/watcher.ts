@@ -193,7 +193,9 @@ function scheduleStateSync(
   // caches were already updated by the storage layer before the write.
   const isAppEcho
     = changedPath !== null
-      && !forceFullSync
+      && (!forceFullSync
+        || changedPath === 'http/.history'
+        || changedPath.startsWith('http/.history/'))
       && (changedNotesPath || changedCodePath || changedHttpPath)
       && wasRecentAppFileChange(path.join(vaultRootPath, changedPath))
 

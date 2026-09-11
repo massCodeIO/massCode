@@ -28,7 +28,10 @@ const AUTO_SAVE_DEBOUNCE_MS = 500
  * это локальный черновик открытой формы, и шарить его между потребителями,
  * как `useHttpEnvironments`, нельзя.
  */
-export function useHttpEnvironmentEditor(open: Ref<boolean>) {
+export function useHttpEnvironmentEditor(
+  open: Ref<boolean>,
+  environmentId?: number,
+) {
   const {
     environments,
     activeEnvironmentId,
@@ -47,7 +50,7 @@ export function useHttpEnvironmentEditor(open: Ref<boolean>) {
   } = useHttpEnvironmentSecrets()
   const { confirm } = useDialog()
 
-  const selectedEnvId = ref<number | null>(null)
+  const selectedEnvId = ref<number | null>(environmentId ?? null)
   const localName = ref('')
   const localVariables = ref<HttpEnvironmentVariableEntry[]>([])
   // Новые значения секретов, ожидающие записи, и точечно раскрытые значения,
@@ -55,6 +58,7 @@ export function useHttpEnvironmentEditor(open: Ref<boolean>) {
   // приходят из main только по явному запросу.
   const secretDrafts = ref<Record<string, string>>({})
   const revealedSecrets = ref<Record<string, string>>({})
+  const initializedEnvironmentId = ref<number | null>(null)
   let isSyncing = false
   let uidCounter = 0
 
@@ -85,7 +89,7 @@ export function useHttpEnvironmentEditor(open: Ref<boolean>) {
 
   const isDirty = computed(() => {
     const env = selectedEnv.value
-    if (!env)
+    if (!env || initializedEnvironmentId.value !== env.id)
       return false
     if (env.name !== localName.value)
       return true
@@ -122,6 +126,7 @@ export function useHttpEnvironmentEditor(open: Ref<boolean>) {
         pendingDrafts[entry.uid] = draft
     }
 
+    initializedEnvironmentId.value = env?.id ?? null
     isSyncing = true
     secretDrafts.value = pendingDrafts
     revealedSecrets.value = {}
@@ -213,32 +218,53 @@ export function useHttpEnvironmentEditor(open: Ref<boolean>) {
     await flushUpdate()
   }
 
+  watch(selectedEnv, (env, previous) => {
+    if (
+      !env
+      || env.id !== previous?.id
+      || initializedEnvironmentId.value !== env.id
+    ) {
+      return
+    }
+    const hasLocalEdits
+      = localName.value !== previous.name
+        || JSON.stringify(variablesRecord.value)
+        !== JSON.stringify(previous.variables)
+        || Object.keys(secretDrafts.value).length > 0
+    if (!hasLocalEdits)
+      syncLocalFromEnv(env)
+  })
+
   watch(selectedEnvId, () => {
     syncLocalFromEnv(selectedEnv.value)
   })
 
-  watch(open, async (isOpen) => {
-    if (!isOpen) {
-      await flushPendingUpdate()
-      return
-    }
-    await Promise.all([getHttpEnvironments(), refreshSecretsStatus()])
-    const stillExists
-      = selectedEnvId.value !== null
-        && environments.value.some(env => env.id === selectedEnvId.value)
-    if (stillExists) {
-      syncLocalFromEnv(selectedEnv.value)
-      return
-    }
-    const nextId
-      = activeEnvironmentId.value ?? environments.value[0]?.id ?? null
-    if (selectedEnvId.value === nextId) {
-      syncLocalFromEnv(selectedEnv.value)
-    }
-    else {
-      selectedEnvId.value = nextId
-    }
-  })
+  watch(
+    open,
+    async (isOpen) => {
+      if (!isOpen) {
+        await flushPendingUpdate()
+        return
+      }
+      await Promise.all([getHttpEnvironments(), refreshSecretsStatus()])
+      const stillExists
+        = selectedEnvId.value !== null
+          && environments.value.some(env => env.id === selectedEnvId.value)
+      if (stillExists || environmentId !== undefined) {
+        syncLocalFromEnv(selectedEnv.value)
+        return
+      }
+      const nextId
+        = activeEnvironmentId.value ?? environments.value[0]?.id ?? null
+      if (selectedEnvId.value === nextId) {
+        syncLocalFromEnv(selectedEnv.value)
+      }
+      else {
+        selectedEnvId.value = nextId
+      }
+    },
+    { immediate: true },
+  )
 
   watch(
     [localName, () => variablesRecord.value],
@@ -510,6 +536,7 @@ export function useHttpEnvironmentEditor(open: Ref<boolean>) {
   }
 
   return {
+    flushPendingUpdate,
     addSecretVariable,
     confirmRemoveVariable,
     createVariable,

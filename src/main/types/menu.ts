@@ -21,6 +21,12 @@ export interface MainMenuFileContext {
 export interface MainMenuViewContext {
   layoutMode: MainMenuLayoutMode | null
   layoutModes: MainMenuLayoutMode[]
+  httpPanels?: {
+    sidebar: boolean
+    bottom: boolean
+    inspector: boolean
+    canToggleBottom: boolean
+  }
   contentSortField: MainMenuContentSortField | null
   contentSortOrder: MainMenuContentSortOrder | null
   canToggleCompactMode: boolean

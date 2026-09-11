@@ -5,6 +5,11 @@ import type {
 } from '../../../shared/httpWebSocket'
 import { Buffer } from 'node:buffer'
 import WebSocket from 'ws'
+import { applyHttpApiKey } from '../../../shared/httpAuth'
+import {
+  applyHttpCollection,
+  collectionVariables,
+} from '../../../shared/httpCollection'
 import {
   interpolateHttpVariables,
   maskHttpSecretVariables,
@@ -16,6 +21,7 @@ import {
 } from '../../../shared/httpWebSocket'
 import { useHttpStorage } from '../../storage'
 import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
+import { resolveHttpCollection } from '../collection'
 import { applyAuth, resolveEnvironment } from '../runtime/execute'
 import { getHttpSession, isHttpSessionCurrent } from '../runtime/session'
 
@@ -90,14 +96,22 @@ export function connectWebSocket(owner: number, input: WsConnect): WsView {
     throw new Error('WS_CONTEXT_CHANGED')
   const vault = getVaultPath()
   const session = getHttpSession(vault, input.environmentId)
+  const config = resolveHttpCollection(saved.folderId)?.config
+  input = applyHttpCollection(input, config)
   const environment = resolveEnvironment(input.environmentId)
-  const variables = { ...environment.variables, ...session.variables }
+  const variables = {
+    ...collectionVariables(config),
+    ...environment.variables,
+    ...session.variables,
+  }
   const maskedVariables = {
+    ...collectionVariables(config),
     ...environment.maskedVariables,
     ...maskHttpSecretVariables(session.variables, session.names),
   }
   const interpolate = (value: string) =>
     interpolateHttpVariables(value, variables)
+  input = applyHttpApiKey(input, variables)
   let url: URL
   let headers: Record<string, string>
   try {

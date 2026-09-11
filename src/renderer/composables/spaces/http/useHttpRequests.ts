@@ -17,6 +17,10 @@ import { i18n } from '@/electron'
 import { api } from '@/services/api'
 import { getContiguousSelection } from '@/utils'
 import { LibraryFilter } from '../../types'
+import {
+  requestRuntimeDraft,
+  requestRuntimeOwner,
+} from './requestRuntimeState'
 import { httpRuntimeNavigation } from './runtimeNavigation'
 import {
   applyQueryToUrl,
@@ -26,6 +30,7 @@ import {
 } from './urlQuery'
 import { useHttpApp } from './useHttpApp'
 import { isSearch, requestsBySearch, searchQuery } from './useHttpSearch'
+import { useHttpSettings } from './useHttpSettings'
 
 export type HttpRequestListItem = HttpRequestsResponse[number]
 export type HttpRequest = HttpRequestItemResponse
@@ -46,9 +51,30 @@ export type HttpRequestDraft = Pick<
 >
 
 export const requests = shallowRef<HttpRequestsResponse>([])
+// Metadata for the unified HTTP navigation tree; the editor keeps its existing scope.
+const allRequests = shallowRef<HttpRequestsResponse>([])
+const trashRequests = shallowRef<HttpRequestsResponse>([])
 export const isRestoreStateBlocked = ref(false)
 const currentRequest = shallowRef<HttpRequest | null>(null)
 const currentDraft = ref<HttpRequestDraft | null>(null)
+const { settings } = useHttpSettings()
+function persistedEncodeUrl(request: HttpRequest) {
+  return (
+    request.runtime?.transport?.encodeUrl
+    ?? settings.transport?.encodeUrl
+    ?? true
+  )
+}
+const encodeUrl = computed(() => {
+  const request = currentRequest.value
+  if (!request)
+    return settings.transport?.encodeUrl ?? true
+  return requestRuntimeOwner.value === `${request.id}:${request.createdAt}`
+    ? (requestRuntimeDraft.value.transport?.encodeUrl
+      ?? settings.transport?.encodeUrl
+      ?? true)
+    : persistedEncodeUrl(request)
+})
 
 const { highlightedRequestIds, httpState, focusRequestNameInput }
   = useHttpApp()
@@ -88,13 +114,45 @@ const queryByLibraryOrFolderOrSearch = computed(() => {
 })
 
 const selectedRequests = computed(() => {
-  const source = isSearch.value ? requestsBySearch.value : requests.value
+  const source = getRequestActionSource()
   return (
     source?.filter(request =>
       selectedRequestIds.value.includes(request.id),
     ) || []
   )
 })
+
+function getRequestActionSource() {
+  const scoped = isSearch.value
+    ? (requestsBySearch.value ?? [])
+    : requests.value
+  return [
+    ...new Map(
+      [...allRequests.value, ...scoped, ...trashRequests.value].map(
+        request => [request.id, request],
+      ),
+    ).values(),
+  ]
+}
+
+let treeLoadToken = 0
+async function getAllHttpRequests() {
+  const token = ++treeLoadToken
+  const [active, deleted] = await Promise.all([
+    api.httpRequests.getHttpRequests({
+      isDeleted: 0,
+      ...getContentSortQuery('http'),
+    }),
+    api.httpRequests.getHttpRequests({
+      isDeleted: 1,
+      ...getContentSortQuery('http'),
+    }),
+  ])
+  if (token === treeLoadToken) {
+    allRequests.value = active.data
+    trashRequests.value = deleted.data
+  }
+}
 
 function getActionTargetIds(fallbackRequestId?: number) {
   const highlightedIds = [...highlightedRequestIds.value]
@@ -122,14 +180,18 @@ function getActionTargetIds(fallbackRequestId?: number) {
     return [...selectedRequestIds.value]
   }
 
-  return httpState.requestId !== undefined ? [httpState.requestId] : []
+  return (httpState.activePanel === undefined
+    || httpState.activePanel === 'request')
+  && httpState.requestId !== undefined
+    ? [httpState.requestId]
+    : []
 }
 
 function getActionTargetRequests(
   targetIds: number[],
   fallbackRequest?: HttpRequestListItem,
 ) {
-  const source = isSearch.value ? requestsBySearch.value : requests.value
+  const source = getRequestActionSource()
   const targetRequests
     = source?.filter(request => targetIds.includes(request.id)) || []
 
@@ -199,7 +261,7 @@ function toDraft(request: HttpRequest): HttpRequestDraft {
     folderId: request.folderId,
     protocol: request.protocol ?? 'http',
     method: request.method,
-    url: getDisplayUrl(request.url, query),
+    url: getDisplayUrl(request.url, query, encodeUrl.value),
     headers: request.headers.map(h => ({ ...h })),
     query,
     bodyType: request.bodyType,
@@ -210,14 +272,18 @@ function toDraft(request: HttpRequest): HttpRequestDraft {
   }
 }
 
-let skipUrlWatch = false
-let skipQueryWatch = false
+let syncingDraft = false
 
 function assignDraft(request: HttpRequest | null) {
-  skipUrlWatch = true
-  skipQueryWatch = true
-  currentRequest.value = request
-  currentDraft.value = request ? toDraft(request) : null
+  syncingDraft = true
+  try {
+    currentRequest.value = request
+    currentDraft.value = request ? toDraft(request) : null
+  }
+  finally {
+    syncingDraft = false
+  }
+  syncDraftDisplayUrl()
 }
 
 const isCurrentRequestDirty = computed(() => {
@@ -225,7 +291,14 @@ const isCurrentRequestDirty = computed(() => {
     return false
   return (
     JSON.stringify(toDraft(currentRequest.value))
-    !== JSON.stringify(currentDraft.value)
+    !== JSON.stringify({
+      ...currentDraft.value,
+      url: getDisplayUrl(
+        currentDraft.value.url,
+        currentDraft.value.query,
+        encodeUrl.value,
+      ),
+    })
   )
 })
 
@@ -249,7 +322,10 @@ export async function getHttpRequests(query?: HttpRequestsQuery) {
 }
 
 async function refreshHttpRequests() {
-  await getHttpRequests(queryByLibraryOrFolderOrSearch.value)
+  await Promise.all([
+    getHttpRequests(queryByLibraryOrFolderOrSearch.value),
+    getAllHttpRequests(),
+  ])
 }
 
 // Список отдаёт только метаданные (без body/description), поэтому полная
@@ -307,14 +383,17 @@ async function fetchHttpRequestById(
   }
 }
 
-async function loadCurrentRequest(requestId: number) {
+async function loadCurrentRequest(requestId: number, transitionToken: number) {
   const requestToken = ++selectionRequestToken
   isCurrentRequestLoading.value = true
 
   try {
     const record = await fetchHttpRequestById(requestId)
 
-    if (requestToken !== selectionRequestToken) {
+    if (
+      requestToken !== selectionRequestToken
+      || transitionToken !== httpRuntimeNavigation.transitionToken
+    ) {
       return
     }
 
@@ -362,9 +441,9 @@ async function refreshCurrentRequestRecord(requestId: number) {
   }
 
   const preserveDraft = isCurrentRequestDirty.value
-  currentRequest.value = record
-  if (!preserveDraft)
-    currentDraft.value = toDraft(record)
+  if (preserveDraft)
+    currentRequest.value = record
+  else assignDraft(record)
 }
 
 async function createHttpRequest(payload?: Partial<HttpRequestsAdd>) {
@@ -736,6 +815,7 @@ export function selectFirstRequest(options?: { folderId?: number | null }) {
 export function selectHttpRequest(
   requestId: number | undefined,
   withShift = false,
+  options: { preservePanel?: boolean } = {},
 ): Promise<void> {
   // Расширение выделения shift'ом не меняет открытый draft — выполняется
   // синхронно и без сохранения.
@@ -759,21 +839,26 @@ export function selectHttpRequest(
     }
   }
 
-  return applyHttpRequestSelection(requestId)
+  return applyHttpRequestSelection(requestId, options)
 }
 
 // Токен перехода взводится ДО первого await: при быстрых кликах A → B → C
 // применяется последний клик, а не последний завершившийся PATCH — устаревший
 // переход после ожидания сохранения обнаруживает новый токен и отменяется.
-let selectionTransitionToken = 0
 
-async function applyHttpRequestSelection(requestId: number | undefined) {
-  const transitionToken = ++selectionTransitionToken
+async function applyHttpRequestSelection(
+  requestId: number | undefined,
+  options: { preservePanel?: boolean },
+) {
+  const transitionToken = ++httpRuntimeNavigation.transitionToken
 
   if (!(await httpRuntimeNavigation.confirmLeave()))
     return
-  if (transitionToken !== selectionTransitionToken)
+  if (transitionToken !== httpRuntimeNavigation.transitionToken)
     return
+
+  if (!options.preservePanel)
+    httpState.activePanel = 'request'
 
   if (requestId === undefined) {
     httpState.requestId = undefined
@@ -787,7 +872,7 @@ async function applyHttpRequestSelection(requestId: number | undefined) {
   lastSelectedRequestId.value = requestId
   httpState.requestId = requestId
 
-  await loadCurrentRequest(requestId)
+  await loadCurrentRequest(requestId, transitionToken)
 }
 
 function hasSiblingRequestNameConflict(
@@ -868,46 +953,63 @@ async function performSaveCurrentRequest(): Promise<boolean> {
 function discardCurrentRequestChanges() {
   if (!currentRequest.value)
     return
-  skipUrlWatch = true
-  skipQueryWatch = true
-  currentDraft.value = toDraft(currentRequest.value)
+  assignDraft(currentRequest.value)
 }
+
+function syncDraftDisplayUrl() {
+  const draft = currentDraft.value
+  if (syncingDraft || !draft)
+    return
+  syncingDraft = true
+  try {
+    // Changing the transport setting changes how values are interpreted;
+    // it must not rewrite the user's literal Params values.
+    draft.url = getDisplayUrl(draft.url, draft.query, encodeUrl.value)
+  }
+  finally {
+    syncingDraft = false
+  }
+}
+watch(encodeUrl, syncDraftDisplayUrl, { flush: 'sync' })
 
 watch(
   () => currentDraft.value?.url,
   () => {
-    if (skipUrlWatch) {
-      skipUrlWatch = false
-      return
-    }
     const draft = currentDraft.value
-    if (!draft)
+    if (syncingDraft || !draft)
       return
-    const next = applyUrlToQuery(draft.url, draft.query)
+    const next = applyUrlToQuery(draft.url, draft.query, encodeUrl.value)
     if (JSON.stringify(next) !== JSON.stringify(draft.query)) {
-      skipQueryWatch = true
-      draft.query = next
+      syncingDraft = true
+      try {
+        draft.query = next
+      }
+      finally {
+        syncingDraft = false
+      }
     }
   },
+  { flush: 'sync' },
 )
 
 watch(
   () => currentDraft.value?.query,
   () => {
-    if (skipQueryWatch) {
-      skipQueryWatch = false
-      return
-    }
     const draft = currentDraft.value
-    if (!draft)
+    if (syncingDraft || !draft)
       return
-    const next = applyQueryToUrl(draft.url, draft.query)
+    const next = applyQueryToUrl(draft.url, draft.query, encodeUrl.value)
     if (next !== draft.url) {
-      skipUrlWatch = true
-      draft.url = next
+      syncingDraft = true
+      try {
+        draft.url = next
+      }
+      finally {
+        syncingDraft = false
+      }
     }
   },
-  { deep: true },
+  { deep: true, flush: 'sync' },
 )
 
 watch(
@@ -921,6 +1023,9 @@ watch(
 )
 
 function resetHttpRequestsState() {
+  treeLoadToken += 1
+  allRequests.value = []
+  trashRequests.value = []
   requests.value = []
   requestsBySearch.value = undefined
   currentRequest.value = null
@@ -932,6 +1037,9 @@ function resetHttpRequestsState() {
 
 export function useHttpRequests() {
   return {
+    allRequests,
+    trashRequests,
+    getAllHttpRequests,
     createHttpRequest,
     createHttpRequestAndSelect,
     currentDraft,

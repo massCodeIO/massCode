@@ -26,6 +26,7 @@ export interface NotesState {
 }
 
 export interface HttpState {
+  activePanel?: 'request' | 'folder' | 'environments' | 'runner'
   requestId?: number
   folderId?: number
   libraryFilter?: string
@@ -153,7 +154,17 @@ export interface AppStore {
     contentSort: ContentSortState
     layout: {
       mode: SpaceLayoutMode
+      bottomOpen?: boolean
+      inspectorOpen?: boolean
+      inspectorWidth?: number
       environmentsListHeight: number
+      collectionsOpen?: boolean
+      environmentsOpen?: boolean
+      trashOpen?: boolean
+      unfiledOpen?: boolean
+      favoritesOnly?: boolean
+      trashHeight?: number
+      treeWidth?: number
       threePanel?: number[]
       twoPanel?: number
       responsePanelHeight?: number
@@ -229,6 +240,8 @@ export interface MathSettings {
 }
 
 export interface HttpSettings {
+  transport?: import('../../../shared/httpTransport').HttpTransport
+  historyLimit: number
   wrapLines: boolean
   defaultPreviewFormat: HttpRequestPreviewFormat
   autoSwitchToResponse: boolean

@@ -68,7 +68,15 @@
     "vaultPathRequired": "Vault path is required.",
     "licenseInvalid": "Invalid license key",
     "noteExportFailed": "Failed to export note.",
-    "noteFolderSiteExportFailed": "Failed to export notes folder."
+    "noteFolderSiteExportFailed": "Failed to export notes folder.",
+    "copyFailed": "Failed to copy to clipboard.",
+    "httpEnvironment": {
+      "load": "Failed to load environments.",
+      "create": "Failed to create the environment.",
+      "update": "Failed to save the environment. Your changes have not been saved.",
+      "delete": "Failed to delete the environment.",
+      "activate": "Failed to switch the environment."
+    }
   },
   "description": {
     "storageVault": "Choose the vault directory. To sync between devices, select a folder in iCloud Drive, Google Drive or Dropbox.",

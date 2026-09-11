@@ -32,7 +32,7 @@ Many developers use both: Raycast for quick text expansion, massCode for the lon
 | Snippet fragments | Yes, multiple tabs per snippet | No |
 | Code editor with syntax highlighting | Yes, full editor | Limited, designed for short text |
 | Notes | Yes, dedicated notes space | Separate Raycast Notes feature; not part of Snippets |
-| HTTP client | Yes, built in | No |
+| API client | [HTTP, GraphQL, WebSocket, tests, and runner](/documentation/http/) | No |
 | Math notebook | Yes, built in | No |
 | Dev tools | Yes, built in | Other core features and extensions; not part of Snippets |
 | Cloud sync | Bring your own — iCloud, Dropbox, Git, Syncthing | Cloud sync is a Pro feature ($8/mo annual, $10/mo monthly) |

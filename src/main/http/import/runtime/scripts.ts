@@ -50,7 +50,6 @@ export function translateScript(
   const tree = parse(code, { ecmaVersion: 2022, sourceType: 'script' })
   let nodes = 0
   let usesVariables = false
-  let readsJson = false
   const reserved = new Set([
     'mc',
     'pm',
@@ -60,6 +59,7 @@ export function translateScript(
     'test',
     'expect',
     'JSON',
+    'console',
     'String',
     'undefined',
     '__mcImportBody',
@@ -109,10 +109,34 @@ export function translateScript(
         return 'mc.response.durationMs'
       }
       if (dialect === 'bruno' && path === 'res.body') {
-        readsJson = true
-        return '__mcImportJson()'
+        return 'mc.response.json()'
       }
     }
+    if (node.type === 'ObjectExpression') {
+      return `{${node.properties
+        .map((item: AnyNode) => {
+          if (
+            item.type !== 'Property'
+            || item.computed
+            || item.method
+            || item.kind !== 'init'
+          ) {
+            unsupported()
+          }
+          const key
+            = item.key.type === 'Identifier'
+              ? item.key.name
+              : item.key.type === 'Literal'
+                ? String(item.key.value)
+                : undefined
+          if (key === undefined || forbidden.has(key))
+            unsupported()
+          return `${JSON.stringify(key)}: ${expr(item.value, locals, depth + 1)}`
+        })
+        .join(', ')}}`
+    }
+    if (node.type === 'ArrayExpression')
+      return `[${node.elements.map((item: AnyNode | null) => (item ? expr(item, locals, depth + 1) : '')).join(', ')}]`
     if (node.type === 'MemberExpression') {
       const key = property(node)
       if (key === undefined || forbidden.has(key))
@@ -155,6 +179,17 @@ export function translateScript(
     if (node.type === 'CallExpression' && !node.optional) {
       const name = memberPath(node.callee)
       const args = node.arguments
+      if (
+        dialect === 'postman'
+        && (name === 'pm.environment.get'
+          || name === 'pm.collectionVariables.get')
+        && args.length === 1
+        && args[0].type === 'Literal'
+        && typeof args[0].value === 'string'
+      ) {
+        usesVariables = true
+        return `mc.${name === 'pm.environment.get' ? 'environment' : 'collectionVariables'}.get(${JSON.stringify(args[0].value)})`
+      }
       if (name === 'String' && args.length === 1)
         return `String(${expr(args[0], locals, depth + 1)})`
       if (
@@ -163,8 +198,7 @@ export function translateScript(
         && args.length === 0
       ) {
         if (name === 'pm.response.json') {
-          readsJson = true
-          return '__mcImportJson()'
+          return 'mc.response.json()'
         }
         if (name === 'pm.response.text')
           return 'mc.response.body'
@@ -197,6 +231,15 @@ export function translateScript(
   }
 
   function assertion(node: AnyNode, locals: Set<string>): string {
+    if (
+      dialect === 'postman'
+      && phase === 'postResponse'
+      && node.type === 'CallExpression'
+      && memberPath(node.callee) === 'pm.response.to.have.status'
+      && node.arguments.length === 1
+    ) {
+      return `mc.assert(mc.response.status === ${expr(node.arguments[0], locals, 1)});`
+    }
     const args = node.type === 'CallExpression' ? node.arguments : []
     let base = node.type === 'CallExpression' ? node.callee : node
     const chain: string[] = []
@@ -328,10 +371,29 @@ export function translateScript(
           ) {
             unsupported()
           }
-          return `mc.test(${JSON.stringify(name.value)}, () => {\n${statements(callback.body.body, locals, true)}\n});`
+          return `mc.test(${JSON.stringify(name.value)}, () => {\n${statements(
+            callback.body.body,
+            locals,
+            true,
+          )
+            .split('\n')
+            .map(line => `  ${line}`)
+            .join('\n')}\n});`
         }
         if (expression.type === 'CallExpression') {
           const name = memberPath(expression.callee)
+          if (
+            name
+            && [
+              'console.log',
+              'console.info',
+              'console.warn',
+              'console.error',
+              'console.clear',
+            ].includes(name)
+          ) {
+            return `${name}(${expression.arguments.map((argument: AnyNode) => expr(argument, locals)).join(', ')});`
+          }
           if (name && Object.hasOwn(variableNames, name))
             return `${expr(expression, locals, 0, true)};`
         }
@@ -340,8 +402,5 @@ export function translateScript(
       .join('\n')
   }
   const translated = statements(tree.body, new Set())
-  const jsonReader = readsJson
-    ? 'let __mcImportBody; const __mcImportJson = () => { mc.assert(!mc.response.truncated && mc.response.bodyKind !== "binary"); return __mcImportBody ??= JSON.parse(mc.response.body); };\n'
-    : ''
-  return { code: `{\n${jsonReader}${translated}\n}`, usesVariables }
+  return { code: translated, usesVariables }
 }

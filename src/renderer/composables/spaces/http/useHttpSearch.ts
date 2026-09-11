@@ -81,7 +81,11 @@ function clearSearch(restoreState = false) {
     }
 
     restoreHttpStateSnapshot('beforeSearch')
-    await selectHttpRequest(httpState.requestId)
+    if (!httpState.activePanel || httpState.activePanel === 'request') {
+      await selectHttpRequest(httpState.requestId, false, {
+        preservePanel: true,
+      })
+    }
   })()
 }
 

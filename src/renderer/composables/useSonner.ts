@@ -6,8 +6,16 @@ export function useSonner() {
   const sonner = (config: Props) => {
     return toast.custom(markRaw(Sonner), {
       id: config.id,
-      componentProps: config,
-      duration: config.action ? Infinity : config.duration || 5000,
+      componentProps: { ...config, closeButton: config.closeButton ?? true },
+      duration:
+        config.duration
+        ?? (config.action
+          ? Infinity
+          : config.type === 'success'
+            ? 3000
+            : config.type === 'error'
+              ? 8000
+              : 5000),
       onDismiss: config.onClose,
     })
   }

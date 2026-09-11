@@ -1,14 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, ref } from 'vue'
 
-globalThis.ref = ref
-globalThis.computed = computed
+Object.assign(globalThis, { ref, computed })
 
 describe('useNavigationHistory', () => {
   beforeEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
     vi.doUnmock('../useNavigationUIState')
+    vi.doMock('../spaces/http/useHttpApp', () => ({
+      useHttpApp: () => ({ httpState: {} }),
+    }))
+    vi.doMock('../spaces/http/useHttpFolders', () => ({
+      useHttpFolders: () => ({
+        folders: ref([]),
+        getFolderByIdFromTree: vi.fn(),
+      }),
+    }))
     vi.doMock('../spaces/http/useHttpRequests', () => ({
       useHttpRequests: () => ({
         currentRequest: ref(),
@@ -19,6 +27,47 @@ describe('useNavigationHistory', () => {
         activeDrawing: ref(),
       }),
     }))
+  })
+
+  it('records the open HTTP folder instead of the previously selected request', async () => {
+    const route = ref({ name: 'http-space' })
+    const httpState = { activePanel: 'folder', folderId: 4 }
+    vi.doMock('@/router', () => ({
+      RouterName: { httpSpace: 'http-space', notesSpace: 'notes-space' },
+      router: { currentRoute: route },
+    }))
+    vi.doMock('../spaces/http/useHttpApp', () => ({
+      useHttpApp: () => ({ httpState }),
+    }))
+    vi.doMock('../spaces/http/useHttpFolders', () => ({
+      useHttpFolders: () => ({
+        folders: ref([]),
+        getFolderByIdFromTree: () => ({ id: 4, name: 'Catalog' }),
+      }),
+    }))
+    vi.doMock('../spaces/http/useHttpRequests', () => ({
+      useHttpRequests: () => ({
+        currentRequest: ref({ id: 8, name: 'Previous request' }),
+      }),
+    }))
+    vi.doMock('../spaces/notes/useNotes', () => ({
+      useNotes: () => ({ selectedNote: ref({ id: 2, name: 'Note' }) }),
+    }))
+    vi.doMock('../useSnippets', () => ({
+      useSnippets: () => ({ selectedSnippet: ref() }),
+    }))
+    const { useNavigationHistory } = await import('../useNavigationHistory')
+    const history = useNavigationHistory()
+    await history.recordNavigation(async () => {
+      route.value.name = 'notes-space'
+    })
+    expect(history.canGoBack.value).toBe(true)
+    expect(history.goBack()).toEqual({
+      type: 'http-folder',
+      id: 4,
+      name: 'Catalog',
+    })
+    expect(history.goForward()).toEqual({ type: 'note', id: 2, name: 'Note' })
   })
 
   it('records internal target navigation and restores backward and forward', async () => {

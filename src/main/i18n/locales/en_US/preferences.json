@@ -235,6 +235,12 @@
     }
   },
   "http": {
+    "history": {
+      "label": "History entries per request",
+      "off": "Do not save",
+      "description": "Keep 10–100 executions per request. Lowering the limit trims older entries on the next history load or send. Disabling stops new entries and keeps existing history.",
+      "section": "History"
+    },
     "label": "HTTP Client",
     "wrapLines": {
       "label": "Wrap Lines",
@@ -255,7 +261,45 @@
     "sslCertificateVerification": {
       "label": "SSL Certificate Verification",
       "description": "Verify SSL certificates when sending HTTPS requests. Turn off to allow invalid or self-signed certificates."
-    }
+    },
+    "transport": {
+      "label": "Transport",
+      "timeoutMs": "Request timeout",
+      "maxResponseBytes": "Maximum response size",
+      "maxRedirects": "Maximum redirects",
+      "followRedirects": "Automatically follow redirects",
+      "skipCertificateVerification": "Skip SSL certificate verification",
+      "inherit": "Use application setting",
+      "legacy": "Default",
+      "on": "On",
+      "off": "Off",
+      "timeoutMsHint": "Set how long a request should wait for a response before timing out. To never time out, set to 0.",
+      "maxResponseBytesHint": "Set the maximum size of a response to download. To download a response of any size, set to 0.",
+      "maxRedirectsHint": "Set the maximum number of redirects to follow. To prevent redirects, set to 0.",
+      "followRedirectsHint": "Follow redirects automatically. By default, this is off for requests with scripts and GraphQL.",
+      "skipCertificateVerificationHint": "Allow requests to servers with invalid or self-signed SSL certificates.",
+      "invalid": "Value not applied. Enter a valid non-negative number. Timeout and redirects must be whole numbers; redirects cannot exceed 100.",
+      "ms": "ms",
+      "mb": "MB",
+      "protocolVersion": "HTTP version",
+      "http1": "HTTP/1.1",
+      "http2": "HTTP/2",
+      "auto": "Auto",
+      "protocolVersionHint": "Choose the HTTP version. Auto negotiates HTTP/2 over HTTPS with HTTP/1.1 fallback. HTTP/2 requires HTTPS and server support. Default: HTTP/1.1.",
+      "encodeUrl": "Encode URL automatically",
+      "encodeUrlHint": "Encode spaces and special characters in the URL. When off, enter an already encoded URL and query parameters. Default: on.",
+      "followOriginalHttpMethod": "Follow original HTTP method",
+      "followOriginalHttpMethodHint": "Keep the method and body when following redirects. When off, use GET after POST 301/302 and non-HEAD 303. Default: switch to GET only on 303.",
+      "followAuthorizationHeader": "Forward Authorization header",
+      "followAuthorizationHeaderHint": "Forward Authorization when a redirect points to another origin. Enable only for trusted destinations. Default: off.",
+      "removeRefererHeaderOnRedirect": "Remove Referer on redirect",
+      "removeRefererHeaderOnRedirectHint": "Remove the Referer header when following redirects. Default: off.",
+      "HTTP2_HTTPS_REQUIRED": "HTTP/2 requires an HTTPS URL.",
+      "HTTP2_NOT_NEGOTIATED": "The server did not negotiate HTTP/2. Choose Auto or HTTP/1.1.",
+      "HTTP_URL_ENCODING_REQUIRED": "URL encoding is off. Enter an already encoded URL and query parameters, or enable automatic encoding.",
+      "HTTP_REDIRECT_PROTOCOL": "The redirect URL must use HTTP or HTTPS."
+    },
+    "interface": "Interface"
   },
   "api": {
     "label": "API",

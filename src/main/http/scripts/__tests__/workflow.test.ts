@@ -1,6 +1,7 @@
 import type { HttpExecutePayload } from '../../../types/http'
 import { Readable } from 'node:stream'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { emptyHttpCollection } from '../../../../shared/httpCollection'
 import { executeHttpRequest } from '../../runtime/execute'
 import {
   commitHttpSession,
@@ -14,8 +15,10 @@ const mocks = vi.hoisted(() => ({
   history: vi.fn(),
   vault: '/vault',
   grants: {},
+  folders: [] as any[],
   saved: {
     id: 1,
+    folderId: null as number | null,
     createdAt: 10,
     runtimeState: 'ready',
     runtime: { scripts: { preRequest: '', postResponse: '' } },
@@ -32,6 +35,9 @@ vi.mock('electron-store', () => ({
     }
   },
 }))
+vi.mock('../../cookies/store', () => ({
+  getHttpCookieJar: () => ({ enabled: () => false }),
+}))
 vi.mock('undici', () => ({ Agent: class {}, request: mocks.request }))
 vi.mock('../../secrets', () => ({ getEnvironmentSecrets: () => ({}) }))
 vi.mock('../../../storage/providers/markdown/runtime/paths', () => ({
@@ -39,6 +45,7 @@ vi.mock('../../../storage/providers/markdown/runtime/paths', () => ({
 }))
 vi.mock('../../../storage', () => ({
   useHttpStorage: () => ({
+    folders: { getFolders: () => mocks.folders },
     requests: { getRequestById: () => mocks.saved },
     environments: {
       getActiveEnvironmentId: () => null,
@@ -81,6 +88,8 @@ beforeEach(() => {
   resetHttpSession()
   vi.clearAllMocks()
   mocks.grants = {}
+  mocks.folders = []
+  mocks.saved.folderId = null
   mocks.vault = '/vault'
   mocks.saved.runtime.scripts = { preRequest: '', postResponse: '' }
   mocks.request.mockImplementation(async () => ({
@@ -91,6 +100,185 @@ beforeEach(() => {
 })
 
 describe('script workflow and local trust', () => {
+  it('sends effective collection headers, auth and variables while request and session values take precedence', async () => {
+    const config = emptyHttpCollection()
+    config.variables = [
+      { key: 'path', value: 'collection' },
+      { key: 'token', value: 'collection-token' },
+    ]
+    config.headers = [
+      { key: 'X-Keep', value: 'collection' },
+      { key: 'X-Mode', value: 'collection' },
+    ]
+    config.auth = { type: 'bearer', token: '{{token}}' }
+    config.runtime.assertions = [
+      {
+        name: 'Collection OK',
+        source: 'status',
+        operator: 'eq',
+        expected: 200,
+      },
+    ]
+    mocks.folders = [
+      { id: 10, parentId: null, createdAt: 100, collectionConfig: config },
+    ]
+    mocks.saved.folderId = 10
+    commitHttpSession(
+      getHttpSession('/vault', null).generation,
+      new Map([['token', 'session-token']]),
+    )
+    const p = payload()
+    p.request.auth = { type: 'inherit' }
+    p.request.headers = [
+      { key: 'x-mode', value: 'request' },
+      { key: 'X-Keep', value: 'disabled', enabled: false },
+    ]
+    const result = await executeHttpRequest(p)
+    expect(mocks.request.mock.calls[0][0]).toBe(
+      'https://example.test/collection',
+    )
+    expect(mocks.request.mock.calls[0][1].headers).toMatchObject({
+      'X-Keep': 'collection',
+      'x-mode': 'request',
+      'Authorization': 'Bearer session-token',
+    })
+    expect(result.runtimeResults?.assertions[0]).toMatchObject({
+      name: 'Collection OK',
+      source: 'collection',
+      ok: true,
+    })
+    expect(JSON.stringify(mocks.history.mock.calls)).not.toContain(
+      'session-token',
+    )
+  })
+
+  it('requires collection trust independently before network, including post-only scripts', async () => {
+    const config = emptyHttpCollection()
+    config.runtime = {
+      version: 2,
+      extractions: [],
+      assertions: [],
+      scripts: { preRequest: '', postResponse: 'mc.assert(true)' },
+    }
+    mocks.folders = [
+      { id: 10, parentId: null, createdAt: 100, collectionConfig: config },
+    ]
+    mocks.saved.folderId = 10
+    const p = payload('mc.variables.set("path", "demo")')
+    allow(p)
+    const blocked = await executeHttpRequest(p)
+    expect(blocked.error).toBe('HTTP_SCRIPT_FAILED')
+    expect(blocked.scriptResults?.[0]).toMatchObject({
+      source: 'collection',
+      error: 'untrusted',
+    })
+    expect(mocks.request).not.toHaveBeenCalled()
+    setScriptTrust(10, config.runtime.scripts!, true, 'collection')
+    expect((await executeHttpRequest(p)).status).toBe(200)
+  })
+
+  it('runs collection pre → request pre → network → request post → collection post with isolated trust', async () => {
+    const config = emptyHttpCollection()
+    config.runtime = {
+      version: 2,
+      extractions: [],
+      assertions: [],
+      scripts: {
+        preRequest:
+          'mc.variables.set("path", "demo"); mc.variables.set("value", "Cpre")',
+        postResponse:
+          'mc.assert(mc.variables.get("value") === "Cpre-Rpre-Rpost"); mc.variables.set("value", mc.variables.get("value") + "-Cpost")',
+      },
+    }
+    mocks.folders = [
+      { id: 10, parentId: null, createdAt: 100, collectionConfig: config },
+    ]
+    mocks.saved.folderId = 10
+    const p = payload(
+      'mc.assert(mc.variables.get("value") === "Cpre"); mc.variables.set("value", mc.variables.get("value") + "-Rpre")',
+      'mc.assert(mc.variables.get("value") === "Cpre-Rpre"); mc.variables.set("value", mc.variables.get("value") + "-Rpost")',
+    )
+    allow(p)
+    setScriptTrust(10, config.runtime.scripts!, true, 'collection')
+    const result = await executeHttpRequest(p)
+    expect(mocks.request.mock.calls[0][1].body).toBe('Cpre-Rpre')
+    expect(
+      result.scriptResults?.map(result => [result.source, result.phase]),
+    ).toEqual([
+      ['collection', 'preRequest'],
+      ['request', 'preRequest'],
+      ['request', 'postResponse'],
+      ['collection', 'postResponse'],
+    ])
+    expect(result.scriptResults?.some(result => result.error)).toBe(false)
+    expect(session().value).toBe('Cpre-Rpre-Rpost-Cpost')
+  })
+
+  it.each(['child-first', 'parent-first'] as const)(
+    'runs nested folder scripts in %s order and requires each scope to be trusted',
+    async (order) => {
+      const root = emptyHttpCollection()
+      root.runtime.version = 2
+      root.runtime.scripts = {
+        preRequest:
+          'mc.variables.set("path", "demo"); mc.variables.set("value", "C")',
+        postResponse:
+          'mc.variables.set("value", mc.variables.get("value") + "-C")',
+      }
+      root.postResponseOrder = order
+      const folder = emptyHttpCollection()
+      folder.auth = { type: 'inherit' }
+      folder.runtime.version = 2
+      folder.runtime.scripts = {
+        preRequest:
+          'mc.variables.set("value", mc.variables.get("value") + "-F")',
+        postResponse:
+          'mc.variables.set("value", mc.variables.get("value") + "-F")',
+      }
+      mocks.folders = [
+        { id: 10, parentId: null, createdAt: 100, collectionConfig: root },
+        { id: 11, parentId: 10, createdAt: 101, collectionConfig: folder },
+      ]
+      mocks.saved.folderId = 11
+      const p = payload(
+        'mc.variables.set("value", mc.variables.get("value") + "-R")',
+        'mc.variables.set("value", mc.variables.get("value") + "-R")',
+      )
+      allow(p)
+      setScriptTrust(10, root.runtime.scripts, true, 'collection')
+      expect((await executeHttpRequest(p)).error).toBe('HTTP_SCRIPT_FAILED')
+      expect(mocks.request).not.toHaveBeenCalled()
+      setScriptTrust(11, folder.runtime.scripts, true, 'collection')
+      const result = await executeHttpRequest(p)
+      expect(result.status).toBe(200)
+      expect(mocks.request.mock.calls[0][1].body).toBe('C-F-R')
+      expect(session().value).toBe(
+        order === 'parent-first' ? 'C-F-R-C-F-R' : 'C-F-R-R-F-C',
+      )
+    },
+  )
+
+  it('invalidates collection trust when synced code or collection identity changes', () => {
+    const config = emptyHttpCollection()
+    config.runtime = {
+      version: 2,
+      extractions: [],
+      assertions: [],
+      scripts: { preRequest: 'mc.assert(true)', postResponse: '' },
+    }
+    mocks.folders = [
+      { id: 10, parentId: null, createdAt: 100, collectionConfig: config },
+    ]
+    const scripts = { ...config.runtime.scripts! }
+    setScriptTrust(10, scripts, true, 'collection')
+    expect(scriptsTrusted(10, scripts, 'collection')).toBe(true)
+    config.runtime.scripts!.preRequest = 'mc.assert(false)'
+    expect(scriptsTrusted(10, scripts, 'collection')).toBe(false)
+    setScriptTrust(10, scripts, true, 'collection')
+    mocks.folders[0].createdAt = 101
+    expect(scriptsTrusted(10, scripts, 'collection')).toBe(false)
+  })
+
   it('keeps the safe script error code when session values need masking', async () => {
     session().token = 'private-session-token'
     const p = payload('throw Error("private-session-token")')
@@ -125,6 +313,18 @@ describe('script workflow and local trust', () => {
     })
     expect(JSON.stringify(mocks.history.mock.calls)).not.toContain('pre-value')
     expect(mocks.saved.runtime.scripts.preRequest).toBe('')
+  })
+  it('honors explicit redirect settings for trusted scripts without rerunning phases', async () => {
+    const p = payload(
+      'mc.variables.set("value", "once")',
+      'mc.test("ok", () => mc.assert(true))',
+    )
+    p.runtime!.transport = { followRedirects: true, maxRedirects: 4 }
+    allow(p)
+    const result = await executeHttpRequest(p)
+    expect(mocks.request.mock.calls[0]?.[1].maxRedirections).toBe(4)
+    expect(result.scriptResults).toHaveLength(2)
+    expect(session().value).toBe('once')
   })
   it('rolls back writes and extraction on post exceptions or failed tests', async () => {
     for (const post of [
@@ -204,7 +404,14 @@ describe('script workflow and local trust', () => {
     })
     expect(variables).toMatchObject({ value: 'runner' })
     expect(session()).toEqual({})
-    expect(mocks.history).not.toHaveBeenCalled()
+    expect(mocks.history).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestId: 1,
+        snapshot: expect.objectContaining({
+          response: expect.objectContaining({ status: 200 }),
+        }),
+      }),
+    )
   })
 })
 

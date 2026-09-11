@@ -63,7 +63,9 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
   // (в том числе бессрочно, если GET упал), и execute отправил бы не тот
   // запрос, что подсвечен в списке.
   if (
-    currentDraft.value?.protocol === 'websocket'
+    (httpState.activePanel !== undefined
+      && httpState.activePanel !== 'request')
+    || currentDraft.value?.protocol === 'websocket'
     || isExecuting.value
     || (currentRequest.value?.runtimeState
       && currentRequest.value.runtimeState !== 'ready')
@@ -95,6 +97,7 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
     requestId: currentRequest.value?.id ?? null,
     environmentId: activeEnvironmentId.value,
     skipCertificateVerification: settings.skipCertificateVerification,
+    transport: JSON.parse(JSON.stringify(settings.transport ?? {})),
   }
 
   isExecuting.value = true
@@ -121,11 +124,20 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
     sessionNames.value = response.sessionNames ?? sessionNames.value
     if (response.error) {
       lastError.value
-        = response.error === 'HTTP_SCRIPT_FAILED'
-          ? i18n.t('spaces.http.scripts.failed')
-          : response.error.startsWith('GRAPHQL_')
-            ? i18n.t(`spaces.http.graphql.errors.${response.error}`)
-            : response.error
+        = response.error === 'HTTP_BODY_FILE_UNAVAILABLE'
+          ? i18n.t('spaces.http.editor.body.fileUnavailable')
+          : response.error === 'HTTP_SCRIPT_FAILED'
+            ? i18n.t('spaces.http.scripts.failed')
+            : [
+                'HTTP2_HTTPS_REQUIRED',
+                'HTTP2_NOT_NEGOTIATED',
+                'HTTP_URL_ENCODING_REQUIRED',
+                'HTTP_REDIRECT_PROTOCOL',
+              ].includes(response.error)
+                ? i18n.t(`preferences:http.transport.${response.error}`)
+                : response.error.startsWith('GRAPHQL_')
+                  ? i18n.t(`spaces.http.graphql.errors.${response.error}`)
+                  : response.error
     }
     return response
   }

@@ -285,7 +285,7 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       )
 
       const record: HttpRequestRecord = {
-        auth: { type: 'none' },
+        auth: { type: input.folderId != null ? 'inherit' : 'none' },
         body: null,
         bodyType: 'none',
         createdAt: now,

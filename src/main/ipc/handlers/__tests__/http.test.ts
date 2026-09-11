@@ -23,6 +23,9 @@ vi.mock('electron', () => ({
   },
 }))
 
+vi.mock('../../../http/cookies/store', () => ({
+  getHttpCookieJar: () => ({ enabled: () => false }),
+}))
 vi.mock('undici', () => ({
   Agent: vi.fn(AgentMock),
   request: requestMock,
@@ -134,17 +137,8 @@ describe('registerHttpHandlers', () => {
       skipCertificateVerification: true,
     })
 
-    expect(requestMock).toHaveBeenCalledWith(
-      'https://example.test/',
-      expect.objectContaining({
-        dispatcher: expect.objectContaining({
-          options: {
-            connect: {
-              rejectUnauthorized: false,
-            },
-          },
-        }),
-      }),
-    )
+    const [url, options] = requestMock.mock.calls.at(-1)!
+    expect(url).toBe('https://example.test/')
+    expect(options.dispatcher.options.connect.rejectUnauthorized).toBe(false)
   })
 })

@@ -5,11 +5,32 @@ async function setup() {
   vi.resetModules()
 
   const isHttpSpaceInitialized = ref(true)
-  const httpState = {
+  const httpState: {
+    requestId?: number
+    folderId?: number
+    activePanel?: 'request' | 'folder'
+  } = {
     requestId: 42,
   }
   const requests = ref([{ id: 42 }])
+  const allRequests = ref([{ id: 42 }])
 
+  const collectionDirty = ref(false)
+  const collectionSaving = ref(false)
+  const resetCollection = vi.fn()
+  vi.doMock('../useHttpCollection', () => ({
+    useHttpCollection: () => ({
+      dirty: collectionDirty,
+      saving: collectionSaving,
+      reset: resetCollection,
+    }),
+  }))
+  const requestDirty = ref(false)
+  const busy = ref(false)
+  vi.doMock('../useHttpRuntime', () => ({
+    useHttpRuntime: () => ({ requestDirty, busy }),
+  }))
+  const selectHttpRequest = vi.fn()
   const resetHttpFoldersState = vi.fn()
   const resetHttpRequestsState = vi.fn(() => {
     requests.value = []
@@ -30,14 +51,19 @@ async function setup() {
     useHttpFolders: () => ({
       getHttpFolders: vi.fn(async () => undefined),
       resetHttpFoldersState,
+      folders: ref([{ id: 10 }]),
+      getFolderByIdFromTree: (_folders: unknown, id: number) =>
+        id === 10 ? { id: 10 } : undefined,
     }),
   }))
   vi.doMock('../useHttpRequests', () => ({
     useHttpRequests: () => ({
       getHttpRequests: vi.fn(async () => undefined),
+      getAllHttpRequests: vi.fn(async () => undefined),
       requests,
+      allRequests,
       resetHttpRequestsState,
-      selectHttpRequest: vi.fn(),
+      selectHttpRequest,
     }),
   }))
   vi.doMock('../useHttpEnvironments', () => ({
@@ -63,9 +89,21 @@ async function setup() {
     }),
   }))
 
-  const { resetHttpSpaceState } = await import('../useHttpSpaceInit')
+  const { resetHttpSpaceState, useHttpSpaceInit } = await import(
+    '../useHttpSpaceInit'
+  )
 
   return {
+    httpState,
+    requestDirty,
+    collectionDirty,
+    collectionSaving,
+    resetCollection,
+    busy,
+    allRequests,
+    requests,
+    selectHttpRequest,
+    refresh: useHttpSpaceInit().refreshHttpSpaceFromDisk,
     isHttpSpaceInitialized,
     resetHttpEnvironmentsState,
     resetHttpExecuteState,
@@ -82,6 +120,63 @@ beforeEach(() => {
 })
 
 describe('resetHttpSpaceState', () => {
+  it.each(['requestDirty', 'busy'] as const)(
+    'does not navigate away from %s during a background refresh',
+    async (field) => {
+      const ctx = await setup()
+      ctx[field].value = true
+      await ctx.refresh()
+      expect(ctx.selectHttpRequest).not.toHaveBeenCalled()
+      expect(ctx.httpState.requestId).toBe(42)
+      ctx[field].value = false
+      await ctx.refresh()
+      expect(ctx.selectHttpRequest).toHaveBeenCalledWith(42, false, {
+        preservePanel: true,
+      })
+    },
+  )
+  it('restores the saved request before the navigation list is populated', async () => {
+    const ctx = await setup()
+    ctx.requests.value = []
+    ctx.allRequests.value = []
+    await ctx.refresh()
+    expect(ctx.selectHttpRequest).toHaveBeenCalledWith(42, false, {
+      preservePanel: true,
+    })
+  })
+
+  it.each([10, 20])(
+    'keeps a request outside the filtered list in folder %s',
+    async (folderId) => {
+      const ctx = await setup()
+      ctx.httpState.folderId = folderId
+      ctx.requests.value = [{ id: 99 }]
+      await ctx.refresh()
+      expect(ctx.selectHttpRequest).toHaveBeenCalledWith(42, false, {
+        preservePanel: true,
+      })
+    },
+  )
+
+  it('does not restore a stale selection after navigation during refresh', async () => {
+    const ctx = await setup()
+    const pending = ctx.refresh()
+    ctx.httpState.requestId = 99
+    await pending
+    expect(ctx.selectHttpRequest).not.toHaveBeenCalled()
+  })
+
+  it('preserves folder settings during sync even when the hidden request is outside the folder', async () => {
+    const ctx = await setup()
+    ctx.httpState.activePanel = 'folder'
+    ctx.httpState.folderId = 10
+    ctx.requests.value = [{ id: 99 }]
+    await ctx.refresh()
+    expect(ctx.httpState.activePanel).toBe('folder')
+    expect(ctx.httpState.requestId).toBe(42)
+    expect(ctx.selectHttpRequest).not.toHaveBeenCalled()
+  })
+
   it('clears every module-level HTTP space state slice', async () => {
     const context = await setup()
 
@@ -95,4 +190,19 @@ describe('resetHttpSpaceState', () => {
     expect(context.resetHttpEnvironmentsState).toHaveBeenCalledTimes(1)
     expect(context.resetHttpHistoryState).toHaveBeenCalledTimes(1)
   })
+  it.each(['collectionDirty', 'collectionSaving'] as const)(
+    'preserves an unavailable collection with %s during sync',
+    async (field) => {
+      const ctx = await setup()
+      ctx.httpState.activePanel = 'folder'
+      ctx.httpState.folderId = 999
+      ctx[field].value = true
+      await ctx.refresh()
+      expect(ctx.httpState.activePanel).toBe('folder')
+      expect(ctx.httpState.folderId).toBe(999)
+      expect(ctx.selectHttpRequest).not.toHaveBeenCalled()
+      ctx.resetHttpSpaceState()
+      expect(ctx.resetCollection).toHaveBeenCalledOnce()
+    },
+  )
 })

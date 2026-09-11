@@ -95,7 +95,9 @@ describe('generated Node request bytes', () => {
             expect(Buffer.from(await file.arrayBuffer())).toEqual(binary)
           }
         }
-        expect([...form.keys()]).toHaveLength(draft.formData.length)
+        const keys: string[] = []
+        form.forEach((_, key) => keys.push(key))
+        expect(keys).toHaveLength(draft.formData.length)
       },
     )
   }

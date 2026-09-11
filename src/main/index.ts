@@ -10,7 +10,10 @@ import { resolveApiSessionToken } from './api/sessionAuth'
 import { cleanupDockBadge, refreshDockBadge } from './dockBadge'
 import { resolveFolderIconResponse } from './folderIcons'
 import { registerIPC } from './ipc'
+import { registerHttpConsoleHandlers } from './ipc/handlers/httpConsole'
+import { registerHttpCookieHandlers } from './ipc/handlers/httpCookies'
 import { registerHttpScriptHandlers } from './ipc/handlers/httpScripts'
+import { registerHttpTerminalHandlers } from './ipc/handlers/httpTerminal'
 import { startThemeWatcher, stopThemeWatcher } from './ipc/handlers/theme'
 import { validateStoredLicense } from './license'
 import { configureLifecycle, requestLifecycleAction } from './lifecycle'
@@ -168,7 +171,10 @@ function createWindow(sessionToken: string) {
         path.join(__dirname, '../../build/renderer/index.html'),
       ).toString()
 
+  registerHttpCookieHandlers(mainWindow.webContents, rendererUrl)
   registerHttpScriptHandlers(mainWindow.webContents, rendererUrl)
+  registerHttpTerminalHandlers(mainWindow.webContents, rendererUrl)
+  registerHttpConsoleHandlers(mainWindow.webContents, rendererUrl)
   registerApiRequestHandler(
     mainWindow.webContents,
     rendererUrl,

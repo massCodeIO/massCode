@@ -8,6 +8,7 @@ import {
   useNotesApp,
   useSnippets,
 } from '@/composables'
+import { useHttpPanels } from '@/composables/spaces/http/useHttpPanels'
 import { ipc } from '@/electron'
 import { getActiveSpaceId } from '@/spaceDefinitions'
 import { createMainMenuContext } from './context'
@@ -26,6 +27,7 @@ const {
   notesLayoutMode,
   hideCompletedTasksInFolders,
 } = useNotesApp()
+const { bottomOpen, inspectorOpen } = useHttpPanels()
 const { httpLayoutMode, httpState } = useHttpApp()
 const { isExecuting } = useHttpExecute()
 const { currentDraft, currentRequest, isCurrentRequestLoading }
@@ -51,6 +53,8 @@ export function registerMainMenuContextSync() {
         notesEditorMode.value,
         hideCompletedTasksInFolders.value,
         httpLayoutMode.value,
+        bottomOpen.value,
+        inspectorOpen.value,
         contentSortState.code.sort,
         contentSortState.code.order,
         contentSortState.notes.sort,
@@ -66,6 +70,7 @@ export function registerMainMenuContextSync() {
         currentRequest.value?.pendingCloudDownload,
         currentRequest.value?.id,
         httpState.requestId,
+        httpState.activePanel,
         isCurrentRequestLoading.value,
       ] as const,
     () => {
@@ -98,8 +103,17 @@ export function registerMainMenuContextSync() {
           },
           http: {
             layoutMode: httpLayoutMode.value,
+            panels: {
+              sidebar: httpLayoutMode.value !== 'editor-only',
+              bottom: bottomOpen.value,
+              inspector: inspectorOpen.value,
+              canToggleBottom:
+                !httpState.activePanel || httpState.activePanel === 'request',
+            },
             canSendRequest:
-              Boolean(currentDraft.value?.url)
+              (httpState.activePanel === undefined
+                || httpState.activePanel === 'request')
+              && Boolean(currentDraft.value?.url)
               && !isExecuting.value
               && !currentRequest.value?.pendingCloudDownload
               // Полная запись выбранного запроса ещё грузится: draft пока

@@ -13,7 +13,6 @@ import {
   writeSpaceState,
   writeSpaceStateImmediate,
 } from '../../runtime/spaceState'
-import { HTTP_HISTORY_CAP } from './constants'
 
 // Версия 2: записи requests несут денормализованные метаданные списка и
 // stat-сигнатуру (`meta`). Записи без meta (v1) дозаполняются организно:
@@ -27,13 +26,11 @@ export function createDefaultHttpState(): HttpState {
       folderId: 0,
       requestId: 0,
       environmentId: 0,
-      historyId: 0,
     },
     folders: [],
     requests: [],
     environments: [],
     activeEnvironmentId: null,
-    history: [],
   }
 }
 
@@ -50,8 +47,6 @@ function normalizeCounters(
       typeof raw?.environmentId === 'number'
         ? raw.environmentId
         : defaults.environmentId,
-    historyId:
-      typeof raw?.historyId === 'number' ? raw.historyId : defaults.historyId,
   }
 }
 
@@ -129,6 +124,7 @@ export function loadHttpState(paths: HttpPaths): HttpState {
 
   return {
     version: typeof raw.version === 'number' ? raw.version : defaults.version,
+    ...('history' in raw ? { history: raw.history } : {}),
     counters: normalizeCounters(raw.counters),
     folders: normalizeFolders(raw.folders),
     requests: Array.isArray(raw.requests) ? raw.requests : [],
@@ -137,9 +133,6 @@ export function loadHttpState(paths: HttpPaths): HttpState {
       typeof raw.activeEnvironmentId === 'number'
         ? raw.activeEnvironmentId
         : null,
-    history: Array.isArray(raw.history)
-      ? raw.history.slice(-HTTP_HISTORY_CAP)
-      : [],
   }
 }
 
@@ -153,14 +146,11 @@ function serializeHttpState(state: HttpState) {
 
   state.version = Math.max(state.version, STATE_VERSION)
 
-  if (state.history.length > HTTP_HISTORY_CAP) {
-    state.history = state.history.slice(-HTTP_HISTORY_CAP)
-  }
-
   // Персистится явная схема: .state.yaml синхронизируется между
   // устройствами и не должен накапливать посторонние и runtime-поля.
   return {
     version: state.version,
+    ...('history' in state ? { history: state.history } : {}),
     counters: state.counters,
     folders: state.folders,
     requests: state.requests.map(({ filePath, id, meta }) => ({
@@ -170,7 +160,6 @@ function serializeHttpState(state: HttpState) {
     })),
     environments: state.environments,
     activeEnvironmentId: state.activeEnvironmentId,
-    history: state.history,
   }
 }
 

@@ -29,6 +29,10 @@ async function setup() {
   }
   const result = deferred<HttpRunView>()
   const status = deferred<HttpRunView>()
+  const httpState: {
+    activePanel: 'request' | 'folder' | 'environments' | 'runner'
+  } = { activePanel: 'folder' }
+  vi.doMock('../useHttpApp', () => ({ useHttpApp: () => ({ httpState }) }))
   const confirmLeave = vi.fn(async () => true)
   const sonner = vi.fn()
   const invoke = vi.fn(async (channel: string, _payload: unknown) => {
@@ -48,7 +52,7 @@ async function setup() {
     useSonner: () => ({ sonner }),
   }))
   vi.doMock('../runtimeNavigation', () => ({
-    httpRuntimeNavigation: { confirmLeave },
+    httpRuntimeNavigation: { confirmLeave, transitionToken: 0 },
   }))
   vi.doMock('../useHttpSettings', () => ({
     useHttpSettings: () => ({
@@ -56,12 +60,29 @@ async function setup() {
     }),
   }))
   const runner = (await import('../useHttpRunner')).useHttpRunner()
-  return { runner, prepared, result, status, confirmLeave, invoke, sonner }
+  return {
+    httpState,
+    runner,
+    prepared,
+    result,
+    status,
+    confirmLeave,
+    invoke,
+    sonner,
+  }
 }
 
 afterEach(() => vi.useRealTimers())
 
 describe('hTTP folder runner UI state', () => {
+  it('opens in the right panel and returns to the previous panel on close', async () => {
+    const { runner, httpState } = await setup()
+    await runner.openRunner(1)
+    expect(httpState.activePanel).toBe('runner')
+    runner.closeRunner()
+    expect(httpState.activePanel).toBe('folder')
+  })
+
   it('honors the unsaved request guard before preparing snapshots', async () => {
     const { runner, confirmLeave, invoke } = await setup()
     confirmLeave.mockResolvedValue(false)
@@ -102,6 +123,7 @@ describe('hTTP folder runner UI state', () => {
       requestIds: [2, 1],
       continueOnFailure: true,
       skipCertificateVerification: false,
+      transport: {},
     })
     result.resolve({ ...prepared, state: 'passed' })
     await starting

@@ -54,6 +54,9 @@ const APP_STORE_DEFAULTS: AppStore = {
     },
     layout: {
       mode: 'all-panels',
+      inspectorOpen: false,
+      inspectorWidth: 340,
+      bottomOpen: true,
       environmentsListHeight: LAYOUT_DEFAULTS.http.environmentsPanel.height,
     },
   },
@@ -173,6 +176,15 @@ function sanitizeCodeState(value: unknown): CodeState {
 function sanitizeHttpState(value: unknown): HttpState {
   const source = asRecord(value)
   const state: HttpState = {}
+
+  if (
+    source.activePanel === 'request'
+    || source.activePanel === 'folder'
+    || source.activePanel === 'environments'
+    || source.activePanel === 'runner'
+  ) {
+    state.activePanel = source.activePanel
+  }
 
   if (typeof source.requestId === 'number')
     state.requestId = source.requestId
@@ -578,6 +590,23 @@ function sanitizeAppStore(value: unknown): AppStore {
             ? LAYOUT_DEFAULTS.http.environmentsPanel.height
             : raw
         })(),
+        inspectorOpen: httpLayoutSource.inspectorOpen === true,
+        bottomOpen: httpLayoutSource.bottomOpen !== false,
+        inspectorWidth: Math.max(
+          260,
+          readNumber(
+            httpLayoutSource,
+            'inspectorWidth',
+            APP_STORE_DEFAULTS.http.layout.inspectorWidth ?? 340,
+          ),
+        ),
+        collectionsOpen: httpLayoutSource.collectionsOpen !== false,
+        environmentsOpen: httpLayoutSource.environmentsOpen !== false,
+        trashOpen: httpLayoutSource.trashOpen === true,
+        unfiledOpen: httpLayoutSource.unfiledOpen !== false,
+        favoritesOnly: httpLayoutSource.favoritesOnly === true,
+        trashHeight: readOptionalNumber(httpLayoutSource, 'trashHeight'),
+        treeWidth: readOptionalNumber(httpLayoutSource, 'treeWidth'),
         threePanel: readOptionalNumberArray(httpLayoutSource, 'threePanel'),
         twoPanel: readOptionalNumber(httpLayoutSource, 'twoPanel') ?? undefined,
         responsePanelHeight: (() => {

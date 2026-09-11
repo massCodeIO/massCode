@@ -1,3 +1,4 @@
+import type { HttpTransport } from '../../../shared/httpTransport'
 import type { HttpAuth, HttpHeaderEntry } from '../../types/http'
 import type { ImportedScript } from './runtime/scripts'
 import type {
@@ -9,6 +10,9 @@ import type {
   HttpImportResult,
   HttpImportWarning,
 } from './types'
+import { emptyHttpCollection } from '../../../shared/httpCollection'
+import { emptyHttpRuntime } from '../../../shared/httpRuntime'
+import { httpTransportSchema } from '../../../shared/httpTransport'
 import { validateImportFiles, validateImportTree } from './limits'
 import {
   addWarning,
@@ -28,6 +32,7 @@ import {
 type UnknownRecord = Record<string, unknown>
 
 interface PostmanContext {
+  profile?: UnknownRecord
   scripts: ImportedScript[]
   auth: HttpAuth
 }
@@ -42,6 +47,10 @@ function asArray(value: unknown): unknown[] {
 
 function asString(value: unknown): string {
   return typeof value === 'string' ? value : ''
+}
+
+function parseDescription(value: unknown): string {
+  return isRecord(value) ? asString(value.content) : asString(value)
 }
 
 function readJsonFile(file: HttpImportFile, warnings: HttpImportWarning[]) {
@@ -116,6 +125,18 @@ function parseAuth(
     return { type: 'none' }
   }
 
+  if (type === 'apikey') {
+    return {
+      type: 'apikey',
+      key: getKeyValueArrayValue(rawAuth.apikey, 'key') ?? '',
+      value: getKeyValueArrayValue(rawAuth.apikey, 'value') ?? '',
+      in:
+        getKeyValueArrayValue(rawAuth.apikey, 'in') === 'query'
+          ? 'query'
+          : 'header',
+    }
+  }
+
   if (type === 'bearer') {
     const token = getKeyValueArrayValue(rawAuth.bearer, 'token') ?? ''
     return { token, type: 'bearer' }
@@ -137,6 +158,7 @@ function parseHeaders(rawHeaders: unknown): HttpHeaderEntry[] {
   return asArray(rawHeaders)
     .filter(isRecord)
     .map(header => ({
+      description: parseDescription(header.description) || undefined,
       enabled: header.disabled === true ? false : undefined,
       key: asString(header.key),
       value: asString(header.value),
@@ -151,7 +173,9 @@ function parsePostmanQuery(rawUrl: unknown): HttpImportRequest['query'] {
   return asArray(rawUrl.query)
     .filter(isRecord)
     .map(entry => ({
-      enabled: entry.disabled === true ? false : undefined,
+      description: parseDescription(entry.description) || undefined,
+      enabled:
+        entry.disabled === true || entry.enabled === false ? false : undefined,
       key: asString(entry.key),
       value: asString(entry.value),
     }))
@@ -204,13 +228,22 @@ function parseBody(
   }
 
   if (mode === 'urlencoded') {
-    const body = asArray(rawBody.urlencoded)
-      .filter(isRecord)
-      .filter(entry => entry.disabled !== true && asString(entry.key))
-      .map(entry => `${asString(entry.key)}=${asString(entry.value)}`)
-      .join('&')
-
-    return { body, bodyType: 'form-urlencoded', formData: [] }
+    return {
+      body: null,
+      bodyType: 'form-urlencoded',
+      formData: asArray(rawBody.urlencoded)
+        .filter(isRecord)
+        .map(entry => ({
+          key: asString(entry.key),
+          value: asString(entry.value),
+          type: 'text',
+          enabled:
+            entry.disabled === true || entry.enabled === false
+              ? false
+              : undefined,
+          description: parseDescription(entry.description) || undefined,
+        })),
+    }
   }
 
   if (mode === 'formdata') {
@@ -219,8 +252,12 @@ function parseBody(
       bodyType: 'multipart',
       formData: asArray(rawBody.formdata)
         .filter(isRecord)
-        .filter(entry => entry.disabled !== true && asString(entry.key))
         .map(entry => ({
+          enabled:
+            entry.disabled === true || entry.enabled === false
+              ? false
+              : undefined,
+          description: parseDescription(entry.description) || undefined,
           key: asString(entry.key),
           type: entry.type === 'file' ? 'file' : 'text',
           value: asString(entry.src || entry.value),
@@ -229,17 +266,44 @@ function parseBody(
   }
 
   if (mode === 'graphql') {
-    addWarning(warnings, source, 'GraphQL body imported as JSON')
+    const graphql = isRecord(rawBody.graphql) ? { ...rawBody.graphql } : {}
+    if (typeof graphql.variables === 'string') {
+      try {
+        const variables: unknown = graphql.variables.trim()
+          ? JSON.parse(graphql.variables)
+          : {}
+        if (!isRecord(variables))
+          throw new Error('Invalid variables')
+        graphql.variables = variables
+      }
+      catch {
+        addWarning(
+          warnings,
+          source,
+          'spaces.http.import.runtimeWarnings.graphqlVariables',
+        )
+      }
+    }
     return {
-      body: JSON.stringify(rawBody.graphql ?? {}, null, 2),
-      bodyType: 'json',
+      body: JSON.stringify({
+        query: asString(graphql.query),
+        variables:
+          typeof graphql.variables === 'string'
+            ? graphql.variables
+            : JSON.stringify(graphql.variables ?? {}),
+        operationName: asString(graphql.operationName),
+      }),
+      bodyType: 'graphql',
       formData: [],
     }
   }
 
   if (mode === 'file') {
-    addWarning(warnings, source, 'Standalone file body skipped')
-    return { body: null, bodyType: 'none', formData: [] }
+    return {
+      body: isRecord(rawBody.file) ? asString(rawBody.file.src) : '',
+      bodyType: 'binary',
+      formData: [],
+    }
   }
 
   return { body: null, bodyType: 'none', formData: [] }
@@ -271,6 +335,66 @@ function parseVariables(
   }
 
   return variables
+}
+
+function parseCollectionConfig(
+  raw: UnknownRecord,
+  parent: boolean,
+  source: string,
+  warnings: HttpImportWarning[],
+) {
+  const config = emptyHttpCollection()
+  config.documentation = parseDescription(raw.description)
+  config.auth = parseAuth(raw.auth, source, warnings) ?? {
+    type: parent ? 'inherit' : 'none',
+  }
+  config.postResponseOrder = 'parent-first'
+  config.variables = asArray(raw.variable)
+    .filter(isRecord)
+    .map(entry => ({
+      key: asString(entry.key),
+      value: asString(entry.value),
+      enabled:
+        entry.disabled === true || entry.enabled === false ? false : undefined,
+      description: parseDescription(entry.description) || undefined,
+    }))
+  const variableIndexes = new Map<string, number>()
+  for (const [index, variable] of config.variables.entries()) {
+    if (variable.enabled === false)
+      continue
+    if (
+      !/^(?!__proto__$|constructor$|prototype$)[\w.-]{1,128}$/u.test(
+        variable.key,
+      )
+    ) {
+      variable.enabled = false
+      addWarning(
+        warnings,
+        source,
+        'spaces.http.import.runtimeWarnings.invalidVariableName',
+      )
+      continue
+    }
+    const previous = variableIndexes.get(variable.key)
+    if (previous !== undefined) {
+      config.variables[previous].enabled = false
+      addWarning(
+        warnings,
+        source,
+        'spaces.http.import.runtimeWarnings.duplicateVariable',
+      )
+    }
+    variableIndexes.set(variable.key, index)
+  }
+  const imported = buildImportedRuntime(
+    postmanScripts(raw.event, source, warnings),
+    'postman',
+    source,
+    warnings,
+  )
+  if (imported.runtime)
+    config.runtime = imported.runtime
+  return config
 }
 
 function parseEnvironment(
@@ -309,7 +433,7 @@ function parseRequest(
   )
   const auth = resolveAuthConflict(
     headers,
-    parseAuth(request.auth, source, warnings) ?? context.auth,
+    parseAuth(request.auth, source, warnings) ?? { type: 'inherit' },
     source,
     warnings,
   )
@@ -324,12 +448,70 @@ function parseRequest(
     scripts.push({ source, phase: 'preRequest', code: '', invalid: true })
   }
 
+  const imported = buildImportedRuntime(
+    [
+      ...postmanScripts(item.event, source, warnings),
+      ...(item.variable !== undefined
+        ? [{ source, phase: 'preRequest' as const, code: '', invalid: true }]
+        : []),
+    ],
+    'postman',
+    source,
+    warnings,
+  )
+  const profile = context.profile ?? {}
+  const transport: HttpTransport = {}
+  for (const key of [
+    'followRedirects',
+    'maxRedirects',
+    'strictSSL',
+    'protocolVersion',
+    'disableUrlEncoding',
+    'followOriginalHttpMethod',
+    'followAuthorizationHeader',
+    'removeRefererHeaderOnRedirect',
+  ] as const) {
+    if (profile[key] === undefined)
+      continue
+    const target
+      = key === 'strictSSL'
+        ? 'skipCertificateVerification'
+        : key === 'disableUrlEncoding'
+          ? 'encodeUrl'
+          : key
+    const value
+      = (key === 'strictSSL' || key === 'disableUrlEncoding')
+        && typeof profile[key] === 'boolean'
+        ? !profile[key]
+        : profile[key]
+    const parsed = httpTransportSchema.safeParse({ [target]: value })
+    if (parsed.success) {
+      Object.assign(transport, parsed.data)
+    }
+    else {
+      addWarning(
+        warnings,
+        source,
+        'spaces.http.import.runtimeWarnings.transport',
+      )
+    }
+  }
+  if (Object.keys(transport).length) {
+    imported.runtime = {
+      ...(imported.runtime ?? emptyHttpRuntime()),
+      transport,
+    }
+  }
+
   return {
     ...parts,
     ...body,
-    ...buildImportedRuntime(scripts, 'postman', source, warnings),
+    disableCookies: profile.disableCookies === true,
+    ...imported,
+    scriptStatus: buildImportedRuntime(scripts, 'postman', source, [])
+      .scriptStatus,
     auth,
-    description: asString(request.description),
+    description: parseDescription(request.description),
     folderId,
     headers,
     method,
@@ -358,18 +540,26 @@ function walkItems(
     const name = normalizeImportName(item.name, `Item ${index + 1}`)
     const source = `${sourcePath}/${name}`
     const itemAuth = parseAuth(item.auth, source, warnings)
-    const nextContext = { ...context, auth: itemAuth ?? context.auth }
+    const nextContext = {
+      ...context,
+      auth: itemAuth ?? context.auth,
+      profile: {
+        ...context.profile,
+        ...(isRecord(item.protocolProfileBehavior)
+          ? item.protocolProfileBehavior
+          : {}),
+      },
+    }
 
     if (Array.isArray(item.item)) {
-      if (item.variable !== undefined) {
-        runtimeWarning(warnings, source, 'scopedVariables')
-        nextContext.scripts = [
-          ...nextContext.scripts,
-          { source, phase: 'preRequest', code: '', invalid: true },
-        ]
-      }
       const id = asString(item.id || item._postman_id) || `${source}:${index}`
-      const folder: HttpImportFolder = { id, name, parentId }
+      const folder: HttpImportFolder = {
+        id,
+        name,
+        parentId,
+        description: parseDescription(item.description),
+        collectionConfig: parseCollectionConfig(item, true, source, warnings),
+      }
       collection.folders.push(folder)
       if (source.split('/').length > 32) {
         runtimeWarning(warnings, source, 'depthLimit')
@@ -410,7 +600,13 @@ function parseCollection(
     type: 'none' as const,
   }
   const collection: HttpImportCollection = {
-    description: asString(info.description),
+    description: parseDescription(info.description),
+    collectionConfig: parseCollectionConfig(
+      { ...raw, description: info.description },
+      false,
+      name,
+      warnings,
+    ),
     folders: [],
     name,
     requests: [],
@@ -420,7 +616,13 @@ function parseCollection(
     asArray(raw.item),
     collection,
     null,
-    { auth, scripts: postmanScripts(raw.event, name, warnings) },
+    {
+      auth,
+      scripts: postmanScripts(raw.event, name, warnings),
+      profile: isRecord(raw.protocolProfileBehavior)
+        ? raw.protocolProfileBehavior
+        : {},
+    },
     name,
     warnings,
   )
@@ -444,15 +646,6 @@ export function parsePostmanFiles(files: HttpImportFile[]): HttpImportResult {
 
     if (isPostmanCollection(raw)) {
       collections.push(parseCollection(raw, file.name, warnings))
-
-      const variables = parseVariables(raw.variable, file.name, warnings)
-      if (Object.keys(variables).length > 0) {
-        const infoName = isRecord(raw.info) ? raw.info.name : undefined
-        environments.push({
-          name: `${normalizeImportName(infoName, file.name.replace(/\.json$/i, ''))} Variables`,
-          variables,
-        })
-      }
 
       continue
     }

@@ -11,7 +11,7 @@ import { LibraryFilter } from '@/composables/types'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
 import { onClickOutside } from '@vueuse/core'
-import { Archive, Inbox, Star, Trash } from 'lucide-vue-next'
+import { Archive, FolderTree, Inbox, Star, Trash } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 
 const { httpState } = useHttpApp()
@@ -38,6 +38,11 @@ const libraryItems = [
     icon: Archive,
   },
   { id: LibraryFilter.Trash, name: i18n.t('common.trash'), icon: Trash },
+  {
+    id: undefined,
+    name: i18n.t('spaces.http.tree.collections'),
+    icon: FolderTree,
+  },
 ]
 
 const focusedItemId = ref<string>()
@@ -53,7 +58,7 @@ async function onItemClick(item: (typeof libraryItems)[number]) {
   if (!(await httpRuntimeNavigation.confirmLeave()))
     return
   const { id } = item
-  focusedItemId.value = id
+  focusedItemId.value = id ?? 'collections'
 
   if (route.name !== RouterName.httpSpace) {
     await router.push({ name: RouterName.httpSpace })
@@ -64,6 +69,11 @@ async function onItemClick(item: (typeof libraryItems)[number]) {
 
   httpState.libraryFilter = id
   clearFolderSelection()
+
+  if (id === undefined) {
+    await getHttpRequests({ isDeleted: 0 })
+    return
+  }
 
   if (id === LibraryFilter.Favorites) {
     await getHttpRequests({ isFavorites: 1 })
@@ -97,14 +107,17 @@ onClickOutside(itemRef, () => {
         <div class="px-1">
           <div
             v-for="item in libraryItems"
-            :key="item.id"
+            :key="item.id ?? 'collections'"
             data-sidebar-item
             :data-selected="isItemSelected(item) ? 'true' : undefined"
-            :data-focused="focusedItemId === item.id ? 'true' : undefined"
+            :data-focused="
+              focusedItemId === (item.id ?? 'collections') ? 'true' : undefined
+            "
             class="data-[selected=true]:bg-accent data-[focused=true]:bg-primary! data-[focused=true]:text-primary-foreground rounded-md"
             :class="{
               'hover:bg-accent-hover':
-                !isItemSelected(item) && focusedItemId !== item.id,
+                !isItemSelected(item)
+                && focusedItemId !== (item.id ?? 'collections'),
             }"
             @click="onItemClick(item)"
           >

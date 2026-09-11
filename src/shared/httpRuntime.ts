@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { httpScriptsSchema } from './httpScripts'
+import { httpTransportSchema } from './httpTransport'
 
 const nameSchema = z
   .string()
@@ -195,6 +196,7 @@ export const httpRuntimeSchema = z
   .object({
     version: z.union([z.literal(1), z.literal(2)]),
     scripts: httpScriptsSchema.optional(),
+    transport: httpTransportSchema.optional(),
     extractions: z.array(extractionSchema).max(100),
     assertions: z.array(assertionSchema).max(100),
   })
@@ -230,6 +232,7 @@ export interface HttpRuntimeRead {
 }
 
 export interface HttpRuntimeResult {
+  source?: 'request' | 'collection'
   index: number
   name: string
   ok: boolean

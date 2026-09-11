@@ -1,3 +1,4 @@
+import type { HttpCollectionConfig } from '../../../shared/httpCollection'
 import type { HttpRuntime } from '../../../shared/httpRuntime'
 import type {
   HttpAuth,
@@ -14,12 +15,15 @@ export interface HttpImportWarning {
 }
 
 export interface HttpImportFolder {
+  collectionConfig?: HttpCollectionConfig
+  description?: string
   id: string
   parentId: string | null
   name: string
 }
 
 export interface HttpImportRequest {
+  disableCookies?: boolean
   runtime?: HttpRuntime
   scriptStatus?: 'none' | 'converted' | 'blocked'
   sourceId?: string
@@ -37,6 +41,7 @@ export interface HttpImportRequest {
 }
 
 export interface HttpImportCollection {
+  collectionConfig?: HttpCollectionConfig
   name: string
   description?: string
   folders: HttpImportFolder[]

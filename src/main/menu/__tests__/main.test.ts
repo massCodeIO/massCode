@@ -497,3 +497,47 @@ describe('createMainMenu', () => {
     })
   })
 })
+
+it('renders independent HTTP panel checkboxes and dispatches their actions', async () => {
+  const { createMainMenu } = await import('../main')
+  const context = createNotesContext()
+  context.view.layoutMode = null
+  context.view.layoutModes = []
+  context.view.httpPanels = {
+    sidebar: false,
+    bottom: true,
+    inspector: true,
+    canToggleBottom: false,
+  }
+  buildFromTemplate.mockClear()
+  createMainMenu(context)
+  const template = buildFromTemplate.mock.calls[0]![0] as Array<{
+    label?: string
+    submenu?: Array<{
+      type?: string
+      checked?: boolean
+      enabled?: boolean
+      click?: () => void
+    }>
+  }>
+  const items = template
+    .find(item => item.label === 'menu:view.label')!
+    .submenu!.slice(0, 3)
+  expect(items.map(item => item.type)).toEqual([
+    'checkbox',
+    'checkbox',
+    'checkbox',
+  ])
+  expect(items.map(item => item.checked)).toEqual([false, true, true])
+  expect(items[1]!.enabled).toBe(false)
+  items[0]!.click!()
+  expect(send).toHaveBeenLastCalledWith(
+    'main-menu:toggle-http-panel',
+    'sidebar',
+  )
+  items[2]!.click!()
+  expect(send).toHaveBeenLastCalledWith(
+    'main-menu:toggle-http-panel',
+    'inspector',
+  )
+})

@@ -229,7 +229,7 @@ describe('createMainMenuContext', () => {
     })
   })
 
-  it('builds http-space menu context with layout-only view actions', () => {
+  it('builds http-space menu context with independent panel toggles', () => {
     const context = createMainMenuContext({
       activeSpaceId: 'http',
       compactListMode: false,
@@ -272,8 +272,14 @@ describe('createMainMenuContext', () => {
       isCompactMode: false,
       isMindmapShown: false,
       isPresentationShown: false,
-      layoutMode: 'list-editor',
-      layoutModes: ['all-panels', 'list-editor', 'editor-only'],
+      layoutMode: null,
+      layoutModes: [],
+      httpPanels: {
+        sidebar: true,
+        bottom: true,
+        inspector: false,
+        canToggleBottom: true,
+      },
     })
     expect(context.editor).toEqual({
       canAdjustFontSize: false,

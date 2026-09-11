@@ -1,11 +1,9 @@
+import type { LayoutMode } from '../../layoutModes'
 import type { LibraryFilter } from '../../types'
 import { store } from '@/electron'
-import {
-  getNextLayoutModeForSidebarToggle,
-  type LayoutMode,
-} from '../../layoutModes'
 
 export interface HttpSpaceState {
+  activePanel?: 'request' | 'folder' | 'environments' | 'runner'
   folderId?: number
   libraryFilter?: (typeof LibraryFilter)[keyof typeof LibraryFilter]
   requestId?: number
@@ -14,6 +12,7 @@ export interface HttpSpaceState {
 export type HttpStateAction = 'beforeSearch'
 
 export interface HttpSavedState {
+  activePanel?: 'request' | 'folder' | 'environments' | 'runner'
   folderId?: number
   libraryFilter?: (typeof LibraryFilter)[keyof typeof LibraryFilter]
   requestId?: number
@@ -41,9 +40,9 @@ const httpLayoutMode = ref<LayoutMode>(
 )
 
 const isHttpSidebarHidden = computed({
-  get: () => httpLayoutMode.value !== 'all-panels',
+  get: () => httpLayoutMode.value === 'editor-only',
   set: (value: boolean) => {
-    httpLayoutMode.value = value ? 'list-editor' : 'all-panels'
+    httpLayoutMode.value = value ? 'editor-only' : 'all-panels'
   },
 })
 
@@ -56,6 +55,7 @@ const isHttpListHidden = computed({
 
 function saveHttpStateSnapshot(action: HttpStateAction): void {
   stateSnapshots[action] = {
+    activePanel: httpState.activePanel,
     folderId: httpState.folderId,
     libraryFilter: httpState.libraryFilter,
     requestId: httpState.requestId,
@@ -67,12 +67,7 @@ function restoreHttpStateSnapshot(action: HttpStateAction): void {
   if (!snapshot)
     return
 
-  if (snapshot.folderId !== undefined)
-    httpState.folderId = snapshot.folderId
-  if (snapshot.libraryFilter !== undefined)
-    httpState.libraryFilter = snapshot.libraryFilter
-  if (snapshot.requestId !== undefined)
-    httpState.requestId = snapshot.requestId
+  Object.assign(httpState, snapshot)
 }
 
 function setHttpLayoutMode(value: LayoutMode) {
@@ -80,9 +75,8 @@ function setHttpLayoutMode(value: LayoutMode) {
 }
 
 function toggleHttpSidebar() {
-  httpLayoutMode.value = getNextLayoutModeForSidebarToggle(
-    httpLayoutMode.value,
-  )
+  httpLayoutMode.value
+    = httpLayoutMode.value === 'editor-only' ? 'all-panels' : 'editor-only'
 }
 
 async function focusRequestNameInput() {

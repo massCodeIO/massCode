@@ -8,6 +8,7 @@ interface Props {
   method: HttpMethod
   protocol?: 'http' | 'websocket'
   size?: 'xs' | 'sm'
+  compact?: boolean
   appearance?: 'text' | 'chip'
   class?: string
 }
@@ -15,6 +16,16 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   size: 'xs',
   appearance: 'text',
+})
+
+const label = computed(() => {
+  if (props.protocol === 'websocket')
+    return 'WS'
+  if (props.compact && props.method === 'DELETE')
+    return 'DEL'
+  if (props.compact && props.method === 'OPTIONS')
+    return 'OPT'
+  return props.method
 })
 
 const variants = cva('font-mono font-semibold tracking-tight uppercase', {
@@ -45,6 +56,7 @@ const variants = cva('font-mono font-semibold tracking-tight uppercase', {
     :is="props.appearance === 'chip' ? Badge : 'span'"
     :variant="props.appearance === 'chip' ? 'outline' : undefined"
     :data-method="props.method"
+    :title="props.protocol === 'websocket' ? 'WebSocket' : props.method"
     :class="
       cn(
         variants({
@@ -57,6 +69,6 @@ const variants = cva('font-mono font-semibold tracking-tight uppercase', {
       )
     "
   >
-    {{ props.protocol === "websocket" ? "WS" : props.method }}
+    {{ label }}
   </component>
 </template>

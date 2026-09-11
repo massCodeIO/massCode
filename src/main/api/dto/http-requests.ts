@@ -18,11 +18,14 @@ const httpBodyType = t.Union([
   t.Literal('text'),
   t.Literal('form-urlencoded'),
   t.Literal('multipart'),
+  t.Literal('binary'),
 ])
 
 const httpAuthType = t.Union([
+  t.Literal('inherit'),
   t.Literal('none'),
   t.Literal('bearer'),
+  t.Literal('apikey'),
   t.Literal('basic'),
 ])
 
@@ -41,6 +44,8 @@ const httpQueryEntry = t.Object({
 })
 
 const httpFormDataEntry = t.Object({
+  enabled: t.Optional(t.Boolean()),
+  description: t.Optional(t.String()),
   key: t.String(),
   type: t.Union([t.Literal('text'), t.Literal('file')]),
   value: t.String(),
@@ -48,6 +53,9 @@ const httpFormDataEntry = t.Object({
 
 const httpAuth = t.Object({
   type: httpAuthType,
+  key: t.Optional(t.String()),
+  value: t.Optional(t.String()),
+  in: t.Optional(t.Union([t.Literal('header'), t.Literal('query')])),
   token: t.Optional(t.String()),
   username: t.Optional(t.String()),
   password: t.Optional(t.String()),
@@ -78,7 +86,33 @@ const httpRequestsUpdate = t.Object({
   description: t.Optional(t.String()),
 })
 
-const httpRuntime = t.Object({
+export const httpRuntime = t.Object({
+  transport: t.Optional(
+    t.Object({
+      timeoutMs: t.Optional(
+        t.Number({ multipleOf: 1, minimum: 0, maximum: 2147483647 }),
+      ),
+      maxResponseBytes: t.Optional(
+        t.Number({
+          multipleOf: 1,
+          minimum: 0,
+          maximum: Number.MAX_SAFE_INTEGER,
+        }),
+      ),
+      protocolVersion: t.Optional(
+        t.Union([t.Literal('http1'), t.Literal('auto'), t.Literal('http2')]),
+      ),
+      encodeUrl: t.Optional(t.Boolean()),
+      followOriginalHttpMethod: t.Optional(t.Boolean()),
+      followAuthorizationHeader: t.Optional(t.Boolean()),
+      removeRefererHeaderOnRedirect: t.Optional(t.Boolean()),
+      followRedirects: t.Optional(t.Boolean()),
+      maxRedirects: t.Optional(
+        t.Number({ multipleOf: 1, minimum: 0, maximum: 100 }),
+      ),
+      skipCertificateVerification: t.Optional(t.Boolean()),
+    }),
+  ),
   scripts: t.Optional(
     t.Object({
       preRequest: t.String({ maxLength: 65536 }),

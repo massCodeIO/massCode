@@ -91,7 +91,10 @@ variables:
         },
       },
     ])
-    expect(result.warnings).toContainEqual(
+    expect(
+      result.collections[0].requests[0].runtime?.scripts?.preRequest,
+    ).toContain('console.log')
+    expect(result.warnings).not.toContainEqual(
       expect.objectContaining({
         message: 'spaces.http.import.runtimeWarnings.unsupportedScript',
       }),

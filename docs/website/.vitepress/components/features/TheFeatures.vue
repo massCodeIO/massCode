@@ -24,10 +24,14 @@ import FeaturesItem from './FeaturesItem.vue'
       mindmaps, or fullscreen presentation mode when you need more structure.
     </FeaturesItem>
     <FeaturesItem title="HTTP Client">
-      Save and send API requests without leaving your workspace. Organize
-      requests in folders, switch environments, preview outgoing HTTP or cURL,
-      inspect responses, and import collections from OpenAPI, Postman, and
-      Bruno.
+      Build and test HTTP, GraphQL, and WebSocket APIs. Organize collections
+      with shared auth and variables, switch environments, and keep secrets
+      locally. Check responses with assertions and JavaScript tests, run request
+      sequences, and debug traffic in Console. Import collections from OpenAPI,
+      Postman, and Bruno.
+      <AppLink href="/documentation/http/">
+        Explore the HTTP client
+      </AppLink>.
     </FeaturesItem>
     <FeaturesItem title="Math Notebook">
       Do the quick calculations that usually break your flow. Natural-language

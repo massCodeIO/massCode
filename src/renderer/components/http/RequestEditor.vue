@@ -6,6 +6,7 @@ import {
   useNavigationHistory,
 } from '@/composables'
 import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
+import { useHttpUi } from '@/composables/spaces/http/useHttpUi'
 import { useHttpWebSocket } from '@/composables/spaces/http/useHttpWebSocket'
 import { i18n } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
@@ -20,15 +21,20 @@ import {
 const { currentDraft, currentRequest } = useHttpRequests()
 const { executeCurrentRequest, isExecuting, cancelRequest } = useHttpExecute()
 const {
+  draft: runtimeDraft,
   saving: runtimeSaving,
   groupDirty,
   groupInvalid,
   focusTarget,
+  requestSaveError,
+  saveError,
+  conflict,
 } = useHttpRuntime()
 const { isWebSocket } = useHttpWebSocket()
 const { canGoBack, canGoForward } = useNavigationHistory()
 
 const activeTab = ref<
+  | 'settings'
   | 'message'
   | 'params'
   | 'headers'
@@ -39,6 +45,11 @@ const activeTab = ref<
   | 'variables'
   | 'scripts'
 >('params')
+
+const { requestSettingsVersion } = useHttpUi()
+watch(requestSettingsVersion, () => {
+  activeTab.value = 'settings'
+})
 
 watch(isWebSocket, () => {
   activeTab.value = isWebSocket.value ? 'message' : 'params'
@@ -60,7 +71,7 @@ const paramsCount = computed(() => currentDraft.value?.query.length ?? 0)
 const headersCount = computed(() => currentDraft.value?.headers.length ?? 0)
 const authIndicator = computed(() => {
   const type = currentDraft.value?.auth.type
-  if (!type || type === 'none')
+  if (!type || type === 'none' || type === 'inherit')
     return null
   return type
 })
@@ -83,16 +94,25 @@ async function onSend() {
 <template>
   <div
     v-if="!currentRequest"
-    class="text-muted-foreground flex h-full items-center justify-center"
+    class="flex h-full flex-col"
   >
-    {{ i18n.t("spaces.http.editor.noSelected") }}
+    <div
+      class="flex h-[calc(40px-var(--content-top-offset))] shrink-0 items-center justify-end border-b px-2 pb-1"
+    >
+      <HttpPanelActions />
+    </div>
+    <div class="text-muted-foreground flex flex-1 items-center justify-center">
+      {{ i18n.t("spaces.http.editor.noSelected") }}
+    </div>
   </div>
   <div
     v-else-if="currentDraft"
     ref="editorRoot"
     class="flex h-full flex-col"
   >
-    <div class="border-border flex items-center border-b px-2 pb-1">
+    <div
+      class="border-border flex h-[calc(40px-var(--content-top-offset))] shrink-0 items-center border-b px-2 pb-1"
+    >
       <div class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
         <div
           v-if="isHistoryVisible"
@@ -116,6 +136,7 @@ async function onSend() {
         <div class="min-w-0 flex-1">
           <HttpRequestName />
         </div>
+        <HttpPanelActions />
       </div>
     </div>
     <div class="border-border flex items-center gap-1 border-b px-2 py-1">
@@ -154,89 +175,128 @@ async function onSend() {
         <Send v-else />
       </UiActionButton>
     </div>
+    <UiAlert
+      v-if="requestSaveError || saveError"
+      variant="error"
+      layout="panel"
+    >
+      {{
+        i18n.t(
+          conflict
+            ? "spaces.http.runtime.conflict"
+            : "spaces.http.runtime.saveError",
+        )
+      }}
+    </UiAlert>
     <Tabs.Tabs
       v-model="activeTab"
       class="flex min-h-0 flex-1 flex-col gap-0"
     >
-      <div
-        class="border-border scrollbar min-w-0 overflow-x-auto border-b px-2 py-1"
-      >
-        <Tabs.TabsList>
-          <Tabs.TabsTrigger
-            v-if="isWebSocket"
-            value="message"
-          >
-            {{ i18n.t("spaces.http.websocket.message") }}
-          </Tabs.TabsTrigger>
-          <Tabs.TabsTrigger value="params">
-            {{ i18n.t("spaces.http.editor.tabs.params") }}
-            <span
-              v-if="paramsCount"
-              class="bg-muted text-muted-foreground ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded px-1 text-[10px] font-medium tabular-nums"
+      <div class="flex min-w-0 shrink-0 items-center gap-2 px-2 py-1">
+        <div class="scrollbar min-w-0 flex-1 overflow-x-auto">
+          <Tabs.TabsList>
+            <Tabs.TabsTrigger
+              v-if="isWebSocket"
+              value="message"
             >
-              {{ paramsCount }}
-            </span>
-          </Tabs.TabsTrigger>
-          <Tabs.TabsTrigger value="headers">
-            {{ i18n.t("spaces.http.editor.tabs.headers") }}
-            <span
-              v-if="headersCount"
-              class="bg-muted text-muted-foreground ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded px-1 text-[10px] font-medium tabular-nums"
+              {{ i18n.t("spaces.http.websocket.message") }}
+            </Tabs.TabsTrigger>
+            <Tabs.TabsTrigger value="params">
+              {{ i18n.t("spaces.http.editor.tabs.params") }}
+              <span
+                v-if="paramsCount"
+                class="bg-muted text-muted-foreground ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded px-1 text-[10px] font-medium tabular-nums"
+              >
+                {{ paramsCount }}
+              </span>
+            </Tabs.TabsTrigger>
+            <Tabs.TabsTrigger value="headers">
+              {{ i18n.t("spaces.http.editor.tabs.headers") }}
+              <span
+                v-if="headersCount"
+                class="bg-muted text-muted-foreground ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded px-1 text-[10px] font-medium tabular-nums"
+              >
+                {{ headersCount }}
+              </span>
+            </Tabs.TabsTrigger>
+            <Tabs.TabsTrigger
+              v-if="!isWebSocket"
+              value="body"
             >
-              {{ headersCount }}
-            </span>
-          </Tabs.TabsTrigger>
-          <Tabs.TabsTrigger
-            v-if="!isWebSocket"
-            value="body"
-          >
-            {{ i18n.t("spaces.http.editor.tabs.body") }}
-          </Tabs.TabsTrigger>
-          <Tabs.TabsTrigger value="auth">
-            {{ i18n.t("spaces.http.editor.tabs.auth") }}
-            <span
-              v-if="authIndicator"
-              class="bg-muted text-muted-foreground ml-1 inline-flex h-4 items-center justify-center rounded px-1.5 text-[10px] font-medium"
+              {{ i18n.t("spaces.http.editor.tabs.body") }}
+              <HttpTabCount
+                :count="
+                  currentDraft.bodyType === 'multipart'
+                    ? (currentDraft.formData?.length ?? 0)
+                    : 0
+                "
+              />
+            </Tabs.TabsTrigger>
+            <Tabs.TabsTrigger value="auth">
+              {{ i18n.t("spaces.http.editor.tabs.auth") }}
+              <span
+                v-if="authIndicator"
+                class="bg-muted text-muted-foreground ml-1 inline-flex h-4 items-center justify-center rounded px-1.5 text-[10px] font-medium"
+              >
+                {{ authIndicator }}
+              </span>
+            </Tabs.TabsTrigger>
+            <Tabs.TabsTrigger
+              v-if="!isWebSocket"
+              value="variables"
+              :class="
+                groupDirty.extractions && groupInvalid.extractions
+                  ? 'text-destructive'
+                  : ''
+              "
             >
-              {{ authIndicator }}
-            </span>
-          </Tabs.TabsTrigger>
-          <Tabs.TabsTrigger
-            v-if="!isWebSocket"
-            value="scripts"
-          >
-            {{ i18n.t("spaces.http.scripts.title") }}
-          </Tabs.TabsTrigger>
-          <Tabs.TabsTrigger value="description">
-            {{ i18n.t("spaces.http.editor.tabs.description") }}
-          </Tabs.TabsTrigger>
-          <Tabs.TabsTrigger
-            v-if="!isWebSocket"
-            value="variables"
-            :class="
-              groupDirty.extractions && groupInvalid.extractions
-                ? 'text-destructive'
-                : ''
-            "
-          >
-            {{ i18n.t("spaces.http.runtime.variables")
-            }}{{ groupDirty.extractions ? " *" : "" }}
-          </Tabs.TabsTrigger>
-          <Tabs.TabsTrigger
-            v-if="!isWebSocket"
-            value="assertions"
-            :class="
-              groupDirty.assertions && groupInvalid.assertions
-                ? 'text-destructive'
-                : ''
-            "
-          >
-            {{ i18n.t("spaces.http.runtime.assertions")
-            }}{{ groupDirty.assertions ? " *" : "" }}
-          </Tabs.TabsTrigger>
-        </Tabs.TabsList>
+              {{ i18n.t("spaces.http.runtime.variables")
+              }}{{ groupDirty.extractions ? " *" : "" }}
+              <HttpTabCount :count="runtimeDraft.extractions.length" />
+            </Tabs.TabsTrigger>
+            <Tabs.TabsTrigger
+              v-if="!isWebSocket"
+              value="scripts"
+            >
+              {{ i18n.t("spaces.http.scripts.title") }}
+            </Tabs.TabsTrigger>
+            <Tabs.TabsTrigger
+              v-if="!isWebSocket"
+              value="assertions"
+              :class="
+                groupDirty.assertions && groupInvalid.assertions
+                  ? 'text-destructive'
+                  : ''
+              "
+            >
+              {{ i18n.t("spaces.http.runtime.assertions")
+              }}{{ groupDirty.assertions ? " *" : "" }}
+              <HttpTabCount :count="runtimeDraft.assertions.length" />
+            </Tabs.TabsTrigger>
+            <Tabs.TabsTrigger value="description">
+              {{ i18n.t("spaces.http.editor.tabs.description") }}
+            </Tabs.TabsTrigger>
+            <Tabs.TabsTrigger
+              v-if="!isWebSocket"
+              value="settings"
+            >
+              {{ i18n.t("spaces.http.editor.tabs.settings") }}
+            </Tabs.TabsTrigger>
+          </Tabs.TabsList>
+        </div>
       </div>
-      <div class="scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-2">
+      <div
+        class="scrollbar min-h-0 flex-1 overflow-y-auto px-3 pt-2"
+        :class="{
+          'pb-2': ![
+            'params',
+            'headers',
+            'body',
+            'variables',
+            'assertions',
+          ].includes(activeTab),
+        }"
+      >
         <Tabs.TabsContent
           v-if="isWebSocket"
           value="message"
@@ -248,7 +308,7 @@ async function onSend() {
           value="assertions"
           class="flex h-full min-h-0 flex-col"
         >
-          <HttpRuntimeToolbar />
+          <HttpRuntimeToolbar :show-hint="false" />
           <fieldset
             class="min-h-0 flex-1"
             :disabled="runtimeSaving || currentRequest.runtimeState !== 'ready'"
@@ -271,13 +331,19 @@ async function onSend() {
           value="params"
           class="h-full"
         >
-          <HttpKeyValueTable v-model="currentDraft.query" />
+          <HttpKeyValueTable
+            v-model="currentDraft.query"
+            bulk-edit
+          />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="headers"
           class="h-full"
         >
-          <HttpKeyValueTable v-model="currentDraft.headers" />
+          <HttpKeyValueTable
+            v-model="currentDraft.headers"
+            bulk-edit
+          />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="body"
@@ -289,13 +355,22 @@ async function onSend() {
           value="auth"
           class="h-full"
         >
-          <HttpRequestAuthTab v-model="currentDraft" />
+          <HttpRequestAuthTab
+            v-model="currentDraft"
+            :parent-id="currentRequest.folderId"
+          />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="scripts"
           class="h-full"
         >
-          <HttpRequestScripts />
+          <HttpRequestScripts embedded />
+        </Tabs.TabsContent>
+        <Tabs.TabsContent
+          v-if="!isWebSocket"
+          value="settings"
+        >
+          <HttpRequestSettingsTab />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="description"

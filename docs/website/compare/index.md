@@ -21,6 +21,8 @@ This section helps you decide whether massCode fits your workflow, or whether an
 
 ## API clients
 
+Build HTTP and GraphQL workflows, exchange WebSocket messages, and share authentication and variables across requests in a collection. massCode includes response assertions, JavaScript tests, a desktop runner, history, and debugging tools alongside your snippets and notes.
+
 - [massCode vs Postman](/compare/postman) — local API testing inside a developer workspace vs a cloud-first API platform
 - [massCode vs Bruno](/compare/bruno) — integrated snippets, notes, and API testing vs a dedicated local-first client with CLI automation
 
@@ -61,7 +63,7 @@ This section helps you decide whether massCode fits your workflow, or whether an
 - Local-first [Markdown Vault](/documentation/storage) — your data stays as plain `.md` files on disk
 - Cross-platform: macOS, Windows, Linux
 - More than snippets: [Code](/documentation/code/library), [Notes](/documentation/notes/), [Tasks](/documentation/notes/tasks), [HTTP](/documentation/http/), [Math](/documentation/math/), [Drawings](/documentation/drawings/), [Tools](/documentation/tools/)
-- Built-in imports for VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, public GitHub Gist URLs, and Obsidian markdown folders
+- Built-in imports for VS Code, Raycast, SnippetsLab, GitHub Gists, and Obsidian, plus [API collections from OpenAPI, Postman, and Bruno](/documentation/http/importing)
 - Sync via any service you already trust — iCloud, Dropbox, Google Drive, Syncthing, or [Git](/documentation/sync)
 - No required account, no vendor lock-in
 

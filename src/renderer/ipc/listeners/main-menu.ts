@@ -18,6 +18,7 @@ import {
   useNotesEditor,
   useSnippets,
 } from '@/composables'
+import { useHttpPanels } from '@/composables/spaces/http/useHttpPanels'
 import { ipc } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
 import { router, RouterName } from '@/router'
@@ -198,6 +199,26 @@ export function registerMainMenuListeners() {
 
   ipc.on('main-menu:goto-math-notebook', () => {
     router.push({ name: RouterName.mathNotebook })
+  })
+
+  ipc.on('main-menu:toggle-http-panel', (_, panel?: string) => {
+    if (getActiveSpaceId() !== 'http')
+      return
+
+    const { bottomOpen, inspectorOpen } = useHttpPanels()
+    const { httpState } = useHttpApp()
+    if (panel === 'sidebar') {
+      toggleHttpSidebar()
+    }
+    else if (
+      panel === 'bottom'
+      && (!httpState.activePanel || httpState.activePanel === 'request')
+    ) {
+      bottomOpen.value = !bottomOpen.value
+    }
+    else if (panel === 'inspector') {
+      inspectorOpen.value = !inspectorOpen.value
+    }
   })
 
   ipc.on('main-menu:set-layout-mode', (_, layoutMode?: MainMenuLayoutMode) => {

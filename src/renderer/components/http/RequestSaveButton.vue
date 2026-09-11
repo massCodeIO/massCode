@@ -1,39 +1,33 @@
 <script setup lang="ts">
+import type { useHttpCollection } from '@/composables/spaces/http/useHttpCollection'
 import { useHttpRequests } from '@/composables/spaces/http/useHttpRequests'
 import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
-import { useSonner } from '@/composables/useSonner'
 import { i18n } from '@/electron'
 import { isMac } from '@/utils'
 import { onKeyStroke } from '@vueuse/core'
 import { LoaderCircle, Save } from 'lucide-vue-next'
 
-const { currentRequest } = useHttpRequests()
-const { sonner } = useSonner()
-const {
-  requestDirty,
-  busy,
-  saveRequest,
-  requestSaveError,
-  saveError,
-  conflict,
-  leaveDialogOpen,
-} = useHttpRuntime()
-const unavailable = computed(
-  () => currentRequest.value?.runtimeState !== 'ready',
-)
+const props = defineProps<{
+  context?: Pick<
+    ReturnType<typeof useHttpCollection>,
+    'dirty' | 'saving' | 'save' | 'unavailable' | 'leaveDialogOpen'
+  >
+}>()
 
-watch([requestSaveError, saveError], () => {
-  if (requestSaveError.value || saveError.value) {
-    sonner({
-      type: 'error',
-      message: i18n.t(
-        conflict.value
-          ? 'spaces.http.runtime.conflict'
-          : 'spaces.http.runtime.saveError',
-      ),
-    })
-  }
-})
+const { currentRequest } = useHttpRequests()
+const { requestDirty, busy, saveRequest, leaveDialogOpen } = props.context
+  ? {
+      requestDirty: props.context.dirty,
+      busy: props.context.saving,
+      saveRequest: props.context.save,
+      leaveDialogOpen: props.context.leaveDialogOpen,
+    }
+  : useHttpRuntime()
+const unavailable = computed(() =>
+  props.context
+    ? props.context.unavailable.value
+    : currentRequest.value?.runtimeState !== 'ready',
+)
 
 onKeyStroke(['s', 'S'], (event) => {
   if (

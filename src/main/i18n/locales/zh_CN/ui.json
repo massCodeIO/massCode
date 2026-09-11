@@ -50,7 +50,6 @@
       "newNotesFolder": "新建笔记文件夹",
       "newNotesFolderSubtitle": "在笔记空间中创建一个文件夹",
       "newHttpFolder": "新建 HTTP 文件夹",
-      "newHttpFolderSubtitle": "在 HTTP 空间中创建一个文件夹",
       "importHttpCollection": "导入 HTTP 集合",
       "importHttpCollectionSubtitle": "导入 OpenAPI、Postman 或 Bruno 集合文件",
       "openPreferences": "打开首选项",

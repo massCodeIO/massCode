@@ -181,6 +181,11 @@ function unprotectEnvironmentSecretHandler(
 
 const manualExecutions = new Map<number, AbortController>()
 export function registerHttpHandlers(): void {
+  ipcMain.handle('spaces:http:history-snapshot', (_, id: number) => {
+    if (!Number.isSafeInteger(id) || id <= 0)
+      return null
+    return useHttpStorage().history.getSnapshot(id)
+  })
   ipcMain.handle('spaces:http:cancel', event =>
     manualExecutions.get(event.sender.id)?.abort())
   registerHttpRunnerHandlers()

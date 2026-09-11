@@ -32,6 +32,7 @@ type MainMenuAction =
   | 'set-content-sort-field'
   | 'set-content-sort-order'
   | 'set-layout-mode'
+  | 'toggle-http-panel'
   | 'set-notes-editor-mode'
   | 'send-http-request'
   | 'toggle-sidebar'
@@ -86,6 +87,18 @@ type FsAction =
   | 'notes-asset'
 type ThemeAction = 'list' | 'get' | 'open-dir' | 'create-template' | 'changed'
 type SpacesAction =
+  | `http:cookies:${
+  | 'read'
+  | 'preview'
+  | 'addDomain'
+  | 'save'
+  | 'remove'
+  | 'removeDomain'
+  | 'clear'
+  | 'setEnabled'
+  | 'event'}`
+  | `http:terminal:${'list' | 'create' | 'input' | 'resize' | 'clear' | 'kill' | 'ack' | 'event'}`
+  | `http:console:${'read' | 'clear' | 'event' | 'detach'}`
   | 'math:read'
   | 'math:write'
   | 'http:execute'
@@ -107,6 +120,7 @@ type SpacesAction =
   | 'http:run-dispose'
   | 'http:clear-session'
   | 'http:session-names'
+  | 'http:history-snapshot'
   | 'http:secrets-status'
   | 'http:set-secret'
   | 'http:delete-secret'

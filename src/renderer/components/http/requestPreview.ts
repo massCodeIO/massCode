@@ -1,13 +1,23 @@
 import type { HttpRequestDraft } from '@/composables'
 import type { HarRequest } from 'httpsnippet'
 import type { HttpAuth, HttpHeaderEntry } from '~/main/types/http'
+import type { HttpCollectionConfig } from '~/shared/httpCollection'
+import { applyHttpApiKey } from '~/shared/httpAuth'
+import {
+  applyHttpCollection,
+  collectionVariables,
+} from '~/shared/httpCollection'
+import { buildHttpFormBody } from '~/shared/httpForm'
 import { buildGraphqlBody } from '~/shared/httpGraphql'
 import { interpolateHttpVariables } from '~/shared/httpVariables'
 
 export type { HttpRequestPreviewFormat } from '~/shared/httpPreview'
 type HttpRequestPreviewFormat = 'http' | 'curl' | 'fetch' | 'axios'
 
-interface HttpRequestPreviewOptions {
+export interface HttpRequestPreviewOptions {
+  encodeUrl?: boolean
+  automaticCookie?: string
+  collection?: HttpCollectionConfig
   name?: string
   variables?: Record<string, string>
 }
@@ -49,7 +59,17 @@ function buildQueryString(query: HttpRequestDraft['query']): string {
     .join('&')
 }
 
-function buildPreviewUrl(draft: HttpRequestDraft): string {
+function buildPreviewUrl(draft: HttpRequestDraft, encodeUrl = true): string {
+  if (!encodeUrl) {
+    const parts = splitUrl(draft.url)
+    const query = draft.query.length
+      ? draft.query
+          .filter(entry => entry.enabled !== false && entry.key)
+          .map(entry => `${entry.key}=${entry.value}`)
+          .join('&')
+      : parts.query
+    return parts.path + (query ? `?${query}` : '') + parts.fragment
+  }
   const queryString = buildQueryString(draft.query)
 
   try {
@@ -78,6 +98,26 @@ function buildPreviewUrl(draft: HttpRequestDraft): string {
       + (parts.fragment || '')
     )
   }
+}
+
+export function resolveHttpPreviewUrl(
+  draft: HttpRequestDraft,
+  options: HttpRequestPreviewOptions = {},
+): string {
+  return buildPreviewUrl(
+    interpolateDraft(
+      {
+        ...applyHttpCollection(draft, options.collection),
+        bodyType: 'none',
+        body: null,
+        formData: [],
+      },
+      options.variables === undefined
+        ? undefined
+        : { ...collectionVariables(options.collection), ...options.variables },
+    ),
+    options.encodeUrl,
+  )
 }
 
 function getHttpUrlParts(url: string): { host: string, target: string } {
@@ -126,12 +166,28 @@ function hasHeader(headers: HttpHeaderEntry[], name: string): boolean {
   return headers.some(header => header.key.toLowerCase() === name)
 }
 
-function getPreviewHeaders(draft: HttpRequestDraft): HttpHeaderEntry[] {
+function getPreviewHeaders(
+  draft: HttpRequestDraft,
+  automaticCookie?: string,
+): HttpHeaderEntry[] {
   const headers = [
     ...draft.headers.filter(entry => entry.enabled !== false && entry.key),
     ...authHeaders(draft.auth),
   ]
 
+  if (automaticCookie) {
+    const manual = headers
+      .filter(header => header.key.toLowerCase() === 'cookie')
+      .map(header => header.value)
+    for (let index = headers.length - 1; index >= 0; index--) {
+      if (headers[index]!.key.toLowerCase() === 'cookie')
+        headers.splice(index, 1)
+    }
+    headers.push({
+      key: 'Cookie',
+      value: [automaticCookie, ...manual].filter(Boolean).join('; '),
+    })
+  }
   const contentType = BODY_CONTENT_TYPES[draft.bodyType]
   if (contentType && !hasHeader(headers, 'content-type')) {
     headers.push({ key: 'Content-Type', value: contentType })
@@ -182,7 +238,7 @@ function interpolateAuth(
   variables: Record<string, string>,
 ): HttpAuth {
   return {
-    type: auth.type,
+    ...auth,
     token:
       auth.token !== undefined
         ? interpolateHttpVariables(auth.token, variables)
@@ -202,6 +258,25 @@ function interpolateDraft(
   draft: HttpRequestDraft,
   variables: Record<string, string> | undefined,
 ): HttpRequestDraft {
+  draft = applyHttpApiKey(draft, variables)
+  draft = {
+    ...draft,
+    formData: draft.formData.filter(entry => entry.enabled !== false),
+  }
+  if (draft.bodyType === 'form-urlencoded') {
+    const body = buildHttpFormBody(draft.body, draft.formData, variables)
+    // The body has already been interpolated and encoded exactly once.
+    return {
+      ...interpolateDraft(
+        { ...draft, bodyType: 'text', body: null },
+        variables,
+      ),
+      bodyType: 'form-urlencoded',
+      body,
+    }
+  }
+  if (draft.bodyType === 'binary')
+    throw new Error('HTTP_PREVIEW_BINARY_UNSUPPORTED')
   if (draft.bodyType === 'graphql') {
     if (draft.method !== 'POST')
       throw new Error('GRAPHQL_METHOD')
@@ -263,10 +338,15 @@ export function buildHttpPreview(
   draft: HttpRequestDraft,
   options: HttpRequestPreviewOptions = {},
 ): string {
-  const previewDraft = interpolateDraft(draft, options.variables)
-  const url = buildPreviewUrl(previewDraft)
+  const previewDraft = interpolateDraft(
+    applyHttpCollection(draft, options.collection),
+    options.variables === undefined
+      ? undefined
+      : { ...collectionVariables(options.collection), ...options.variables },
+  )
+  const url = buildPreviewUrl(previewDraft, options.encodeUrl)
   const { host, target } = getHttpUrlParts(url)
-  const headers = getPreviewHeaders(previewDraft)
+  const headers = getPreviewHeaders(previewDraft, options.automaticCookie)
   const lines = [`${previewDraft.method} ${target || '/'} HTTP/1.1`]
 
   if (host && !hasHeader(headers, 'host')) {
@@ -289,14 +369,22 @@ export function buildCurlPreview(
   draft: HttpRequestDraft,
   options: HttpRequestPreviewOptions = {},
 ): string {
-  const previewDraft = interpolateDraft(draft, options.variables)
-  const url = buildPreviewUrl(previewDraft)
+  const previewDraft = interpolateDraft(
+    applyHttpCollection(draft, options.collection),
+    options.variables === undefined
+      ? undefined
+      : { ...collectionVariables(options.collection), ...options.variables },
+  )
+  const url = buildPreviewUrl(previewDraft, options.encodeUrl)
   const indent = '     '
   const lines = [
     `curl -X ${shellDoubleQuote(previewDraft.method)} ${shellDoubleQuote(url)}`,
   ]
 
-  for (const header of getPreviewHeaders(previewDraft).filter(
+  for (const header of getPreviewHeaders(
+    previewDraft,
+    options.automaticCookie,
+  ).filter(
     header =>
       previewDraft.bodyType !== 'multipart'
       || header.key.toLowerCase() !== 'content-type',
@@ -385,8 +473,13 @@ export function buildHarRequest(
   draft: HttpRequestDraft,
   options: HttpRequestPreviewOptions = {},
 ): HarRequest {
-  const preview = interpolateDraft(draft, options.variables)
-  const headers = getPreviewHeaders(preview)
+  const preview = interpolateDraft(
+    applyHttpCollection(draft, options.collection),
+    options.variables === undefined
+      ? undefined
+      : { ...collectionVariables(options.collection), ...options.variables },
+  )
+  const headers = getPreviewHeaders(preview, options.automaticCookie)
   const contentType = headers.find(
     header => header.key.toLowerCase() === 'content-type',
   )?.value
@@ -414,7 +507,7 @@ export function buildHarRequest(
   }
   return {
     method: preview.method,
-    url: buildPreviewUrl(preview),
+    url: buildPreviewUrl(preview, options.encodeUrl),
     httpVersion: 'HTTP/1.1',
     headers: headers
       .filter(
@@ -436,10 +529,18 @@ export function buildJavaScriptPreview(
   format: 'fetch' | 'axios',
   options: HttpRequestPreviewOptions = {},
 ): string {
-  const previewDraft = interpolateDraft(draft, options.variables)
+  const previewDraft = interpolateDraft(
+    applyHttpCollection(draft, options.collection),
+    options.variables === undefined
+      ? undefined
+      : { ...collectionVariables(options.collection), ...options.variables },
+  )
   const multipart = previewDraft.bodyType === 'multipart'
   const headers = new Map<string, { key: string, value: string }>()
-  for (const header of getPreviewHeaders(previewDraft)) {
+  for (const header of getPreviewHeaders(
+    previewDraft,
+    options.automaticCookie,
+  )) {
     const key = header.key.toLowerCase()
     // FormData owns the boundary; a copied content type would invalidate it.
     if (multipart && key === 'content-type')
@@ -464,7 +565,9 @@ export function buildJavaScriptPreview(
     lines.push('')
   }
   const config: Record<string, unknown> = {
-    ...(format === 'axios' ? { url: buildPreviewUrl(previewDraft) } : {}),
+    ...(format === 'axios'
+      ? { url: buildPreviewUrl(previewDraft, options.encodeUrl) }
+      : {}),
     method: previewDraft.method,
     headers: headerObject,
   }
@@ -479,7 +582,7 @@ export function buildJavaScriptPreview(
   }
   const call
     = format === 'fetch'
-      ? `fetch(${JSON.stringify(buildPreviewUrl(previewDraft))}, ${serialized.join('\n')})`
+      ? `fetch(${JSON.stringify(buildPreviewUrl(previewDraft, options.encodeUrl))}, ${serialized.join('\n')})`
       : `axios(${serialized.join('\n')})`
   lines.push(`const response = await ${call};`)
   const imports = format === 'axios' ? 'import axios from "axios";\n\n' : ''

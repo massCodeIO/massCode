@@ -5,33 +5,87 @@ import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
 import { i18n } from '@/electron'
 import { Trash2 } from 'lucide-vue-next'
 
-const { currentRequest } = useHttpRequests()
-const { draft, saving, removeExtraction } = useHttpRuntime()
-const unavailable = computed(
-  () => currentRequest.value?.runtimeState !== 'ready',
+const props = withDefaults(
+  defineProps<{
+    fill?: boolean
+    context?: Pick<
+      ReturnType<typeof useHttpRuntime>,
+      'draft' | 'saving' | 'removeExtraction' | 'fieldError' | 'touchField'
+    >
+  }>(),
+  { fill: true },
 )
+const { currentRequest } = useHttpRequests()
+const { draft, saving, removeExtraction } = props.context ?? useHttpRuntime()
+const unavailable = computed(
+  () => !props.context && currentRequest.value?.runtimeState !== 'ready',
+)
+const rowsElement = useTemplateRef<HTMLElement>('rows')
+async function addExtraction() {
+  draft.value.extractions.push({ name: '', source: 'json', path: '' })
+  await nextTick()
+  rowsElement.value?.lastElementChild?.scrollIntoView({
+    block: 'nearest',
+    inline: 'nearest',
+  })
+}
+const variableExample = '{{userId}}'
 </script>
 
 <template>
   <fieldset
     :disabled="unavailable || saving"
-    class="flex min-h-0 flex-1 flex-col disabled:opacity-50"
+    class="flex min-h-0 flex-col disabled:opacity-50"
+    :class="{ 'flex-1': fill }"
   >
-    <UiText
-      as="p"
-      variant="xs"
-      class="mb-3 shrink-0"
-      muted
+    <section
+      class="flex min-h-0 flex-col"
+      :class="{ 'flex-1': fill }"
     >
-      {{ i18n.t("spaces.http.runtime.extractionHint") }}
-    </UiText>
-    <section class="flex min-h-0 flex-1 flex-col">
-      <div class="mb-1 flex h-7 shrink-0 items-center">
+      <div class="mb-1 flex h-7 shrink-0 items-center justify-between gap-2">
         <UiText variant="sm">
           {{ i18n.t("spaces.http.runtime.postResponse") }}
         </UiText>
+        <UiHelpButton
+          :label="i18n.t('spaces.http.runtime.help.extraction.title')"
+        >
+          <UiText
+            as="p"
+            variant="xs"
+            muted
+          >
+            {{ i18n.t("spaces.http.runtime.extractionHint") }}
+          </UiText><UiText
+            as="p"
+            variant="xs"
+            muted
+          >
+            {{ i18n.t("spaces.http.runtime.help.extraction.pointer") }}
+          </UiText><code
+            class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+          >/user/id</code><UiText
+            as="p"
+            variant="xs"
+            muted
+          >
+            {{ i18n.t("spaces.http.runtime.help.extraction.header") }}
+          </UiText><code
+            class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+          >x-request-id</code><UiText
+            as="p"
+            variant="xs"
+            muted
+          >
+            {{ i18n.t("spaces.http.runtime.help.extraction.reuse") }}
+          </UiText><code
+            class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+          >{{ variableExample }}</code>
+        </UiHelpButton>
       </div>
-      <div class="scrollbar min-h-0 flex-1 space-y-1 overflow-y-auto">
+      <div
+        ref="rows"
+        class="scrollbar -m-1 min-h-0 space-y-1 overflow-y-auto p-1"
+      >
         <div
           v-for="(rule, index) in draft.extractions"
           :key="index"
@@ -39,6 +93,7 @@ const unavailable = computed(
         >
           <HttpRuntimeInput
             v-model="rule.name"
+            :context="context"
             group="extractions"
             :index="index"
             field="name"
@@ -66,6 +121,7 @@ const unavailable = computed(
           </Select.Select>
           <HttpRuntimeInput
             v-model="rule.path"
+            :context="context"
             group="extractions"
             :index="index"
             field="path"
@@ -86,11 +142,13 @@ const unavailable = computed(
           </UiActionButton>
         </div>
       </div>
-      <HttpAddRowButton
-        :label="i18n.t('spaces.http.runtime.addExtraction')"
-        :disabled="unavailable || saving || draft.extractions.length >= 100"
-        @click="draft.extractions.push({ name: '', source: 'json', path: '' })"
-      />
+      <UiEditableTableFooter>
+        <HttpAddRowButton
+          :label="i18n.t('spaces.http.runtime.addExtraction')"
+          :disabled="unavailable || saving || draft.extractions.length >= 100"
+          @click="addExtraction"
+        />
+      </UiEditableTableFooter>
     </section>
   </fieldset>
 </template>

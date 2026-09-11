@@ -39,6 +39,8 @@ export interface HttpRequestFrontmatter {
 }
 
 export interface HttpFolderRecord {
+  /** Preserve invalid synced configuration; execution validates before use. */
+  collectionConfig?: unknown
   id: number
   name: string
   icon: string | null
@@ -132,6 +134,7 @@ export interface HttpEnvironmentRecord {
 }
 
 export interface HttpHistoryRecord {
+  snapshotFile?: string
   id: number
   requestId: number | null
   method: HttpMethod
@@ -147,27 +150,27 @@ export interface HttpCounters {
   folderId: number
   requestId: number
   environmentId: number
-  historyId: number
 }
 
 export interface HttpStateFile {
+  /** Legacy v5.10 history, retained verbatim until migration succeeds. */
+  history?: unknown
   version?: number
   counters?: Partial<HttpCounters>
   folders?: HttpFolderRecord[]
   requests?: HttpRequestIndexItem[]
   environments?: HttpEnvironmentRecord[]
   activeEnvironmentId?: number | null
-  history?: HttpHistoryRecord[]
 }
 
 export interface HttpState {
+  history?: unknown
   version: number
   counters: HttpCounters
   folders: HttpFolderRecord[]
   requests: HttpRequestIndexItem[]
   environments: HttpEnvironmentRecord[]
   activeEnvironmentId: number | null
-  history: HttpHistoryRecord[]
   // Дефолтный state на период, пока .state.yaml не докачан из облака:
   // такой state нельзя ни персистить, ни использовать для выдачи id.
   provisional?: boolean

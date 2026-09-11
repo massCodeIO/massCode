@@ -101,7 +101,12 @@ function editable(row: Row, column: EditableColumn<Row>) {
             weight="semibold"
             class="truncate tracking-wider uppercase"
           >
-            {{ column.label }}
+            <slot
+              :name="`header-${column.key}`"
+              :column="column"
+            >
+              {{ column.label }}
+            </slot>
           </UiText>
         </div>
       </div>

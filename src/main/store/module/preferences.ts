@@ -9,6 +9,7 @@ import type {
 } from '../types'
 import { homedir, platform } from 'node:os'
 import Store from 'electron-store'
+import { DATE_FORMATS, DEFAULT_DATE_FORMAT } from '../../../shared/dateFormat'
 import {
   HTTP_HISTORY_DEFAULT_LIMIT,
   HTTP_HISTORY_LIMITS,
@@ -57,6 +58,7 @@ const PREFERENCES_DEFAULTS: PreferencesStore = {
   appearance: {
     theme: 'auto',
     dockBadgeSource: 'none',
+    dateFormat: DEFAULT_DATE_FORMAT,
   },
   updates: {
     autoUpdate: true,
@@ -302,6 +304,12 @@ function sanitizePreferences(value: unknown): PreferencesStore {
         appearanceSource,
         'theme',
         readString(source, 'theme', PREFERENCES_DEFAULTS.appearance.theme),
+      ),
+      dateFormat: readEnum(
+        appearanceSource,
+        'dateFormat',
+        DATE_FORMATS,
+        DEFAULT_DATE_FORMAT,
       ),
       dockBadgeSource: readEnum(
         appearanceSource,

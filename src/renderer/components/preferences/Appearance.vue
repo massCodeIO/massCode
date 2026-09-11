@@ -4,8 +4,13 @@ import type { DockBadgeSource } from '~/main/store/types'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import { useSonner, useTheme } from '@/composables'
+import { useDateFormat } from '@/composables/useDateFormat'
 import { i18n, ipc, store } from '@/electron'
 import { isMac } from '@/utils'
+import { DATE_FORMATS } from '~/shared/dateFormat'
+
+const { dateFormat, setDateFormat, formatDate } = useDateFormat()
+const datePreview = new Date(2026, 10, 23)
 
 const { currentThemeId, customThemes, loadCustomThemes, setTheme } = useTheme()
 const { sonner } = useSonner()
@@ -189,6 +194,36 @@ void loadCustomThemes()
             </template>
           </Select.SelectContent>
         </Select.Select>
+      </UiMenuFormItem>
+
+      <UiMenuFormItem
+        :label="i18n.t('preferences:appearance.dateFormat.label')"
+      >
+        <Select.Select
+          :model-value="dateFormat"
+          @update:model-value="setDateFormat"
+        >
+          <Select.SelectTrigger class="w-64">
+            <Select.SelectValue />
+          </Select.SelectTrigger>
+          <Select.SelectContent>
+            <Select.SelectItem
+              v-for="(option, index) in DATE_FORMATS"
+              :key="option"
+              :value="option"
+            >
+              {{ i18n.t(`preferences:appearance.dateFormat.options.${index}`) }}
+            </Select.SelectItem>
+          </Select.SelectContent>
+        </Select.Select>
+        <template #description>
+          {{
+            i18n.t("preferences:appearance.dateFormat.preview", {
+              date: formatDate(datePreview),
+              interpolation: { escapeValue: false },
+            })
+          }}
+        </template>
       </UiMenuFormItem>
 
       <UiMenuFormItem

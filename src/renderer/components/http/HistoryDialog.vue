@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import * as Dialog from '@/components/ui/shadcn/dialog'
 import { useHttpHistory } from '@/composables/spaces/http/useHttpHistory'
+import { useDateFormat } from '@/composables/useDateFormat'
 import { i18n } from '@/electron'
+
+const { formatDateTime } = useDateFormat()
 
 const { selected, snapshot, loadingSnapshot, snapshotError, closeHistory }
   = useHttpHistory()
@@ -19,14 +22,12 @@ const { selected, snapshot, loadingSnapshot, snapshotError, closeHistory }
     >
       <Dialog.DialogHeader>
         <Dialog.DialogTitle>
-          {{
-            i18n.t("spaces.http.history.title")
-          }}
+          {{ i18n.t("spaces.http.history.title") }}
         </Dialog.DialogTitle>
         <Dialog.DialogDescription class="break-all">
           {{ selected?.method }} {{ selected?.url }}
           <span v-if="selected">
-            · {{ new Date(selected.requestedAt).toLocaleString() }}</span>
+            · {{ formatDateTime(selected.requestedAt) }}</span>
         </Dialog.DialogDescription>
       </Dialog.DialogHeader>
       <UiText

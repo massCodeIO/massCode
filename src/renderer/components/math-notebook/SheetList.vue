@@ -8,10 +8,12 @@ import {
   useInlineRename,
   useMathNotebook,
 } from '@/composables'
+import { useDateFormat } from '@/composables/useDateFormat'
 import { i18n } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
-import { format } from 'date-fns'
 import { FileText, Search } from 'lucide-vue-next'
+
+const { formatDate } = useDateFormat()
 
 const { isCompactListMode } = useApp()
 const {
@@ -277,7 +279,7 @@ defineExpose({
                     :class="isCompactListMode ? 'shrink-0' : ''"
                     muted
                   >
-                    {{ format(new Date(sheet.updatedAt), "dd.MM.yyyy") }}
+                    {{ formatDate(new Date(sheet.updatedAt)) }}
                   </UiText>
                 </div>
               </div>

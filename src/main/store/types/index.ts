@@ -1,3 +1,4 @@
+import type { DateFormat } from '../../../shared/dateFormat'
 import type { HttpRequestPreviewFormat } from '../../../shared/httpPreview'
 
 export type SpaceLayoutMode = 'all-panels' | 'list-editor' | 'editor-only'
@@ -263,6 +264,7 @@ export interface PreferencesStore {
   appearance: {
     theme: string
     dockBadgeSource: DockBadgeSource
+    dateFormat: DateFormat
   }
   updates: UpdatesSettings
   localization: {

@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import type { HttpHistoryItem } from '@/composables/spaces/http/useHttpHistory'
 import type { HttpHistorySnapshot } from '~/shared/httpHistory'
+import { useDateFormat } from '@/composables/useDateFormat'
 import { i18n, ipc } from '@/electron'
 
 const props = defineProps<{ entry: HttpHistoryItem }>()
+
+const { formatDateTime } = useDateFormat()
+
 const expanded = ref(false)
 const snapshot = shallowRef<HttpHistorySnapshot | null>(null)
 const loading = ref(false)
@@ -72,7 +76,7 @@ watch(expanded, async (value, _old, onCleanup) => {
         mono
         muted
       >
-        {{ new Date(entry.requestedAt).toLocaleString() }}
+        {{ formatDateTime(entry.requestedAt) }}
       </UiText>
     </template>
     <div class="px-3 py-2">

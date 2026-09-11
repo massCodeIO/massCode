@@ -2,17 +2,16 @@
 import type { NotesDashboardResponse } from '@/services/api/generated'
 import * as Card from '@/components/ui/shadcn/card'
 import { useNotesWorkspaceNavigation } from '@/composables'
+import { useDateFormat } from '@/composables/useDateFormat'
 import { i18n } from '@/electron'
 
 const props = defineProps<{
   recent: NotesDashboardResponse['recent']
 }>()
 
+const { formatDate } = useDateFormat()
+
 const { openNoteInNotesWorkspace } = useNotesWorkspaceNavigation()
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-  day: 'numeric',
-  month: 'short',
-})
 </script>
 
 <template>
@@ -49,7 +48,7 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
           >
             <span>{{ note.folder?.name || i18n.t("common.inbox") }}</span>
             <span>•</span>
-            <span>{{ dateFormatter.format(note.updatedAt) }}</span>
+            <span>{{ formatDate(note.updatedAt) }}</span>
           </UiText>
         </button>
       </div>

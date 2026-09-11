@@ -3,12 +3,16 @@ import { Button } from '@/components/ui/shadcn/button'
 import { Checkbox } from '@/components/ui/shadcn/checkbox'
 import * as Select from '@/components/ui/shadcn/select'
 import { useHttpConsole } from '@/composables/spaces/http/devtools/useHttpConsole'
+import { useDateFormat } from '@/composables/useDateFormat'
 import { i18n, ipc } from '@/electron'
 import { useClipboard, useVirtualList } from '@vueuse/core'
 import { Copy, ExternalLink, Trash2 } from 'lucide-vue-next'
 import { consoleLevels } from '~/shared/httpDevtools'
 
 const props = defineProps<{ detached?: boolean }>()
+
+const { formatTime } = useDateFormat()
+
 const { entries, error, clear } = useHttpConsole()
 const search = ref('')
 const levels = ref<string[]>([...consoleLevels])
@@ -167,7 +171,7 @@ watch(
               muted
               mono
             >
-              {{ new Date(entry.timestamp).toLocaleTimeString() }}
+              {{ formatTime(entry.timestamp) }}
             </UiText>
             <UiText
               variant="xs"

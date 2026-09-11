@@ -3,6 +3,7 @@ import type { NotesDashboardResponse } from '@/services/api/generated'
 import * as Card from '@/components/ui/shadcn/card'
 import * as Tooltip from '@/components/ui/shadcn/tooltip'
 import { useTheme } from '@/composables'
+import { useDateFormat } from '@/composables/useDateFormat'
 import { i18n } from '@/electron'
 import { useElementSize } from '@vueuse/core'
 import { getNotesHeatmapPalette } from '../shared/heatmapPalette'
@@ -14,6 +15,9 @@ import {
 const props = defineProps<{
   activity: NotesDashboardResponse['activity']
 }>()
+
+const { formatDate, locale } = useDateFormat()
+
 const { isDark } = useTheme()
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -23,16 +27,7 @@ const DAY_LABELS = ['', 'Mon', '', 'Wed', '', 'Fri', '']
 const heatmapPalette = computed(() => getNotesHeatmapPalette(isDark.value))
 
 const formatters = {
-  day: new Intl.DateTimeFormat(undefined, {
-    day: 'numeric',
-    month: 'short',
-  }),
-  weekday: new Intl.DateTimeFormat(undefined, {
-    weekday: 'short',
-  }),
-  month: new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-  }),
+  month: new Intl.DateTimeFormat(locale, { month: 'short' }),
 }
 
 const heatmapRef = ref<HTMLElement>()
@@ -62,7 +57,7 @@ const cells = computed(() => {
       count: props.activity.days[key] ?? 0,
       date,
       key,
-      label: `${formatters.weekday.format(date)}, ${formatters.day.format(date)}`,
+      label: formatDate(date),
     }
   })
 })

@@ -5,6 +5,7 @@ import { Calendar } from '@/components/ui/shadcn/calendar'
 import { Field, FieldLabel } from '@/components/ui/shadcn/field'
 import { Input } from '@/components/ui/shadcn/input'
 import * as Popover from '@/components/ui/shadcn/popover'
+import { useDateFormat } from '@/composables/useDateFormat'
 import {
   fromDate,
   getLocalTimeZone,
@@ -21,6 +22,9 @@ const props = defineProps<{
   variant?: 'outline' | 'ghost'
   disabled?: boolean
 }>()
+
+const { formatDateTime } = useDateFormat()
+
 const model = defineModel<string>({ required: true })
 const open = ref(false)
 const zone = getLocalTimeZone()
@@ -81,7 +85,7 @@ function clear() {
             class="truncate"
             :muted="!date"
           >
-            {{ date ? date.toLocaleString() : placeholder }}
+            {{ date ? formatDateTime(date) : placeholder }}
           </UiText>
         </Button>
       </Popover.PopoverTrigger>

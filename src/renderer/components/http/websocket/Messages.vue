@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { useHttpWebSocket } from '@/composables/spaces/http/useHttpWebSocket'
+import { useDateFormat } from '@/composables/useDateFormat'
 import { i18n } from '@/electron'
 import { ArrowDownLeft, ArrowUpRight, Trash2 } from 'lucide-vue-next'
+
+const { formatTime } = useDateFormat()
 
 const { view, error, clear } = useHttpWebSocket()
 const log = useTemplateRef<HTMLElement>('log')
@@ -116,7 +119,7 @@ function onScroll() {
             muted
             class="flex-1"
           >
-            {{ new Date(item.time).toLocaleTimeString() }}
+            {{ formatTime(item.time) }}
           </UiText>
           <UiText
             variant="caption"

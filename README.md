@@ -106,14 +106,18 @@ Write longer markdown documents right next to your snippets: project docs, draft
 
 ### HTTP Client
 
-Keep API requests close to your code snippets and project notes with a lightweight HTTP client built into massCode.
+Build and test API workflows alongside your code snippets and project notes.
 
-- Organize requests with folders and custom folder icons
-- Use environments and `{{variables}}` for local, staging, and production APIs
-- Edit params, headers, body, auth, and markdown descriptions
-- Preview requests as raw HTTP or cURL before sending
-- Inspect response status, time, size, body, and headers
-- Send the current request with <kbd>Cmd+Enter</kbd> on macOS or <kbd>Ctrl+Enter</kbd> on Windows and Linux
+- Send HTTP and GraphQL requests and exchange WebSocket messages
+- Organize collections and nested folders with shared auth, headers, variables, and scripts
+- Switch environments, protect tokens with local secret variables, and pass response values between requests
+- Check responses with assertions and JavaScript tests, then run collections or folders in sequence
+- Edit query parameters, headers, authentication, and JSON, text, form, or file payloads
+- Generate request code for 20 languages and runtimes, including cURL
+- Inspect responses and saved history, debug traffic in Console, and manage cookies and transport settings
+- Import collections from OpenAPI, Postman, and Bruno
+
+See the [HTTP documentation](https://masscode.io/documentation/http/) to get started.
 
 ### Math Notebook
 

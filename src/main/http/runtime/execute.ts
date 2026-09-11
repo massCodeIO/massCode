@@ -1189,7 +1189,8 @@ function appendHistory(
       ...(error ? { error } : {}),
     })
   }
-  catch {
-    // history is best-effort; never fail the response
+  catch (error) {
+    // History is best-effort; retain diagnostics without failing the response.
+    console.warn('HTTP history entry could not be saved', error)
   }
 }

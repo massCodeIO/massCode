@@ -5,6 +5,7 @@ import type {
 } from '../../../shared/httpWebSocket'
 import { Buffer } from 'node:buffer'
 import WebSocket from 'ws'
+import { applyHttpApiKey } from '../../../shared/httpAuth'
 import {
   applyHttpCollection,
   collectionVariables,
@@ -110,6 +111,7 @@ export function connectWebSocket(owner: number, input: WsConnect): WsView {
   }
   const interpolate = (value: string) =>
     interpolateHttpVariables(value, variables)
+  input = applyHttpApiKey(input, variables)
   let url: URL
   let headers: Record<string, string>
   try {

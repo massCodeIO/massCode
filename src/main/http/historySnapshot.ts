@@ -41,14 +41,49 @@ export function createHistorySnapshot(
       else collect(item)
     }
   }
-  for (const body of [request.body, response.body]) {
+  function prepareBody(
+    value: string,
+    headers: HttpHeaderEntry[],
+    isJson = false,
+  ) {
+    const contentType
+      = headers.find(h => /^content-type$/i.test(h.key))?.value ?? ''
+    if (/application\/x-www-form-urlencoded/i.test(contentType)) {
+      const form = new URLSearchParams(value)
+      for (const [key, item] of form) {
+        if (sensitive.test(key) && item)
+          known.add(item)
+      }
+      return [...form]
+        .map(
+          ([key, item]) =>
+            `${encodeURIComponent(key)}=${sensitive.test(key) ? mask : encodeURIComponent(item)}`,
+        )
+        .join('&')
+    }
     try {
-      collect(JSON.parse(body))
+      collect(JSON.parse(value))
     }
     catch {
-      /* Non-JSON bodies are masked by known values below. */
+      // A partial structured payload may contain newly issued credentials that
+      // are absent from the request/environment. Never persist it verbatim.
+      if (
+        value
+        && (isJson
+          || /application\/json|\+json/i.test(contentType)
+          || /^\s*[[{]/.test(value))
+      ) {
+        return mask
+      }
     }
+    return value
   }
+  const requestBody = prepareBody(request.body, request.headers)
+  const preparedResponseBody = prepareBody(
+    response.body,
+    response.headers,
+    response.bodyKind === 'json',
+  )
   for (const header of [...request.headers, ...response.headers]) {
     if (sensitive.test(header.key) && header.value) {
       known.add(header.value)
@@ -63,24 +98,11 @@ export function createHistorySnapshot(
     known.add(decodeURIComponent(url.username))
   url.username = ''
   url.password = ''
-  for (const [key, value] of url.searchParams) {
+  for (const [key, value] of [...url.searchParams]) {
     if (sensitive.test(key)) {
       if (value)
         known.add(value)
       url.searchParams.set(key, mask)
-    }
-  }
-  // Also recognize credential fields in form-encoded payloads.
-  if (
-    request.headers.some(
-      h =>
-        /content-type/i.test(h.key)
-        && h.value.includes('application/x-www-form-urlencoded'),
-    )
-  ) {
-    for (const [key, value] of new URLSearchParams(request.body)) {
-      if (sensitive.test(key) && value)
-        known.add(value)
     }
   }
   function redact(value: string) {
@@ -110,13 +132,13 @@ export function createHistorySnapshot(
       truncated: buffer.length > HTTP_HISTORY_BODY_LIMIT,
     }
   }
-  const responseBody = body(response.body)
+  const responseBody = body(preparedResponseBody)
   return {
     request: {
       method: request.method,
       url: redact(url.toString()),
       headers: headers(request.headers),
-      ...body(request.body),
+      ...body(requestBody),
     },
     response: {
       status: response.status,

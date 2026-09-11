@@ -15,6 +15,7 @@ const {
   submitted,
   valid,
   unavailable,
+  missing,
   leaveDialogOpen,
   resolveNavigation,
   runtimeContext,
@@ -60,11 +61,13 @@ watch(
     >
       {{
         i18n.t(
-          unavailable
-            ? "spaces.http.collection.invalid"
-            : saveError
-              ? "spaces.http.collection.saveFailed"
-              : "spaces.http.collection.validation",
+          missing
+            ? "spaces.http.collection.missing"
+            : unavailable
+              ? "spaces.http.collection.invalid"
+              : saveError
+                ? "spaces.http.collection.saveFailed"
+                : "spaces.http.collection.validation",
         )
       }}
     </UiText>
@@ -85,7 +88,7 @@ watch(
         </Tabs.TabsList>
       </div>
       <fieldset
-        :disabled="saving || unavailable"
+        :disabled="saving || (unavailable && !missing)"
         class="scrollbar min-h-0 flex-1 overflow-auto px-3 pt-2 disabled:opacity-50"
         :class="{ 'pb-2': !['headers', 'vars', 'tests'].includes(activeTab) }"
       >
@@ -139,7 +142,7 @@ watch(
         >
           <HttpRequestAssertions
             :context="runtimeContext"
-            :disabled="saving || unavailable"
+            :disabled="saving || (unavailable && !missing)"
           />
         </Tabs.TabsContent>
       </fieldset>

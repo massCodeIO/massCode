@@ -124,6 +124,7 @@ export function loadHttpState(paths: HttpPaths): HttpState {
 
   return {
     version: typeof raw.version === 'number' ? raw.version : defaults.version,
+    ...('history' in raw ? { history: raw.history } : {}),
     counters: normalizeCounters(raw.counters),
     folders: normalizeFolders(raw.folders),
     requests: Array.isArray(raw.requests) ? raw.requests : [],
@@ -149,6 +150,7 @@ function serializeHttpState(state: HttpState) {
   // устройствами и не должен накапливать посторонние и runtime-поля.
   return {
     version: state.version,
+    ...('history' in state ? { history: state.history } : {}),
     counters: state.counters,
     folders: state.folders,
     requests: state.requests.map(({ filePath, id, meta }) => ({

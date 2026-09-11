@@ -17,6 +17,10 @@ import { i18n } from '@/electron'
 import { api } from '@/services/api'
 import { getContiguousSelection } from '@/utils'
 import { LibraryFilter } from '../../types'
+import {
+  requestRuntimeDraft,
+  requestRuntimeOwner,
+} from './requestRuntimeState'
 import { httpRuntimeNavigation } from './runtimeNavigation'
 import {
   applyQueryToUrl,
@@ -26,6 +30,7 @@ import {
 } from './urlQuery'
 import { useHttpApp } from './useHttpApp'
 import { isSearch, requestsBySearch, searchQuery } from './useHttpSearch'
+import { useHttpSettings } from './useHttpSettings'
 
 export type HttpRequestListItem = HttpRequestsResponse[number]
 export type HttpRequest = HttpRequestItemResponse
@@ -52,6 +57,24 @@ const trashRequests = shallowRef<HttpRequestsResponse>([])
 export const isRestoreStateBlocked = ref(false)
 const currentRequest = shallowRef<HttpRequest | null>(null)
 const currentDraft = ref<HttpRequestDraft | null>(null)
+const { settings } = useHttpSettings()
+function persistedEncodeUrl(request: HttpRequest) {
+  return (
+    request.runtime?.transport?.encodeUrl
+    ?? settings.transport?.encodeUrl
+    ?? true
+  )
+}
+const encodeUrl = computed(() => {
+  const request = currentRequest.value
+  if (!request)
+    return settings.transport?.encodeUrl ?? true
+  return requestRuntimeOwner.value === `${request.id}:${request.createdAt}`
+    ? (requestRuntimeDraft.value.transport?.encodeUrl
+      ?? settings.transport?.encodeUrl
+      ?? true)
+    : persistedEncodeUrl(request)
+})
 
 const { highlightedRequestIds, httpState, focusRequestNameInput }
   = useHttpApp()
@@ -105,7 +128,9 @@ function getRequestActionSource() {
     : requests.value
   return [
     ...new Map(
-      [...allRequests.value, ...scoped].map(request => [request.id, request]),
+      [...allRequests.value, ...scoped, ...trashRequests.value].map(
+        request => [request.id, request],
+      ),
     ).values(),
   ]
 }
@@ -236,7 +261,7 @@ function toDraft(request: HttpRequest): HttpRequestDraft {
     folderId: request.folderId,
     protocol: request.protocol ?? 'http',
     method: request.method,
-    url: getDisplayUrl(request.url, query),
+    url: getDisplayUrl(request.url, query, encodeUrl.value),
     headers: request.headers.map(h => ({ ...h })),
     query,
     bodyType: request.bodyType,
@@ -247,14 +272,18 @@ function toDraft(request: HttpRequest): HttpRequestDraft {
   }
 }
 
-let skipUrlWatch = false
-let skipQueryWatch = false
+let syncingDraft = false
 
 function assignDraft(request: HttpRequest | null) {
-  skipUrlWatch = true
-  skipQueryWatch = true
-  currentRequest.value = request
-  currentDraft.value = request ? toDraft(request) : null
+  syncingDraft = true
+  try {
+    currentRequest.value = request
+    currentDraft.value = request ? toDraft(request) : null
+  }
+  finally {
+    syncingDraft = false
+  }
+  syncDraftDisplayUrl()
 }
 
 const isCurrentRequestDirty = computed(() => {
@@ -262,7 +291,14 @@ const isCurrentRequestDirty = computed(() => {
     return false
   return (
     JSON.stringify(toDraft(currentRequest.value))
-    !== JSON.stringify(currentDraft.value)
+    !== JSON.stringify({
+      ...currentDraft.value,
+      url: getDisplayUrl(
+        currentDraft.value.url,
+        currentDraft.value.query,
+        encodeUrl.value,
+      ),
+    })
   )
 })
 
@@ -405,9 +441,9 @@ async function refreshCurrentRequestRecord(requestId: number) {
   }
 
   const preserveDraft = isCurrentRequestDirty.value
-  currentRequest.value = record
-  if (!preserveDraft)
-    currentDraft.value = toDraft(record)
+  if (preserveDraft)
+    currentRequest.value = record
+  else assignDraft(record)
 }
 
 async function createHttpRequest(payload?: Partial<HttpRequestsAdd>) {
@@ -917,46 +953,63 @@ async function performSaveCurrentRequest(): Promise<boolean> {
 function discardCurrentRequestChanges() {
   if (!currentRequest.value)
     return
-  skipUrlWatch = true
-  skipQueryWatch = true
-  currentDraft.value = toDraft(currentRequest.value)
+  assignDraft(currentRequest.value)
 }
+
+function syncDraftDisplayUrl() {
+  const draft = currentDraft.value
+  if (syncingDraft || !draft)
+    return
+  syncingDraft = true
+  try {
+    // Changing the transport setting changes how values are interpreted;
+    // it must not rewrite the user's literal Params values.
+    draft.url = getDisplayUrl(draft.url, draft.query, encodeUrl.value)
+  }
+  finally {
+    syncingDraft = false
+  }
+}
+watch(encodeUrl, syncDraftDisplayUrl, { flush: 'sync' })
 
 watch(
   () => currentDraft.value?.url,
   () => {
-    if (skipUrlWatch) {
-      skipUrlWatch = false
-      return
-    }
     const draft = currentDraft.value
-    if (!draft)
+    if (syncingDraft || !draft)
       return
-    const next = applyUrlToQuery(draft.url, draft.query)
+    const next = applyUrlToQuery(draft.url, draft.query, encodeUrl.value)
     if (JSON.stringify(next) !== JSON.stringify(draft.query)) {
-      skipQueryWatch = true
-      draft.query = next
+      syncingDraft = true
+      try {
+        draft.query = next
+      }
+      finally {
+        syncingDraft = false
+      }
     }
   },
+  { flush: 'sync' },
 )
 
 watch(
   () => currentDraft.value?.query,
   () => {
-    if (skipQueryWatch) {
-      skipQueryWatch = false
-      return
-    }
     const draft = currentDraft.value
-    if (!draft)
+    if (syncingDraft || !draft)
       return
-    const next = applyQueryToUrl(draft.url, draft.query)
+    const next = applyQueryToUrl(draft.url, draft.query, encodeUrl.value)
     if (next !== draft.url) {
-      skipUrlWatch = true
-      draft.url = next
+      syncingDraft = true
+      try {
+        draft.url = next
+      }
+      finally {
+        syncingDraft = false
+      }
     }
   },
-  { deep: true },
+  { deep: true, flush: 'sync' },
 )
 
 watch(

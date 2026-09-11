@@ -1,4 +1,5 @@
 import { useHttpApp } from './useHttpApp'
+import { useHttpCollection } from './useHttpCollection'
 import { useHttpEnvironments } from './useHttpEnvironments'
 import { useHttpExecute } from './useHttpExecute'
 import { useHttpFolders } from './useHttpFolders'
@@ -35,6 +36,7 @@ export function resetHttpSpaceState() {
   resetHttpSearchState()
   resetHttpExecuteState()
   resetHttpRequestsState()
+  useHttpCollection().reset()
   resetHttpFoldersState()
   resetHttpEnvironmentsState()
   resetHttpHistoryState()
@@ -87,6 +89,9 @@ async function refreshHttpSpaceFromDisk() {
   }
 
   if (httpState.activePanel === 'folder') {
+    const collection = useHttpCollection()
+    if (collection.dirty.value || collection.saving.value)
+      return
     if (!folders.value.length)
       return
     if (getFolderByIdFromTree(folders.value, httpState.folderId ?? null))

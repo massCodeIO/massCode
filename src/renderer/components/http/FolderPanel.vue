@@ -8,6 +8,7 @@ import {
   useHttpRequests,
   useSonner,
 } from '@/composables'
+import { useHttpCollection } from '@/composables/spaces/http/useHttpCollection'
 import { useHttpNavigationTree } from '@/composables/spaces/http/useHttpNavigationTree'
 import { useHttpRunner } from '@/composables/spaces/http/useHttpRunner'
 import { i18n } from '@/electron'
@@ -18,6 +19,7 @@ import {
 import { Folder, Layers } from 'lucide-vue-next'
 
 const { httpState } = useHttpApp()
+const { missing } = useHttpCollection()
 const {
   folders,
   getFolderByIdFromTree,
@@ -90,7 +92,7 @@ function setIcon() {
 </script>
 
 <template>
-  <HttpCollectionEditor v-if="folder?.parentId === null" />
+  <HttpCollectionEditor v-if="folder?.parentId === null || missing" />
   <div
     v-else-if="folder"
     class="flex h-full flex-col overflow-hidden pt-[var(--content-top-offset)]"

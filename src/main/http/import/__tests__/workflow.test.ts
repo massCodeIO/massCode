@@ -10,6 +10,7 @@ import { join } from 'node:path'
 import { Readable } from 'node:stream'
 import { buildSchema, graphql as runGraphql } from 'graphql'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { emptyHttpCollection } from '../../../../shared/httpCollection'
 import { executeHttpRequest } from '../../runtime/execute'
 import {
   commitHttpSession,
@@ -127,6 +128,32 @@ beforeEach(() => {
 })
 
 describe('preview, persistence and imported script trust', () => {
+  it('rejects invalid nested collection settings before creating any folders', () => {
+    const config = emptyHttpCollection()
+    config.variables = [{ key: '', value: 'invalid' }]
+    expect(() =>
+      persistHttpImportResult({
+        collections: [
+          {
+            name: 'QA',
+            requests: [],
+            folders: [
+              {
+                id: 'nested',
+                parentId: null,
+                name: 'Nested',
+                collectionConfig: config,
+              },
+            ],
+          },
+        ],
+        environments: [],
+        warnings: [],
+      }),
+    ).toThrow()
+    expect(mocks.createFolder).not.toHaveBeenCalled()
+  })
+
   it('previews compatibility without writing storage or executing code', async () => {
     const preview = await previewHttpImport([fixture('bruno-scripts.yml')])
     expect(preview.collections[0].runtime).toEqual([

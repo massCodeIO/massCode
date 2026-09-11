@@ -13,9 +13,13 @@ import {
 import { flushPendingStateWrites } from '../../../runtime/shared/stateWriter'
 import { splitFrontmatter } from '../../runtime/parser'
 import { getHttpPaths } from '../../runtime/paths'
-import { ensureHttpStateFile } from '../../runtime/state'
+import {
+  ensureHttpStateFile,
+  saveHttpStateImmediate,
+} from '../../runtime/state'
 import { getHttpRuntimeCache, resetHttpRuntimeCache } from '../../runtime/sync'
 import { createHttpFoldersStorage } from '../folders'
+import { createHttpHistoryStorage } from '../history'
 import { createHttpRequestsStorage } from '../requests'
 
 let tempVaultPath = ''
@@ -131,6 +135,78 @@ describe('http requests storage', () => {
     tempVaultPath = ''
     vi.useRealTimers()
     vi.clearAllMocks()
+  })
+
+  it('migrates legacy history through the real state writer and survives a cold reload', () => {
+    const requests = createHttpRequestsStorage()
+    const { id } = requests.createRequest({
+      name: 'QA upgrade',
+      method: 'GET',
+    })
+    const paths = getHttpPaths(tempVaultPath)
+    const { state } = getHttpRuntimeCache(paths)
+    state.history = [
+      {
+        id: 1,
+        requestId: id,
+        method: 'GET',
+        url: 'https://qa.invalid/upgrade',
+        status: 200,
+        durationMs: 5,
+        sizeBytes: 10,
+        requestedAt: 1,
+      },
+    ]
+    saveHttpStateImmediate(paths, state)
+    resetHttpRuntimeCache()
+    const history = createHttpHistoryStorage()
+    expect(history.getEntries()).toMatchObject([{ id: 1, requestId: id }])
+    expect(
+      yaml.load(fs.readFileSync(paths.statePath, 'utf8')),
+    ).not.toHaveProperty('history')
+    resetHttpRuntimeCache()
+    expect(history.getEntries()).toMatchObject([{ id: 1, requestId: id }])
+    expect(requests.getRequestById(id)?.name).toBe('QA upgrade')
+  })
+
+  it('keeps request and history owners isolated across A to B to A vault changes', () => {
+    const vaultA = tempVaultPath
+    const vaultB = fs.mkdtempSync(path.join(os.tmpdir(), 'http-vault-b-'))
+    const requests = createHttpRequestsStorage()
+    const history = createHttpHistoryStorage()
+    const { id } = requests.createRequest({
+      name: 'QA vault A',
+      method: 'GET',
+    })
+    history.appendEntry({
+      requestId: id,
+      method: 'GET',
+      url: 'https://qa.invalid/a',
+      status: 200,
+      durationMs: 1,
+      sizeBytes: 0,
+      requestedAt: 1,
+    })
+    try {
+      resetHttpRuntimeCache()
+      tempVaultPath = vaultB
+      ensureHttpStateFile(getHttpPaths(vaultB))
+      expect(requests.getRequests({})).toEqual([])
+      expect(history.getEntries()).toEqual([])
+      requests.createRequest({ name: 'QA vault B', method: 'POST' })
+      resetHttpRuntimeCache()
+      tempVaultPath = vaultA
+      expect(requests.getRequests({}).map(request => request.name)).toEqual([
+        'QA vault A',
+      ])
+      expect(history.getEntries()).toMatchObject([
+        { url: 'https://qa.invalid/a' },
+      ])
+    }
+    finally {
+      tempVaultPath = vaultA
+      fs.removeSync(vaultB)
+    }
   })
 
   it('preserves GraphQL and incomplete variables through cold and indexed reloads', () => {

@@ -153,6 +153,8 @@ export interface HttpCounters {
 }
 
 export interface HttpStateFile {
+  /** Legacy v5.10 history, retained verbatim until migration succeeds. */
+  history?: unknown
   version?: number
   counters?: Partial<HttpCounters>
   folders?: HttpFolderRecord[]
@@ -162,6 +164,7 @@ export interface HttpStateFile {
 }
 
 export interface HttpState {
+  history?: unknown
   version: number
   counters: HttpCounters
   folders: HttpFolderRecord[]

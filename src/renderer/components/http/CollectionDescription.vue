@@ -2,11 +2,11 @@
 import { useHttpCollection } from '@/composables/spaces/http/useHttpCollection'
 import { i18n } from '@/electron'
 
-const { collection, draft, saving, unavailable } = useHttpCollection()
+const { collection, draft, saving, unavailable, missing } = useHttpCollection()
 const editing = ref(false)
 const editor = ref<{ focusEditor: () => void }>()
 async function startEditing() {
-  if (saving.value || unavailable.value)
+  if (saving.value || (unavailable.value && !missing.value))
     return
   editing.value = true
   await nextTick()
@@ -40,8 +40,8 @@ watch(
       v-if="showGuide"
       class="min-h-0 flex-1"
       role="button"
-      :tabindex="saving || unavailable ? -1 : 0"
-      :aria-disabled="saving || unavailable"
+      :tabindex="saving || (unavailable && !missing) ? -1 : 0"
+      :aria-disabled="saving || (unavailable && !missing)"
       :aria-label="i18n.t('spaces.http.collection.dashboard.editDescription')"
       @click.capture="startEditing"
       @keydown.enter.self.prevent="startEditing"
@@ -58,7 +58,7 @@ watch(
       ref="editor"
       :key="collection.id"
       v-model:content="draft.documentation"
-      :disabled="saving || unavailable"
+      :disabled="saving || (unavailable && !missing)"
     />
   </div>
 </template>

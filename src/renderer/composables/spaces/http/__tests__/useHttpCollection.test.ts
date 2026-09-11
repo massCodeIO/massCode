@@ -57,7 +57,14 @@ async function setup() {
   const { useHttpCollection } = await import('../useHttpCollection')
   const collection = useHttpCollection()
   const { httpRuntimeNavigation } = await import('../runtimeNavigation')
-  return { httpState, folders, collection, httpRuntimeNavigation, patch }
+  return {
+    httpState,
+    folders,
+    collection,
+    httpRuntimeNavigation,
+    patch,
+    records,
+  }
 }
 
 beforeEach(() => vi.restoreAllMocks())
@@ -158,5 +165,82 @@ describe('collection document state', () => {
     await collection.resolveNavigation('cancel')
     expect(await leaving).toBe(false)
     expect(collection.dirty.value).toBe(true)
+  })
+  it.each([false, true])(
+    'retains the disappeared collection draft and active owner (empty tree: %s)',
+    async (emptyTree) => {
+      const {
+        folders,
+        collection,
+        httpState,
+        records,
+        patch,
+        httpRuntimeNavigation,
+      } = await setup()
+      const original = structuredClone(records)
+      collection.draft.value.documentation = 'Unsaved collection work'
+      records.splice(emptyTree ? 0 : 1)
+      await folders.getHttpFolders(false)
+      expect(httpState.folderId).toBe(2)
+      expect(httpState.activePanel).toBe('folder')
+      expect(collection.collection.value?.id).toBe(2)
+      expect(collection.missing.value).toBe(true)
+      expect(collection.unavailable.value).toBe(true)
+      expect(collection.draft.value.documentation).toBe(
+        'Unsaved collection work',
+      )
+      expect(await collection.save()).toBe(false)
+      expect(patch).not.toHaveBeenCalled()
+      const leaving = httpRuntimeNavigation.confirmCollectionLeave!()
+      await collection.resolveNavigation('cancel')
+      expect(await leaving).toBe(false)
+      expect(collection.dirty.value).toBe(true)
+      records.splice(0, records.length, ...original)
+      await folders.getHttpFolders(false)
+      expect(collection.missing.value).toBe(false)
+      expect(collection.draft.value.documentation).toBe(
+        'Unsaved collection work',
+      )
+      expect(await collection.save()).toBe(true)
+      expect(collection.dirty.value).toBe(false)
+      expect(patch).toHaveBeenCalledWith('2', expect.anything())
+    },
+  )
+  it('discards the orphan only through confirmed navigation and resets it when changing vault', async () => {
+    const { folders, collection, httpState, records, httpRuntimeNavigation }
+      = await setup()
+    collection.draft.value.documentation = 'Orphan draft'
+    records.pop()
+    await folders.getHttpFolders(false)
+    const leaving = httpRuntimeNavigation.confirmCollectionLeave!()
+    await collection.resolveNavigation('discard')
+    expect(await leaving).toBe(true)
+    httpState.folderId = 1
+    expect(collection.collection.value?.id).toBe(1)
+    expect(collection.dirty.value).toBe(false)
+    expect(collection.draft.value.documentation).toBe('')
+    collection.draft.value.documentation = 'Old vault content'
+    collection.reset()
+    folders.resetHttpFoldersState()
+    expect(collection.dirty.value).toBe(false)
+    expect(collection.collection.value).toBeNull()
+    expect(collection.draft.value.documentation).toBe('')
+  })
+
+  it('retains a draft if its owner disappears while saving', async () => {
+    const { folders, collection, patch, records } = await setup()
+    collection.draft.value.documentation = 'Saving collection work'
+    let finish!: () => void
+    patch.mockImplementationOnce(
+      () => new Promise(resolve => (finish = () => resolve({}))),
+    )
+    const pending = collection.save()
+    records.pop()
+    await folders.getHttpFolders(false)
+    finish()
+    expect(await pending).toBe(false)
+    expect(collection.dirty.value).toBe(true)
+    expect(collection.missing.value).toBe(true)
+    expect(collection.draft.value.documentation).toBe('Saving collection work')
   })
 })

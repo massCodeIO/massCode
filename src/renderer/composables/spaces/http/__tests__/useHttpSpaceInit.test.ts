@@ -15,6 +15,16 @@ async function setup() {
   const requests = ref([{ id: 42 }])
   const allRequests = ref([{ id: 42 }])
 
+  const collectionDirty = ref(false)
+  const collectionSaving = ref(false)
+  const resetCollection = vi.fn()
+  vi.doMock('../useHttpCollection', () => ({
+    useHttpCollection: () => ({
+      dirty: collectionDirty,
+      saving: collectionSaving,
+      reset: resetCollection,
+    }),
+  }))
   const requestDirty = ref(false)
   const busy = ref(false)
   vi.doMock('../useHttpRuntime', () => ({
@@ -86,6 +96,9 @@ async function setup() {
   return {
     httpState,
     requestDirty,
+    collectionDirty,
+    collectionSaving,
+    resetCollection,
     busy,
     allRequests,
     requests,
@@ -177,4 +190,19 @@ describe('resetHttpSpaceState', () => {
     expect(context.resetHttpEnvironmentsState).toHaveBeenCalledTimes(1)
     expect(context.resetHttpHistoryState).toHaveBeenCalledTimes(1)
   })
+  it.each(['collectionDirty', 'collectionSaving'] as const)(
+    'preserves an unavailable collection with %s during sync',
+    async (field) => {
+      const ctx = await setup()
+      ctx.httpState.activePanel = 'folder'
+      ctx.httpState.folderId = 999
+      ctx[field].value = true
+      await ctx.refresh()
+      expect(ctx.httpState.activePanel).toBe('folder')
+      expect(ctx.httpState.folderId).toBe(999)
+      expect(ctx.selectHttpRequest).not.toHaveBeenCalled()
+      ctx.resetHttpSpaceState()
+      expect(ctx.resetCollection).toHaveBeenCalledOnce()
+    },
+  )
 })

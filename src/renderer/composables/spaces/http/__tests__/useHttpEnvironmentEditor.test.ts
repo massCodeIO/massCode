@@ -2,10 +2,7 @@ import type { Ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, nextTick, ref, watch } from 'vue'
 
-globalThis.computed = computed
-globalThis.nextTick = nextTick
-globalThis.ref = ref
-globalThis.watch = watch
+Object.assign(globalThis, { computed, nextTick, ref, watch })
 
 interface EnvFixture {
   id: number

@@ -7,11 +7,14 @@ import {
   httpOperatorNeedsExpected,
   httpRuntimeSchema,
 } from '~/shared/httpRuntime'
+import {
+  requestRuntimeDraft as draft,
+  requestRuntimeOwner as owner,
+} from './requestRuntimeState'
 import { httpRuntimeNavigation } from './runtimeNavigation'
 import { useHttpRequests } from './useHttpRequests'
 
 type Runtime = NonNullable<HttpRequestItemResponse['runtime']>
-const draft = ref<Runtime>(emptyHttpRuntime())
 const saved = ref(JSON.stringify(draft.value))
 const saving = ref(false)
 const savingRequest = ref(false)
@@ -115,23 +118,22 @@ const {
 } = useHttpRequests()
 const requestDirty = computed(() => dirty.value || isCurrentRequestDirty.value)
 const busy = computed(() => saving.value || savingRequest.value)
-let owner: string | null = null
 let generation = 0
 
 watch(
   currentRequest,
   (request) => {
     const nextOwner = request ? `${request.id}:${request.createdAt}` : null
-    if (nextOwner === owner && dirty.value)
+    if (nextOwner === owner.value && dirty.value)
       return
-    if (nextOwner !== owner) {
+    if (nextOwner !== owner.value) {
       generation += 1
       focusTarget.value = null
     }
-    if (nextOwner !== owner && resolveLeave)
+    if (nextOwner !== owner.value && resolveLeave)
       finishLeave(false)
-    owner = nextOwner
     draft.value = structuredClone(request?.runtime ?? emptyHttpRuntime())
+    owner.value = nextOwner
     saved.value = JSON.stringify(draft.value)
     expectedRevision = request?.runtimeRevision ?? null
     saveError.value = false
@@ -303,8 +305,8 @@ async function resolveNavigation(choice: 'save' | 'discard' | 'cancel') {
     return
   }
   if (choice === 'discard') {
-    discardCurrentRequestChanges()
     draft.value = JSON.parse(saved.value || JSON.stringify(emptyHttpRuntime()))
+    discardCurrentRequestChanges()
     expectedInputs.value = {}
     expectedErrors.value = {}
     touched.value.clear()

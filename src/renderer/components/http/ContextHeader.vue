@@ -8,7 +8,7 @@ import { i18n } from '@/electron'
 import { Folder, Layers, Play } from 'lucide-vue-next'
 
 const collectionContext = useHttpCollection()
-const { collection } = collectionContext
+const { collection, missing } = collectionContext
 const { httpState } = useHttpApp()
 const { folders, getFolderByIdFromTree, getHttpFolders } = useHttpFolders()
 const { open: runnerOpen, openRunner, running, preparing } = useHttpRunner()
@@ -18,10 +18,12 @@ const folder = computed(() =>
 const title = computed(() =>
   httpState.activePanel === 'runner'
     ? i18n.t('spaces.http.runner.title')
-    : (folder.value?.name ?? i18n.t('spaces.http.title')),
+    : (folder.value?.name
+      ?? collection.value?.name
+      ?? i18n.t('spaces.http.title')),
 )
 function setIcon() {
-  if (!collection.value)
+  if (!collection.value || missing.value)
     return
   useDialog().showDialog({
     title: i18n.t('action.setCustomIcon'),
@@ -52,6 +54,7 @@ async function showRunner() {
     <UiActionButton
       v-if="collection"
       :tooltip="i18n.t('action.setCustomIcon')"
+      :disabled="missing"
       @click="setIcon"
     >
       <UiFolderIcon

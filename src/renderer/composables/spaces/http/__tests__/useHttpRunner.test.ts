@@ -123,6 +123,7 @@ describe('hTTP folder runner UI state', () => {
       requestIds: [2, 1],
       continueOnFailure: true,
       skipCertificateVerification: false,
+      transport: {},
     })
     result.resolve({ ...prepared, state: 'passed' })
     await starting

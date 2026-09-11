@@ -100,6 +100,19 @@ function syncSelectedFoldersWithTree() {
 
   const orderedIds = flatFolderList.value.map(folder => folder.id)
 
+  // Tree refresh changes highlights, never the active collection document.
+  // Its editor retains an unavailable owner's draft until explicit navigation.
+  if (httpState.activePanel === 'folder') {
+    selectedFolderIds.value = sortFolderIdsByTreeOrder(selectedFolderIds.value)
+    if (
+      lastSelectedFolderId.value !== undefined
+      && !folderOrderMap.value.has(lastSelectedFolderId.value)
+    ) {
+      lastSelectedFolderId.value = undefined
+    }
+    return
+  }
+
   if (!orderedIds.length) {
     clearFolderSelection()
     return

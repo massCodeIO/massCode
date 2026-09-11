@@ -13,8 +13,22 @@ describe('hTTP navigation metadata', () => {
         parentId: null,
         name: 'API',
         icon: null,
+        createdAt: 1,
+        updatedAt: 1,
+        isOpen: 1,
+        orderIndex: 0,
         children: [
-          { id: 2, parentId: 1, name: 'Accounts', icon: null, children: [] },
+          {
+            id: 2,
+            parentId: 1,
+            name: 'Accounts',
+            icon: null,
+            children: [],
+            createdAt: 1,
+            updatedAt: 1,
+            isOpen: 1,
+            orderIndex: 0,
+          },
         ],
       },
     ] as HttpFolderTreeItem[]

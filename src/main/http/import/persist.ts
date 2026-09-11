@@ -6,7 +6,10 @@ import type {
   HttpImportResult,
   HttpImportSelection,
 } from './types'
-import { emptyHttpCollection } from '../../../shared/httpCollection'
+import {
+  emptyHttpCollection,
+  httpCollectionSchema,
+} from '../../../shared/httpCollection'
 import { useHttpStorage } from '../../storage'
 import { getHttpCookieJar } from '../cookies/store'
 import { normalizeImportName } from './normalize'
@@ -165,6 +168,13 @@ export function persistHttpImportResult(
     result.environments,
     selection.selectedEnvironmentIndexes,
   )
+  // Validate every selected scope before creating the first folder.
+  for (const collection of collections) {
+    for (const scope of [collection, ...collection.folders]) {
+      if (scope.collectionConfig)
+        httpCollectionSchema.parse(scope.collectionConfig)
+    }
+  }
   const summary: HttpImportPersistSummary = {
     collections: 0,
     createdCollectionNames: [],

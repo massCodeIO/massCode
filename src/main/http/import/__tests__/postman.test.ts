@@ -1,9 +1,40 @@
 import { describe, expect, it } from 'vitest'
+import { httpCollectionSchema } from '../../../../shared/httpCollection'
 import { buildHttpFormBody } from '../../../../shared/httpForm'
 import { buildGraphqlBody } from '../../../../shared/httpGraphql'
 import { parsePostmanFiles } from '../postman'
 
 describe('parsePostmanFiles', () => {
+  it('retains invalid and duplicate variables disabled with preview warnings', () => {
+    const result = parsePostmanFiles([
+      {
+        name: 'qa.json',
+        content: JSON.stringify({
+          info: {
+            name: 'QA',
+            schema:
+              'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+          },
+          variable: [
+            { key: 'baseUrl', value: 'first' },
+            { key: '', value: 'empty' },
+            { key: 'baseUrl', value: 'last' },
+          ],
+          item: [],
+        }),
+      },
+    ])
+    const config = result.collections[0].collectionConfig!
+    expect(httpCollectionSchema.safeParse(config).success).toBe(true)
+    expect(config.variables).toMatchObject([
+      { key: 'baseUrl', value: 'first', enabled: false },
+      { key: '', value: 'empty', enabled: false },
+      { key: 'baseUrl', value: 'last' },
+    ])
+    expect(config.variables[2].enabled).not.toBe(false)
+    expect(result.warnings).toHaveLength(2)
+  })
+
   it('parses nested Postman collection requests and inherited auth', () => {
     const result = parsePostmanFiles([
       {

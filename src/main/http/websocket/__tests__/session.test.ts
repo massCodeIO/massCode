@@ -5,7 +5,10 @@ import { once } from 'node:events'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { WebSocketServer } from 'ws'
 import { emptyHttpCollection } from '../../../../shared/httpCollection'
-import { WS_MESSAGE_LIMIT } from '../../../../shared/httpWebSocket'
+import {
+  WS_MESSAGE_LIMIT,
+  wsConnectSchema,
+} from '../../../../shared/httpWebSocket'
 import {
   commitHttpSession,
   getHttpSession,
@@ -94,6 +97,39 @@ afterEach(async () => {
 })
 
 describe('webSocket sessions', () => {
+  it.each(['header', 'query'] as const)(
+    'sends direct and inherited API keys in %s',
+    async (location) => {
+      const config = emptyHttpCollection()
+      config.auth = {
+        type: 'apikey',
+        key: 'X-QA-Key',
+        value: '{{token}}',
+        in: location,
+      }
+      mocks.folders = [{ id: 10, parentId: null, collectionConfig: config }]
+      mocks.folderId = 10
+      for (const inherited of [false, true]) {
+        const request = wsConnectSchema.parse({
+          ...input(),
+          url: `${url}?keep=1`,
+          auth: inherited ? { type: 'inherit' } : config.auth,
+        })
+        const connected = once(server, 'connection')
+        connectWebSocket(1, request)
+        const [, handshake] = await connected
+        const query = new URL(handshake.url, url).searchParams
+        expect(query.get('keep')).toBe('1')
+        expect(
+          location === 'header'
+            ? handshake.headers['x-qa-key']
+            : query.get('X-QA-Key'),
+        ).toBe('env-value')
+        disposeWebSocket(1)
+      }
+    },
+  )
+
   it('uses the same inherited headers, credentials and variable precedence in the handshake', async () => {
     const config = emptyHttpCollection()
     config.headers = [{ key: 'X-Inherited', value: '{{collectionValue}}' }]

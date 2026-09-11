@@ -1,3 +1,4 @@
+import type { ComponentOptions } from 'vue'
 import { expect, it, vi } from 'vitest'
 import {
   computed,
@@ -18,7 +19,8 @@ vi.mock('@/composables', () => ({ useHttpSettings: () => ({ settings: {} }) }))
 vi.mock('@/components/ui/shadcn/select', () => ({}))
 
 it('keeps legacy form bytes until an actual row edit and persists nested edits', async () => {
-  const component = (await import('../RequestBodyTab.vue')).default
+  const component = (await import('../RequestBodyTab.vue'))
+    .default as ComponentOptions
   const draft = ref({
     method: 'POST',
     bodyType: 'form-urlencoded',

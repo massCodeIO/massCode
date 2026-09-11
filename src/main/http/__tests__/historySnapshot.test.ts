@@ -20,6 +20,18 @@ const response = {
 }
 
 describe('history snapshots', () => {
+  it('redacts every duplicate credential query value even when echoed in a response', () => {
+    const snapshot = createHistorySnapshot(
+      {
+        ...request,
+        url: 'https://api.test/?token=first-secret&token=second-secret',
+      },
+      { ...response, body: 'first-secret second-secret', bodyKind: 'text' },
+      [],
+    )
+    expect(snapshot.response.body).toBe('[REDACTED] [REDACTED]')
+  })
+
   it('masks credentials, known secrets and encoded values without changing the response', () => {
     const result = {
       ...response,
@@ -53,7 +65,11 @@ describe('history snapshots', () => {
   it('caps both bodies after redaction and reports truncation', () => {
     const saved = createHistorySnapshot(
       { ...request, body: 'x'.repeat(HTTP_HISTORY_BODY_LIMIT + 10) },
-      { ...response, body: 'x'.repeat(HTTP_HISTORY_BODY_LIMIT + 10) },
+      {
+        ...response,
+        bodyKind: 'text',
+        body: 'x'.repeat(HTTP_HISTORY_BODY_LIMIT + 10),
+      },
       [],
     )
     expect(saved.request.body.length).toBe(HTTP_HISTORY_BODY_LIMIT)
@@ -70,5 +86,72 @@ describe('history snapshots', () => {
     sent.body = 'changed'
     expect(saved.request.body).toBe(request.body)
     expect(saved.response.truncated).toBe(true)
+  })
+  it.each([
+    {
+      body: '{"access_token":"new-token","profile":"truncated',
+      truncated: true,
+    },
+    { body: '{"access_token":"new-token",invalid}', truncated: false },
+  ])(
+    'does not persist credentials from invalid structured responses: $truncated',
+    (payload) => {
+      const saved = createHistorySnapshot(
+        request,
+        { ...response, ...payload },
+        [],
+      )
+      expect(saved.response.body).toBe('[REDACTED]')
+      expect(JSON.stringify(saved)).not.toContain('new-token')
+      expect(saved.response.truncated).toBe(payload.truncated)
+    },
+  )
+  it('fails closed for malformed JSON requests and JSON advertised as text', () => {
+    const saved = createHistorySnapshot(
+      { ...request, body: '{"password":"new-request-secret",' },
+      {
+        ...response,
+        bodyKind: 'text',
+        headers: [{ key: 'Content-Type', value: 'application/problem+json' }],
+        body: 'invalid new-response-secret',
+      },
+      [],
+    )
+    expect(saved.request.body).toBe('[REDACTED]')
+    expect(saved.response.body).toBe('[REDACTED]')
+  })
+  it('masks newly issued form response credentials and preserves ordinary fields', () => {
+    const saved = createHistorySnapshot(
+      request,
+      {
+        ...response,
+        bodyKind: 'text',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'Application/X-WWW-Form-Urlencoded; charset=utf-8',
+          },
+        ],
+        body: 'oauth_token=new%2ftoken&oauth_token_secret=new+secret&name=ordinary+value&name=second',
+      },
+      [],
+    )
+    const form = new URLSearchParams(saved.response.body)
+    expect(form.get('oauth_token')).toBe('[REDACTED]')
+    expect(form.get('oauth_token_secret')).toBe('[REDACTED]')
+    expect(form.getAll('name')).toEqual(['ordinary value', 'second'])
+    expect(saved.response.body).not.toContain('new')
+  })
+  it('keeps ordinary text responses unchanged', () => {
+    const saved = createHistorySnapshot(
+      request,
+      {
+        ...response,
+        bodyKind: 'text',
+        body: 'Ordinary response',
+      },
+      [],
+    )
+    expect(saved.response.body).toBe('Ordinary response')
   })
 })

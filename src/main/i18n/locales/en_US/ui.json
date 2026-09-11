@@ -499,6 +499,8 @@
         },
         "scriptTrustNotice": "Imported scripts require local trust before they can run. Review the code in Scripts. Blocked scripts also require manual adaptation.",
         "runtimeWarnings": {
+          "invalidVariableName": "A variable with an invalid name was retained but disabled. Rename it before enabling it.",
+          "duplicateVariable": "Duplicate variables were retained; only the last enabled value remains active.",
           "graphqlVariables": "GraphQL variables could not be parsed as a JSON object. The original value was kept; adapt it before sending.",
           "disabled": "Disabled rule or event was not imported.",
           "unsupportedScript": "Unsupported or malformed script: all scripts for this request are blocked. Original code is retained as comments for manual adaptation.",
@@ -762,6 +764,7 @@
         "loadFailed": "Could not load requests. Click to retry."
       },
       "collection": {
+        "missing": "This collection is no longer available. Your unsaved draft is preserved: you can edit or copy it, or wait for the collection to return before saving.",
         "tabs": {
           "overview": "Overview",
           "headers": "Headers",

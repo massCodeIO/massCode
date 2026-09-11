@@ -108,7 +108,7 @@ async function setup(options: SetupOptions = {}) {
 
   const initCodeSpace = vi.fn(async () => undefined)
   const initNotesSpace = vi.fn(async () => undefined)
-  const initHttpSpace = vi.fn(async () => undefined)
+  const initHttpSpace = vi.fn(async (): Promise<void> => undefined)
   const isAppLoading = ref(false)
   const isCodeSpaceInitialized = ref(false)
   const isHttpSpaceInitialized = ref(false)

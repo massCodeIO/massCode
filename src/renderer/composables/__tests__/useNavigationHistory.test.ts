@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, ref } from 'vue'
 
-globalThis.ref = ref
-globalThis.computed = computed
+Object.assign(globalThis, { ref, computed })
 
 describe('useNavigationHistory', () => {
   beforeEach(() => {

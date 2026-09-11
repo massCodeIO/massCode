@@ -358,6 +358,34 @@ function parseCollectionConfig(
         entry.disabled === true || entry.enabled === false ? false : undefined,
       description: parseDescription(entry.description) || undefined,
     }))
+  const variableIndexes = new Map<string, number>()
+  for (const [index, variable] of config.variables.entries()) {
+    if (variable.enabled === false)
+      continue
+    if (
+      !/^(?!__proto__$|constructor$|prototype$)[\w.-]{1,128}$/u.test(
+        variable.key,
+      )
+    ) {
+      variable.enabled = false
+      addWarning(
+        warnings,
+        source,
+        'spaces.http.import.runtimeWarnings.invalidVariableName',
+      )
+      continue
+    }
+    const previous = variableIndexes.get(variable.key)
+    if (previous !== undefined) {
+      config.variables[previous].enabled = false
+      addWarning(
+        warnings,
+        source,
+        'spaces.http.import.runtimeWarnings.duplicateVariable',
+      )
+    }
+    variableIndexes.set(variable.key, index)
+  }
   const imported = buildImportedRuntime(
     postmanScripts(raw.event, source, warnings),
     'postman',

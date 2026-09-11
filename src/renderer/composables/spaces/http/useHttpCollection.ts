@@ -16,13 +16,19 @@ const { httpState } = useHttpApp()
 const { folders, getFolderByIdFromTree, updateHttpFolder } = useHttpFolders()
 // Install the shared navigation dispatcher even before opening a request.
 useHttpRuntime()
-const collection = computed(() => {
+const liveCollection = computed(() => {
   const folder = getFolderByIdFromTree(
     folders.value,
     httpState.folderId ?? null,
   )
   return httpState.activePanel === 'folder' && folder ? folder : null
 })
+const collection = shallowRef(liveCollection.value)
+const missing = computed(
+  () =>
+    Boolean(collection.value)
+    && liveCollection.value?.id !== collection.value?.id,
+)
 type Config = NonNullable<HttpFoldersUpdate['collectionConfig']>
 const draft = ref<Config>(emptyHttpCollection())
 const saved = ref(JSON.stringify(draft.value))
@@ -45,13 +51,14 @@ const dirty = computed(
   () => JSON.stringify(draft.value) !== saved.value || hasExpectedErrors.value,
 )
 const unavailable = computed(
-  () => collection.value?.collectionConfigState === 'invalid',
+  () => missing.value || collection.value?.collectionConfigState === 'invalid',
 )
 const validation = computed(() => httpCollectionSchema.safeParse(draft.value))
 const valid = computed(
   () => validation.value.success && !hasExpectedErrors.value,
 )
 let owner: number | null = null
+let generation = 0
 let leavePromise: Promise<boolean> | null = null
 let resolveLeave: ((allowed: boolean) => void) | null = null
 const runtime = computed({
@@ -66,10 +73,14 @@ function resetInputs() {
   submitted.value = false
 }
 watch(
-  collection,
+  liveCollection,
   (value) => {
-    if (value?.id === owner && dirty.value)
+    if (collection.value && (dirty.value || saving.value)) {
+      if (value?.id === owner)
+        collection.value = value
       return
+    }
+    collection.value = value
     owner = value?.id ?? null
     draft.value = JSON.parse(
       JSON.stringify(
@@ -94,21 +105,40 @@ async function save(): Promise<boolean> {
   if (!dirty.value)
     return true
   const id = collection.value.id
+  const epoch = generation
   const snapshot: Config = JSON.parse(JSON.stringify(draft.value))
   saving.value = true
   saveError.value = false
   try {
     const success = await updateHttpFolder(id, { collectionConfig: snapshot })
-    if (owner === id) {
-      saveError.value = !success
-      if (success)
-        saved.value = JSON.stringify(snapshot)
+    if (epoch !== generation || owner !== id)
+      return false
+    if (missing.value) {
+      saveError.value = true
+      return false
     }
+    saveError.value = !success
+    if (success)
+      saved.value = JSON.stringify(snapshot)
     return success
   }
   finally {
-    saving.value = false
+    if (epoch === generation)
+      saving.value = false
   }
+}
+function reset() {
+  generation += 1
+  saving.value = false
+  owner = null
+  collection.value = null
+  draft.value = emptyHttpCollection()
+  saved.value = JSON.stringify(draft.value)
+  resetInputs()
+  leaveDialogOpen.value = false
+  resolveLeave?.(false)
+  leavePromise = null
+  resolveLeave = null
 }
 function discard() {
   draft.value = JSON.parse(saved.value)
@@ -217,6 +247,8 @@ export function useHttpCollection() {
     submitted,
     valid,
     unavailable,
+    missing,
+    reset,
     save,
     discard,
     leaveDialogOpen,

@@ -1764,13 +1764,12 @@ watch(activeActionId, () => {
       >
         <span>{{ hint.label }}</span>
         <span class="flex items-center gap-0.5">
-          <kbd
+          <UiKbd
             v-for="key in hint.keys"
             :key="key"
-            class="bg-muted text-muted-foreground min-w-5 rounded-sm px-1.5 py-0.5 text-center font-sans text-[11px] leading-none"
           >
             {{ key }}
-          </kbd>
+          </UiKbd>
         </span>
       </div>
     </div>

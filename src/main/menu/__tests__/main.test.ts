@@ -541,3 +541,31 @@ it('renders independent HTTP panel checkboxes and dispatches their actions', asy
     'inspector',
   )
 })
+
+it('renders and dispatches the Notes inspector checkbox', async () => {
+  const { createMainMenu } = await import('../main')
+  const context = createNotesContext()
+  context.view.notesInspector = { open: true, enabled: true }
+  buildFromTemplate.mockClear()
+  createMainMenu(context)
+  const template = buildFromTemplate.mock.calls[0]![0] as Array<{
+    label?: string
+    submenu?: Array<{
+      label?: string
+      type?: string
+      checked?: boolean
+      enabled?: boolean
+      click?: () => void
+    }>
+  }>
+  const item = template
+    .find(item => item.label === 'menu:view.label')!
+    .submenu!.find(item => item.label === 'ui:notes.inspector.title')!
+  expect(item).toMatchObject({
+    type: 'checkbox',
+    checked: true,
+    enabled: true,
+  })
+  item.click!()
+  expect(send).toHaveBeenLastCalledWith('main-menu:toggle-notes-inspector')
+})

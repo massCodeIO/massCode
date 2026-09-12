@@ -8,11 +8,17 @@ import {
   useNotesApp,
   useNoteUpdate,
 } from '@/composables'
-import { i18n, ipc } from '@/electron'
+import { useResizeHandle } from '@/composables/useResizeHandle'
+import { i18n, ipc, store } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
 import { router, RouterName } from '@/router'
 import { getEntryNameConflictMessage } from '@/utils'
-import { useClipboard, useDebounceFn, useEventListener } from '@vueuse/core'
+import {
+  useClipboard,
+  useDebounceFn,
+  useElementSize,
+  useEventListener,
+} from '@vueuse/core'
 import {
   BookOpen,
   ChevronLeft,
@@ -60,6 +66,7 @@ function hasSiblingNoteNameConflict(value: string, excludeId: number) {
   )
 }
 const {
+  isNotesInspectorOpen,
   isFocusedSearch,
   isFocusedNoteName,
   isNotesMindmapShown,
@@ -72,6 +79,36 @@ const {
   showNotesPresentation,
   toggleNotesSidebar,
 } = useNotesApp()
+
+const workspace = ref<HTMLElement>()
+const inspectorHandle = ref<HTMLElement>()
+const { width: workspaceWidth } = useElementSize(workspace)
+const inspectorWidth = ref(
+  store.app.get<number>('notes.layout.inspectorWidth') ?? 300,
+)
+const panelWidth = computed(() =>
+  Math.min(inspectorWidth.value, Math.max(240, workspaceWidth.value - 320)),
+)
+const showInspector = computed(
+  () =>
+    isNotesInspectorOpen.value
+    && !isNotesMindmapShown.value
+    && !isNotesPresentationShown.value,
+)
+useResizeHandle(inspectorHandle, {
+  direction: 'horizontal',
+  onMove: (delta) => {
+    inspectorWidth.value = Math.max(
+      240,
+      Math.min(
+        panelWidth.value - delta,
+        Math.max(240, workspaceWidth.value - 320),
+      ),
+    )
+  },
+  onEnd: () =>
+    store.app.set('notes.layout.inspectorWidth', inspectorWidth.value),
+})
 
 const sidebarActionTooltip = computed(() =>
   isNotesSidebarHidden.value
@@ -432,172 +469,208 @@ onBeforeUnmount(() => {
 <template>
   <div
     v-if="displayedNote"
-    class="relative flex h-full flex-col pt-[var(--content-top-offset)]"
+    ref="workspace"
+    class="relative flex h-full min-w-0"
   >
-    <UiLoadingOverlay
-      v-if="selectedNoteRecordStatus === 'loading'"
-      :silent="!isSelectedNoteLoadingVisible"
-    />
-    <UiLoadingOverlay
-      v-else-if="selectedNoteRecordStatus === 'error'"
-      error
-      :label="i18n.t('contentLoad.failed')"
-      :action-label="i18n.t('contentLoad.retry')"
-      @retry="retrySelectedNote"
-    />
-    <UiLoadingOverlay
-      v-else-if="displayedNote.pendingCloudDownload"
-      :label="i18n.t('cloudDownloads.itemPending')"
-    />
     <div
-      data-notes-editor-header
-      :inert="!isSelectedNoteContentReady"
+      class="relative flex h-full min-w-0 flex-1 flex-col pt-[var(--content-top-offset)]"
     >
+      <UiLoadingOverlay
+        v-if="selectedNoteRecordStatus === 'loading'"
+        :silent="!isSelectedNoteLoadingVisible"
+      />
+      <UiLoadingOverlay
+        v-else-if="selectedNoteRecordStatus === 'error'"
+        error
+        :label="i18n.t('contentLoad.failed')"
+        :action-label="i18n.t('contentLoad.retry')"
+        @retry="retrySelectedNote"
+      />
+      <UiLoadingOverlay
+        v-else-if="displayedNote.pendingCloudDownload"
+        :label="i18n.t('cloudDownloads.itemPending')"
+      />
       <div
-        class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
+        data-notes-editor-header
+        :inert="!isSelectedNoteContentReady"
       >
-        <div class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
-          <div
-            v-if="isHistoryVisible"
-            class="flex shrink-0 items-center gap-0.5"
-          >
-            <UiActionButton
-              :disabled="!canGoBack"
-              :tooltip="i18n.t('menu:history.back')"
-              @click="onBackClick"
+        <div
+          class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
+        >
+          <div class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
+            <div
+              v-if="isHistoryVisible"
+              class="flex shrink-0 items-center gap-0.5"
             >
-              <ChevronLeft class="h-3 w-3" />
-            </UiActionButton>
-            <UiActionButton
-              :disabled="!canGoForward"
-              :tooltip="i18n.t('menu:history.forward')"
-              @click="onForwardClick"
-            >
-              <ChevronRight class="h-3 w-3" />
-            </UiActionButton>
+              <UiActionButton
+                :disabled="!canGoBack"
+                :tooltip="i18n.t('menu:history.back')"
+                @click="onBackClick"
+              >
+                <ChevronLeft class="h-3 w-3" />
+              </UiActionButton>
+              <UiActionButton
+                :disabled="!canGoForward"
+                :tooltip="i18n.t('menu:history.forward')"
+                @click="onForwardClick"
+              >
+                <ChevronRight class="h-3 w-3" />
+              </UiActionButton>
+            </div>
+            <div class="min-w-0 flex-1">
+              <UiInputValidationTooltip
+                :open="isNameValidationTooltipOpen"
+                :message="nameValidationMessage"
+              >
+                <UiInput
+                  v-model="name"
+                  variant="ghost"
+                  class="w-full truncate px-0"
+                  :data-planned-title="`note:${displayedNote?.id}`"
+                  :select="isFocusedNoteName"
+                  @focus="onNoteNameFocus"
+                  @blur="onNameBlur"
+                  @keydown="onNameKeydown"
+                />
+              </UiInputValidationTooltip>
+            </div>
           </div>
-          <div class="min-w-0 flex-1">
-            <UiInputValidationTooltip
-              :open="isNameValidationTooltipOpen"
-              :message="nameValidationMessage"
+          <div class="ml-2 flex h-7 items-center">
+            <UiActionButton
+              :tooltip="mindmapActionTooltip"
+              :active="isNotesMindmapShown"
+              @click="onMindmapToggle"
             >
-              <UiInput
-                v-model="name"
-                variant="ghost"
-                class="w-full truncate px-0"
-                :data-planned-title="`note:${displayedNote?.id}`"
-                :select="isFocusedNoteName"
-                @focus="onNoteNameFocus"
-                @blur="onNameBlur"
-                @keydown="onNameKeydown"
+              <Network class="h-3 w-3 -rotate-90" />
+            </UiActionButton>
+            <UiActionButton
+              :tooltip="presentationActionTooltip"
+              :active="isNotesPresentationShown"
+              @click="onPresentationToggle"
+            >
+              <Presentation class="h-3 w-3" />
+            </UiActionButton>
+            <UiActionButton
+              class="mr-1"
+              :tooltip="sidebarActionTooltip"
+              :active="isNotesSidebarHidden"
+              @click="onSidebarToggle"
+            >
+              <PanelLeftOpen
+                v-if="isNotesSidebarHidden"
+                class="h-3 w-3"
               />
-            </UiInputValidationTooltip>
+              <PanelLeftClose
+                v-else
+                class="h-3 w-3"
+              />
+            </UiActionButton>
+            <UiActionButton
+              v-if="!isNotesMindmapShown && !isNotesPresentationShown"
+              :tooltip="i18n.t('notes.inspector.title')"
+              :active="isNotesInspectorOpen"
+              @click="isNotesInspectorOpen = !isNotesInspectorOpen"
+            >
+              <UiPanelIcon
+                side="right"
+                :open="isNotesInspectorOpen"
+              />
+            </UiActionButton>
           </div>
-        </div>
-        <div class="ml-2 flex h-7 items-center">
-          <UiActionButton
-            class="mr-1"
-            :tooltip="sidebarActionTooltip"
-            :active="isNotesSidebarHidden"
-            @click="onSidebarToggle"
-          >
-            <PanelLeftOpen
-              v-if="isNotesSidebarHidden"
-              class="h-3 w-3"
-            />
-            <PanelLeftClose
-              v-else
-              class="h-3 w-3"
-            />
-          </UiActionButton>
-          <UiActionButton
-            :tooltip="mindmapActionTooltip"
-            :active="isNotesMindmapShown"
-            @click="onMindmapToggle"
-          >
-            <Network class="h-3 w-3 -rotate-90" />
-          </UiActionButton>
-          <UiActionButton
-            :tooltip="presentationActionTooltip"
-            :active="isNotesPresentationShown"
-            @click="onPresentationToggle"
-          >
-            <Presentation class="h-3 w-3" />
-          </UiActionButton>
-        </div>
-      </div>
-      <div
-        v-if="!isNotesMindmapShown && !isNotesPresentationShown"
-        class="pt-1"
-      >
-        <NotesTaskMetadataBar :note="displayedNote" />
-        <NotesEditorTags
-          :note="displayedNote"
-          :disabled="!isSelectedNoteContentReady"
-        />
-      </div>
-    </div>
-    <div
-      class="min-h-0 flex-1"
-      :inert="!isSelectedNoteContentReady"
-    >
-      <NotesMindmap v-if="isNotesMindmapShown" />
-      <div
-        v-else
-        class="grid h-full grid-rows-[1fr_auto] overflow-hidden"
-      >
-        <div class="min-h-0">
-          <NotesEditor
-            ref="notesEditorRef"
-            v-model:content="content"
-            :disabled="!isSelectedNoteContentReady"
-            :mode="notesEditorMode"
-            :note-id="editorNoteId"
-          />
         </div>
         <div
-          data-notes-editor-footer
-          class="border-border flex items-center justify-between border-t px-2 py-1 text-xs tabular-nums"
+          v-if="!isNotesMindmapShown && !isNotesPresentationShown"
+          class="pt-1"
         >
-          <Select.Select v-model="notesEditorMode">
-            <Select.SelectTrigger variant="ghost">
-              <Select.SelectValue>
-                <Code
-                  v-if="notesEditorMode === 'raw'"
-                  class="size-3.5"
-                />
-                <Pencil
-                  v-else-if="notesEditorMode === 'livePreview'"
-                  class="size-3.5"
-                />
-                <BookOpen
-                  v-else
-                  class="size-3.5"
-                />
-              </Select.SelectValue>
-            </Select.SelectTrigger>
-            <Select.SelectContent align="start">
-              <Select.SelectItem value="raw">
-                <Code class="size-3.5" />
-                Raw
-              </Select.SelectItem>
-              <Select.SelectItem value="livePreview">
-                <Pencil class="size-3.5" />
-                Live Preview
-              </Select.SelectItem>
-              <Select.SelectItem value="preview">
-                <BookOpen class="size-3.5" />
-                Preview
-              </Select.SelectItem>
-            </Select.SelectContent>
-          </Select.Select>
-          <div class="mr-1">
-            {{ i18n.t("notes.words") }} {{ textStats.words }},
-            {{ i18n.t("notes.symbols") }} {{ textStats.symbols }}
+          <NotesTaskMetadataBar :note="displayedNote" />
+          <NotesEditorTags
+            :note="displayedNote"
+            :disabled="!isSelectedNoteContentReady"
+          />
+        </div>
+      </div>
+      <div
+        class="min-h-0 flex-1"
+        :inert="!isSelectedNoteContentReady"
+      >
+        <NotesMindmap v-if="isNotesMindmapShown" />
+        <div
+          v-else
+          class="grid h-full grid-rows-[1fr_auto] overflow-hidden"
+        >
+          <div class="min-h-0">
+            <NotesEditor
+              ref="notesEditorRef"
+              v-model:content="content"
+              :disabled="!isSelectedNoteContentReady"
+              :mode="notesEditorMode"
+              :note-id="editorNoteId"
+            />
+          </div>
+          <div
+            data-notes-editor-footer
+            class="border-border flex items-center justify-between border-t px-2 py-1 text-xs tabular-nums"
+          >
+            <Select.Select v-model="notesEditorMode">
+              <Select.SelectTrigger variant="ghost">
+                <Select.SelectValue>
+                  <Code
+                    v-if="notesEditorMode === 'raw'"
+                    class="size-3.5"
+                  />
+                  <Pencil
+                    v-else-if="notesEditorMode === 'livePreview'"
+                    class="size-3.5"
+                  />
+                  <BookOpen
+                    v-else
+                    class="size-3.5"
+                  />
+                </Select.SelectValue>
+              </Select.SelectTrigger>
+              <Select.SelectContent align="start">
+                <Select.SelectItem value="raw">
+                  <Code class="size-3.5" />
+                  Raw
+                </Select.SelectItem>
+                <Select.SelectItem value="livePreview">
+                  <Pencil class="size-3.5" />
+                  Live Preview
+                </Select.SelectItem>
+                <Select.SelectItem value="preview">
+                  <BookOpen class="size-3.5" />
+                  Preview
+                </Select.SelectItem>
+              </Select.SelectContent>
+            </Select.Select>
+            <div class="mr-1">
+              {{ i18n.t("notes.words") }} {{ textStats.words }},
+              {{ i18n.t("notes.symbols") }} {{ textStats.symbols }}
+            </div>
           </div>
         </div>
       </div>
     </div>
+    <template v-if="showInspector">
+      <div
+        ref="inspectorHandle"
+        class="bg-border hover:bg-primary relative z-10 w-px shrink-0 cursor-col-resize after:absolute after:inset-y-0 after:-left-1 after:w-2"
+      />
+      <aside
+        :style="{ width: `${panelWidth}px` }"
+        class="h-full min-h-0 shrink-0 overflow-hidden"
+      >
+        <NotesInspector
+          :note-id="displayedNote.id"
+          :content="content"
+          :disabled="!isSelectedNoteContentReady"
+          :can-create="notesEditorMode !== 'preview'"
+          @close="isNotesInspectorOpen = false"
+          @reveal="notesEditorRef?.revealLink($event)"
+          @activate="notesEditorRef?.activateLink($event)"
+        />
+      </aside>
+    </template>
   </div>
   <div
     v-else-if="notesState.noteId !== undefined"

@@ -102,6 +102,7 @@ describe('createMainMenuContext', () => {
       secondaryAction: 'new-folder',
     })
     expect(context.view).toEqual({
+      notesInspector: { open: false, enabled: false },
       canToggleCompactMode: true,
       canToggleHideCompletedTasks: true,
       isHideCompletedTasksInFolders: false,

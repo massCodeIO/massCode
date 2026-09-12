@@ -33,6 +33,7 @@ type MainMenuAction =
   | 'set-content-sort-order'
   | 'set-layout-mode'
   | 'toggle-http-panel'
+  | 'toggle-notes-inspector'
   | 'set-notes-editor-mode'
   | 'send-http-request'
   | 'toggle-sidebar'

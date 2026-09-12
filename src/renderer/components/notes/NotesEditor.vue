@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { NotesEditorMode } from '@/composables/spaces/notes/useNotesApp'
 import type { EditorMenuCommand } from './NotesEditorContextMenu.vue'
+import type { InternalLinkMatch } from '~/shared/notes/internalLinks'
 import { createCodeHighlight } from '@/components/cm-extensions/codeHighlight'
 import { editorScrollbarTheme } from '@/components/cm-extensions/scrollbarTheme'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
@@ -65,6 +66,7 @@ import {
 import { createImageInsert } from './cm-extensions/imageInsert'
 import { createInternalLinks } from './cm-extensions/internalLinks'
 import { activatePlannedLink } from './cm-extensions/internalLinks/activatePlannedLink'
+import { getPlannedLinkActions } from './cm-extensions/internalLinks/trigger'
 import { createListIndent } from './cm-extensions/listIndent'
 import { createListLineIndent } from './cm-extensions/listLineIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
@@ -664,7 +666,28 @@ function focusEditor() {
   })
 }
 
+function revealLink(match: InternalLinkMatch) {
+  if (
+    !view
+    || props.disabled
+    || view.state.doc.sliceString(match.from, match.to) !== match.raw
+  ) {
+    return
+  }
+  view.dispatch({
+    selection: { anchor: match.to - 2 },
+    effects: EditorView.scrollIntoView(match.from, { y: 'center' }),
+  })
+  view.focus()
+}
+function activateLink(match: InternalLinkMatch) {
+  if (view && !props.disabled)
+    getPlannedLinkActions(view, match)?.create()
+}
+
 defineExpose({
+  revealLink,
+  activateLink,
   closeContentSearch,
   focusEditor,
   openContentSearch,

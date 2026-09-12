@@ -127,6 +127,8 @@ export interface AppStore {
     selection: CodeState
     contentSort: ContentSortState
     layout: {
+      inspectorOpen?: boolean
+      inspectorWidth?: number
       mode: SpaceLayoutMode
       tagsListHeight: number
       threePanel?: number[]

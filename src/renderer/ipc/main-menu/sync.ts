@@ -21,6 +21,7 @@ const {
 } = useApp()
 const { selectedNote } = useNotes()
 const {
+  isNotesInspectorOpen,
   isNotesMindmapShown,
   isNotesPresentationShown,
   notesEditorMode,
@@ -47,6 +48,7 @@ export function registerMainMenuContextSync() {
         isShowCodePreview.value,
         isShowJsonVisualizer.value,
         Boolean(selectedNote.value),
+        isNotesInspectorOpen.value,
         isNotesMindmapShown.value,
         isNotesPresentationShown.value,
         notesLayoutMode.value,
@@ -95,6 +97,7 @@ export function registerMainMenuContextSync() {
             layoutMode: codeLayoutMode.value,
           },
           notes: {
+            inspectorOpen: isNotesInspectorOpen.value,
             hasSelectedNote: Boolean(selectedNote.value),
             isMindmapShown: isNotesMindmapShown.value,
             isPresentationShown: isNotesPresentationShown.value,

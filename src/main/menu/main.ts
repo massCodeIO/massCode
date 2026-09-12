@@ -488,6 +488,18 @@ function createSortMenuItems(context: MainMenuContext): MenuConfig[] {
 
 function createViewMenuItems(context: MainMenuContext): MenuConfig[] {
   const items = createLayoutMenuItems(context)
+  if (context.view.notesInspector) {
+    items.push(
+      { type: 'separator' },
+      {
+        label: i18n.t('ui:notes.inspector.title'),
+        type: 'checkbox',
+        checked: context.view.notesInspector.open,
+        enabled: context.view.notesInspector.enabled,
+        click: () => send('main-menu:toggle-notes-inspector'),
+      },
+    )
+  }
   const sortItems = createSortMenuItems(context)
 
   if (sortItems.length) {

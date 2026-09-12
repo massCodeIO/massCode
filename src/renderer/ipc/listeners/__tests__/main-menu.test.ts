@@ -6,6 +6,9 @@ async function setup() {
 
   Object.assign(globalThis, { watch: vi.fn() })
 
+  const selectedNote = ref<{ id: number }>()
+  const isNotesInspectorOpen = ref(false)
+  const isNotesMindmapShown = ref(false)
   const bottomOpen = ref(true)
   const inspectorOpen = ref(false)
   const httpState = { activePanel: 'request' }
@@ -68,11 +71,12 @@ async function setup() {
       createNoteAndSelect,
       createTaskAndSelect,
       getNotes,
-      selectedNote: ref(undefined),
+      selectedNote,
     }),
     useNotesApp: () => ({
       hideNotesViewModes: vi.fn(),
-      isNotesMindmapShown: ref(false),
+      isNotesMindmapShown,
+      isNotesInspectorOpen,
       isNotesPresentationShown: ref(false),
       notesEditorMode: ref('livePreview'),
       setNotesLayoutMode: vi.fn(),
@@ -145,6 +149,9 @@ async function setup() {
   registerMainMenuListeners()
 
   return {
+    selectedNote,
+    isNotesInspectorOpen,
+    isNotesMindmapShown,
     bottomOpen,
     inspectorOpen,
     httpState,
@@ -293,4 +300,24 @@ it('toggles HTTP panels and ignores unavailable panels and other spaces', async 
   state.httpState.activePanel = 'folder'
   toggle({}, 'bottom')
   expect(state.bottomOpen.value).toBe(false)
+})
+
+it('toggles the Notes inspector only for a selected note in its editor', async () => {
+  const state = await setup()
+  const toggle = state.ipcHandlers.get('main-menu:toggle-notes-inspector')!
+  state.getActiveSpaceId.mockReturnValue('notes')
+  toggle()
+  expect(state.isNotesInspectorOpen.value).toBe(false)
+  state.selectedNote.value = { id: 1 }
+  toggle()
+  expect(state.isNotesInspectorOpen.value).toBe(true)
+  toggle()
+  expect(state.isNotesInspectorOpen.value).toBe(false)
+  state.isNotesMindmapShown.value = true
+  toggle()
+  expect(state.isNotesInspectorOpen.value).toBe(false)
+  state.isNotesMindmapShown.value = false
+  state.getActiveSpaceId.mockReturnValue('http')
+  toggle()
+  expect(state.isNotesInspectorOpen.value).toBe(false)
 })

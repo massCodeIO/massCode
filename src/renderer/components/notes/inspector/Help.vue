@@ -62,37 +62,29 @@ const types = Object.keys(calloutTitleByType)
       >
         {{ i18n.t("notes.inspector.annotations.help.usage") }}
       </UiText>
+      <NotesInspectorHelpAction
+        translation-key="notes.inspector.annotations.help.navigate"
+        action="locate"
+      />
     </UiHelpButton>
     <UiHelpButton
       v-else
       :label="i18n.t('notes.inspector.linkHelp.title')"
     >
-      <UiText
-        as="p"
-        variant="xs"
-        muted
-      >
-        {{ i18n.t("notes.inspector.linkHelp.navigate") }}
-      </UiText>
-      <UiText
+      <NotesInspectorHelpAction
+        translation-key="notes.inspector.linkHelp.navigate"
+        action="locate"
+      />
+      <NotesInspectorHelpAction
         v-if="canCreate"
-        as="p"
-        variant="xs"
-        muted
-      >
-        {{
-          i18n.t("notes.inspector.linkHelp.create", {
-            shortcut: isMac ? "Cmd" : "Ctrl",
-          })
-        }}
-      </UiText>
-      <UiText
-        as="p"
-        variant="xs"
-        muted
-      >
-        {{ i18n.t("notes.inspector.linkHelp.external") }}
-      </UiText>
+        translation-key="notes.inspector.linkHelp.create"
+        action="locate"
+        :shortcut="isMac ? 'Cmd' : 'Ctrl'"
+      />
+      <NotesInspectorHelpAction
+        translation-key="notes.inspector.linkHelp.external"
+        action="external"
+      />
     </UiHelpButton>
   </div>
 </template>

@@ -7,6 +7,7 @@ import type {
 } from './types'
 import {
   normalizeInternalLinkLookupKey,
+  realInternalLinkRewrite,
   rewriteInternalLinks,
 } from '../../../../../../shared/notes/internalLinks'
 import { getPaths, getVaultPath } from '../../runtime/paths'
@@ -197,7 +198,12 @@ function buildDeferredRewrite(
         return null
       }
 
-      return newTarget
+      return realInternalLinkRewrite(
+        newTarget,
+        resolved.id,
+        'note',
+        match.alias,
+      )
     })
 }
 
@@ -353,7 +359,12 @@ export function rewriteBacklinksAfterNoteUpdate(
         return null
       }
 
-      return updatedTarget
+      return realInternalLinkRewrite(
+        updatedTarget,
+        updatedNoteId,
+        'note',
+        match.alias,
+      )
     })
 
   for (const note of notes) {
@@ -505,7 +516,7 @@ export function promoteBareBacklinksOnConflict(
           return null
         }
 
-        return newTarget
+        return realInternalLinkRewrite(newTarget, noteId, 'note', match.alias)
       })
 
     for (const linker of notes) {
@@ -688,7 +699,12 @@ export function rewriteBacklinksAfterFolderUpdate(
         return null
       }
 
-      return newTarget
+      return realInternalLinkRewrite(
+        newTarget,
+        resolved.id,
+        'note',
+        match.alias,
+      )
     })
 
   for (const linker of notes) {

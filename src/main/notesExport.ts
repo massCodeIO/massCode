@@ -59,6 +59,7 @@ markdown.inline.ruler.before(
       token.content = match.raw
       token.meta = {
         label: match.label,
+        planned: !!match.plannedTarget,
         target: match.target,
       }
     }
@@ -69,7 +70,13 @@ markdown.inline.ruler.before(
 
 markdown.renderer.rules.masscode_internal_link = (tokens, index, _, env) => {
   const token = tokens[index]
-  const meta = token.meta as { label: string, target: string }
+  const meta = token.meta as {
+    label: string
+    target: string
+    planned?: boolean
+  }
+  if (meta.planned)
+    return escapeHtml(meta.label)
   const resolveHref = (
     env as { internalLinkHref?: (target: string) => string | null }
   ).internalLinkHref

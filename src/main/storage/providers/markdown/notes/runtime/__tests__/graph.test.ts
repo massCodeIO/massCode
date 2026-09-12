@@ -95,3 +95,15 @@ describe('buildNotesGraph', () => {
     )
   })
 })
+
+it('never creates planned edges even when a real reserved title exists', () => {
+  const graph = buildNotesGraph({
+    notes: [
+      createNote(1, 'Source', '[[masscode:planned:note|Later]]'),
+      createNote(2, 'masscode:planned:note', ''),
+    ],
+    snippets: [],
+  })
+  expect(graph.edges).toEqual([])
+  expect(graph.nodes.find(node => node.id === 2)?.incomingLinksCount).toBe(0)
+})

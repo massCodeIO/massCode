@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   parseNoteExportPayload,
   renderNoteHtml,
+  renderNoteHtmlBody,
   sanitizeNoteExportFileName,
   writeFileAtomically,
 } from '../notesExport'
@@ -287,4 +288,18 @@ describe('note export helpers', () => {
       }),
     ).toBeNull()
   })
+})
+
+it('exports planned labels escaped without calling the resolver, including no-resolver export', async () => {
+  const resolve = vi.fn(() => 'real-reserved-title.html')
+  for (const internalLinkHref of [resolve, undefined]) {
+    const html = await renderNoteHtmlBody(
+      '[[masscode:planned:note|<Future & safe>]]',
+      { internalLinkHref },
+    )
+    expect(html).toContain('&lt;Future &amp; safe&gt;')
+    expect(html).not.toContain('href="real-reserved-title.html"')
+    expect(html).not.toContain('masscode:planned:note')
+  }
+  expect(resolve).not.toHaveBeenCalled()
 })

@@ -3,6 +3,7 @@ import type {
   InternalLinkType,
 } from '../../../../../../shared/notes/internalLinks'
 import {
+  getPlannedLinkTarget,
   normalizeInternalLinkLookupKey,
   splitInternalLinkTarget,
 } from '../../../../../../shared/notes/internalLinks'
@@ -115,6 +116,8 @@ export function createInternalLinkResolver(
 
   return {
     resolve(target, options) {
+      if (getPlannedLinkTarget(target))
+        return null
       const { basename, pathSegments } = splitInternalLinkTarget(target)
 
       if (!basename) {

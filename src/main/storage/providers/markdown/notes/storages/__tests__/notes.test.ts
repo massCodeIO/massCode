@@ -7,6 +7,7 @@ import {
   resetCloudFileExemptions,
   setDatalessProbeForTests,
 } from '../../../runtime/shared/cloudFiles'
+import { rewriteBacklinksAfterNoteUpdate } from '../../runtime/backlinks'
 import { getNotesPaths } from '../../runtime/constants'
 import { ensureNotesStateFile } from '../../runtime/state'
 import {
@@ -634,6 +635,42 @@ describe('notes storage validations', () => {
     }
   })
 
+  it.each([false, true])(
+    'preserves planned links and keeps real reserved renames typed (deferred=%s)',
+    (deferred) => {
+      const storage = createNotesNotesStorage()
+      const target = storage.createNote({ name: 'Old Target' })
+      const linker = storage.createNote({ name: 'Linker' })
+      const planned = '[[masscode:planned:note|Keep]]'
+      storage.updateNoteContent(linker.id, `${planned} [[Old Target]]`)
+      const paths = getNotesPaths(tempVaultPath)
+      const cached = getNotesRuntimeCache(paths).notes.find(
+        note => note.id === linker.id,
+      )!
+      if (deferred)
+        cached.pendingCloudDownload = true
+      const cache = getNotesRuntimeCache(paths)
+      cache.notes.find(note => note.id === target.id)!.name
+        = 'masscode:planned:note'
+      // Imported legacy names bypass normal API validation; exercise actual replay.
+      rewriteBacklinksAfterNoteUpdate({
+        paths,
+        state: cache.state,
+        notes: cache.notes,
+        updatedNoteId: target.id,
+        previousName: 'Old Target',
+        nextName: 'masscode:planned:note',
+        previousFolderId: null,
+        nextFolderId: null,
+      })
+      if (deferred)
+        syncNoteFileWithDisk(paths, cached.filePath)
+      expect(storage.getNoteById(linker.id)?.content).toBe(
+        `${planned} [[note:${target.id}|masscode:planned:note]]`,
+      )
+    },
+  )
+
   it('rewrites internal links in backlinking notes when a note is renamed', () => {
     const storage = createNotesNotesStorage()
 
@@ -642,7 +679,10 @@ describe('notes storage validations', () => {
     const aliasLinker = storage.createNote({ name: 'Alias Linker' })
     const unrelated = storage.createNote({ name: 'Unrelated' })
 
-    storage.updateNoteContent(linker.id, 'See [[Old Name]] for context')
+    storage.updateNoteContent(
+      linker.id,
+      'See [[Old Name]] [[masscode:planned:note|Future]] for context',
+    )
     storage.updateNoteContent(
       aliasLinker.id,
       'See [[old name|the old]] for context',
@@ -652,7 +692,7 @@ describe('notes storage validations', () => {
     storage.updateNote(target.id, { name: 'New Name' })
 
     expect(storage.getNoteById(linker.id)?.content).toBe(
-      'See [[New Name]] for context',
+      'See [[New Name]] [[masscode:planned:note|Future]] for context',
     )
     expect(storage.getNoteById(aliasLinker.id)?.content).toBe(
       'See [[New Name|the old]] for context',

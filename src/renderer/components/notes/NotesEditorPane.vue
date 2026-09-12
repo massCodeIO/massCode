@@ -549,7 +549,6 @@ onBeforeUnmount(() => {
               <Presentation class="h-3 w-3" />
             </UiActionButton>
             <UiActionButton
-              class="mr-1"
               :tooltip="sidebarActionTooltip"
               :active="isNotesSidebarHidden"
               @click="onSidebarToggle"

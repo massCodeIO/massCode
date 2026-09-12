@@ -213,9 +213,7 @@ function revealRow(row: LinkRow) {
           >
             <Select.SelectValue>
               {{ i18n.t(`notes.inspector.status.${statusFilter}`) }} ·
-              {{
-                statusFilter === "all" ? rows.length : summary[statusFilter]
-              }}
+              {{ statusFilter === "all" ? rows.length : summary[statusFilter] }}
             </Select.SelectValue>
           </Select.SelectTrigger>
           <Select.SelectContent>
@@ -307,10 +305,12 @@ function revealRow(row: LinkRow) {
           <div
             class="flex min-w-0 flex-1 items-start gap-2 px-1 py-2 text-left"
           >
-            <component
-              :is="icon(row)"
-              class="size-3.5 shrink-0 self-start"
-            />
+            <span class="flex h-4 shrink-0 items-center">
+              <component
+                :is="icon(row)"
+                class="size-3.5"
+              />
+            </span>
             <span class="min-w-0">
               <UiText
                 as="span"

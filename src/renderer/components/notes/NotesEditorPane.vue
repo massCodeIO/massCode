@@ -26,8 +26,6 @@ import {
   Code,
   LoaderCircle,
   Network,
-  PanelLeftClose,
-  PanelLeftOpen,
   Pencil,
   Presentation,
 } from 'lucide-vue-next'
@@ -556,13 +554,9 @@ onBeforeUnmount(() => {
               :active="isNotesSidebarHidden"
               @click="onSidebarToggle"
             >
-              <PanelLeftOpen
-                v-if="isNotesSidebarHidden"
-                class="h-3 w-3"
-              />
-              <PanelLeftClose
-                v-else
-                class="h-3 w-3"
+              <UiPanelIcon
+                side="left"
+                :open="!isNotesSidebarHidden"
               />
             </UiActionButton>
             <UiActionButton

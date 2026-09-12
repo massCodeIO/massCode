@@ -7,9 +7,17 @@ import { subscribeStorageMutations } from '@/composables/useStorageMutation'
 import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
 import { useDebounceFn } from '@vueuse/core'
-import { Code2, FileText, LocateFixed, Send, X } from 'lucide-vue-next'
+import {
+  Code2,
+  ExternalLink,
+  FileText,
+  Globe,
+  LocateFixed,
+  Send,
+  X,
+} from 'lucide-vue-next'
 import { findInternalLinks } from '~/shared/notes/internalLinks'
-import { groupLinks, resolveInspectorLinks } from './links'
+import { groupExternalLinks, groupLinks, resolveInspectorLinks } from './links'
 
 const props = defineProps<{
   noteId: number
@@ -19,13 +27,13 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{
   close: []
-  reveal: [match: InternalLinkMatch]
+  reveal: [match: LinkRow['occurrences'][number]]
   activate: [match: InternalLinkMatch]
 }>()
 const statusFilter = ref<'all' | 'linked' | 'planned' | 'missing'>('all')
 const spaceFilter = ref('all')
 const statuses = ['all', 'linked', 'planned', 'missing'] as const
-const spaces = ['all', 'note', 'snippet', 'http-request'] as const
+const spaces = ['all', 'note', 'snippet', 'http-request', 'external'] as const
 const displayedNoteId = ref<number>()
 const displayedContent = ref('')
 const actionsDisabled = computed(
@@ -55,8 +63,12 @@ const targetKey = computed(() =>
     ].sort(),
   ),
 )
-const rows = computed(() => groupLinks(matches.value, resolved.value))
+const rows = computed(() => [
+  ...groupLinks(matches.value, resolved.value),
+  ...groupExternalLinks(displayedContent.value),
+])
 const summary = computed(() => ({
+  external: rows.value.filter(row => row.status === 'external').length,
   linked: rows.value.filter(row => row.status === 'linked').length,
   planned: rows.value.filter(row => row.status === 'planned').length,
   missing: rows.value.filter(row => row.status === 'missing').length,
@@ -75,6 +87,11 @@ const groups = computed(() => {
         row => row.status === 'linked' && row.type === type,
       ),
     })),
+    {
+      key: 'external',
+      label: i18n.t('notes.inspector.external'),
+      rows: filtered.filter(row => row.status === 'external'),
+    },
     ...(['planned', 'missing', 'pending'] as const).map(status => ({
       key: status,
       label: i18n.t(`notes.inspector.${status}`),
@@ -140,6 +157,8 @@ watch(
   },
 )
 function icon(row: LinkRow) {
+  if (row.type === 'external')
+    return Globe
   return row.type === 'snippet'
     ? Code2
     : row.type === 'http-request'
@@ -154,7 +173,9 @@ function openRow(row: LinkRow, event: MouseEvent) {
     && props.canCreate
     && (isMac ? event.metaKey : event.ctrlKey)
   ) {
-    emit('activate', row.occurrences[0]!)
+    const match = row.occurrences[0]!
+    if ('plannedTarget' in match)
+      emit('activate', match)
   }
   else {
     revealRow(row)
@@ -330,11 +351,13 @@ function revealRow(row: LinkRow) {
                 muted
                 class="block truncate"
               >{{
-                row.status === "linked"
-                  ? row.path || i18n.t("common.inbox")
-                  : row.type
-                    ? i18n.t(`internalLinks.planned.types.${row.type}`)
-                    : row.occurrences[0]?.target
+                row.url
+                  ? row.url
+                  : row.status === "linked"
+                    ? row.path || i18n.t("common.inbox")
+                    : row.type
+                      ? i18n.t(`internalLinks.planned.types.${row.type}`)
+                      : row.name
               }}</UiText>
             </span>
           </div>
@@ -344,6 +367,14 @@ function revealRow(row: LinkRow) {
           >
             ×{{ row.occurrences.length }}
           </UiText>
+          <UiActionButton
+            v-if="row.url"
+            :tooltip="i18n.t('notes.inspector.openExternal')"
+            :disabled="actionsDisabled"
+            @click="ipc.invoke('system:open-external', row.url)"
+          >
+            <ExternalLink class="size-3.5" />
+          </UiActionButton>
           <UiActionButton
             :tooltip="i18n.t('notes.inspector.reveal')"
             :disabled="actionsDisabled"

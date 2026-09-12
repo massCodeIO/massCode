@@ -1120,12 +1120,12 @@
     },
     "inspector": {
       "title": "Note inspector",
-      "summary": "{{linked}} linked · {{planned}} planned · {{missing}} missing",
+      "summary": "{{linked}} linked · {{planned}} planned · {{missing}} missing · {{external}} external",
       "planned": "Planned",
       "missing": "Missing",
       "pending": "Loading links…",
       "failed": "Could not load linked items.",
-      "empty": "This note has no internal links.",
+      "empty": "This note has no links.",
       "createHint": "{{shortcut}}+click the locate button of a planned link to create it.",
       "links": "Links",
       "reveal": "Find in note · click again for next occurrence",
@@ -1145,8 +1145,11 @@
         "all": "All spaces",
         "note": "Notes",
         "snippet": "Code",
-        "http-request": "HTTP"
-      }
+        "http-request": "HTTP",
+        "external": "External"
+      },
+      "external": "External",
+      "openExternal": "Open in browser"
     }
   },
   "folder": {

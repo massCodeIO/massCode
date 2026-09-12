@@ -1,23 +1,26 @@
 import type { InternalLinksResolveResponse } from '@/services/api/generated'
+import type { ExternalLinkMatch } from './externalLinks'
 import type {
   InternalLinkMatch,
   InternalLinkType,
 } from '~/shared/notes/internalLinks'
 import { api } from '@/services/api'
 import { buildNoteFolderPathMap } from '~/shared/notes/folderPath'
+import { findExternalLinks } from './externalLinks'
 
 export type ResolvedLink = NonNullable<
   InternalLinksResolveResponse[number]['resolved']
 > & { path?: string }
 export interface LinkRow {
   key: string
-  status: 'linked' | 'planned' | 'missing' | 'pending'
-  type?: InternalLinkType
+  status: 'linked' | 'planned' | 'missing' | 'pending' | 'external'
+  type?: InternalLinkType | 'external'
   name: string
   aliases: string[]
   path?: string
   target?: { type: InternalLinkType, id: number }
-  occurrences: InternalLinkMatch[]
+  url?: string
+  occurrences: (InternalLinkMatch | ExternalLinkMatch)[]
 }
 
 export function groupLinks(
@@ -129,4 +132,33 @@ export async function resolveInspectorLinks(
       ]
     }),
   )
+}
+
+export function groupExternalLinks(content: string): LinkRow[] {
+  const rows = new Map<string, LinkRow>()
+  for (const match of findExternalLinks(content)) {
+    const existing = rows.get(match.url)
+    if (existing) {
+      existing.occurrences.push(match)
+      if (
+        match.alias
+        && match.alias !== existing.name
+        && !existing.aliases.includes(match.alias)
+      ) {
+        existing.aliases.push(match.alias)
+      }
+    }
+    else {
+      rows.set(match.url, {
+        key: `external:${match.url}`,
+        status: 'external',
+        type: 'external',
+        url: match.url,
+        name: match.alias || match.url,
+        aliases: [],
+        occurrences: [match],
+      })
+    }
+  }
+  return [...rows.values()]
 }

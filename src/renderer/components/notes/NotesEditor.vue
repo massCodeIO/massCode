@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { NotesEditorMode } from '@/composables/spaces/notes/useNotesApp'
+import type { ExternalLinkMatch } from './inspector/externalLinks'
 import type { EditorMenuCommand } from './NotesEditorContextMenu.vue'
 import type { InternalLinkMatch } from '~/shared/notes/internalLinks'
 import { createCodeHighlight } from '@/components/cm-extensions/codeHighlight'
@@ -666,7 +667,7 @@ function focusEditor() {
   })
 }
 
-function revealLink(match: InternalLinkMatch) {
+function revealLink(match: InternalLinkMatch | ExternalLinkMatch) {
   if (
     !view
     || props.disabled
@@ -675,7 +676,7 @@ function revealLink(match: InternalLinkMatch) {
     return
   }
   view.dispatch({
-    selection: { anchor: match.to - 2 },
+    selection: { anchor: 'cursor' in match ? match.cursor : match.to - 2 },
     effects: EditorView.scrollIntoView(match.from, { y: 'center' }),
   })
   view.focus()

@@ -7,7 +7,11 @@ import { api } from '@/services/api'
 import { StateEffect } from '@codemirror/state'
 import { Decoration, ViewPlugin, WidgetType } from '@codemirror/view'
 import { h, render } from 'vue'
-import { getRevealSelection, revealSelectionChanged } from '../revealSelection'
+import {
+  getRevealHasFocus,
+  getRevealSelection,
+  revealSelectionChanged,
+} from '../revealSelection'
 import { entityCache } from './cache'
 import {
   findInternalLinks,
@@ -531,7 +535,7 @@ export function createInternalLinksDecorations(mode: InternalLinksMode) {
             if (
               !shouldShowInternalLinkWidget(
                 mode,
-                this.view.hasFocus,
+                getRevealHasFocus(this.view.state, this.view.hasFocus),
                 selections,
                 link.from,
                 link.to,

@@ -6,16 +6,26 @@ import { EditorView } from '@codemirror/view'
 // в raw-markdown (как в Obsidian): раскрытие пересчитывается только после
 // отпускания кнопки. Для этого selection, по которому декорации решают,
 // показывать ли разметку, «замораживается» состоянием на момент нажатия.
-const setRevealSelectionFrozenEffect = StateEffect.define<boolean>()
+const setRevealSelectionFrozenEffect = StateEffect.define<{
+  hasFocus: boolean
+} | null>()
 
-const revealSelectionField = StateField.define<EditorSelection | null>({
+const revealSelectionField = StateField.define<{
+  selection: EditorSelection
+  hasFocus: boolean
+} | null>({
   create() {
     return null
   },
   update(value, transaction) {
     for (const effect of transaction.effects) {
       if (effect.is(setRevealSelectionFrozenEffect)) {
-        return effect.value ? transaction.startState.selection : null
+        return effect.value
+          ? {
+              selection: transaction.startState.selection,
+              hasFocus: effect.value.hasFocus,
+            }
+          : null
       }
     }
 
@@ -23,7 +33,7 @@ const revealSelectionField = StateField.define<EditorSelection | null>({
     // замена placeholder'а картинки): без маппинга замороженные позиции
     // указали бы за конец документа и уронили билдеры декораций.
     if (value && transaction.docChanged)
-      return value.map(transaction.changes)
+      return { ...value, selection: value.selection.map(transaction.changes) }
 
     return value
   },
@@ -31,7 +41,14 @@ const revealSelectionField = StateField.define<EditorSelection | null>({
 
 // Selection, по которому декорации решают, раскрывать ли raw-markdown.
 export function getRevealSelection(state: EditorState): EditorSelection {
-  return state.field(revealSelectionField, false) ?? state.selection
+  return state.field(revealSelectionField, false)?.selection ?? state.selection
+}
+
+export function getRevealHasFocus(
+  state: EditorState,
+  hasFocus: boolean,
+): boolean {
+  return state.field(revealSelectionField, false)?.hasFocus ?? hasFocus
 }
 
 // Заморозка/разморозка приходит транзакцией без docChanged/selectionSet,
@@ -43,8 +60,12 @@ export function revealSelectionChanged(update: {
   startState: EditorState
   state: EditorState
 }): boolean {
-  return !getRevealSelection(update.startState).eq(
-    getRevealSelection(update.state),
+  const wasUnfocused
+    = update.startState.field(revealSelectionField, false)?.hasFocus === false
+  const isUnfrozen = update.state.field(revealSelectionField, false) === null
+  return (
+    (wasUnfocused && isUnfrozen)
+    || !getRevealSelection(update.startState).eq(getRevealSelection(update.state))
   )
 }
 
@@ -55,11 +76,13 @@ export function freezeRevealSelectionUntilMouseup(view: EditorView) {
   const unfreeze = () => {
     window.removeEventListener('mouseup', unfreeze)
     if (view.dom.isConnected)
-      view.dispatch({ effects: setRevealSelectionFrozenEffect.of(false) })
+      view.dispatch({ effects: setRevealSelectionFrozenEffect.of(null) })
   }
 
   window.addEventListener('mouseup', unfreeze)
-  view.dispatch({ effects: setRevealSelectionFrozenEffect.of(true) })
+  view.dispatch({
+    effects: setRevealSelectionFrozenEffect.of({ hasFocus: view.hasFocus }),
+  })
 }
 
 // Prec.highest: обработчики других расширений (например, клик под последней

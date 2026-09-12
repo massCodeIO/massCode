@@ -146,6 +146,7 @@ export interface AppStore {
       widgets: NotesDashboardWidgets
     }
     layout: {
+      inspectorTab?: 'outline' | 'links'
       mode: SpaceLayoutMode
       tagsListHeight: number
       threePanel?: number[]

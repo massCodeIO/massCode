@@ -1149,7 +1149,13 @@
         "external": "External"
       },
       "external": "External",
-      "openExternal": "Open in browser"
+      "openExternal": "Open in browser",
+      "outline": {
+        "title": "Outline",
+        "empty": "Add headings to navigate your note.",
+        "untitled": "Untitled heading",
+        "hint": "Drag headings to reorder sections. Drop above or below a heading to place the section beside it, or onto the heading to nest it. All content and nested sections move together."
+      }
     }
   },
   "folder": {

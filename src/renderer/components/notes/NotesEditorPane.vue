@@ -334,6 +334,7 @@ watch(
 )
 
 const editorContent = ref('')
+const editorCursor = ref(0)
 // id заметки, контент которой сейчас находится в редакторе: меняется только
 // вместе с editorContent, когда полная запись уже загружена.
 const editorNoteId = ref<number | undefined>()
@@ -598,6 +599,7 @@ onBeforeUnmount(() => {
               :disabled="!isSelectedNoteContentReady"
               :mode="notesEditorMode"
               :note-id="editorNoteId"
+              @cursor="editorCursor = $event"
             />
           </div>
           <div
@@ -658,6 +660,9 @@ onBeforeUnmount(() => {
           :content="content"
           :disabled="!isSelectedNoteContentReady"
           :can-create="notesEditorMode !== 'preview'"
+          :cursor="editorCursor"
+          @heading="notesEditorRef?.revealHeading($event)"
+          @move="notesEditorRef?.moveSection($event)"
           @close="isNotesInspectorOpen = false"
           @reveal="notesEditorRef?.revealLink($event)"
           @activate="notesEditorRef?.activateLink($event)"

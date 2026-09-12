@@ -80,7 +80,7 @@ it('updates occurrences immediately while typing and resolves renamed objects af
     isDeleted: 0,
   }
   resolve.mockImplementation(async () => new Map([['note:1', { ...item }]]))
-  const { default: Inspector } = await import('../Inspector.vue')
+  const { default: Inspector } = await import('../Links.vue')
   const props = Vue.reactive({
     noteId: 2,
     content: '[[note:1]]',

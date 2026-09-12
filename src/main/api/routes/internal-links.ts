@@ -2,6 +2,10 @@ import type { InternalLinkLookupItem } from '../../../shared/notes/internalLinks
 import type { InternalLinksResolveResponse } from '../dto/internal-links'
 import Elysia from 'elysia'
 import { buildNoteFolderPathMap } from '../../../shared/notes/folderPath'
+import {
+  buildLinkMarkdown,
+  parseInternalLink,
+} from '../../../shared/notes/internalLinks'
 import { useHttpStorage, useNotesStorage, useStorage } from '../../storage'
 import { createInternalLinkResolver } from '../../storage/providers/markdown/notes/runtime/internalLinkResolver'
 import { internalLinksDTO } from '../dto/internal-links'
@@ -66,7 +70,9 @@ app.use(internalLinksDTO).post(
     const requestById = new Map(httpRequests.map(r => [r.id, r]))
 
     return titles.map((title) => {
-      const target = resolver.resolve(title)
+      const target
+        = parseInternalLink(buildLinkMarkdown(title))?.legacyTarget
+          ?? resolver.resolve(title)
 
       if (!target) {
         return { title, resolved: null }

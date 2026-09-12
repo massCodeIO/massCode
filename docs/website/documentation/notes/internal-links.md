@@ -97,6 +97,12 @@ Click the locate button to place the cursor at the end of the link text, before 
 
 Filter by status (Linked, Planned, or Missing) and space (Notes, Code, HTTP, or External). Combine the filters to focus on a subset; the summary still counts the whole note. The list updates as you edit, and the inspector remembers its visibility and width.
 
+### Outline
+
+The **Outline** tab lists H1–H6 headings with their hierarchy and highlights the section at the cursor. Click a heading to jump to it. The selected tab is remembered when switching notes or reopening the inspector.
+
+In Raw and Live Preview, drag a heading above or below another heading to place it at that level, or drop onto its center to nest it inside that section. The entire section moves, including nested headings and content. Heading levels shift together; a move that would exceed H6 is unavailable. Undo the move with <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+<kbd>Z</kbd>. Preview supports navigation only. Headings in code blocks, quotes, and lists are excluded from the outline.
+
 ### External links
 
 The **External** group includes HTTP and HTTPS Markdown links, reference links, autolinks, and plain URLs. Links inside code and image sources are excluded. Repeated URLs share a row with an occurrence count; custom labels remain visible alongside the address.

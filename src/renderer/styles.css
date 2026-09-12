@@ -36,6 +36,16 @@
   --input: oklch(90% 0 0);
   --ring: oklch(50% 0.19 260);
 
+  /* Callouts */
+  --callout-note: #1e40af;
+  --callout-note-bg: #eff6ff;
+  --callout-important: #b91c1c;
+  --callout-important-bg: #fff1f2;
+  --callout-todo: #716000;
+  --callout-todo-bg: #fefce8;
+  --callout-warning: #9a3412;
+  --callout-warning-bg: #fff3e6;
+
   /* Misc */
   --text-highlight: oklch(90.5% 0.182 98.111);
   --scrollbar: oklch(0% 0 0 / 0.2);
@@ -98,6 +108,16 @@
   --border: oklch(30% 0 0);
   --input: oklch(30% 0 0);
   --ring: oklch(50% 0.19 260);
+
+  /* Callouts */
+  --callout-note: #93c5fd;
+  --callout-note-bg: #202d40;
+  --callout-important: #fda4af;
+  --callout-important-bg: #39262c;
+  --callout-todo: #e8d86a;
+  --callout-todo-bg: #33311f;
+  --callout-warning: #fdba74;
+  --callout-warning-bg: #3b2b20;
 
   /* Misc */
   --text-highlight: oklch(90.5% 0.182 98.111);

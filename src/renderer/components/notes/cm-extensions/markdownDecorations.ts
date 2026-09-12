@@ -107,6 +107,7 @@ class CheckboxWidget extends WidgetType {
 }
 
 const calloutIconPaths: Record<CalloutType, string> = {
+  TODO: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="m8 12 3 3 5-6"/>',
   NOTE: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
   IMPORTANT:
     '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
@@ -257,23 +258,20 @@ const blockquoteBaseStyle = [
 ].join(';')
 
 const calloutAccentByType: Record<CalloutType, string> = {
-  NOTE: 'var(--primary)',
-  IMPORTANT: 'var(--destructive)',
-  WARNING: 'var(--warning)',
+  TODO: 'var(--callout-todo)',
+  NOTE: 'var(--callout-note)',
+  IMPORTANT: 'var(--callout-important)',
+  WARNING: 'var(--callout-warning)',
 }
 
-const CALLOUT_BACKGROUND_SATURATION = 10
 const FALLBACK_LIST_MARK_RE = /^([ \t]*)([-*+]|\d+\.)(?=\s)/
 const LIST_MARK_FALLBACK_STYLE = 'color:var(--muted-foreground)'
 
-function createCalloutBackground(baseColor: string): string {
-  return `color-mix(in oklch, ${baseColor} ${CALLOUT_BACKGROUND_SATURATION}%, var(--background))`
-}
-
 const calloutBackgroundByType: Record<CalloutType, string> = {
-  NOTE: createCalloutBackground(calloutAccentByType.NOTE),
-  IMPORTANT: createCalloutBackground(calloutAccentByType.IMPORTANT),
-  WARNING: createCalloutBackground(calloutAccentByType.WARNING),
+  TODO: 'var(--callout-todo-bg)',
+  NOTE: 'var(--callout-note-bg)',
+  IMPORTANT: 'var(--callout-important-bg)',
+  WARNING: 'var(--callout-warning-bg)',
 }
 
 function getCalloutBlockquoteStyle(type: CalloutType) {

@@ -25,7 +25,7 @@ Use [Note inspector](/documentation/notes/inspector) to navigate and reorder sec
 
 ## HTTP
 
-Use [HTTP](/documentation/http/) as a lightweight API client inside massCode. Store requests in folders, import collections from OpenAPI, Postman, or Bruno, switch environments, preview the outgoing request as raw HTTP or cURL, send it from the editor, and inspect the response body and headers without leaving your workspace.
+Use [HTTP](/documentation/http/) as a local API workspace inside massCode. Organize collections, import requests from OpenAPI, Postman, or Bruno, manage environments, and work with HTTP, GraphQL, and WebSocket. Add scripts and tests, run saved requests in sequence, and inspect responses and request history without leaving your workspace.
 
 ## Math
 

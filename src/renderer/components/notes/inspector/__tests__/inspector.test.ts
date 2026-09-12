@@ -59,6 +59,10 @@ let inspectorState: {
   loading: Vue.Ref<boolean>
   showLoading: Vue.ComputedRef<boolean>
   actionsDisabled: Vue.ComputedRef<boolean>
+  statusFilter: Vue.Ref<string>
+  spaceFilter: Vue.Ref<string>
+  summary: Vue.ComputedRef<{ linked: number, planned: number }>
+  groups: Vue.ComputedRef<Array<{ rows: Array<{ name: string }> }>>
 }
 
 afterEach(() => {
@@ -94,6 +98,10 @@ it('updates occurrences immediately while typing and resolves renamed objects af
             loading: Vue.Ref<boolean>
             showLoading: Vue.ComputedRef<boolean>
             actionsDisabled: Vue.ComputedRef<boolean>
+            statusFilter: Vue.Ref<string>
+            spaceFilter: Vue.Ref<string>
+            summary: Vue.ComputedRef<{ linked: number, planned: number }>
+            groups: Vue.ComputedRef<Array<{ rows: Array<{ name: string }> }>>
             rows: Vue.ComputedRef<
               Array<{ name: string, occurrences: unknown[] }>
             >
@@ -168,4 +176,22 @@ it('updates occurrences immediately while typing and resolves renamed objects af
   expect(text(host)).toContain('Next note link')
   expect(text(host)).not.toContain('Synced name')
   expect(inspectorState.actionsDisabled.value).toBe(false)
+  props.content
+    += ' [[masscode:planned:note|Guide]] [[masscode:planned:http-request|List posts]]'
+  await Vue.nextTick()
+  inspectorState.statusFilter.value = 'planned'
+  inspectorState.spaceFilter.value = 'http-request'
+  expect(
+    inspectorState.groups.value.flatMap(group =>
+      group.rows.map(row => row.name),
+    ),
+  ).toEqual(['List posts'])
+  expect(inspectorState.summary.value).toMatchObject({ linked: 1, planned: 2 })
+  inspectorState.spaceFilter.value = 'snippet'
+  expect(inspectorState.groups.value).toEqual([])
+  inspectorState.statusFilter.value = 'all'
+  inspectorState.spaceFilter.value = 'all'
+  expect(
+    inspectorState.groups.value.flatMap(group => group.rows),
+  ).toHaveLength(3)
 })

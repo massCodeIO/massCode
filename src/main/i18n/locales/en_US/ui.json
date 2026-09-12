@@ -1121,7 +1121,6 @@
     "inspector": {
       "title": "Note inspector",
       "summary": "{{linked}} linked · {{planned}} planned · {{missing}} missing",
-      "search": "Search links…",
       "planned": "Planned",
       "missing": "Missing",
       "pending": "Loading links…",
@@ -1132,7 +1131,22 @@
       "reveal": "Find in note · click again for next occurrence",
       "alias": "Label in note: {{alias}}",
       "showMore": "Show more",
-      "showLess": "Show less"
+      "showLess": "Show less",
+      "filterStatus": "Link status",
+      "filterSpace": "Space",
+      "noMatches": "No links match these filters.",
+      "status": {
+        "all": "All statuses",
+        "linked": "Linked",
+        "planned": "Planned",
+        "missing": "Missing"
+      },
+      "space": {
+        "all": "All spaces",
+        "note": "Notes",
+        "snippet": "Code",
+        "http-request": "HTTP"
+      }
     }
   },
   "folder": {

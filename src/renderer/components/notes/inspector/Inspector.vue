@@ -2,7 +2,7 @@
 import type { LinkRow, ResolvedLink } from './links'
 import type { InternalLinkMatch } from '~/shared/notes/internalLinks'
 import { Button } from '@/components/ui/shadcn/button'
-import { Input } from '@/components/ui/shadcn/input'
+import * as Select from '@/components/ui/shadcn/select'
 import { subscribeStorageMutations } from '@/composables/useStorageMutation'
 import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
@@ -22,7 +22,10 @@ const emit = defineEmits<{
   reveal: [match: InternalLinkMatch]
   activate: [match: InternalLinkMatch]
 }>()
-const query = ref('')
+const statusFilter = ref<'all' | 'linked' | 'planned' | 'missing'>('all')
+const spaceFilter = ref('all')
+const statuses = ['all', 'linked', 'planned', 'missing'] as const
+const spaces = ['all', 'note', 'snippet', 'http-request'] as const
 const displayedNoteId = ref<number>()
 const displayedContent = ref('')
 const actionsDisabled = computed(
@@ -59,13 +62,10 @@ const summary = computed(() => ({
   missing: rows.value.filter(row => row.status === 'missing').length,
 }))
 const groups = computed(() => {
-  const search = query.value.trim().toLocaleLowerCase()
   const filtered = rows.value.filter(
     row =>
-      !search
-      || `${row.name} ${row.aliases.join(' ')} ${row.path ?? ''}`
-        .toLocaleLowerCase()
-        .includes(search),
+      (statusFilter.value === 'all' || row.status === statusFilter.value)
+      && (spaceFilter.value === 'all' || row.type === spaceFilter.value),
   )
   return [
     ...(['note', 'snippet', 'http-request'] as const).map(type => ({
@@ -135,7 +135,8 @@ watch(
 watch(
   () => props.noteId,
   () => {
-    query.value = ''
+    statusFilter.value = 'all'
+    spaceFilter.value = 'all'
   },
 )
 function icon(row: LinkRow) {
@@ -204,11 +205,48 @@ function revealRow(row: LinkRow) {
       >
         {{ i18n.t("notes.inspector.summary", summary) }}
       </UiText>
-      <Input
-        v-model="query"
-        :placeholder="i18n.t('notes.inspector.search')"
-        :aria-label="i18n.t('notes.inspector.search')"
-      />
+      <div class="flex flex-wrap gap-1">
+        <Select.Select v-model="statusFilter">
+          <Select.SelectTrigger
+            class="h-7 w-auto"
+            :aria-label="i18n.t('notes.inspector.filterStatus')"
+          >
+            <Select.SelectValue>
+              {{ i18n.t(`notes.inspector.status.${statusFilter}`) }} ·
+              {{
+                statusFilter === "all" ? rows.length : summary[statusFilter]
+              }}
+            </Select.SelectValue>
+          </Select.SelectTrigger>
+          <Select.SelectContent>
+            <Select.SelectItem
+              v-for="status in statuses"
+              :key="status"
+              :value="status"
+            >
+              {{ i18n.t(`notes.inspector.status.${status}`) }} ·
+              {{ status === "all" ? rows.length : summary[status] }}
+            </Select.SelectItem>
+          </Select.SelectContent>
+        </Select.Select>
+        <Select.Select v-model="spaceFilter">
+          <Select.SelectTrigger
+            class="h-7 w-auto"
+            :aria-label="i18n.t('notes.inspector.filterSpace')"
+          >
+            <Select.SelectValue />
+          </Select.SelectTrigger>
+          <Select.SelectContent>
+            <Select.SelectItem
+              v-for="space in spaces"
+              :key="space"
+              :value="space"
+            >
+              {{ i18n.t(`notes.inspector.space.${space}`) }}
+            </Select.SelectItem>
+          </Select.SelectContent>
+        </Select.Select>
+      </div>
       <UiText
         v-if="showLoading"
         as="p"
@@ -245,9 +283,7 @@ function revealRow(row: LinkRow) {
       >
         {{
           i18n.t(
-            query
-              ? "internalLinks.picker.emptyResults"
-              : "notes.inspector.empty",
+            rows.length ? "notes.inspector.noMatches" : "notes.inspector.empty",
           )
         }}
       </UiText>

@@ -95,7 +95,7 @@ Open **View → Note inspector** or use the right-panel button at the end of the
 
 Click the locate button to place the cursor at the end of the link text, before its closing brackets. In Live Preview, this reveals the link markup for editing. Repeated clicks cycle through occurrences. In Raw or Live Preview, <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+click the locate button of a planned row to create its first occurrence through the usual flow.
 
-Search by name or folder path. The list updates as you edit, and the inspector remembers its visibility and width.
+Filter by status (Linked, Planned, or Missing) and space (Notes, Code, or HTTP). Combine the filters to focus on a subset; the summary still counts the whole note. The list updates as you edit, and the inspector remembers its visibility and width.
 
 ## Navigation History
 

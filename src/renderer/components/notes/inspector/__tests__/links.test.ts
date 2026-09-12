@@ -68,3 +68,30 @@ describe('note inspector links', () => {
     expect(result.get('note:1')).toBeNull()
   })
 })
+
+it('shows distinct custom labels alongside the target name for every space', () => {
+  for (const type of ['note', 'snippet', 'http-request'] as const) {
+    const item = { type, id: 1, name: 'Original', folder: null, isDeleted: 0 }
+    const rows = groupLinks(
+      findInternalLinks(
+        `[[${type}:1|Custom]] [[${type}:1|Other]] [[${type}:1|Custom]] [[${type}:1|Original]]`,
+      ),
+      new Map([[`${type}:1`, item]]),
+    )
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({
+      name: 'Original',
+      aliases: ['Custom', 'Other'],
+    })
+    expect(rows[0]!.occurrences).toHaveLength(4)
+  }
+})
+
+it('keeps the target visible for missing links and does not treat planned names as aliases', () => {
+  const rows = groupLinks(
+    findInternalLinks('[[Missing|Label]] [[masscode:planned:note|Future]]'),
+    new Map([['Missing', null]]),
+  )
+  expect(rows[0]).toMatchObject({ name: 'Missing', aliases: ['Label'] })
+  expect(rows[1]).toMatchObject({ name: 'Future', aliases: [] })
+})

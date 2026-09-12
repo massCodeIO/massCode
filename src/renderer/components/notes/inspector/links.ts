@@ -14,6 +14,7 @@ export interface LinkRow {
   status: 'linked' | 'planned' | 'missing' | 'pending'
   type?: InternalLinkType
   name: string
+  aliases: string[]
   path?: string
   target?: { type: InternalLinkType, id: number }
   occurrences: InternalLinkMatch[]
@@ -48,13 +49,29 @@ export function groupLinks(
       key,
       status,
       type,
-      name: entity?.name ?? match.alias ?? match.basename,
+      name:
+        entity?.name
+        ?? (match.plannedTarget ? match.alias : null)
+        ?? match.basename,
+      aliases: [],
       path: entity?.path,
       target: entity ? { type: entity.type, id: entity.id } : undefined,
       occurrences: [match],
     })
   }
-  return [...rows.values()]
+  return [...rows.values()].map(row => ({
+    ...row,
+    aliases:
+      row.status === 'planned'
+        ? []
+        : [
+            ...new Set(
+              row.occurrences.flatMap(match =>
+                match.alias && match.alias !== row.name ? [match.alias] : [],
+              ),
+            ),
+          ],
+  }))
 }
 
 export async function resolveInspectorLinks(

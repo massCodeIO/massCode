@@ -58,7 +58,9 @@ const groups = computed(() => {
   const filtered = rows.value.filter(
     row =>
       !search
-      || `${row.name} ${row.path ?? ''}`.toLocaleLowerCase().includes(search),
+      || `${row.name} ${row.aliases.join(' ')} ${row.path ?? ''}`
+        .toLocaleLowerCase()
+        .includes(search),
   )
   return [
     ...(['note', 'snippet', 'http-request'] as const).map(type => ({
@@ -268,6 +270,14 @@ function revealRow(row: LinkRow) {
                     ? i18n.t(`internalLinks.planned.types.${row.type}`)
                     : row.occurrences[0]?.target
               }}</UiText>
+              <UiText
+                v-for="alias in row.aliases"
+                :key="alias"
+                as="span"
+                variant="xs"
+                muted
+                class="block break-words"
+              >{{ i18n.t("notes.inspector.alias", { alias }) }}</UiText>
             </span>
           </div>
           <UiText

@@ -258,6 +258,11 @@ function revealRow(row: LinkRow) {
               >{{
                 row.name
               }}</UiText>
+              <NotesInspectorAlias
+                v-for="alias in row.aliases"
+                :key="alias"
+                :alias="alias"
+              />
               <UiText
                 as="span"
                 variant="xs"
@@ -270,14 +275,6 @@ function revealRow(row: LinkRow) {
                     ? i18n.t(`internalLinks.planned.types.${row.type}`)
                     : row.occurrences[0]?.target
               }}</UiText>
-              <UiText
-                v-for="alias in row.aliases"
-                :key="alias"
-                as="span"
-                variant="xs"
-                muted
-                class="block break-words"
-              >{{ i18n.t("notes.inspector.alias", { alias }) }}</UiText>
             </span>
           </div>
           <UiText

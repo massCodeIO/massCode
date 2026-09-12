@@ -1130,7 +1130,9 @@
       "createHint": "{{shortcut}}+click the locate button of a planned link to create it.",
       "links": "Links",
       "reveal": "Find in note · click again for next occurrence",
-      "alias": "Label in note: {{alias}}"
+      "alias": "Label in note: {{alias}}",
+      "showMore": "Show more",
+      "showLess": "Show less"
     }
   },
   "folder": {

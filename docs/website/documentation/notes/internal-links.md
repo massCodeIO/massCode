@@ -47,6 +47,28 @@ Start typing `[[` in the Notes editor to open the internal links picker.
 
 The picker inserts the shortest unambiguous form: just the name when it is unique, or a folder path when another item shares the same name.
 
+## Plan Material for Later
+
+Type `[[` followed by a title and choose **Plan Note**, **Plan Snippet**, or **Plan HTTP request**. Use the arrow keys and <kbd>Enter</kbd>, or click the action. The **Plan…** action stays pinned below the search results. Press <kbd>Cmd</kbd>+<kbd>Enter</kbd> on macOS or <kbd>Ctrl</kbd>+<kbd>Enter</kbd> on Windows/Linux to jump directly to **Plan Note**, then press <kbd>Enter</kbd> to insert it. Use the arrow keys to choose another type. <kbd>Tab</kbd> keeps its usual indentation behavior. A placeholder is inserted; no material is created yet. Continue writing your note.
+
+When ready, hold <kbd>Cmd</kbd> on macOS or <kbd>Ctrl</kbd> on Windows/Linux and click the placeholder. massCode creates the material, saves its link in your note, and opens it in the usual Notes, Code, or HTTP space. Fill it in normally, then use **Back** to return to your note through the existing navigation history.
+
+Notes and snippets are created in **Inbox**. HTTP requests are created in the **Inbox** collection, which is created on demand. Names are checked when you activate the placeholder: if the name is taken, a numeric suffix is added, such as `Example 1` or `Example 2`.
+
+Placeholders are stored as Markdown:
+
+```md
+[[masscode:planned:note|Authentication guide]]
+[[masscode:planned:snippet|Token refresh helper]]
+[[masscode:planned:http-request|Refresh access token]]
+```
+
+Only the clicked placeholder is replaced. Planned material has no backlinks or export link until it is created. Repeated clicks while creation is in progress do not create another object. If a step fails, an error notification offers a retry when it is safe to continue.
+
+::: warning Reserved link targets
+The three exact targets above are reserved for placeholders. Existing links using them change meaning; your notes are not rewritten automatically. To link to an imported or older real material with one of these names, select it in the picker, which writes an explicit ID link.
+:::
+
 ## Opening Links
 
 Hold <kbd>Cmd</kbd> on macOS or <kbd>Ctrl</kbd> on Windows or Linux, then click the link.

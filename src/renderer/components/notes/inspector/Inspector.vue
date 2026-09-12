@@ -321,7 +321,7 @@ function revealRow(row: LinkRow) {
         <div
           v-for="row in group.rows"
           :key="row.key"
-          class="flex min-w-0 items-center gap-1 border-b py-1"
+          class="flex min-w-0 items-start gap-1 border-b py-1"
         >
           <div
             class="flex min-w-0 flex-1 items-start gap-2 px-1 py-2 text-left"
@@ -361,27 +361,30 @@ function revealRow(row: LinkRow) {
               }}</UiText>
             </span>
           </div>
-          <UiText
-            variant="xs"
-            muted
-          >
-            ×{{ row.occurrences.length }}
-          </UiText>
-          <UiActionButton
-            v-if="row.url"
-            :tooltip="i18n.t('notes.inspector.openExternal')"
-            :disabled="actionsDisabled"
-            @click="ipc.invoke('system:open-external', row.url)"
-          >
-            <ExternalLink class="size-3.5" />
-          </UiActionButton>
-          <UiActionButton
-            :tooltip="i18n.t('notes.inspector.reveal')"
-            :disabled="actionsDisabled"
-            @click="openRow(row, $event)"
-          >
-            <LocateFixed class="size-3.5" />
-          </UiActionButton>
+          <div class="mt-2 flex h-4 shrink-0 items-center">
+            <UiText
+              variant="xs"
+              muted
+              class="pr-2"
+            >
+              ×{{ row.occurrences.length }}
+            </UiText>
+            <UiActionButton
+              v-if="row.url"
+              :tooltip="i18n.t('notes.inspector.openExternal')"
+              :disabled="actionsDisabled"
+              @click="ipc.invoke('system:open-external', row.url)"
+            >
+              <ExternalLink class="size-3.5" />
+            </UiActionButton>
+            <UiActionButton
+              :tooltip="i18n.t('notes.inspector.reveal')"
+              :disabled="actionsDisabled"
+              @click="openRow(row, $event)"
+            >
+              <LocateFixed class="size-3.5" />
+            </UiActionButton>
+          </div>
         </div>
       </section>
       <UiText

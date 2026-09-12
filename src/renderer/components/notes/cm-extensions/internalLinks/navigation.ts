@@ -1,6 +1,8 @@
 import { openInternalTarget } from '@/ipc/listeners/deepLinks'
 import { isMac } from '@/utils'
 import { EditorView } from '@codemirror/view'
+import { findInternalLinks } from './parser'
+import { getPlannedLinkActions } from './trigger'
 
 function isNavigationClick(event: MouseEvent): boolean {
   return isMac ? event.metaKey : event.ctrlKey
@@ -86,10 +88,37 @@ export function handleInternalLinkClick(
   return true
 }
 
+export function handlePlannedLinkMouseDown(
+  view: EditorView,
+  event: MouseEvent,
+  link: HTMLElement | null,
+): boolean {
+  if (isNavigationClick(event)) {
+    const position = link?.dataset.internalLinkPlanned
+      ? Number(link.dataset.internalLinkFrom)
+      : view.posAtCoords({ x: event.clientX, y: event.clientY })
+    if (position !== null && position !== undefined) {
+      const match = findInternalLinks(view.state.doc.toString()).find(
+        item =>
+          item.plannedTarget && item.from <= position && position <= item.to,
+      )
+      const actions = match && getPlannedLinkActions(view, match)
+      if (actions) {
+        event.preventDefault()
+        actions.create()
+        return true
+      }
+    }
+  }
+  return false
+}
+
 export function createInternalLinksNavigation() {
   return EditorView.domEventHandlers({
     mousedown(event, view) {
       const link = findInternalLinkElement(event.target)
+      if (handlePlannedLinkMouseDown(view, event, link))
+        return true
       if (!link) {
         return false
       }

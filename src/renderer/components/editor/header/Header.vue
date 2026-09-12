@@ -268,6 +268,7 @@ function onAddFragment() {
               v-model="name"
               variant="ghost"
               class="w-full truncate px-0"
+              :data-planned-title="`snippet:${displayedSnippet?.id}`"
               :select="isFocusedSnippetName"
               @focus="onSnippetNameFocus"
               @blur="onNameBlur"

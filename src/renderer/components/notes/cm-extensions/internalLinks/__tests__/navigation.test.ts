@@ -3,6 +3,7 @@ import {
   findInternalLinkElement,
   handleInternalLinkClick,
   handleInternalLinkMouseDown,
+  handlePlannedLinkMouseDown,
 } from '../navigation'
 
 const { openInternalTarget } = vi.hoisted(() => ({
@@ -12,6 +13,8 @@ const { openInternalTarget } = vi.hoisted(() => ({
 vi.mock('@/ipc/listeners/deepLinks', () => ({
   openInternalTarget,
 }))
+
+vi.mock('../trigger', () => ({ getPlannedLinkActions: vi.fn() }))
 
 vi.mock('@/utils', () => ({
   isMac: true,
@@ -148,3 +151,36 @@ describe('handleInternalLinkClick', () => {
     expect(preventDefault).toHaveBeenCalledTimes(1)
   })
 })
+
+it.each(['note', 'snippet', 'http-request'] as const)(
+  'cmd-click creates the selected %s placeholder before normal navigation',
+  async (type) => {
+    const { EditorState } = await import('@codemirror/state')
+    const { getPlannedLinkActions } = await import('../trigger')
+    const raw = `[[masscode:planned:${type}|Future]]`
+    const state = EditorState.create({ doc: `${raw} ${raw}` })
+    const create = vi.fn()
+    vi.mocked(getPlannedLinkActions).mockReturnValue({ create })
+    const view = { state, posAtCoords: () => raw.length + 2 } as any
+    const event = {
+      metaKey: true,
+      ctrlKey: false,
+      preventDefault: vi.fn(),
+    } as any
+    expect(handlePlannedLinkMouseDown(view, event, null)).toBe(true)
+    expect(getPlannedLinkActions).toHaveBeenCalledWith(
+      view,
+      expect.objectContaining({
+        from: raw.length + 1,
+        plannedTarget: { type },
+      }),
+    )
+    expect(create).toHaveBeenCalledOnce()
+    expect(openInternalTarget).not.toHaveBeenCalled()
+    expect(event.preventDefault).toHaveBeenCalledOnce()
+    create.mockClear()
+    event.metaKey = false
+    expect(handlePlannedLinkMouseDown(view, event, null)).toBe(false)
+    expect(create).not.toHaveBeenCalled()
+  },
+)

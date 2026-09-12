@@ -64,6 +64,7 @@ import {
 } from './cm-extensions/imageBlocks'
 import { createImageInsert } from './cm-extensions/imageInsert'
 import { createInternalLinks } from './cm-extensions/internalLinks'
+import { activatePlannedLink } from './cm-extensions/internalLinks/activatePlannedLink'
 import { createListIndent } from './cm-extensions/listIndent'
 import { createListLineIndent } from './cm-extensions/listLineIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
@@ -127,6 +128,7 @@ let lastEmittedContent:
   | { noteId: number | undefined, value: string }
   | undefined
 let lastAppliedNoteId: number | undefined
+let noteGeneration = 0
 
 function moveSelectionToAdjacentImageSource(
   view: EditorView,
@@ -316,6 +318,11 @@ function createEditorState(doc: string): EditorState {
     ...createInternalLinks({
       editable,
       mode: props.mode,
+      sourceIdentity: () =>
+        props.noteId === undefined
+          ? undefined
+          : { id: props.noteId, generation: noteGeneration },
+      activatePlannedLink: props.presentation ? undefined : activatePlannedLink,
     }),
   )
 
@@ -609,6 +616,7 @@ watch([() => props.noteId, content], ([noteId, val]) => {
   // но переиспользует EditorView и DOM (раньше компонент пересоздавался
   // целиком через :key).
   if (noteId !== lastAppliedNoteId) {
+    noteGeneration++
     lastEmittedContent = undefined
     lastAppliedNoteId = noteId
     applyExternalState(val, true)

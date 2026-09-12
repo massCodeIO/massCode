@@ -1,13 +1,19 @@
 import type { DecorationSet, EditorView, ViewUpdate } from '@codemirror/view'
 import type { CachedEntity } from './cache'
 import type { InternalLinkMatch, InternalLinkType } from './parser'
+import * as Tooltip from '@/components/ui/shadcn/tooltip'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
 import { StateEffect } from '@codemirror/state'
 import { Decoration, ViewPlugin, WidgetType } from '@codemirror/view'
+import { h, render } from 'vue'
 import { getRevealSelection, revealSelectionChanged } from '../revealSelection'
 import { entityCache } from './cache'
-import { findInternalLinks, normalizeInternalLinkLookupKey } from './parser'
+import {
+  findInternalLinks,
+  getPlannedLinkTarget,
+  normalizeInternalLinkLookupKey,
+} from './parser'
 
 type InternalLinksMode = 'raw' | 'livePreview' | 'preview'
 
@@ -19,7 +25,7 @@ interface SelectionSnapshot {
   empty: boolean
 }
 
-type InternalLinkEntityStatus = 'pending' | 'valid' | 'broken'
+type InternalLinkEntityStatus = 'pending' | 'valid' | 'broken' | 'planned'
 
 export function getInternalLinkEntityStatus(
   entity: CachedEntity | undefined,
@@ -103,18 +109,24 @@ class InternalLinkWidget extends WidgetType {
   constructor(
     readonly link: InternalLinkMatch,
     readonly status: InternalLinkEntityStatus,
-    readonly resolvedTarget: { id: number, type: InternalLinkType } | null,
+    readonly resolvedTarget: {
+      id: number
+      type: InternalLinkType
+      name?: string
+    } | null,
   ) {
     super()
   }
 
   eq(other: InternalLinkWidget): boolean {
     return (
-      this.link.raw === other.link.raw
+      this.link.from === other.link.from
+      && this.link.raw === other.link.raw
       && this.link.label === other.link.label
       && this.status === other.status
       && this.resolvedTarget?.id === other.resolvedTarget?.id
       && this.resolvedTarget?.type === other.resolvedTarget?.type
+      && this.resolvedTarget?.name === other.resolvedTarget?.name
     )
   }
 
@@ -125,21 +137,39 @@ class InternalLinkWidget extends WidgetType {
     root.dataset.internalLink = 'true'
     root.dataset.internalLinkBroken = String(this.status === 'broken')
     root.dataset.internalLinkFrom = String(this.link.from)
+    let tooltip: string | undefined
+    if (this.link.plannedTarget) {
+      root.dataset.internalLinkPlanned = this.link.plannedTarget.type
+      tooltip = i18n.t('internalLinks.planned.status', {
+        type: i18n.t(
+          `internalLinks.planned.types.${this.link.plannedTarget.type}`,
+        ),
+      })
+    }
 
     if (this.resolvedTarget) {
       root.dataset.internalLinkId = String(this.resolvedTarget.id)
       root.dataset.internalLinkType = this.resolvedTarget.type
     }
 
-    root.append(createTypeIcon(this.resolvedTarget?.type ?? 'note'))
+    root.append(
+      createTypeIcon(
+        this.link.plannedTarget?.type ?? this.resolvedTarget?.type ?? 'note',
+      ),
+    )
 
     const label = document.createElement('span')
     label.className = 'cm-internal-link__label'
-    label.textContent = this.link.alias ?? this.link.basename
+    label.textContent
+      = this.link.alias
+        ?? this.resolvedTarget?.name
+        ?? (this.link.plannedTarget
+          ? i18n.t(`internalLinks.planned.types.${this.link.plannedTarget.type}`)
+          : this.link.basename)
     root.append(label)
 
     if (this.status === 'broken') {
-      root.title = i18n.t(
+      tooltip = i18n.t(
         this.resolvedTarget?.type === 'snippet'
           ? 'internalLinks.missing.snippet'
           : this.resolvedTarget?.type === 'http-request'
@@ -148,7 +178,32 @@ class InternalLinkWidget extends WidgetType {
       )
     }
 
-    return root
+    if (!tooltip)
+      return root
+
+    const container = document.createElement('span')
+    render(
+      h(Tooltip.TooltipProvider, null, {
+        default: () =>
+          h(Tooltip.Tooltip, null, {
+            default: () => [
+              h(Tooltip.TooltipTrigger, {
+                as: 'span',
+                onVnodeMounted: (vnode) => {
+                  vnode.el?.append(root)
+                },
+              }),
+              h(Tooltip.TooltipContent, null, { default: () => tooltip }),
+            ],
+          }),
+      }),
+      container,
+    )
+    return container
+  }
+
+  destroy(dom: HTMLElement): void {
+    render(null, dom)
   }
 
   ignoreEvent(): boolean {
@@ -314,7 +369,11 @@ async function flushTitleResolutions() {
   }
 }
 
-function resolveInternalLinkByTitle(title: string): Promise<CachedEntity> {
+export function resolveInternalLinkByTitle(
+  title: string,
+): Promise<CachedEntity> {
+  if (getPlannedLinkTarget(title))
+    return Promise.resolve({ exists: false })
   return new Promise((resolve) => {
     const normalizedTitle = title.trim()
 
@@ -372,6 +431,7 @@ export function createInternalLinksDecorations(mode: InternalLinksMode) {
       decorations: DecorationSet = Decoration.none
 
       constructor(private readonly view: EditorView) {
+        entityCache.clear()
         this.decorations = this.build()
       }
 
@@ -480,6 +540,14 @@ export function createInternalLinksDecorations(mode: InternalLinksMode) {
               continue
             }
 
+            if (link.plannedTarget) {
+              decorations.push(
+                Decoration.replace({
+                  widget: new InternalLinkWidget(link, 'planned', null),
+                }).range(link.from, link.to),
+              )
+              continue
+            }
             const key = getInternalLinkCacheKey(link)
             const entity = entityCache.get(key)
             const status = getInternalLinkEntityStatus(entity)
@@ -494,7 +562,11 @@ export function createInternalLinksDecorations(mode: InternalLinksMode) {
                   link,
                   status,
                   entity?.exists
-                    ? { id: entity.data.id, type: entity.data.type }
+                    ? {
+                        id: entity.data.id,
+                        type: entity.data.type,
+                        name: entity.data.name,
+                      }
                     : link.legacyTarget,
                 ),
               }).range(link.from, link.to),

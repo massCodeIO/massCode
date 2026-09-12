@@ -10,6 +10,7 @@ describe('parseInternalLink', () => {
   it('parses a link without alias', () => {
     expect(parseInternalLink('[[Repository Pattern with Cache]]')).toEqual({
       alias: null,
+      plannedTarget: null,
       basename: 'Repository Pattern with Cache',
       legacyTarget: null,
       label: 'Repository Pattern with Cache',
@@ -24,6 +25,7 @@ describe('parseInternalLink', () => {
       parseInternalLink('[[Repository Pattern with Cache|Repo Pattern]]'),
     ).toEqual({
       alias: 'Repo Pattern',
+      plannedTarget: null,
       basename: 'Repository Pattern with Cache',
       legacyTarget: null,
       label: 'Repo Pattern',
@@ -42,6 +44,7 @@ describe('parseInternalLink', () => {
   it('handles escaped characters in the target and alias', () => {
     expect(parseInternalLink('[[Array \\] draft|foo \\| bar]]')).toEqual({
       alias: 'foo | bar',
+      plannedTarget: null,
       basename: 'Array ] draft',
       legacyTarget: null,
       label: 'foo | bar',
@@ -54,6 +57,7 @@ describe('parseInternalLink', () => {
   it('handles escaped backslashes', () => {
     expect(parseInternalLink('[[path\\\\file|Alias\\\\Text]]')).toEqual({
       alias: 'Alias\\Text',
+      plannedTarget: null,
       basename: 'path\\file',
       legacyTarget: null,
       label: 'Alias\\Text',
@@ -68,6 +72,7 @@ describe('parseInternalLink', () => {
       parseInternalLink('[[snippet:57|Repository Pattern with Cache]]'),
     ).toEqual({
       alias: 'Repository Pattern with Cache',
+      plannedTarget: null,
       basename: 'snippet:57',
       legacyTarget: { id: 57, type: 'snippet' },
       label: 'Repository Pattern with Cache',
@@ -120,11 +125,13 @@ describe('findInternalLinks', () => {
     expect(links).toHaveLength(2)
     expect(links[0]).toMatchObject({
       alias: null,
+      plannedTarget: null,
       label: 'Repository Pattern',
       target: 'Repository Pattern',
     })
     expect(links[1]).toMatchObject({
       alias: 'Shown',
+      plannedTarget: null,
       label: 'Shown',
       target: 'Second Doc',
     })

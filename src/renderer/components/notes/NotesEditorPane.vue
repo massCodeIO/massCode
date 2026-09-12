@@ -485,6 +485,7 @@ onBeforeUnmount(() => {
                 v-model="name"
                 variant="ghost"
                 class="w-full truncate px-0"
+                :data-planned-title="`note:${displayedNote?.id}`"
                 :select="isFocusedNoteName"
                 @focus="onNoteNameFocus"
                 @blur="onNameBlur"

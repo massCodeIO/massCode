@@ -103,6 +103,7 @@ onBeforeUnmount(flushName)
       variant="ghost"
       class="w-full truncate px-0"
       :placeholder="i18n.t('spaces.http.editor.namePlaceholder')"
+      :data-planned-title="`http-request:${currentRequest?.id}`"
       :select="isFocusedRequestName"
       @focus="focusName"
       @blur="blurName"

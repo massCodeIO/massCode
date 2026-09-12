@@ -1,7 +1,9 @@
 export {
   buildLinkMarkdown,
+  buildPlannedLinkMarkdown,
   escapeLinkPart,
   findInternalLinks,
+  getPlannedLinkTarget,
   normalizeInternalLinkLookupKey,
   parseInternalLink,
   resolveInternalLinkTargetByTitle,

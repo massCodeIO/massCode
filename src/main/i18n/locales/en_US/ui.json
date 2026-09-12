@@ -1276,6 +1276,18 @@
       "snippet": "Snippet not found",
       "httpRequest": "HTTP request not found",
       "note": "Note not found"
+    },
+    "planned": {
+      "status": "Planned {{type}}",
+      "add": "Plan {{type}}",
+      "failed": "Could not finish creating the linked item. Try again.",
+      "types": {
+        "note": "Note",
+        "snippet": "Snippet",
+        "http-request": "HTTP request"
+      },
+      "httpCollection": "Inbox",
+      "choose": "Plan…"
     }
   },
   "placeholder": {

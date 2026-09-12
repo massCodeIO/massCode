@@ -2,7 +2,12 @@
 import type { DropPosition, TreeNode } from '@/components/ui/tree/types'
 import type { OutlineHeading, OutlineMove } from './outline'
 import { i18n } from '@/electron'
-import { createOutlineMove, getActiveHeading, getOutline } from './outline'
+import {
+  createOutlineMove,
+  getActiveHeading,
+  getOutline,
+  remapCollapsedHeadings,
+} from './outline'
 
 interface OutlineNode extends TreeNode {
   heading: OutlineHeading
@@ -23,7 +28,15 @@ const emit = defineEmits<{
 }>()
 const headings = computed(() => getOutline(props.content))
 const collapsed = ref(new Set<number>())
-watch([() => props.noteId, () => props.content], () => collapsed.value.clear())
+watch(
+  [() => props.noteId, () => props.content],
+  ([noteId, content], [previousId, previous]) => {
+    collapsed.value
+      = noteId === previousId
+        ? remapCollapsedHeadings(previous, content, collapsed.value)
+        : new Set()
+  },
+)
 const nodes = computed(() => {
   const roots: OutlineNode[] = []
   const byPosition = new Map<number, OutlineNode>()

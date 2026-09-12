@@ -1,5 +1,6 @@
 import type { TransactionSpec } from '@codemirror/state'
 import { isolateHistory } from '@codemirror/commands'
+import { ChangeSet, Text } from '@codemirror/state'
 import { GFM, parser } from '@lezer/markdown'
 
 export interface OutlineHeading {
@@ -71,6 +72,45 @@ export function getActiveHeading(headings: OutlineHeading[], cursor: number) {
   return headings.findLast(heading => heading.from <= cursor)?.from
 }
 
+export function remapCollapsedHeadings(
+  previous: string,
+  content: string,
+  collapsed: Set<number>,
+): Set<number> {
+  let start = 0
+  while (
+    start < previous.length
+    && start < content.length
+    && previous[start] === content[start]
+  ) {
+    start++
+  }
+  let oldEnd = previous.length
+  let newEnd = content.length
+  while (
+    oldEnd > start
+    && newEnd > start
+    && previous[oldEnd - 1] === content[newEnd - 1]
+  ) {
+    oldEnd--
+    newEnd--
+  }
+  const previousTitles = new Map(
+    getOutline(previous).map(heading => [heading.from, heading.title]),
+  )
+  const titles = new Map(
+    getOutline(content).map(heading => [heading.from, heading.title]),
+  )
+  const result = new Set<number>()
+  for (const from of collapsed) {
+    const mapped
+      = from >= oldEnd ? from + newEnd - oldEnd : from <= start ? from : -1
+    if (titles.has(mapped) && titles.get(mapped) === previousTitles.get(from))
+      result.add(mapped)
+  }
+  return result
+}
+
 export function createOutlineMove(
   content: string,
   move: OutlineMove,
@@ -87,6 +127,14 @@ export function createOutlineMove(
     || (target.from > source.from && target.from < source.end)
   ) {
     return null
+  }
+  // EOF may implicitly close a fence or HTML block. Moving text past it must
+  // not swallow other sections; reject the drop without changing the document.
+  const validate = (spec: TransactionSpec): TransactionSpec | null => {
+    const result = ChangeSet.of(spec.changes, content.length)
+      .apply(Text.of(content.split('\n')))
+      .toString()
+    return getOutline(result).length === headings.length ? spec : null
   }
   const destination = move.inside || move.after ? target.end : target.from
   const level = target.level + (move.inside ? 1 : 0)
@@ -117,18 +165,18 @@ export function createOutlineMove(
   if (destination === source.from || destination === source.end) {
     if (!delta)
       return null
-    return {
+    return validate({
       changes: { from: source.from, to: source.end, insert: section },
       selection: { anchor: source.from },
       annotations: isolateHistory.of('full'),
       userEvent: 'input.move',
-    }
+    })
   }
   const separate = (text: string) =>
     text.endsWith('\n\n') ? text : text + (text.endsWith('\n') ? '\n' : '\n\n')
   if (destination < source.from) {
     const middle = content.slice(destination, source.from)
-    return {
+    return validate({
       changes: {
         from: destination,
         to: source.end,
@@ -137,14 +185,14 @@ export function createOutlineMove(
       selection: { anchor: destination },
       annotations: isolateHistory.of('full'),
       userEvent: 'input.move',
-    }
+    })
   }
   const middle = content.slice(source.end, destination)
   const before = separate(middle)
-  return {
+  return validate({
     changes: { from: source.from, to: destination, insert: before + section },
     selection: { anchor: source.from + before.length },
     annotations: isolateHistory.of('full'),
     userEvent: 'input.move',
-  }
+  })
 }

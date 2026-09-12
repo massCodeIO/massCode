@@ -1,7 +1,12 @@
 import { history, undo } from '@codemirror/commands'
 import { EditorState } from '@codemirror/state'
 import { describe, expect, it } from 'vitest'
-import { createOutlineMove, getActiveHeading, getOutline } from '../outline'
+import {
+  createOutlineMove,
+  getActiveHeading,
+  getOutline,
+  remapCollapsedHeadings,
+} from '../outline'
 
 describe('note outline', () => {
   it('parses real sections, skips code and quoted or list headings, and tracks hierarchy', () => {
@@ -210,5 +215,84 @@ describe('note outline', () => {
         inside: true,
       }),
     ).toBeNull()
+  })
+})
+
+describe('outline editing regressions', () => {
+  it.each([
+    '```js\nconst a=1',
+    '~~~~js\nconst a=1',
+    '<!-- comment',
+    '<script>\nconst a=1',
+  ])('rejects moves across an EOF-closed block: %s', (block) => {
+    const content = `# A\nbody\n\n# B\n${block}`
+    const [a, b] = getOutline(content)
+    expect(
+      createOutlineMove(content, {
+        content,
+        from: b!.from,
+        target: a!.from,
+        after: false,
+      }),
+    ).toBeNull()
+    expect(
+      createOutlineMove(content, {
+        content,
+        from: a!.from,
+        target: b!.from,
+        after: true,
+      }),
+    ).toBeNull()
+  })
+
+  it('allows moving a section with a closed fence', () => {
+    const content = '# A\nbody\n\n# B\n```js\nconst a=1\n```'
+    const [a, b] = getOutline(content)
+    const spec = createOutlineMove(content, {
+      content,
+      from: b!.from,
+      target: a!.from,
+      after: false,
+    })!
+    expect(spec).not.toBeNull()
+    const result = EditorState.create({ doc: content })
+      .update(spec)
+      .state
+      .doc
+      .toString()
+    expect(getOutline(result).map(h => h.title)).toEqual(['B', 'A'])
+  })
+
+  it('keeps collapsed sections through body edits and insertions before headings', () => {
+    const before = '# A\nbody\n\n## Child\ntext\n\n# B\n## Nested'
+    const collapsed = new Set(
+      getOutline(before)
+        .filter(h => h.level === 1)
+        .map(h => h.from),
+    )
+    const edited = before.replace('body', 'longer body')
+    const updated = remapCollapsedHeadings(before, edited, collapsed)
+    expect([...updated]).toEqual(
+      getOutline(edited)
+        .filter(h => h.level === 1)
+        .map(h => h.from),
+    )
+    const prefixed = `Introduction\n\n${edited}`
+    expect([...remapCollapsedHeadings(edited, prefixed, updated)]).toEqual(
+      getOutline(prefixed)
+        .filter(h => h.level === 1)
+        .map(h => h.from),
+    )
+  })
+
+  it('drops removed headings instead of collapsing a different section', () => {
+    const before = '# A\n## Child\n# B\n## Nested'
+    expect([
+      ...remapCollapsedHeadings(before, '# B\n## Nested', new Set([0])),
+    ]).toEqual([])
+    const b = getOutline(before)[2]!
+    expect([
+      ...remapCollapsedHeadings(before, '# A\n## Child\n', new Set([b.from])),
+    ]).toEqual([])
   })
 })

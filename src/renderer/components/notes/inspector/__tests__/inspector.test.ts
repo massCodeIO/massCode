@@ -58,6 +58,7 @@ let host: Node
 let inspectorState: {
   loading: Vue.Ref<boolean>
   showLoading: Vue.ComputedRef<boolean>
+  actionsDisabled: Vue.ComputedRef<boolean>
 }
 
 afterEach(() => {
@@ -92,6 +93,7 @@ it('updates occurrences immediately while typing and resolves renamed objects af
           ) => {
             loading: Vue.Ref<boolean>
             showLoading: Vue.ComputedRef<boolean>
+            actionsDisabled: Vue.ComputedRef<boolean>
             rows: Vue.ComputedRef<
               Array<{ name: string, occurrences: unknown[] }>
             >
@@ -145,4 +147,25 @@ it('updates occurrences immediately while typing and resolves renamed objects af
   await Vue.nextTick()
   expect(inspectorState.loading.value).toBe(false)
   expect(text(host)).toContain('Synced name')
+  let finishSwitch!: (value: Map<string, typeof item>) => void
+  resolve.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finishSwitch = resolve
+      }),
+  )
+  props.noteId = 3
+  props.content = '[[note:3]]'
+  await Vue.nextTick()
+  expect(text(host)).toContain('Synced name')
+  expect(inspectorState.showLoading.value).toBe(false)
+  expect(inspectorState.actionsDisabled.value).toBe(true)
+  finishSwitch(
+    new Map([['note:3', { ...item, id: 3, name: 'Next note link' }]]),
+  )
+  await Vue.nextTick()
+  await Vue.nextTick()
+  expect(text(host)).toContain('Next note link')
+  expect(text(host)).not.toContain('Synced name')
+  expect(inspectorState.actionsDisabled.value).toBe(false)
 })

@@ -23,6 +23,11 @@ const emit = defineEmits<{
   activate: [match: InternalLinkMatch]
 }>()
 const query = ref('')
+const displayedNoteId = ref<number>()
+const displayedContent = ref('')
+const actionsDisabled = computed(
+  () => props.disabled || displayedNoteId.value !== props.noteId,
+)
 const resolved = shallowRef(new Map<string, ResolvedLink | null>())
 const loading = ref(false)
 const showLoading = computed(() => loading.value && resolved.value.size === 0)
@@ -35,12 +40,12 @@ const unsubscribeMutations = subscribeStorageMutations(refresh)
 onBeforeUnmount(unsubscribeMutations)
 ipc.on('system:storage-synced', refresh)
 onBeforeUnmount(() => ipc.removeListener('system:storage-synced', refresh))
-const matches = computed(() => findInternalLinks(props.content))
+const matches = computed(() => findInternalLinks(displayedContent.value))
 const targetKey = computed(() =>
   JSON.stringify(
     [
       ...new Set(
-        matches.value
+        findInternalLinks(props.content)
           .filter(match => !match.plannedTarget)
           .map(match => match.target),
       ),
@@ -78,27 +83,40 @@ const groups = computed(() => {
   ].filter(group => group.rows.length)
 })
 watch(
-  [() => props.noteId, targetKey, revision],
-  async ([noteId], previous, onCleanup) => {
+  [() => props.noteId, targetKey, revision, () => props.disabled],
+  async ([noteId], _, onCleanup) => {
     let cancelled = false
     onCleanup(() => {
       cancelled = true
     })
-    if (previous?.[0] !== noteId)
-      resolved.value = new Map()
+    if (props.disabled)
+      return
     failed.value = false
     const targets: string[] = JSON.parse(targetKey.value)
     loading.value = targets.length > 0
-    if (!targets.length)
+    if (!targets.length) {
+      resolved.value = new Map()
+      displayedContent.value = props.content
+      displayedNoteId.value = noteId
       return
+    }
     try {
       const result = await resolveInspectorLinks(targets)
-      if (!cancelled)
+      if (!cancelled) {
         resolved.value = result
+        displayedContent.value = props.content
+        displayedNoteId.value = noteId
+      }
     }
     catch {
-      if (!cancelled)
+      if (!cancelled) {
         failed.value = true
+        if (displayedNoteId.value !== noteId) {
+          resolved.value = new Map()
+          displayedContent.value = props.content
+          displayedNoteId.value = noteId
+        }
+      }
     }
     finally {
       if (!cancelled)
@@ -106,6 +124,13 @@ watch(
     }
   },
   { immediate: true },
+)
+watch(
+  () => props.content,
+  (value) => {
+    if (!props.disabled && displayedNoteId.value === props.noteId)
+      displayedContent.value = value
+  },
 )
 watch(
   () => props.noteId,
@@ -121,7 +146,7 @@ function icon(row: LinkRow) {
       : FileText
 }
 function openRow(row: LinkRow, event: MouseEvent) {
-  if (props.disabled)
+  if (actionsDisabled.value)
     return
   if (
     row.status === 'planned'
@@ -285,7 +310,7 @@ function revealRow(row: LinkRow) {
           </UiText>
           <UiActionButton
             :tooltip="i18n.t('notes.inspector.reveal')"
-            :disabled="disabled"
+            :disabled="actionsDisabled"
             @click="openRow(row, $event)"
           >
             <LocateFixed class="size-3.5" />

@@ -661,7 +661,7 @@ onBeforeUnmount(() => {
         class="h-full min-h-0 shrink-0 overflow-hidden"
       >
         <NotesInspector
-          :note-id="displayedNote.id"
+          :note-id="editorNoteId ?? displayedNote.id"
           :content="content"
           :disabled="!isSelectedNoteContentReady"
           :can-create="notesEditorMode !== 'preview'"

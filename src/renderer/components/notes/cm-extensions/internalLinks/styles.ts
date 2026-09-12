@@ -1,10 +1,6 @@
 import { EditorView } from '@codemirror/view'
 
 export const internalLinksTheme = EditorView.baseTheme({
-  '.cm-internal-link.is-planned': {
-    borderBottom: '1px dashed currentColor',
-    opacity: '0.8',
-  },
   '.cm-internal-link': {
     display: 'inline-flex',
     alignItems: 'center',
@@ -27,6 +23,10 @@ export const internalLinksTheme = EditorView.baseTheme({
     border: '1px solid var(--internal-link-border-hover)',
     backgroundColor: 'var(--internal-link-bg-hover)',
     color: 'var(--internal-link-fg-hover)',
+  },
+  '.cm-internal-link.is-planned': {
+    border: '1px dashed currentColor',
+    opacity: '0.8',
   },
   '.cm-internal-link.is-pending': {
     opacity: '0.8',

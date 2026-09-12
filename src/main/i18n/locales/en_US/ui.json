@@ -1126,7 +1126,6 @@
       "pending": "Loading links…",
       "failed": "Could not load linked items.",
       "empty": "This note has no links.",
-      "createHint": "{{shortcut}}+click the locate button of a planned link to create it.",
       "links": "Links",
       "reveal": "Find in note · click again for next occurrence",
       "alias": "Label in note: {{alias}}",
@@ -1154,7 +1153,11 @@
         "title": "Outline",
         "empty": "Add headings to navigate your note.",
         "untitled": "Untitled heading",
-        "hint": "Drag headings to reorder sections. Drop above or below a heading to place the section beside it, or onto the heading to nest it. All content and nested sections move together."
+        "hint": "Drag headings to reorder sections. Drop above or below a heading to place the section beside it, or onto the heading to nest it. All content and nested sections move together.",
+        "help": {
+          "title": "Note outline",
+          "navigation": "Headings H1–H6 form the outline. Click a heading to jump to it; the current section follows the cursor."
+        }
       },
       "annotations": {
         "title": "Annotations",
@@ -1170,7 +1173,24 @@
           "WARNING": "Warning"
         },
         "emptyCallout": "Empty callout",
-        "summary": "{{count}} callouts"
+        "summary": "{{count}} callouts",
+        "help": {
+          "title": "Callouts in notes",
+          "intro": "Add a callout marker in a blockquote, then write its text on the same line or continue on lines starting with >.",
+          "types": {
+            "NOTE": "Additional context or an explanation.",
+            "IMPORTANT": "Key information the reader should not miss.",
+            "WARNING": "A warning about a risk or an unexpected result.",
+            "TODO": "Unfinished work: add an example, check a fact, or rewrite a passage."
+          },
+          "usage": "Markers are case-insensitive. All callouts appear here automatically. Filter by type or use the locate button to jump to the text."
+        }
+      },
+      "linkHelp": {
+        "title": "Links in this note",
+        "navigate": "Use the locate button to jump to a link in the note. Click again to find its next occurrence.",
+        "create": "{{shortcut}}+click the locate button beside a planned link to create the item and open it.",
+        "external": "For external links, use the open button to visit the address in your browser."
       }
     }
   },

@@ -101,5 +101,10 @@ const { notesInspectorTab: tab } = useNotesApp()
         />
       </Tabs.TabsContent>
     </Tabs.Tabs>
+    <NotesInspectorHelp
+      :key="tab"
+      :tab="tab"
+      :can-create="canCreate"
+    />
   </div>
 </template>

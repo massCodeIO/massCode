@@ -362,18 +362,6 @@ function revealRow(row: LinkRow) {
           </div>
         </div>
       </section>
-      <UiText
-        v-if="summary.planned && canCreate"
-        as="p"
-        variant="xs"
-        muted
-      >
-        {{
-          i18n.t("notes.inspector.createHint", {
-            shortcut: isMac ? "Cmd" : "Ctrl",
-          })
-        }}
-      </UiText>
     </div>
   </div>
 </template>

@@ -112,46 +112,39 @@ function headingLevel(node: TreeNode) {
 </script>
 
 <template>
-  <div class="flex h-full min-h-0 flex-col p-3">
-    <UiText
-      v-if="!headings.length"
-      as="p"
-      variant="xs"
-      muted
-    >
-      {{ i18n.t("notes.inspector.outline.empty") }}
-    </UiText>
-    <template v-else>
-      <div class="min-h-0 flex-1 overflow-y-auto">
-        <UiTree
-          :model-value="nodes"
-          :selected-ids="selected"
-          :can-drag="() => canEdit && !disabled"
-          :can-drop="canDrop"
-          @click-node="reveal"
-          @toggle-node="toggleNode"
-          @drag-node="dragNode"
-        >
-          <template #icon="{ node }">
-            <UiText
-              variant="xs"
-              muted
-              class="mr-1 shrink-0"
-            >
-              H{{ headingLevel(node) }}
-            </UiText>
-          </template>
-        </UiTree>
-      </div>
+  <div class="flex h-full min-h-0 flex-col">
+    <div class="scrollbar min-h-0 flex-1 overflow-y-auto p-3">
       <UiText
-        v-if="canEdit"
+        v-if="!headings.length"
         as="p"
         variant="xs"
         muted
-        class="mt-3 shrink-0"
       >
-        {{ i18n.t("notes.inspector.outline.hint") }}
+        {{ i18n.t("notes.inspector.outline.empty") }}
       </UiText>
-    </template>
+      <template v-else>
+        <div class="min-h-0 flex-1 overflow-y-auto">
+          <UiTree
+            :model-value="nodes"
+            :selected-ids="selected"
+            :can-drag="() => canEdit && !disabled"
+            :can-drop="canDrop"
+            @click-node="reveal"
+            @toggle-node="toggleNode"
+            @drag-node="dragNode"
+          >
+            <template #icon="{ node }">
+              <UiText
+                variant="xs"
+                muted
+                class="mr-1 shrink-0"
+              >
+                H{{ headingLevel(node) }}
+              </UiText>
+            </template>
+          </UiTree>
+        </div>
+      </template>
+    </div>
   </div>
 </template>

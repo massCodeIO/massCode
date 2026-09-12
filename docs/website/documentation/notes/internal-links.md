@@ -95,7 +95,13 @@ Open **View → Note inspector** or use the right-panel button at the end of the
 
 Click the locate button to place the cursor at the end of the link text, before its closing brackets. In Live Preview, this reveals the link markup for editing. Repeated clicks cycle through occurrences. In Raw or Live Preview, <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+click the locate button of a planned row to create its first occurrence through the usual flow.
 
-Filter by status (Linked, Planned, or Missing) and space (Notes, Code, or HTTP). Combine the filters to focus on a subset; the summary still counts the whole note. The list updates as you edit, and the inspector remembers its visibility and width.
+Filter by status (Linked, Planned, or Missing) and space (Notes, Code, HTTP, or External). Combine the filters to focus on a subset; the summary still counts the whole note. The list updates as you edit, and the inspector remembers its visibility and width.
+
+### External links
+
+The **External** group includes HTTP and HTTPS Markdown links, reference links, autolinks, and plain URLs. Links inside code and image sources are excluded. Repeated URLs share a row with an occurrence count; custom labels remain visible alongside the address.
+
+Use the locate button to find an occurrence in the note, or the external-link button to open the address in your browser. External addresses are counted separately; massCode does not check website availability or classify them as missing.
 
 ## Navigation History
 

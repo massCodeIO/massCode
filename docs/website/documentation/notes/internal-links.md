@@ -89,6 +89,14 @@ Hover an internal link while holding <kbd>Cmd</kbd> on macOS or <kbd>Ctrl</kbd> 
 
 This helps you confirm the target before you navigate away from the current note.
 
+## Note Inspector
+
+Open **View → Note inspector** or use the right-panel button at the end of the editor toolbar. The inspector groups linked objects by space and lists planned and missing links separately. A summary counts unique objects; repeated links share one row with an occurrence count.
+
+Click the locate button to place the cursor at the end of the link text, before its closing brackets. In Live Preview, this reveals the link markup for editing. Repeated clicks cycle through occurrences. In Raw or Live Preview, <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+click the locate button of a planned row to create its first occurrence through the usual flow.
+
+Search by name or folder path. The list updates as you edit, and the inspector remembers its visibility and width.
+
 ## Navigation History
 
 When you follow internal links, massCode keeps a small link navigation history for that session.

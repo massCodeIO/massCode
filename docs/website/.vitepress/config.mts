@@ -204,6 +204,7 @@ export default defineConfig({
             { text: 'Folders', link: '/documentation/notes/folders' },
             { text: 'Tags', link: '/documentation/notes/tags' },
             { text: 'Internal Links', link: '/documentation/notes/internal-links' },
+            { text: 'Note Inspector', link: '/documentation/notes/inspector' },
             { text: 'Images', link: '/documentation/notes/images' },
             { text: 'Callouts', link: '/documentation/notes/callouts' },
             { text: 'Mermaid', link: '/documentation/notes/mermaid' },

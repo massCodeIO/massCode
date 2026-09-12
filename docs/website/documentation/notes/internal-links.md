@@ -7,7 +7,7 @@ description: "Link notes, snippets, and HTTP requests together inside massCode N
 
 <AppVersion text=">=5.1" />
 
-Internal Links let you connect notes, snippets, and HTTP requests with wiki-style links directly inside Notes. Use them to build lightweight documentation, link reference snippets or saved API requests from prose, and move through related material without leaving massCode.
+Internal Links let you connect notes, snippets, and HTTP requests with wiki-style links directly inside Notes. Use them to build lightweight documentation, link reference snippets or saved API requests from prose, and move through related item without leaving massCode.
 
 <img :src="withBase('/notes-internal-links.png')">
 
@@ -47,13 +47,33 @@ Start typing `[[` in the Notes editor to open the internal links picker.
 
 The picker inserts the shortest unambiguous form: just the name when it is unique, or a folder path when another item shares the same name.
 
-## Plan Material for Later
+## Plan Notes, Snippets, and Requests
 
-Type `[[` followed by a title and choose **Plan Note**, **Plan Snippet**, or **Plan HTTP request**. Use the arrow keys and <kbd>Enter</kbd>, or click the action. The **Plan…** action stays pinned below the search results. Press <kbd>Cmd</kbd>+<kbd>Enter</kbd> on macOS or <kbd>Ctrl</kbd>+<kbd>Enter</kbd> on Windows/Linux to jump directly to **Plan Note**, then press <kbd>Enter</kbd> to insert it. Use the arrow keys to choose another type. <kbd>Tab</kbd> keeps its usual indentation behavior. A placeholder is inserted; no material is created yet. Continue writing your note.
+<AppVersion text=">=5.12" />
 
-When ready, hold <kbd>Cmd</kbd> on macOS or <kbd>Ctrl</kbd> on Windows/Linux and click the placeholder. massCode creates the material, saves its link in your note, and opens it in the usual Notes, Code, or HTTP space. Fill it in normally, then use **Back** to return to your note through the existing navigation history.
+Plan a note, snippet, or HTTP request right where you need it in your writing. Insert a placeholder, continue the note, and create the item later without losing your place.
+
+<img :src="withBase('/notes-planned.png')" alt="Internal link picker with Plan Note, Plan Snippet, and Plan HTTP request actions below existing results">
+
+### Insert a placeholder
+
+1. Type `[[` followed by the title you have in mind.
+2. Choose **Plan Note**, **Plan Snippet**, or **Plan HTTP request** with the arrow keys and <kbd>Enter</kbd>, or click the action.
+3. Continue writing. The placeholder has a dashed border in Live Preview; the actual item does not exist yet.
+
+The **Plan…** action stays pinned below the search results. To reach it without stepping through matching items, press <kbd>Cmd</kbd>+<kbd>Enter</kbd> on macOS or <kbd>Ctrl</kbd>+<kbd>Enter</kbd> on Windows/Linux. This selects **Plan Note**; press <kbd>Enter</kbd> to insert it, or use the arrow keys to choose another type. <kbd>Tab</kbd> keeps its usual indentation behavior.
+
+### Create the planned item
+
+Hold <kbd>Cmd</kbd> on macOS or <kbd>Ctrl</kbd> on Windows/Linux and click the placeholder. massCode creates the item, replaces the placeholder with its link, and opens the usual Notes, Code, or HTTP space with the title selected for renaming.
+
+Fill in the item normally, then use **Back** to return to your note through the existing navigation history. The placeholder is now a regular link to the created item.
 
 Notes and snippets are created in **Inbox**. HTTP requests are created in the **Inbox** collection, which is created on demand. Names are checked when you activate the placeholder: if the name is taken, a numeric suffix is added, such as `Example 1` or `Example 2`.
+
+Find all placeholders in [Note inspector → Links](/documentation/notes/inspector#links) by choosing the **Planned** status filter.
+
+### Markdown syntax
 
 Placeholders are stored as Markdown:
 
@@ -63,10 +83,10 @@ Placeholders are stored as Markdown:
 [[masscode:planned:http-request|Refresh access token]]
 ```
 
-Only the clicked placeholder is replaced. Planned material has no backlinks or export link until it is created. Repeated clicks while creation is in progress do not create another object. If a step fails, an error notification offers a retry when it is safe to continue.
+Only the clicked placeholder is replaced. A planned item has no backlinks or export link until it is created. Repeated clicks while creation is in progress do not create another object. If a step fails, an error notification offers a retry when it is safe to continue.
 
 ::: warning Reserved link targets
-The three exact targets above are reserved for placeholders. Existing links using them change meaning; your notes are not rewritten automatically. To link to an imported or older real material with one of these names, select it in the picker, which writes an explicit ID link.
+The three exact targets above are reserved for placeholders. Existing links using them change meaning; your notes are not rewritten automatically. To link to an imported or older item with one of these names, select it in the picker, which writes an explicit ID link.
 :::
 
 ## Opening Links
@@ -91,23 +111,9 @@ This helps you confirm the target before you navigate away from the current note
 
 ## Note Inspector
 
-Open **View → Note inspector** or use the right-panel button at the end of the editor toolbar. The inspector groups linked objects by space and lists planned and missing links separately. A summary counts unique objects; repeated links share one row with an occurrence count.
+<AppVersion text=">=5.12" />
 
-Click the locate button to place the cursor at the end of the link text, before its closing brackets. In Live Preview, this reveals the link markup for editing. Repeated clicks cycle through occurrences. In Raw or Live Preview, <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+click the locate button of a planned row to create its first occurrence through the usual flow.
-
-Filter by status (Linked, Planned, or Missing) and space (Notes, Code, HTTP, or External). Combine the filters to focus on a subset; the summary still counts the whole note. The list updates as you edit, and the inspector remembers its visibility and width.
-
-### Outline
-
-The **Outline** tab lists H1–H6 headings with their hierarchy and highlights the section at the cursor. Click a heading to jump to it. The selected tab is remembered when switching notes or reopening the inspector.
-
-In Raw and Live Preview, drag a heading above or below another heading to place it at that level, or drop onto its center to nest it inside that section. The entire section moves, including nested headings and content. Heading levels shift together; a move that would exceed H6 is unavailable. Undo the move with <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+<kbd>Z</kbd>. Preview supports navigation only. Headings in code blocks, quotes, and lists are excluded from the outline.
-
-### External links
-
-The **External** group includes HTTP and HTTPS Markdown links, reference links, autolinks, and plain URLs. Links inside code and image sources are excluded. Repeated URLs share a row with an occurrence count; custom labels remain visible alongside the address.
-
-Use the locate button to find an occurrence in the note, or the external-link button to open the address in your browser. External addresses are counted separately; massCode does not check website availability or classify them as missing.
+Open the **Links** tab in [Note inspector](/documentation/notes/inspector#links) to inspect linked items, planned placeholders, missing targets, and external addresses. Filter by status or space and use the locate button to find each occurrence in your note.
 
 ## Navigation History
 

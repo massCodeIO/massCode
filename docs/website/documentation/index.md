@@ -21,6 +21,8 @@ Use [Code](/documentation/code/) to build a reusable snippet library across proj
 
 Use [Notes](/documentation/notes/) for longer markdown documents that do not fit well into snippets: project notes, [task notes](/documentation/notes/tasks) with status, priority, due dates, cleanup controls, drafts, technical docs, meeting notes, and personal knowledge bases. It uses the same three-column layout as Code and adds a Notes Dashboard, live preview with editable tables, a notes graph, mindmaps, and fullscreen presentation mode.
 
+Use [Note inspector](/documentation/notes/inspector) to navigate and reorder sections, inspect links, and find callouts. [Planned links](/documentation/notes/internal-links#plan-notes-snippets-and-requests) let you leave placeholders for notes, snippets, and HTTP requests, then create them when ready. <AppVersion text=">=5.12" />
+
 ## HTTP
 
 Use [HTTP](/documentation/http/) as a lightweight API client inside massCode. Store requests in folders, import collections from OpenAPI, Postman, or Bruno, switch environments, preview the outgoing request as raw HTTP or cURL, send it from the editor, and inspect the response body and headers without leaving your workspace.

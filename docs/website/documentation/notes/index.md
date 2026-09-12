@@ -1,6 +1,6 @@
 ---
 title: Markdown Notes
-description: "Write markdown notes in massCode with a Notes Dashboard, tasks, live preview, a three-column layout, and features for diagrams, mind maps, and presentations."
+description: "Write markdown notes in massCode with a Notes Dashboard, tasks, live preview, planned links, a Note inspector, diagrams, mind maps, and presentations."
 ---
 
 # Notes
@@ -22,6 +22,12 @@ Use Notes when you want to keep markdown documents close to your snippets and da
 - track tasks with status, priority, and due dates
 - prepare presentations from markdown
 - turn note outlines into mind maps
+
+## Note Inspector
+
+<AppVersion text=">=5.12" />
+
+Use [Note inspector](/documentation/notes/inspector) to navigate and reorder sections, inspect links, and find callouts while writing. [Planned links](/documentation/notes/internal-links#plan-notes-snippets-and-requests) let you leave placeholders for notes, snippets, and HTTP requests, then create them when you are ready.
 
 ## Creating a Note
 
@@ -66,7 +72,7 @@ The editor is built on CodeMirror 6 and includes:
 - Editable markdown tables in Live Preview
 - One-click copying for fenced code blocks in Live Preview and Preview <AppVersion text=">=5.9" />
 - Line break normalization for hard-wrapped terminal text from **Editor** > **Normalize Line Breaks** <AppVersion text=">=5.9" />
-- [Internal links](/documentation/notes/internal-links) to notes and snippets
+- [Internal links](/documentation/notes/internal-links) to notes, snippets, and HTTP requests
 - [Task notes](/documentation/notes/tasks) with status, priority, due dates, and smart views
 - [Mermaid diagram](/documentation/notes/mermaid) support
 - [Image embedding](/documentation/notes/images)

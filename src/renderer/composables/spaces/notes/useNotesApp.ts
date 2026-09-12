@@ -63,10 +63,12 @@ watch(hideCompletedTasksInFolders, (value) => {
   store.app.set('notes.hideCompletedTasksInFolders', value)
 })
 
-const notesInspectorTab = ref<'outline' | 'links'>(
+const notesInspectorTab = ref<'outline' | 'links' | 'annotations'>(
   store.app.get('notes.layout.inspectorTab') === 'outline'
     ? 'outline'
-    : 'links',
+    : store.app.get('notes.layout.inspectorTab') === 'annotations'
+      ? 'annotations'
+      : 'links',
 )
 watch(notesInspectorTab, value =>
   store.app.set('notes.layout.inspectorTab', value))

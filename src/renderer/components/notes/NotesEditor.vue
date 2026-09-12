@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { NotesEditorMode } from '@/composables/spaces/notes/useNotesApp'
+import type { NoteAnnotation } from './inspector/annotations'
 import type { ExternalLinkMatch } from './inspector/externalLinks'
 import type { OutlineHeading, OutlineMove } from './inspector/outline'
 import type { EditorMenuCommand } from './NotesEditorContextMenu.vue'
@@ -722,7 +723,26 @@ function moveSection(move: OutlineMove) {
   view.focus()
 }
 
+function revealAnnotation(annotation: NoteAnnotation) {
+  if (
+    !view
+    || props.disabled
+    || view.state.doc.sliceString(annotation.from, annotation.to)
+    !== annotation.raw
+  ) {
+    return
+  }
+  view.dispatch({
+    selection: {
+      anchor: annotation.from + annotation.raw.split('\n')[0]!.length,
+    },
+    effects: EditorView.scrollIntoView(annotation.from, { y: 'center' }),
+  })
+  view.focus()
+}
+
 defineExpose({
+  revealAnnotation,
   revealHeading,
   moveSection,
   revealLink,

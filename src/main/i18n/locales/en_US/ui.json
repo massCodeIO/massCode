@@ -1155,6 +1155,22 @@
         "empty": "Add headings to navigate your note.",
         "untitled": "Untitled heading",
         "hint": "Drag headings to reorder sections. Drop above or below a heading to place the section beside it, or onto the heading to nest it. All content and nested sections move together."
+      },
+      "annotations": {
+        "title": "Annotations",
+        "filter": "Callout type",
+        "all": "All types",
+        "empty": "This note has no callouts.",
+        "noMatches": "No callouts of this type.",
+        "reveal": "Locate callout",
+        "types": {
+          "TODO": "Todo",
+          "NOTE": "Note",
+          "IMPORTANT": "Important",
+          "WARNING": "Warning"
+        },
+        "emptyCallout": "Empty callout",
+        "summary": "{{count}} callouts"
       }
     }
   },

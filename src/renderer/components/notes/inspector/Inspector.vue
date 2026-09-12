@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { NoteAnnotation } from './annotations'
 import type { LinkRow } from './links'
 import type { OutlineHeading, OutlineMove } from './outline'
 import type { InternalLinkMatch } from '~/shared/notes/internalLinks'
@@ -15,6 +16,7 @@ defineProps<{
   canCreate: boolean
 }>()
 const emit = defineEmits<{
+  annotation: [annotation: NoteAnnotation]
   close: []
   reveal: [match: LinkRow['occurrences'][number]]
   activate: [match: InternalLinkMatch]
@@ -53,6 +55,9 @@ const { notesInspectorTab: tab } = useNotesApp()
         <Tabs.TabsTrigger value="links">
           {{ i18n.t("notes.inspector.links") }}
         </Tabs.TabsTrigger>
+        <Tabs.TabsTrigger value="annotations">
+          {{ i18n.t("notes.inspector.annotations.title") }}
+        </Tabs.TabsTrigger>
       </Tabs.TabsList>
       <Tabs.TabsContent
         value="outline"
@@ -80,6 +85,19 @@ const { notesInspectorTab: tab } = useNotesApp()
           :can-create="canCreate"
           @reveal="emit('reveal', $event)"
           @activate="emit('activate', $event)"
+        />
+      </Tabs.TabsContent>
+      <Tabs.TabsContent
+        value="annotations"
+        class="min-h-0 overflow-hidden"
+        force-mount
+        :hidden="tab !== 'annotations'"
+      >
+        <NotesInspectorAnnotations
+          :note-id="noteId"
+          :content="content"
+          :disabled="disabled"
+          @reveal="emit('annotation', $event)"
         />
       </Tabs.TabsContent>
     </Tabs.Tabs>

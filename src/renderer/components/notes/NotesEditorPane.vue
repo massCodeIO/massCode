@@ -662,6 +662,7 @@ onBeforeUnmount(() => {
           :can-create="notesEditorMode !== 'preview'"
           :cursor="editorCursor"
           @heading="notesEditorRef?.revealHeading($event)"
+          @annotation="notesEditorRef?.revealAnnotation($event)"
           @move="notesEditorRef?.moveSection($event)"
           @close="isNotesInspectorOpen = false"
           @reveal="notesEditorRef?.revealLink($event)"

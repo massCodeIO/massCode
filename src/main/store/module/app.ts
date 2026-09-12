@@ -698,7 +698,7 @@ function sanitizeAppStore(value: unknown): AppStore {
         inspectorTab: readEnum(
           notesLayoutSource,
           'inspectorTab',
-          ['outline', 'links'] as const,
+          ['outline', 'links', 'annotations'] as const,
           'links',
         ),
         inspectorOpen: notesLayoutSource.inspectorOpen === true,

@@ -59,6 +59,8 @@ export function buildNotesGraph(input: BuildNotesGraphInput): NotesGraphData {
     const links = findInternalLinks(note.content)
 
     for (const link of links) {
+      if (link.plannedTarget)
+        continue
       let targetId: number | null = null
 
       if (link.legacyTarget) {

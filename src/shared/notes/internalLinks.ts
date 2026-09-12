@@ -2,6 +2,7 @@ export type InternalLinkType = 'snippet' | 'note' | 'http-request'
 
 export interface InternalLink {
   alias: string | null
+  plannedTarget: { type: InternalLinkType } | null
   basename: string
   legacyTarget: { id: number, type: InternalLinkType } | null
   label: string
@@ -28,6 +29,35 @@ export interface ResolveInternalLinkOptions {
 
 const ESCAPABLE_LINK_CHARACTERS = new Set(['\\', '|', ']'])
 const LEGACY_TARGET_RE = /^(?:snippet|note|http-request):\d+$/
+
+export function getPlannedLinkTarget(
+  target: string,
+): { type: InternalLinkType } | null {
+  const match = /^masscode:planned:(note|snippet|http-request)$/.exec(target)
+  return match && match[0] === target
+    ? { type: match[1] as InternalLinkType }
+    : null
+}
+
+export function buildPlannedLinkMarkdown(
+  type: InternalLinkType,
+  title: string,
+): string {
+  if (!title.trim() || /[\r\n]/.test(title))
+    throw new Error('INVALID_PLANNED_TITLE')
+  return `[[masscode:planned:${type}|${escapeLinkPart(title)}]]`
+}
+
+export function realInternalLinkRewrite(
+  target: string,
+  id: number,
+  type: InternalLinkType,
+  alias?: string | null,
+) {
+  return getPlannedLinkTarget(target)
+    ? { target: `${type}:${id}`, alias: alias ?? target }
+    : target
+}
 
 export function splitInternalLinkTarget(target: string): {
   basename: string
@@ -182,6 +212,7 @@ function parseLinkAt(text: string, from: number): InternalLinkMatch | null {
 
   return {
     alias,
+    plannedTarget: getPlannedLinkTarget(target),
     basename,
     from,
     legacyTarget,
@@ -202,6 +233,7 @@ export function parseInternalLink(text: string): InternalLink | null {
 
   return {
     alias: match.alias,
+    plannedTarget: match.plannedTarget,
     basename: match.basename,
     legacyTarget: match.legacyTarget,
     label: match.label,
@@ -247,7 +279,9 @@ export function normalizeInternalLinkLookupKey(name: string): string {
 
 export function rewriteInternalLinks(
   text: string,
-  mapMatch: (match: InternalLinkMatch) => string | null,
+  mapMatch: (
+    match: InternalLinkMatch,
+  ) => string | { target: string, alias: string } | null,
 ): string | null {
   const matches = findInternalLinks(text)
   let result = ''
@@ -255,13 +289,18 @@ export function rewriteInternalLinks(
   let changed = false
 
   for (const match of matches) {
+    if (match.plannedTarget)
+      continue
     const nextTarget = mapMatch(match)
     if (nextTarget === null) {
       continue
     }
 
     result += text.slice(cursor, match.from)
-    result += buildLinkMarkdown(nextTarget, match.alias ?? undefined)
+    result
+      += typeof nextTarget === 'string'
+        ? buildLinkMarkdown(nextTarget, match.alias ?? undefined)
+        : buildLinkMarkdown(nextTarget.target, nextTarget.alias)
     cursor = match.to
     changed = true
   }
@@ -350,6 +389,8 @@ export function resolveInternalLinkTargetByTitle(
   items: InternalLinkLookupItem[],
   options?: ResolveInternalLinkOptions,
 ): { id: number, type: InternalLinkType } | null {
+  if (getPlannedLinkTarget(target))
+    return null
   const { basename, pathSegments } = splitInternalLinkTarget(target)
 
   if (!basename) {

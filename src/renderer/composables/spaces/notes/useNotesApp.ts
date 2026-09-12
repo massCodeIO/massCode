@@ -63,6 +63,22 @@ watch(hideCompletedTasksInFolders, (value) => {
   store.app.set('notes.hideCompletedTasksInFolders', value)
 })
 
+const notesInspectorTab = ref<'outline' | 'links' | 'annotations'>(
+  store.app.get('notes.layout.inspectorTab') === 'outline'
+    ? 'outline'
+    : store.app.get('notes.layout.inspectorTab') === 'annotations'
+      ? 'annotations'
+      : 'links',
+)
+watch(notesInspectorTab, value =>
+  store.app.set('notes.layout.inspectorTab', value))
+
+const isNotesInspectorOpen = ref(
+  store.app.get<boolean>('notes.layout.inspectorOpen') ?? false,
+)
+watch(isNotesInspectorOpen, value =>
+  store.app.set('notes.layout.inspectorOpen', value))
+
 const isNotesSpaceInitialized = ref(false)
 const pendingNotesNavigation = ref(false)
 const isFocusedNoteName = ref(false)
@@ -198,6 +214,8 @@ watch(notesLayoutMode, (mode) => {
 
 export function useNotesApp() {
   return {
+    isNotesInspectorOpen,
+    notesInspectorTab,
     focusedFolderId,
     focusedNoteId,
     focusNoteNameInput,

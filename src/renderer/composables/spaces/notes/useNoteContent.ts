@@ -10,7 +10,8 @@ import { notesBySearch } from './useNoteSearch'
 // выполняются на каждый keystroke.
 const contentUpdateQueue = new Map<number, string>()
 const contentUpdateTimers = new Map<number, ReturnType<typeof setTimeout>>()
-const inFlightContentUpdateIds = new Set<number>()
+const inFlightContentUpdates = new Map<number, Promise<void>>()
+const versions = new Map<number, number>()
 
 const CONTENT_UPDATE_DEBOUNCE_MS = 500
 const CONTENT_UPDATE_RETRY_MS = 2000
@@ -65,63 +66,70 @@ function scheduleContentUpdate(
 
   const timer = setTimeout(() => {
     contentUpdateTimers.delete(noteId)
-    void flushContentUpdate(noteId)
+    void flushContentUpdate(noteId).catch(console.error)
   }, delayMs)
 
   contentUpdateTimers.set(noteId, timer)
 }
 
-async function flushContentUpdate(noteId: number) {
+function flushContentUpdate(noteId: number): Promise<void> {
+  const pending = inFlightContentUpdates.get(noteId)
+  if (pending)
+    return pending
   const content = contentUpdateQueue.get(noteId)
-  if (content === undefined) {
-    return
-  }
-
+  if (content === undefined)
+    return Promise.resolve()
+  clearTimeout(contentUpdateTimers.get(noteId))
+  contentUpdateTimers.delete(noteId)
   contentUpdateQueue.delete(noteId)
-  inFlightContentUpdateIds.add(noteId)
-
-  let shouldRetry = false
-  try {
-    markPersistedStorageMutation()
-    await api.notes.patchNotesByIdContent(String(noteId), { content })
-    retryAttemptsByNoteId.delete(noteId)
-  }
-  catch (error) {
-    console.error(error)
-    shouldRetry = isRetriableSaveError(error)
-  }
-  finally {
-    inFlightContentUpdateIds.delete(noteId)
-
-    // Временный сбой (503 на evicted-файле, сеть) возвращает payload в
-    // очередь: набранный текст ретраится с backoff до успеха и не гибнет
-    // при hydration refresh. Более свежий ввод, попавший в очередь во время
-    // полёта, приоритетнее возвращаемого.
-    if (shouldRetry && !contentUpdateQueue.has(noteId)) {
-      contentUpdateQueue.set(noteId, content)
+  const version = versions.get(noteId) ?? 0
+  const request = (async () => {
+    try {
+      markPersistedStorageMutation()
+      await api.notes.patchNotesByIdContent(String(noteId), { content })
+      retryAttemptsByNoteId.delete(noteId)
+      if (contentUpdateQueue.has(noteId))
+        scheduleContentUpdate(noteId)
     }
-
-    if (contentUpdateQueue.has(noteId)) {
-      scheduleContentUpdate(
-        noteId,
-        shouldRetry ? nextRetryDelay(noteId) : undefined,
-      )
+    catch (error) {
+      // Keep permanent failures too, but only retry transient errors automatically.
+      if (!contentUpdateQueue.has(noteId))
+        contentUpdateQueue.set(noteId, content)
+      if ((versions.get(noteId) ?? 0) > version)
+        scheduleContentUpdate(noteId)
+      else if (isRetriableSaveError(error))
+        scheduleContentUpdate(noteId, nextRetryDelay(noteId))
+      throw error
     }
-  }
+    finally {
+      inFlightContentUpdates.delete(noteId)
+    }
+  })()
+  inFlightContentUpdates.set(noteId, request)
+  return request
+}
+
+// Drain only this note, including edits queued while its PATCH was in flight.
+// Failure leaves the latest draft queued.
+async function flushNoteContent(noteId: number): Promise<void> {
+  while (contentUpdateQueue.has(noteId) || inFlightContentUpdates.has(noteId))
+    await flushContentUpdate(noteId)
 }
 
 function hasBusyNoteContentUpdates() {
-  return contentUpdateQueue.size > 0 || inFlightContentUpdateIds.size > 0
+  return contentUpdateTimers.size > 0 || inFlightContentUpdates.size > 0
 }
 
 function updateNoteContent(noteId: number, content: string) {
   updateLocalNoteContent(noteId, content)
   contentUpdateQueue.set(noteId, content)
+  const version = (versions.get(noteId) ?? 0) + 1
+  versions.set(noteId, version)
   // Новый ввод сбрасывает backoff: пользователь активен, сохранение снова
   // пробуется быстро.
   retryAttemptsByNoteId.delete(noteId)
 
-  if (inFlightContentUpdateIds.has(noteId)) {
+  if (inFlightContentUpdates.has(noteId)) {
     return
   }
 
@@ -129,8 +137,5 @@ function updateNoteContent(noteId: number, content: string) {
 }
 
 export function useNoteContent() {
-  return {
-    hasBusyNoteContentUpdates,
-    updateNoteContent,
-  }
+  return { hasBusyNoteContentUpdates, flushNoteContent, updateNoteContent }
 }

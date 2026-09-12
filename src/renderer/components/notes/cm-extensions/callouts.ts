@@ -1,7 +1,8 @@
-export type CalloutType = 'NOTE' | 'IMPORTANT' | 'WARNING'
+export type CalloutType = 'NOTE' | 'IMPORTANT' | 'WARNING' | 'TODO'
 export type CalloutTitleMode = 'raw' | 'smart' | 'replace'
 
 export const calloutTitleByType: Record<CalloutType, string> = {
+  TODO: 'Todo',
   NOTE: 'Note',
   IMPORTANT: 'Important',
   WARNING: 'Warning',
@@ -14,7 +15,7 @@ export interface ParsedBlockquoteCallout {
   markerText: string
 }
 
-const CALLOUT_PATTERN = /^\s*>\s*(\[!(NOTE|IMPORTANT|WARNING)\])/i
+const CALLOUT_PATTERN = /^\s*>\s*(\[!(NOTE|IMPORTANT|WARNING|TODO)\])/i
 
 export function parseBlockquoteCallout(
   lineText: string,

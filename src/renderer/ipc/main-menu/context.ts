@@ -16,6 +16,7 @@ interface CodeMenuState {
 }
 
 interface NotesMenuState {
+  inspectorOpen?: boolean
   layoutMode: LayoutMode
   hasSelectedNote: boolean
   isMindmapShown: boolean
@@ -99,6 +100,13 @@ export function createMainMenuContext(
         canCreateTask: true,
       },
       view: {
+        notesInspector: {
+          open: options.notes.inspectorOpen ?? false,
+          enabled:
+            options.notes.hasSelectedNote
+            && !options.notes.isMindmapShown
+            && !options.notes.isPresentationShown,
+        },
         layoutMode: options.notes.layoutMode,
         layoutModes: sharedLayoutModes,
         contentSortField: options.contentSort.notes.sort,

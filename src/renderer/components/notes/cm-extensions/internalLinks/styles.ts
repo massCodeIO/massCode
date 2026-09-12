@@ -24,6 +24,10 @@ export const internalLinksTheme = EditorView.baseTheme({
     backgroundColor: 'var(--internal-link-bg-hover)',
     color: 'var(--internal-link-fg-hover)',
   },
+  '.cm-internal-link.is-planned': {
+    border: '1px dashed currentColor',
+    opacity: '0.8',
+  },
   '.cm-internal-link.is-pending': {
     opacity: '0.8',
   },

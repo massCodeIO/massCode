@@ -21,6 +21,7 @@ export interface MainMenuFileContext {
 export interface MainMenuViewContext {
   layoutMode: MainMenuLayoutMode | null
   layoutModes: MainMenuLayoutMode[]
+  notesInspector?: { open: boolean, enabled: boolean }
   httpPanels?: {
     sidebar: boolean
     bottom: boolean

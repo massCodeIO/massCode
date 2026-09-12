@@ -7,7 +7,7 @@ description: "Link notes, snippets, and HTTP requests together inside massCode N
 
 <AppVersion text=">=5.1" />
 
-Internal Links let you connect notes, snippets, and HTTP requests with wiki-style links directly inside Notes. Use them to build lightweight documentation, link reference snippets or saved API requests from prose, and move through related material without leaving massCode.
+Internal Links let you connect notes, snippets, and HTTP requests with wiki-style links directly inside Notes. Use them to build lightweight documentation, link reference snippets or saved API requests from prose, and move through related item without leaving massCode.
 
 <img :src="withBase('/notes-internal-links.png')">
 
@@ -47,6 +47,48 @@ Start typing `[[` in the Notes editor to open the internal links picker.
 
 The picker inserts the shortest unambiguous form: just the name when it is unique, or a folder path when another item shares the same name.
 
+## Plan Notes, Snippets, and Requests
+
+<AppVersion text=">=5.12" />
+
+Plan a note, snippet, or HTTP request right where you need it in your writing. Insert a placeholder, continue the note, and create the item later without losing your place.
+
+<img :src="withBase('/notes-planned.png')" alt="Internal link picker with Plan Note, Plan Snippet, and Plan HTTP request actions below existing results">
+
+### Insert a placeholder
+
+1. Type `[[` followed by the title you have in mind.
+2. Choose **Plan Note**, **Plan Snippet**, or **Plan HTTP request** with the arrow keys and <kbd>Enter</kbd>, or click the action.
+3. Continue writing. The placeholder has a dashed border in Live Preview; the actual item does not exist yet.
+
+The **Plan…** action stays pinned below the search results. To reach it without stepping through matching items, press <kbd>Cmd</kbd>+<kbd>Enter</kbd> on macOS or <kbd>Ctrl</kbd>+<kbd>Enter</kbd> on Windows/Linux. This selects **Plan Note**; press <kbd>Enter</kbd> to insert it, or use the arrow keys to choose another type. <kbd>Tab</kbd> keeps its usual indentation behavior.
+
+### Create the planned item
+
+Hold <kbd>Cmd</kbd> on macOS or <kbd>Ctrl</kbd> on Windows/Linux and click the placeholder. massCode creates the item, replaces the placeholder with its link, and opens the usual Notes, Code, or HTTP space with the title selected for renaming.
+
+Fill in the item normally, then use **Back** to return to your note through the existing navigation history. The placeholder is now a regular link to the created item.
+
+Notes and snippets are created in **Inbox**. HTTP requests are created in the **Inbox** collection, which is created on demand. Names are checked when you activate the placeholder: if the name is taken, a numeric suffix is added, such as `Example 1` or `Example 2`.
+
+Find all placeholders in [Note inspector → Links](/documentation/notes/inspector#links) by choosing the **Planned** status filter.
+
+### Markdown syntax
+
+Placeholders are stored as Markdown:
+
+```md
+[[masscode:planned:note|Authentication guide]]
+[[masscode:planned:snippet|Token refresh helper]]
+[[masscode:planned:http-request|Refresh access token]]
+```
+
+Only the clicked placeholder is replaced. A planned item has no backlinks or export link until it is created. Repeated clicks while creation is in progress do not create another object. If a step fails, an error notification offers a retry when it is safe to continue.
+
+::: warning Reserved link targets
+The three exact targets above are reserved for placeholders. Existing links using them change meaning; your notes are not rewritten automatically. To link to an imported or older item with one of these names, select it in the picker, which writes an explicit ID link.
+:::
+
 ## Opening Links
 
 Hold <kbd>Cmd</kbd> on macOS or <kbd>Ctrl</kbd> on Windows or Linux, then click the link.
@@ -66,6 +108,12 @@ Hover an internal link while holding <kbd>Cmd</kbd> on macOS or <kbd>Ctrl</kbd> 
 - HTTP request links show the method, URL, and description.
 
 This helps you confirm the target before you navigate away from the current note.
+
+## Note Inspector
+
+<AppVersion text=">=5.12" />
+
+Open the **Links** tab in [Note inspector](/documentation/notes/inspector#links) to inspect linked items, planned placeholders, missing targets, and external addresses. Filter by status or space and use the locate button to find each occurrence in your note.
 
 ## Navigation History
 

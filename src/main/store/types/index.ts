@@ -127,6 +127,8 @@ export interface AppStore {
     selection: CodeState
     contentSort: ContentSortState
     layout: {
+      inspectorOpen?: boolean
+      inspectorWidth?: number
       mode: SpaceLayoutMode
       tagsListHeight: number
       threePanel?: number[]
@@ -144,6 +146,7 @@ export interface AppStore {
       widgets: NotesDashboardWidgets
     }
     layout: {
+      inspectorTab?: 'outline' | 'links' | 'annotations'
       mode: SpaceLayoutMode
       tagsListHeight: number
       threePanel?: number[]

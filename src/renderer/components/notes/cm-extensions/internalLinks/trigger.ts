@@ -1,13 +1,17 @@
-import type { EditorView } from '@codemirror/view'
-import type { InternalLinkType } from './parser'
+import type { EditorView, ViewUpdate } from '@codemirror/view'
+import type { NoteLinkSource } from './creationSource'
+import type { InternalLinkMatch, InternalLinkType } from './parser'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
 import { Prec } from '@codemirror/state'
 import { keymap, ViewPlugin } from '@codemirror/view'
 import { reactive, shallowRef } from 'vue'
+import { captureNoteLinkSource } from './creationSource'
 import { buildNoteFolderPathMap } from './folderPath'
 import {
   buildLinkMarkdown,
+  buildPlannedLinkMarkdown,
+  getPlannedLinkTarget,
   normalizeInternalLinkLookupKey,
   parseInternalLink,
 } from './parser'
@@ -32,7 +36,16 @@ export interface InternalLinkPickerItem {
   folderPath?: string
 }
 
-interface InternalLinkTriggerOptions {
+export interface InternalLinkCreationOptions {
+  sourceIdentity?: () => { id: number, generation: number } | undefined
+  activatePlannedLink?: (
+    source: NoteLinkSource,
+    type: InternalLinkType,
+    query: string,
+  ) => unknown
+}
+
+interface InternalLinkTriggerOptions extends InternalLinkCreationOptions {
   mode: InternalLinksMode
   editable: boolean
 }
@@ -68,6 +81,7 @@ type InternalLinkTokenState =
 const pickerView = shallowRef<EditorView | null>(null)
 let pickerRange: InternalLinkSearchMatch | null = null
 let searchRequestId = 0
+let pickerSelectionChanged = false
 let pickerCleanupTimer: ReturnType<typeof setTimeout> | null = null
 
 export const internalLinksPickerState = reactive({
@@ -76,6 +90,7 @@ export const internalLinksPickerState = reactive({
   isOpen: false,
   items: [] as InternalLinkPickerItem[],
   query: '',
+  plan: null as ((type: InternalLinkType) => void) | null,
 })
 
 export function isInternalLinkPickerEnabled(
@@ -149,7 +164,11 @@ export function getInternalLinkTokenState(
     return { kind: 'closed' }
   }
 
-  if (isStoredInternalLinkPayload(fullPayload)) {
+  if (
+    isStoredInternalLinkPayload(fullPayload)
+    || (closingIndex !== -1
+      && parseInternalLink(`[[${fullPayload}]]`)?.plannedTarget)
+  ) {
     return { kind: 'stored_link' }
   }
 
@@ -191,6 +210,8 @@ export function pickShortestUniqueInsertTarget(
   selected: InternalLinkPickerItem,
   items: InternalLinkPickerItem[],
 ): string {
+  if (getPlannedLinkTarget(selected.name))
+    return `${selected.type}:${selected.id}`
   if (selected.type === 'snippet') {
     return selected.name
   }
@@ -297,6 +318,7 @@ export function closeInternalLinksPicker(restoreFocus = true) {
 
   internalLinksPickerState.activeIndex = 0
   internalLinksPickerState.isOpen = false
+  internalLinksPickerState.plan = null
 
   if (pickerCleanupTimer) {
     clearTimeout(pickerCleanupTimer)
@@ -324,6 +346,7 @@ export function closeInternalLinksPicker(restoreFocus = true) {
 
 export async function setInternalLinksPickerQuery(query: string) {
   internalLinksPickerState.query = query
+  pickerSelectionChanged = false
   const currentRequestId = ++searchRequestId
   const items = await searchItems(query)
 
@@ -334,20 +357,42 @@ export async function setInternalLinksPickerQuery(query: string) {
     return
   }
 
+  const actions = getInternalLinksPickerActions()
+  const selectedAction = pickerSelectionChanged
+    ? actions[
+      internalLinksPickerState.activeIndex
+      - internalLinksPickerState.items.length
+    ]
+    : undefined
   internalLinksPickerState.items = items
-  internalLinksPickerState.activeIndex = 0
+  internalLinksPickerState.activeIndex = selectedAction
+    ? items.length + actions.indexOf(selectedAction)
+    : 0
+}
+
+export function getInternalLinksPickerActions() {
+  const types: InternalLinkType[] = ['note', 'snippet', 'http-request']
+  return internalLinksPickerState.plan
+    ? types.map(type => ({ type, key: `plan:${type}` }))
+    : []
+}
+
+export function setInternalLinksPickerSelection(index: number) {
+  pickerSelectionChanged = true
+  internalLinksPickerState.activeIndex = index
 }
 
 export function moveInternalLinksPickerSelection(delta: number) {
-  if (!internalLinksPickerState.items.length) {
+  const count
+    = internalLinksPickerState.items.length
+      + getInternalLinksPickerActions().length
+  if (!count) {
     return
   }
 
-  internalLinksPickerState.activeIndex
-    = (internalLinksPickerState.activeIndex
-      + delta
-      + internalLinksPickerState.items.length)
-    % internalLinksPickerState.items.length
+  setInternalLinksPickerSelection(
+    (internalLinksPickerState.activeIndex + delta + count) % count,
+  )
 }
 
 export function getInternalLinksPickerAnchorFromCoords(
@@ -362,6 +407,13 @@ export function getInternalLinksPickerAnchorFromCoords(
 export function handleInternalLinksPickerKey(key: string): boolean {
   if (!internalLinksPickerState.isOpen) {
     return false
+  }
+
+  if (key === 'Mod-Enter') {
+    if (!internalLinksPickerState.plan)
+      return false
+    setInternalLinksPickerSelection(internalLinksPickerState.items.length)
+    return true
   }
 
   if (key === 'ArrowDown') {
@@ -398,12 +450,18 @@ export function shouldOpenInternalLinksPicker(
 }
 
 export function selectInternalLinksPickerItem(index?: number) {
+  const selectedIndex = index ?? internalLinksPickerState.activeIndex
+  const action
+    = getInternalLinksPickerActions()[
+      selectedIndex - internalLinksPickerState.items.length
+    ]
+  if (action) {
+    internalLinksPickerState.plan?.(action.type)
+    return
+  }
   const view = pickerView.value
   const range = pickerRange
-  const item
-    = internalLinksPickerState.items[
-      index ?? internalLinksPickerState.activeIndex
-    ]
+  const item = internalLinksPickerState.items[selectedIndex]
 
   if (!view || !range || !item) {
     return
@@ -414,10 +472,10 @@ export function selectInternalLinksPickerItem(index?: number) {
     internalLinksPickerState.items,
   )
   const change
-    = item.type === 'http-request'
+    = item.type === 'http-request' || getPlannedLinkTarget(item.name)
       ? {
           from: range.from,
-          insert: buildLinkMarkdown(`http-request:${item.id}`, item.name),
+          insert: buildLinkMarkdown(`${item.type}:${item.id}`, item.name),
           to: range.to,
         }
       : buildInternalLinkInsertChange(range, target)
@@ -445,6 +503,7 @@ function openInternalLinksPicker(
     pickerCleanupTimer = null
   }
 
+  internalLinksPickerState.plan = null
   pickerView.value = view
   pickerRange = match
   internalLinksPickerState.activeIndex = 0
@@ -452,6 +511,20 @@ function openInternalLinksPicker(
   internalLinksPickerState.isOpen = true
   internalLinksPickerState.items = []
   void setInternalLinksPickerQuery(match.query)
+}
+
+export interface PlannedLinkActions {
+  create: () => void
+}
+const plannedOwners = new WeakMap<
+  EditorView,
+  (match: InternalLinkMatch) => PlannedLinkActions | undefined
+>()
+export function getPlannedLinkActions(
+  view: EditorView,
+  match: InternalLinkMatch,
+) {
+  return plannedOwners.get(view)?.(match)
 }
 
 export function createInternalLinksTrigger(
@@ -465,13 +538,57 @@ export function createInternalLinksTrigger(
 
   const plugin = ViewPlugin.fromClass(
     class {
-      constructor(private readonly view: EditorView) {}
+      private disposed = false
+      captures = new Set<
+        NonNullable<ReturnType<typeof captureNoteLinkSource>>
+      >()
 
-      update(update: {
-        docChanged: boolean
-        selectionSet: boolean
-        view: EditorView
-      }) {
+      constructor(private readonly view: EditorView) {
+        if (options.activatePlannedLink && options.sourceIdentity) {
+          plannedOwners.set(view, (match) => {
+            if (!match.plannedTarget)
+              return
+            const act = () => {
+              if (
+                view.state.doc.sliceString(match.from, match.to) !== match.raw
+              )
+                return
+              const capture
+                = [...this.captures].find(item => item.matches(match))
+                  ?? this.capture(match)
+              if (capture) {
+                options.activatePlannedLink!(
+                  capture.source,
+                  match.plannedTarget!.type,
+                  match.alias ?? '',
+                )
+              }
+            }
+            return { create: act }
+          })
+        }
+      }
+
+      private capture(range: { from: number, to: number }) {
+        if (this.disposed)
+          return
+        const capture = captureNoteLinkSource(
+          this.view,
+          options.sourceIdentity!,
+          range,
+          () => {
+            if (capture)
+              this.captures.delete(capture)
+          },
+        )
+        if (capture)
+          this.captures.add(capture)
+        return capture
+      }
+
+      update(update: ViewUpdate) {
+        if (update.docChanged)
+          this.captures.forEach(capture => capture.update(update.changes))
         const selection = update.view.state.selection.main
 
         if (!selection.empty) {
@@ -527,10 +644,30 @@ export function createInternalLinksTrigger(
         }
 
         openInternalLinksPicker(this.view, match)
+        if (options.activatePlannedLink && options.sourceIdentity) {
+          internalLinksPickerState.plan = (type) => {
+            if (!isInternalLinksPickerOwner(this.view) || !pickerRange)
+              return
+            const title
+              = internalLinksPickerState.query.trim()
+                || i18n.t(`internalLinks.planned.types.${type}`)
+            const capture = this.capture(pickerRange)
+            if (!capture)
+              return
+            capture.source.insert(buildPlannedLinkMarkdown(type, title))
+            closeInternalLinksPicker(false)
+            capture.source.focus()
+            capture.source.release()
+          }
+        }
         this.schedulePopupPosition(match)
       }
 
       destroy() {
+        this.disposed = true
+        plannedOwners.delete(this.view)
+        this.captures.forEach(capture => capture.invalidate())
+        this.captures.clear()
         if (isInternalLinksPickerOwner(this.view)) {
           closeInternalLinksPicker(false)
         }
@@ -561,6 +698,12 @@ export function createInternalLinksTrigger(
     plugin,
     Prec.highest(
       keymap.of([
+        {
+          key: 'Mod-Enter',
+          run: view =>
+            isInternalLinksPickerOwner(view)
+            && handleInternalLinksPickerKey('Mod-Enter'),
+        },
         {
           any(view, event) {
             if (!isInternalLinksPickerOwner(view)) {

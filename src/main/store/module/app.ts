@@ -695,6 +695,17 @@ function sanitizeAppStore(value: unknown): AppStore {
         })(),
       },
       layout: {
+        inspectorTab: readEnum(
+          notesLayoutSource,
+          'inspectorTab',
+          ['outline', 'links', 'annotations'] as const,
+          'links',
+        ),
+        inspectorOpen: notesLayoutSource.inspectorOpen === true,
+        inspectorWidth: Math.max(
+          240,
+          readNumber(notesLayoutSource, 'inspectorWidth', 300),
+        ),
         mode: readEnum(
           notesLayoutSource,
           'mode',

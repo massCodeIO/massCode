@@ -201,6 +201,18 @@ export function registerMainMenuListeners() {
     router.push({ name: RouterName.mathNotebook })
   })
 
+  ipc.on('main-menu:toggle-notes-inspector', () => {
+    const state = useNotesApp()
+    if (
+      getActiveSpaceId() === 'notes'
+      && selectedNote.value
+      && !state.isNotesMindmapShown.value
+      && !state.isNotesPresentationShown.value
+    ) {
+      state.isNotesInspectorOpen.value = !state.isNotesInspectorOpen.value
+    }
+  })
+
   ipc.on('main-menu:toggle-http-panel', (_, panel?: string) => {
     if (getActiveSpaceId() !== 'http')
       return

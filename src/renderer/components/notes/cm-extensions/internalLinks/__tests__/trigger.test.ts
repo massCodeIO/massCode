@@ -10,6 +10,7 @@ import {
   internalLinksPickerState,
   isInternalLinkPickerEnabled,
   pickShortestUniqueInsertTarget,
+  setInternalLinksPickerQuery,
   shouldOpenInternalLinksPicker,
 } from '../trigger'
 
@@ -232,6 +233,90 @@ describe('getInternalLinksPickerAnchorFromCoords', () => {
 })
 
 describe('handleInternalLinksPickerKey', () => {
+  it('jumps past matches to Plan Note without creating, leaving Tab alone', () => {
+    const plan = vi.fn()
+    internalLinksPickerState.isOpen = true
+    internalLinksPickerState.items = Array.from({ length: 50 }, (_, id) => ({
+      id,
+      name: String(id),
+      locationLabel: '',
+      type: 'note' as const,
+    }))
+    internalLinksPickerState.activeIndex = 0
+    internalLinksPickerState.plan = plan
+    expect(handleInternalLinksPickerKey('Tab')).toBe(false)
+    expect(handleInternalLinksPickerKey('Mod-Enter')).toBe(true)
+    expect(internalLinksPickerState.activeIndex).toBe(50)
+    expect(plan).not.toHaveBeenCalled()
+    handleInternalLinksPickerKey('Enter')
+    expect(plan).toHaveBeenCalledExactlyOnceWith('note')
+    handleInternalLinksPickerKey('Escape')
+    expect(handleInternalLinksPickerKey('Mod-Enter')).toBe(false)
+  })
+
+  it.each([0, 2])(
+    'navigates results and Plan actions with Enter (%s results)',
+    (resultCount) => {
+      const plan = vi.fn()
+      internalLinksPickerState.isOpen = true
+      internalLinksPickerState.activeIndex = resultCount ? resultCount - 1 : 0
+      internalLinksPickerState.items = Array.from(
+        { length: resultCount },
+        (_, id) => ({
+          id,
+          name: String(id),
+          locationLabel: '',
+          type: 'note' as const,
+        }),
+      )
+      internalLinksPickerState.plan = plan
+      if (resultCount)
+        handleInternalLinksPickerKey('ArrowDown')
+      for (const [offset, type] of [
+        'note',
+        'snippet',
+        'http-request',
+      ].entries()) {
+        expect(internalLinksPickerState.activeIndex).toBe(resultCount + offset)
+        handleInternalLinksPickerKey('Enter')
+        expect(plan).toHaveBeenLastCalledWith(type)
+        handleInternalLinksPickerKey('ArrowDown')
+      }
+      expect(internalLinksPickerState.activeIndex).toBe(0)
+      handleInternalLinksPickerKey('ArrowUp')
+      expect(internalLinksPickerState.activeIndex).toBe(resultCount + 2)
+      handleInternalLinksPickerKey('Escape')
+      expect(internalLinksPickerState.isOpen).toBe(false)
+      expect(internalLinksPickerState.plan).toBeNull()
+    },
+  )
+
+  it('preserves the selected action when search results arrive', async () => {
+    const { api } = await import('@/services/api')
+    for (const get of [
+      api.snippets.getSnippets,
+      api.notes.getNotes,
+      api.noteFolders.getNoteFolders,
+      api.httpRequests.getHttpRequests,
+      api.httpFolders.getHttpFolders,
+    ])
+      vi.mocked(get).mockResolvedValue({ data: [] } as never)
+    vi.mocked(api.notes.getNotes).mockResolvedValue({
+      data: [{ id: 7, name: 'Match', folder: null, isDeleted: 0 }],
+    } as never)
+    internalLinksPickerState.isOpen = true
+    internalLinksPickerState.items = []
+    internalLinksPickerState.activeIndex = 0
+    internalLinksPickerState.plan = vi.fn()
+    const pending = setInternalLinksPickerQuery('Match')
+    handleInternalLinksPickerKey('ArrowUp')
+    await pending
+    expect(internalLinksPickerState.items).toHaveLength(1)
+    expect(internalLinksPickerState.activeIndex).toBe(3)
+    handleInternalLinksPickerKey('Enter')
+    expect(internalLinksPickerState.plan).toHaveBeenCalledWith('http-request')
+    handleInternalLinksPickerKey('Escape')
+  })
   it('moves active selection with arrow keys', () => {
     internalLinksPickerState.isOpen = true
     internalLinksPickerState.activeIndex = 0
@@ -400,5 +485,86 @@ describe('pickShortestUniqueInsertTarget', () => {
     ]
 
     expect(pickShortestUniqueInsertTarget(selected, items)).toBe('Shared')
+  })
+})
+
+describe('planned occurrence owner actions', () => {
+  it.each([1, 22])(
+    'captures only the chosen complete occurrence in owner %s and maps later edits',
+    async (id) => {
+      const { EditorState } = await import('@codemirror/state')
+      const { createInternalLinksTrigger, getPlannedLinkActions }
+        = await import('../trigger')
+      const { findInternalLinks } = await import('../parser')
+      const raw = '[[masscode:planned:note|Later]]'
+      let state = EditorState.create({ doc: `${raw} ${raw}` })
+      let plugin: { update: (value: unknown) => void, destroy: () => void }
+      const view = {
+        get state() {
+          return state
+        },
+        dom: { inert: false },
+        requestMeasure: vi.fn(),
+        focus: vi.fn(),
+        dispatch(spec: Parameters<typeof state.update>[0]) {
+          const tr = state.update(spec)
+          state = tr.state
+          plugin.update({
+            view,
+            docChanged: tr.docChanged,
+            selectionSet: false,
+            changes: tr.changes,
+          })
+        },
+      }
+      const create = vi.fn()
+      const extension = createInternalLinksTrigger({
+        mode: 'livePreview',
+        editable: true,
+        sourceIdentity: () => ({ id, generation: 0 }),
+        activatePlannedLink: create,
+      })
+      plugin = (
+        extension[0] as { create: (view: unknown) => typeof plugin }
+      ).create(view)
+      const actions = getPlannedLinkActions(
+        view as never,
+        findInternalLinks(state.doc.toString())[1]!,
+      )!
+      actions.create()
+      const captured = create.mock.calls[0]![0]
+      expect(create).toHaveBeenCalledWith(
+        expect.objectContaining({ noteId: id }),
+        'note',
+        'Later',
+      )
+      view.dispatch({ changes: { from: 0, insert: 'prefix ' } })
+      captured.insert('[[note:9|Existing]]')
+      expect(state.doc.toString()).toBe(`prefix ${raw} [[note:9|Existing]]`)
+      plugin.destroy()
+      expect(captured.valid()).toBe(false)
+      actions.create()
+      expect(create).toHaveBeenCalledTimes(1)
+    },
+  )
+  it('treats the complete planned token as stored at every target caret and uses typed IDs for reserved real names', () => {
+    const token = '[[masscode:planned:note|Later]]'
+    expect(getInternalLinkTokenState(token, 5)).toEqual({
+      kind: 'stored_link',
+    })
+    expect(getInternalLinkTokenState('[[masscode:planned:note]]', 5)).toEqual({
+      kind: 'stored_link',
+    })
+    expect(
+      pickShortestUniqueInsertTarget(
+        {
+          id: 9,
+          name: 'masscode:planned:note',
+          type: 'snippet',
+          locationLabel: '',
+        },
+        [],
+      ),
+    ).toBe('snippet:9')
   })
 })

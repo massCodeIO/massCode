@@ -22,6 +22,12 @@ import FeaturesItem from './FeaturesItem.vue'
       Write in Markdown with live preview, add status, priority, and due dates
       to task notes, organize with folders and tags, and use Mermaid diagrams,
       mindmaps, or fullscreen presentation mode when you need more structure.
+      Plan linked notes, snippets, and requests while writing, then create them
+      when ready. Use the
+      <AppLink href="/documentation/notes/inspector">
+        Note inspector
+      </AppLink>
+      to reorder sections, inspect links, and find callouts.
     </FeaturesItem>
     <FeaturesItem title="HTTP Client">
       Build and test HTTP, GraphQL, and WebSocket APIs. Organize collections

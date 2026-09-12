@@ -22,7 +22,7 @@ Start a blockquote with one of the supported markers:
 > Use warnings for risks, destructive actions, or anything that needs extra care.
 ```
 
-Supported callout types are `NOTE`, `IMPORTANT`, and `WARNING`. The marker is case-insensitive, so `> [!note]` works the same as `> [!NOTE]`.
+Supported callout types are `NOTE`, `IMPORTANT`, and `WARNING`. [`TODO`](#authoring-todos-and-annotations) is available starting with 5.12. The marker is case-insensitive, so `> [!note]` works the same as `> [!NOTE]`.
 
 ## Multi-line Callouts
 
@@ -36,3 +36,16 @@ Keep each line inside the same blockquote:
 ```
 
 Callouts are shown with dedicated styling in **Live Preview** and **Preview** modes. In editable modes, the marker stays visible while the cursor is on the callout line, so the markdown remains easy to edit.
+
+## Authoring TODOs and Annotations
+
+<AppVersion text=">=5.12" />
+
+Use a TODO callout to mark unfinished work in the current note:
+
+```md
+> [!TODO]
+> Add an example of error handling.
+```
+
+Open [Note inspector → Annotations](/documentation/notes/inspector#annotations) to find all callouts in the note, grouped and filtered by type. These are ordinary Markdown blocks, not separate tasks.

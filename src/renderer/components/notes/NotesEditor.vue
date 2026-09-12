@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import type { NotesEditorMode } from '@/composables/spaces/notes/useNotesApp'
+import type { NoteAnnotation } from './inspector/annotations'
+import type { ExternalLinkMatch } from './inspector/externalLinks'
+import type { OutlineHeading, OutlineMove } from './inspector/outline'
 import type { EditorMenuCommand } from './NotesEditorContextMenu.vue'
+import type { InternalLinkMatch } from '~/shared/notes/internalLinks'
 import { createCodeHighlight } from '@/components/cm-extensions/codeHighlight'
 import { editorScrollbarTheme } from '@/components/cm-extensions/scrollbarTheme'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
@@ -64,6 +68,8 @@ import {
 } from './cm-extensions/imageBlocks'
 import { createImageInsert } from './cm-extensions/imageInsert'
 import { createInternalLinks } from './cm-extensions/internalLinks'
+import { activatePlannedLink } from './cm-extensions/internalLinks/activatePlannedLink'
+import { getPlannedLinkActions } from './cm-extensions/internalLinks/trigger'
 import { createListIndent } from './cm-extensions/listIndent'
 import { createListLineIndent } from './cm-extensions/listLineIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
@@ -85,6 +91,7 @@ import {
 } from './cm-extensions/tableBlocks'
 import { moveSelectionToAdjacentTableCell } from './cm-extensions/tableNavigation'
 import { isOwnNoteContentEcho } from './editorSync'
+import { createOutlineMove, getOutline } from './inspector/outline'
 import { createNotesEditTheme } from './theme'
 
 interface Props {
@@ -99,6 +106,7 @@ const props = withDefaults(defineProps<Props>(), {
   mode: 'livePreview',
   presentation: false,
 })
+const emit = defineEmits<{ cursor: [position: number] }>()
 const content = defineModel<string>('content', { default: '' })
 const { isDark } = useTheme()
 const { settings: notesSettings } = useNotesEditor()
@@ -127,6 +135,7 @@ let lastEmittedContent:
   | { noteId: number | undefined, value: string }
   | undefined
 let lastAppliedNoteId: number | undefined
+let noteGeneration = 0
 
 function moveSelectionToAdjacentImageSource(
   view: EditorView,
@@ -316,6 +325,11 @@ function createEditorState(doc: string): EditorState {
     ...createInternalLinks({
       editable,
       mode: props.mode,
+      sourceIdentity: () =>
+        props.noteId === undefined
+          ? undefined
+          : { id: props.noteId, generation: noteGeneration },
+      activatePlannedLink: props.presentation ? undefined : activatePlannedLink,
     }),
   )
 
@@ -350,6 +364,8 @@ function createEditorState(doc: string): EditorState {
 
   extensions.push(
     EditorView.updateListener.of((update) => {
+      if (update.selectionSet || update.docChanged)
+        emit('cursor', update.state.selection.main.head)
       if (update.docChanged && !isApplyingExternalContent) {
         const value = update.state.doc.toString()
         lastEmittedContent = { noteId: props.noteId, value }
@@ -399,6 +415,7 @@ function applyExternalState(doc: string, selectFirstMatch = false) {
   pendingTableSearchReveal = undefined
   isApplyingExternalContent = true
   view.setState(createEditorState(doc))
+  emit('cursor', view.state.selection.main.head)
   isApplyingExternalContent = false
   refreshVisibleSearch(selectFirstMatch)
 }
@@ -609,6 +626,7 @@ watch([() => props.noteId, content], ([noteId, val]) => {
   // но переиспользует EditorView и DOM (раньше компонент пересоздавался
   // целиком через :key).
   if (noteId !== lastAppliedNoteId) {
+    noteGeneration++
     lastEmittedContent = undefined
     lastAppliedNoteId = noteId
     applyExternalState(val, true)
@@ -656,7 +674,79 @@ function focusEditor() {
   })
 }
 
+function revealLink(match: InternalLinkMatch | ExternalLinkMatch) {
+  if (
+    !view
+    || props.disabled
+    || view.state.doc.sliceString(match.from, match.to) !== match.raw
+  ) {
+    return
+  }
+  view.dispatch({
+    selection: { anchor: 'cursor' in match ? match.cursor : match.to - 2 },
+    effects: EditorView.scrollIntoView(match.from, { y: 'center' }),
+  })
+  view.focus()
+}
+function activateLink(match: InternalLinkMatch) {
+  if (view && !props.disabled)
+    getPlannedLinkActions(view, match)?.create()
+}
+
+function revealHeading(heading: OutlineHeading) {
+  if (!view || props.disabled)
+    return
+  const current = getOutline(view.state.doc.toString()).find(
+    item => item.from === heading.from && item.title === heading.title,
+  )
+  if (!current)
+    return
+  view.dispatch({
+    selection: { anchor: current.from },
+    effects: EditorView.scrollIntoView(current.from, { y: 'center' }),
+  })
+  view.focus()
+}
+
+function moveSection(move: OutlineMove) {
+  if (!view || props.disabled || isPreviewMode.value)
+    return
+  const transaction = createOutlineMove(view.state.doc.toString(), move)
+  if (!transaction)
+    return
+  view.dispatch(transaction)
+  view.dispatch({
+    effects: EditorView.scrollIntoView(view.state.selection.main.head, {
+      y: 'center',
+    }),
+  })
+  view.focus()
+}
+
+function revealAnnotation(annotation: NoteAnnotation) {
+  if (
+    !view
+    || props.disabled
+    || view.state.doc.sliceString(annotation.from, annotation.to)
+    !== annotation.raw
+  ) {
+    return
+  }
+  view.dispatch({
+    selection: {
+      anchor: annotation.from + annotation.raw.split('\n')[0]!.length,
+    },
+    effects: EditorView.scrollIntoView(annotation.from, { y: 'center' }),
+  })
+  view.focus()
+}
+
 defineExpose({
+  revealAnnotation,
+  revealHeading,
+  moveSection,
+  revealLink,
+  activateLink,
   closeContentSearch,
   focusEditor,
   openContentSearch,

@@ -1117,6 +1117,82 @@
         "empty": "No links between notes yet.",
         "error": "Failed to load notes graph."
       }
+    },
+    "inspector": {
+      "title": "Note inspector",
+      "summary": "{{linked}} linked · {{planned}} planned · {{missing}} missing · {{external}} external",
+      "planned": "Planned",
+      "missing": "Missing",
+      "pending": "Loading links…",
+      "failed": "Could not load linked items.",
+      "empty": "This note has no links.",
+      "links": "Links",
+      "reveal": "Find in note · click again for next occurrence",
+      "alias": "Label in note: {{alias}}",
+      "showMore": "Show more",
+      "showLess": "Show less",
+      "filterStatus": "Link status",
+      "filterSpace": "Space",
+      "noMatches": "No links match these filters.",
+      "status": {
+        "all": "All statuses",
+        "linked": "Linked",
+        "planned": "Planned",
+        "missing": "Missing"
+      },
+      "space": {
+        "all": "All spaces",
+        "note": "Notes",
+        "snippet": "Code",
+        "http-request": "HTTP",
+        "external": "External"
+      },
+      "external": "External",
+      "openExternal": "Open in browser",
+      "outline": {
+        "title": "Outline",
+        "empty": "Add headings to navigate your note.",
+        "untitled": "Untitled heading",
+        "hint": "Drag headings to reorder sections. Drop above or below a heading to place the section beside it, or onto the heading to nest it. All content and nested sections move together.",
+        "help": {
+          "title": "Note outline",
+          "navigation": "Headings H1–H6 form the outline. Click a heading to jump to it; the current section follows the cursor."
+        }
+      },
+      "annotations": {
+        "title": "Annotations",
+        "filter": "Callout type",
+        "all": "All types",
+        "empty": "This note has no callouts.",
+        "noMatches": "No callouts of this type.",
+        "reveal": "Locate callout",
+        "types": {
+          "TODO": "Todo",
+          "NOTE": "Note",
+          "IMPORTANT": "Important",
+          "WARNING": "Warning"
+        },
+        "emptyCallout": "Empty callout",
+        "summary": "{{count}} callouts",
+        "help": {
+          "title": "Callouts in notes",
+          "intro": "Add a callout marker in a blockquote, then write its text on the same line or continue on lines starting with >.",
+          "types": {
+            "NOTE": "Additional context or an explanation.",
+            "IMPORTANT": "Key information the reader should not miss.",
+            "WARNING": "A warning about a risk or an unexpected result.",
+            "TODO": "Unfinished work: add an example, check a fact, or rewrite a passage."
+          },
+          "usage": "Markers are case-insensitive. All callouts appear here automatically. Filter by type to narrow the list.",
+          "navigate": "Click {{action}} to jump to a callout in the note."
+        }
+      },
+      "linkHelp": {
+        "title": "Links in this note",
+        "navigate": "Click {{action}} to jump to a link in the note. Click again to find its next occurrence.",
+        "create": "{{shortcut}} + click {{action}} beside a planned link to create the item and open it.",
+        "external": "Click {{action}} beside an external link to open it in your browser."
+      }
     }
   },
   "folder": {
@@ -1276,6 +1352,18 @@
       "snippet": "Snippet not found",
       "httpRequest": "HTTP request not found",
       "note": "Note not found"
+    },
+    "planned": {
+      "status": "Planned {{type}}",
+      "add": "Plan {{type}}",
+      "failed": "Could not finish creating the linked item. Try again.",
+      "types": {
+        "note": "Note",
+        "snippet": "Snippet",
+        "http-request": "HTTP request"
+      },
+      "httpCollection": "Inbox",
+      "choose": "Plan…"
     }
   },
   "placeholder": {

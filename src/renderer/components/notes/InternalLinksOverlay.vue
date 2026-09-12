@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { InternalLinkPickerItem } from './cm-extensions/internalLinks/trigger'
+import { Button } from '@/components/ui/shadcn/button'
 import * as Popover from '@/components/ui/shadcn/popover'
 import { i18n } from '@/electron'
-import { cn } from '@/utils'
+import { cn, isMac } from '@/utils'
 import { useWindowSize } from '@vueuse/core'
 import { Code2, FileText, Send } from 'lucide-vue-next'
 import {
@@ -17,8 +18,10 @@ import {
 } from './cm-extensions/internalLinks/preview'
 import {
   closeInternalLinksPicker,
+  getInternalLinksPickerActions,
   internalLinksPickerState,
   selectInternalLinksPickerItem,
+  setInternalLinksPickerSelection,
 } from './cm-extensions/internalLinks/trigger'
 
 const { height: windowHeight, width: windowWidth } = useWindowSize()
@@ -66,8 +69,14 @@ const activePickerItem = computed(
     ?? null,
 )
 
+const pickerActions = computed(getInternalLinksPickerActions)
 const activePickerItemKey = computed(() =>
-  activePickerItem.value ? getPickerItemKey(activePickerItem.value) : null,
+  activePickerItem.value
+    ? getPickerItemKey(activePickerItem.value)
+    : (pickerActions.value[
+        internalLinksPickerState.activeIndex
+        - internalLinksPickerState.items.length
+      ]?.key ?? null),
 )
 
 const previewAnchorStyle = computed(() => {
@@ -136,7 +145,7 @@ function setActivePickerItem(item: InternalLinkPickerItem) {
     return
   }
 
-  internalLinksPickerState.activeIndex = index
+  setInternalLinksPickerSelection(index)
 }
 
 function onPickerInteractOutside() {
@@ -188,12 +197,12 @@ watch(
       @open-auto-focus.prevent
     >
       <div
-        class="bg-popover text-popover-foreground overflow-hidden rounded-md"
+        class="bg-popover text-popover-foreground flex min-h-0 flex-col overflow-hidden rounded-md"
+        :style="{ maxHeight: pickerContentStyle.maxHeight }"
       >
         <div
           ref="pickerListRef"
-          class="overflow-y-auto p-1.5"
-          :style="{ maxHeight: pickerContentStyle.maxHeight }"
+          class="min-h-0 overflow-y-auto p-1.5"
         >
           <template v-if="pickerGroups.length">
             <div
@@ -249,6 +258,66 @@ watch(
           >
             {{ i18n.t("internalLinks.picker.emptyResults") }}
           </div>
+        </div>
+        <div
+          v-if="pickerActions.length"
+          class="border-border shrink-0 border-t p-1.5"
+        >
+          <Button
+            variant="ghost"
+            class="w-full justify-between"
+            @mousedown.prevent
+            @click="
+              setInternalLinksPickerSelection(
+                internalLinksPickerState.items.length,
+              )
+            "
+          >
+            {{ i18n.t("internalLinks.planned.choose") }}
+            <UiText
+              variant="xs"
+              muted
+            >
+              {{ isMac ? "⌘↵" : "Ctrl+Enter" }}
+            </UiText>
+          </Button>
+          <template
+            v-if="
+              internalLinksPickerState.activeIndex
+                >= internalLinksPickerState.items.length
+            "
+          >
+            <Button
+              v-for="(action, index) in pickerActions"
+              :key="action.key"
+              variant="ghost"
+              :data-picker-item-key="action.key"
+              :class="
+                cn(
+                  'w-full justify-start',
+                  activePickerItemKey === action.key
+                    && 'bg-accent text-accent-foreground',
+                )
+              "
+              @mousemove="
+                setInternalLinksPickerSelection(
+                  internalLinksPickerState.items.length + index,
+                )
+              "
+              @mousedown.prevent
+              @click="
+                selectInternalLinksPickerItem(
+                  internalLinksPickerState.items.length + index,
+                )
+              "
+            >
+              {{
+                i18n.t("internalLinks.planned.add", {
+                  type: i18n.t(`internalLinks.planned.types.${action.type}`),
+                })
+              }}
+            </Button>
+          </template>
         </div>
       </div>
     </Popover.PopoverContent>

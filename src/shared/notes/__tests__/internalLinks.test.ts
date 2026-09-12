@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildLinkMarkdown,
+  buildPlannedLinkMarkdown,
   escapeLinkPart,
   findInternalLinks,
   parseInternalLink,
+  realInternalLinkRewrite,
   resolveInternalLinkTargetByTitle,
+  rewriteInternalLinks,
   rewriteInternalLinkTarget,
   splitInternalLinkTarget,
 } from '../internalLinks'
@@ -13,6 +16,7 @@ describe('parseInternalLink', () => {
   it('parses a link without alias', () => {
     expect(parseInternalLink('[[Repository Pattern with Cache]]')).toEqual({
       alias: null,
+      plannedTarget: null,
       basename: 'Repository Pattern with Cache',
       legacyTarget: null,
       label: 'Repository Pattern with Cache',
@@ -27,6 +31,7 @@ describe('parseInternalLink', () => {
       parseInternalLink('[[Repository Pattern with Cache|Repo Pattern]]'),
     ).toEqual({
       alias: 'Repo Pattern',
+      plannedTarget: null,
       basename: 'Repository Pattern with Cache',
       legacyTarget: null,
       label: 'Repo Pattern',
@@ -39,6 +44,7 @@ describe('parseInternalLink', () => {
   it('parses a link with a folder path', () => {
     expect(parseInternalLink('[[Projects/Repository Pattern]]')).toEqual({
       alias: null,
+      plannedTarget: null,
       basename: 'Repository Pattern',
       legacyTarget: null,
       label: 'Projects/Repository Pattern',
@@ -51,6 +57,7 @@ describe('parseInternalLink', () => {
   it('parses a link with a nested folder path', () => {
     expect(parseInternalLink('[[Work/Projects/Repository Pattern]]')).toEqual({
       alias: null,
+      plannedTarget: null,
       basename: 'Repository Pattern',
       legacyTarget: null,
       label: 'Work/Projects/Repository Pattern',
@@ -63,6 +70,7 @@ describe('parseInternalLink', () => {
   it('parses a path-based link with alias', () => {
     expect(parseInternalLink('[[Projects/Repository Pattern|Repo]]')).toEqual({
       alias: 'Repo',
+      plannedTarget: null,
       basename: 'Repository Pattern',
       legacyTarget: null,
       label: 'Repo',
@@ -81,6 +89,7 @@ describe('parseInternalLink', () => {
   it('handles escaped characters in the target and alias', () => {
     expect(parseInternalLink('[[Array \\] draft|foo \\| bar]]')).toEqual({
       alias: 'foo | bar',
+      plannedTarget: null,
       basename: 'Array ] draft',
       legacyTarget: null,
       label: 'foo | bar',
@@ -93,6 +102,7 @@ describe('parseInternalLink', () => {
   it('handles escaped backslashes', () => {
     expect(parseInternalLink('[[path\\\\file|Alias\\\\Text]]')).toEqual({
       alias: 'Alias\\Text',
+      plannedTarget: null,
       basename: 'path\\file',
       legacyTarget: null,
       label: 'Alias\\Text',
@@ -107,6 +117,7 @@ describe('parseInternalLink', () => {
       parseInternalLink('[[snippet:57|Repository Pattern with Cache]]'),
     ).toEqual({
       alias: 'Repository Pattern with Cache',
+      plannedTarget: null,
       basename: 'snippet:57',
       legacyTarget: { id: 57, type: 'snippet' },
       label: 'Repository Pattern with Cache',
@@ -119,6 +130,7 @@ describe('parseInternalLink', () => {
   it('keeps HTTP request id metadata for stored internal link payloads', () => {
     expect(parseInternalLink('[[http-request:8|Create snippet]]')).toEqual({
       alias: 'Create snippet',
+      plannedTarget: null,
       basename: 'http-request:8',
       legacyTarget: { id: 8, type: 'http-request' },
       label: 'Create snippet',
@@ -223,11 +235,13 @@ describe('findInternalLinks', () => {
     expect(links).toHaveLength(2)
     expect(links[0]).toMatchObject({
       alias: null,
+      plannedTarget: null,
       label: 'Repository Pattern',
       target: 'Repository Pattern',
     })
     expect(links[1]).toMatchObject({
       alias: 'Shown',
+      plannedTarget: null,
       label: 'Shown',
       target: 'Second Doc',
     })
@@ -490,5 +504,60 @@ describe('resolveInternalLinkTargetByTitle', () => {
         { folderPath: 'Work/Projects', id: 1, name: 'Foo', type: 'note' },
       ]),
     ).toEqual({ id: 1, type: 'note' })
+  })
+})
+
+describe('planned reserved targets', () => {
+  it.each(['note', 'snippet', 'http-request'] as const)(
+    'round trips exact %s with escaped alias, including target-as-title',
+    (type) => {
+      const title = 'Unicode Привет | ] \\'
+      const markdown = buildPlannedLinkMarkdown(type, title)
+      expect(parseInternalLink(markdown)).toMatchObject({
+        plannedTarget: { type },
+        alias: title,
+        legacyTarget: null,
+      })
+      expect(buildPlannedLinkMarkdown(type, `masscode:planned:${type}`)).toBe(
+        `[[masscode:planned:${type}|masscode:planned:${type}]]`,
+      )
+      expect(
+        parseInternalLink(`[[masscode:planned:${type}]]`)?.plannedTarget,
+      ).toEqual({ type })
+      expect(
+        resolveInternalLinkTargetByTitle(`masscode:planned:${type}`, [
+          { id: 1, type, name: `masscode:planned:${type}` },
+        ]),
+      ).toBeNull()
+    },
+  )
+  it('keeps unknown, case and path variants ordinary and rejects empty/multiline canonical aliases', () => {
+    for (const target of [
+      'Masscode:planned:note',
+      'masscode:planned:Note',
+      'masscode:planned:drawing',
+      'Folder/masscode:planned:note',
+    ])
+      expect(parseInternalLink(`[[${target}]]`)?.plannedTarget).toBeNull()
+    expect(() => buildPlannedLinkMarkdown('note', '')).toThrow()
+    expect(() => buildPlannedLinkMarkdown('note', 'a\nb')).toThrow()
+    expect(parseInternalLink('[[masscode:planned:note|]]')).toBeNull()
+  })
+  it('never calls rewrite callbacks for planned links and writes real reserved renames as typed IDs', () => {
+    const original = '[[masscode:planned:note|Keep]] [[Old]]'
+    const calls: string[] = []
+    const result = rewriteInternalLinks(original, (match) => {
+      calls.push(match.target)
+      return realInternalLinkRewrite(
+        'masscode:planned:note',
+        9,
+        'note',
+        match.alias,
+      )
+    })
+    expect(calls).toEqual(['Old'])
+    expect(result).toBe(
+      '[[masscode:planned:note|Keep]] [[note:9|masscode:planned:note]]',
+    )
   })
 })

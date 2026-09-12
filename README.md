@@ -98,11 +98,13 @@ Write longer markdown documents right next to your snippets: project docs, draft
 - Dashboard with activity overview, recent notes, top linked notes, and a notes graph preview
 - Editor, Live Preview, and Preview modes
 - Editable markdown tables with row and column controls
+- Internal links to notes, snippets, and HTTP requests, with placeholders for items you plan to create later
+- Note inspector with section navigation and reordering, link filters, and grouped callouts
 - Fullscreen notes graph for exploring internal links between notes
 - Integrated [Mermaid](https://mermaid-js.github.io/mermaid/#) diagrams
 - Mind maps generated from markdown heading structure
 - Fullscreen presentation mode for demos and meetings
-- Callout blocks and image embedding
+- Callout blocks, including TODOs for unfinished writing, and image embedding
 
 ### HTTP Client
 

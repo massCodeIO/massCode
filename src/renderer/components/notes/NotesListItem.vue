@@ -52,7 +52,7 @@ const props = defineProps<Props>()
 const { formatDate } = useDateFormat()
 
 const { isCompactListMode } = useApp()
-const { clearHistory } = useNavigationHistory()
+const { recordNavigation } = useNavigationHistory()
 const { highlightedNoteIds, highlightedFolderIds, focusedNoteId, notesState }
   = useNotesApp()
 
@@ -130,8 +130,14 @@ const trailingMeta = computed(() => {
   return formatDate(new Date(props.note.updatedAt))
 })
 function onNoteClick(id: number, event: MouseEvent) {
-  clearHistory()
-  selectNote(id, event.shiftKey)
+  if (event.shiftKey) {
+    selectNote(id, true)
+  }
+  else {
+    recordNavigation(() => {
+      selectNote(id)
+    })
+  }
   focusedNoteId.value = id
 }
 

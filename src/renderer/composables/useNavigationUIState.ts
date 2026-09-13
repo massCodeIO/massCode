@@ -1,12 +1,22 @@
+import type { EditorView } from '@codemirror/view'
 import type { NavigationHistoryEntry } from './useNavigationHistory'
 
 export interface NavigationHistoryUIState {
   scrollTop: number
+  scrollSnapshot?: {
+    effect: ReturnType<EditorView['scrollSnapshot']>
+    anchor: number
+    offset: number
+  }
 }
 
 interface NavigationUIStateController {
   getScrollTop: () => number
-  setScrollTop: (scrollTop: number) => void
+  getScrollSnapshot?: () => NavigationHistoryUIState['scrollSnapshot']
+  setScrollTop: (
+    scrollTop: number,
+    snapshot?: NavigationHistoryUIState['scrollSnapshot'],
+  ) => void
 }
 
 const noteControllers = new Map<number, NavigationUIStateController>()
@@ -74,6 +84,9 @@ export function captureNavigationUIState(
 
   return {
     scrollTop: controller.getScrollTop(),
+    ...(controller.getScrollSnapshot && {
+      scrollSnapshot: controller.getScrollSnapshot(),
+    }),
   }
 }
 
@@ -83,6 +96,10 @@ export function queueNavigationUIStateRestore(entry: NavigationHistoryEntry) {
   }
 
   pendingUIStateByKey.set(getEntryKey(entry), entry.uiState)
+  if (entry.type === 'note')
+    applyPendingNavigationUIStateForNote(entry.id)
+  else if (entry.type === 'route')
+    applyPendingNavigationUIStateForRoute(entry.routeName)
 }
 
 export function applyPendingNavigationUIStateForNote(noteId: number) {
@@ -94,7 +111,7 @@ export function applyPendingNavigationUIStateForNote(noteId: number) {
     return false
   }
 
-  controller.setScrollTop(pending.scrollTop)
+  controller.setScrollTop(pending.scrollTop, pending.scrollSnapshot)
   pendingUIStateByKey.delete(key)
   return true
 }
@@ -111,6 +128,10 @@ export function applyPendingNavigationUIStateForRoute(routeName: string) {
   controller.setScrollTop(pending.scrollTop)
   pendingUIStateByKey.delete(key)
   return true
+}
+
+export function clearPendingNavigationUIStateRestore() {
+  pendingUIStateByKey.clear()
 }
 
 export function clearNavigationUIStateForTests() {

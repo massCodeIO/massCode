@@ -41,7 +41,7 @@ const {
   updateSnippets,
   deleteSelectedSnippets,
 } = useSnippets()
-const { clearHistory } = useNavigationHistory()
+const { recordNavigation } = useNavigationHistory()
 
 const { copy } = useClipboard()
 
@@ -99,8 +99,14 @@ const createdAtFormatted = computed(() =>
 )
 
 function onSnippetClick(id: number, event: MouseEvent) {
-  clearHistory()
-  selectSnippet(id, event.shiftKey)
+  if (event.shiftKey) {
+    selectSnippet(id, true)
+  }
+  else {
+    recordNavigation(() => {
+      selectSnippet(id)
+    })
+  }
   focusedSnippetId.value = id
 }
 

@@ -6,6 +6,7 @@ import {
   useNoteSearch,
   useNotesSpaceInitialization,
 } from '@/composables'
+import { useNavigationHistory } from '@/composables/useNavigationHistory'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
 import { useFullscreen, useMagicKeys } from '@vueuse/core'
@@ -90,7 +91,9 @@ function onPrevNext(direction: 'prev' | 'next') {
   const id = noteIds.value[targetIndex]
 
   if (id !== undefined) {
-    selectNote(id)
+    useNavigationHistory().recordNavigation(() => {
+      selectNote(id)
+    })
   }
 }
 

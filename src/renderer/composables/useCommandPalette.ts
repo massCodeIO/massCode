@@ -1004,10 +1004,8 @@ function clearSearchFilterToken(id: string) {
 }
 
 async function openSpace(spaceId: SpaceId) {
-  const space = getSpaceDefinitions().find(item => item.id === spaceId)
-  if (space) {
-    await router.push(space.to)
-  }
+  const { openSpaceTarget } = await import('@/ipc/listeners/deepLinks')
+  await openSpaceTarget(spaceId)
 }
 
 function isHttpUrl(value: string) {
@@ -1258,12 +1256,27 @@ function getCommandDefinitions(): CommandPaletteCommand[] {
 }
 
 async function openSnippet(snippet: SnippetResult) {
+  const { useNavigationHistory } = await import(
+    '@/composables/useNavigationHistory'
+  )
+  await useNavigationHistory().recordNavigation(() =>
+    openSnippetInternal(snippet),
+  )
+}
+
+async function openSnippetInternal(snippet: SnippetResult) {
+  if (!(await httpRuntimeNavigation.confirmLeave()))
+    return false
   const [{ useApp }, { useFolders }, { useSnippets }] = await Promise.all([
     import('@/composables/useApp'),
     import('@/composables/useFolders'),
     import('@/composables/useSnippets'),
   ])
   const codeApp = useApp()
+  if (!codeApp.isCodeSpaceInitialized.value) {
+    const { initCodeSpace } = await import('@/composables/useCodeSpaceInit')
+    await initCodeSpace()
+  }
   const codeFolders = useFolders()
   const codeSnippets = useSnippets()
 
@@ -1297,6 +1310,19 @@ async function openSnippet(snippet: SnippetResult) {
 }
 
 async function openNote(note: NoteResult) {
+  const { useNavigationHistory } = await import(
+    '@/composables/useNavigationHistory'
+  )
+  await useNavigationHistory().recordNavigation(() => openNoteInternal(note))
+}
+
+async function openNoteInternal(note: NoteResult) {
+  if (!(await httpRuntimeNavigation.confirmLeave()))
+    return false
+  const { useNotesSpaceInitialization } = await import(
+    '@/composables/spaces/notes/useNotesSpaceInitialization'
+  )
+  await useNotesSpaceInitialization().initNotesSpace()
   notesData.isRestoreStateBlocked.value = true
   noteSearch.clearSearch(false)
   notesApp.hideNotesViewModes()
@@ -1326,8 +1352,21 @@ async function openNote(note: NoteResult) {
 }
 
 async function openHttpRequest(request: HttpRequestResult) {
+  const { useNavigationHistory } = await import(
+    '@/composables/useNavigationHistory'
+  )
+  await useNavigationHistory().recordNavigation(() =>
+    openHttpRequestInternal(request),
+  )
+}
+
+async function openHttpRequestInternal(request: HttpRequestResult) {
   if (!(await httpRuntimeNavigation.confirmLeave()))
     return
+  const { useHttpSpaceInit } = await import(
+    '@/composables/spaces/http/useHttpSpaceInit'
+  )
+  await useHttpSpaceInit().initHttpSpace()
   const httpFolders = useHttpFolders()
 
   httpData.isRestoreStateBlocked.value = true
@@ -1358,6 +1397,12 @@ async function openHttpRequest(request: HttpRequestResult) {
   // Ожидание фактической смены выбора: история/навигация ниже читают уже
   // применённое состояние, а не предыдущий запрос.
   await httpData.selectHttpRequest(request.id)
+  if (
+    httpApp.httpState.requestId !== request.id
+    || httpData.currentRequest.value?.id !== request.id
+  ) {
+    return false
+  }
   await router.push({ name: RouterName.httpSpace })
 }
 

@@ -24,7 +24,7 @@ import FeaturesItem from './FeaturesItem.vue'
       mindmaps, or fullscreen presentation mode when you need more structure.
       Plan linked notes, snippets, and requests while writing, then create them
       when ready. Use the
-      <AppLink href="/documentation/notes/inspector">
+      <AppLink href="/documentation/notes/inspector.html">
         Note inspector
       </AppLink>
       to reorder sections, inspect links, and find callouts.

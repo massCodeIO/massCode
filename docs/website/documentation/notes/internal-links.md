@@ -117,13 +117,17 @@ Open the **Links** tab in [Note inspector](/documentation/notes/inspector#links)
 
 ## Navigation History
 
-When you follow internal links, massCode keeps a small link navigation history for that session.
+massCode keeps a shared navigation history for Notes, Code, and HTTP during your session. Opening an item from a list, search, Command Palette, Recent, or an internal link adds a navigation step.
 
-- Use the back and forward buttons in the editor header to move through link-based navigation.
+- Use the back and forward buttons in the editor header to revisit items across spaces.
 - Use <kbd>Cmd+[</kbd> / <kbd>Cmd+]</kbd> on macOS or <kbd>Ctrl+[</kbd> / <kbd>Ctrl+]</kbd> on Windows or Linux.
 - The same actions are also available from the **History** menu.
 
-The history is specific to internal-link navigation. If you manually select another note or snippet from the list, that temporary link history is cleared.
+Returning to a note restores its scroll position.
+
+Opening a different item after going back replaces the remaining forward history. Selecting the current item again preserves it. Deleted items are skipped.
+
+History resets when the app reloads. **Recent** is a separate list of recently opened items.
 
 ## When to Use Internal Links
 

@@ -13,10 +13,11 @@ async function setup() {
   const selectFirstNote = vi.fn()
   const selectNote = vi.fn()
   const getNotesById = vi.fn()
-  const recordNavigation = vi.fn(async (navigate: () => Promise<void>) => {
-    await navigate()
-  })
   const isNavigatingHistory = ref(false)
+  const recordNavigation = vi.fn(async (navigate: () => Promise<void>) => {
+    if (!isNavigatingHistory.value)
+      await navigate()
+  })
 
   const notesState = reactive<{
     noteId?: number
@@ -178,7 +179,7 @@ describe('useNotesWorkspaceNavigation', () => {
     expect(context.selectNote).toHaveBeenCalledWith(42)
   })
 
-  it('skips history recording for graph opens during history restoration', async () => {
+  it('blocks explicit graph opens during history restoration', async () => {
     const context = await setup()
 
     context.currentRoute.value = { name: 'notes-space/graph' }
@@ -195,8 +196,8 @@ describe('useNotesWorkspaceNavigation', () => {
 
     await context.openNoteFromGraph(42)
 
-    expect(context.recordNavigation).not.toHaveBeenCalled()
-    expect(context.selectNote).toHaveBeenCalledWith(42)
+    expect(context.recordNavigation).toHaveBeenCalledOnce()
+    expect(context.selectNote).not.toHaveBeenCalled()
   })
 
   it('records dashboard graph note opens in navigation history', async () => {

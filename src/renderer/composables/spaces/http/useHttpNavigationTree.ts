@@ -59,6 +59,13 @@ export function useHttpNavigationTree() {
 
   let selectionToken = 0
   async function open(node: HttpTreeNode) {
+    const { useNavigationHistory } = await import(
+      '@/composables/useNavigationHistory'
+    )
+    await useNavigationHistory().recordNavigation(() => openInternal(node))
+  }
+
+  async function openInternal(node: HttpTreeNode) {
     const token = ++selectionToken
     if (node.entityId === undefined)
       return
@@ -70,7 +77,7 @@ export function useHttpNavigationTree() {
           && httpState.activePanel !== 'request')
         || httpState.requestId !== node.entityId
       ) {
-        return
+        return false
       }
       if (currentRequest.value?.isDeleted) {
         clearFolderSelection()
@@ -91,7 +98,7 @@ export function useHttpNavigationTree() {
       }
       return
     }
-    await openHttpFolder(node.entityId)
+    return openHttpFolder(node.entityId)
   }
 
   function validateMove(

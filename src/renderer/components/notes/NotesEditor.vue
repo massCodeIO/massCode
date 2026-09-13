@@ -760,10 +760,52 @@ async function syncNavigationNoteUIStateRegistration(noteId = props.noteId) {
     return
   }
 
+  let restored = false
   unregisterNavigationNoteUIState = registerNavigationNoteUIState(noteId, {
     getScrollTop: () => view?.scrollDOM.scrollTop ?? 0,
-    setScrollTop: (scrollTop) => {
-      view?.scrollDOM.scrollTo({ top: scrollTop })
+    getScrollSnapshot: () => {
+      if (!view)
+        return
+      const anchor = view.lineBlockAtHeight(view.scrollDOM.scrollTop).from
+      const coordinates = view.coordsAtPos(anchor)
+      if (!coordinates)
+        return
+      return {
+        effect: markRaw(view.scrollSnapshot()),
+        anchor,
+        offset: coordinates.top - view.scrollDOM.getBoundingClientRect().top,
+      }
+    },
+    setScrollTop: (scrollTop, snapshot) => {
+      restored = true
+      if (snapshot && view) {
+        const editor = view
+        editor.dispatch({ effects: snapshot.effect })
+        // Preview decorations change line heights when the restored viewport is built.
+        requestAnimationFrame(() =>
+          editor.requestMeasure({
+            read: () => {
+              if (view !== editor || props.noteId !== noteId)
+                return 0
+              const coordinates = editor.coordsAtPos(
+                Math.min(snapshot.anchor, editor.state.doc.length),
+              )
+              return coordinates
+                ? coordinates.top
+                - editor.scrollDOM.getBoundingClientRect().top
+                - snapshot.offset
+                : 0
+            },
+            write: (delta) => {
+              if (view === editor && props.noteId === noteId)
+                editor.scrollDOM.scrollTop += delta
+            },
+          }),
+        )
+      }
+      else {
+        view?.scrollDOM.scrollTo({ top: scrollTop })
+      }
     },
   })
 
@@ -777,7 +819,7 @@ async function syncNavigationNoteUIStateRegistration(noteId = props.noteId) {
   // Back/Forward восстанавливает сохранённую позицию. При обычном выборе
   // новая заметка открывается сверху. Эффект CodeMirror также пересчитывает
   // viewport, чтобы preview-декорации сразу построились для начала документа.
-  if (!applyPendingNavigationUIStateForNote(noteId)) {
+  if (!applyPendingNavigationUIStateForNote(noteId) && !restored) {
     view.dispatch({
       effects: EditorView.scrollIntoView(0, { y: 'start', yMargin: 0 }),
     })

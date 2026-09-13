@@ -35,11 +35,19 @@ async function setup(options: SetupOptions = {}) {
   const selectHttpFolder = vi.fn(async () => undefined)
   const clearHttpFolderSelection = vi.fn()
   const getHttpRequests = vi.fn(async () => undefined)
+  const httpState = reactive<{
+    activePanel?: string
+    folderId?: number
+    libraryFilter?: string
+    requestId?: number
+  }>({})
+  const currentRequest = ref({ id: 7, name: 'Cached A' })
   const selectHttpRequest = vi.fn()
 
   const getNoteFolders = vi.fn(async () => undefined)
   const selectNoteFolder = vi.fn(async () => undefined)
   const clearNoteFolderSelection = vi.fn()
+  const clearNoteSearch = vi.fn()
   const clearNotesState = vi.fn()
   const getNotes = vi.fn(async () => undefined)
   const selectNote = vi.fn()
@@ -138,21 +146,21 @@ async function setup(options: SetupOptions = {}) {
       focusedRequestId: ref<number | undefined>(),
       highlightedFolderIds: ref(new Set<number>()),
       highlightedRequestIds: ref(new Set<number>()),
-      httpState: reactive<{
-        folderId?: number
-        libraryFilter?: string
-        requestId?: number
-      }>({}),
+      httpState,
       isHttpSpaceInitialized,
     }),
     useHttpFolders: () => ({
       clearFolderSelection: clearHttpFolderSelection,
       getHttpFolders,
+      folders: ref([{ id: 4 }]),
+      getFolderByIdFromTree: (_: unknown, id: number) =>
+        id === 4 ? { id: 4 } : undefined,
       selectHttpFolder,
     }),
     useHttpRequests: () => ({
       getHttpRequests,
       selectHttpRequest,
+      currentRequest,
     }),
     useHttpSpaceInit: () => ({
       initHttpSpace,
@@ -175,7 +183,20 @@ async function setup(options: SetupOptions = {}) {
       goForward,
       isNavigatingHistory,
       recordNavigation,
+      restoreHistory: async (
+        direction: number,
+        restore: (entry: any) => Promise<string>,
+      ) => {
+        isNavigatingHistory.value = true
+        try {
+          return await restore(direction === -1 ? goBack() : goForward())
+        }
+        finally {
+          isNavigatingHistory.value = false
+        }
+      },
     }),
+    useNoteSearch: () => ({ clearSearch: clearNoteSearch }),
     useNotes: () => ({
       clearNotesState,
       getNotes,
@@ -254,14 +275,23 @@ async function setup(options: SetupOptions = {}) {
     router,
   }))
 
+  const { httpRuntimeNavigation } = await import(
+    '@/composables/spaces/http/runtimeNavigation'
+  )
   const module = await import('../deepLinks')
 
   return {
+    httpRuntimeNavigation,
+    currentRequest,
+    httpState,
     clearFolderSelection,
     clearHttpFolderSelection,
     clearNoteFolderSelection,
     clearNotesState,
+    clearNoteSearch,
     getFolders,
+    getNotesById,
+    getSnippetsById,
     getHttpFolders,
     getHttpRequests,
     getNotes,
@@ -317,6 +347,17 @@ describe('deepLinks', () => {
     expect(context.selectFolder).toHaveBeenCalledWith(7)
     expect(context.getSnippets).toHaveBeenCalledWith({ folderId: 7 })
     expect(context.selectSnippet).toHaveBeenCalledWith(42)
+  })
+
+  it('clears search before replacing its results with a history target folder', async () => {
+    const context = await setup({
+      noteResponse: { id: 15, name: 'Note', folder: { id: 3 }, isDeleted: 0 },
+    })
+    await context.module.openNoteDeepLink(15, true)
+    expect(context.clearNoteSearch).toHaveBeenCalledOnce()
+    expect(context.clearNoteSearch.mock.invocationCallOrder[0]).toBeLessThan(
+      context.getNotes.mock.invocationCallOrder[0]!,
+    )
   })
 
   it('opens note links in trash context when folder is empty and note is deleted', async () => {
@@ -444,6 +485,7 @@ describe('deepLinks', () => {
 
   it('restores target from history on back navigation', async () => {
     const context = await setup({
+      noteResponse: { id: 15, name: 'Note', folder: null, isDeleted: 0 },
       snippetRouteName: 'main',
     })
 
@@ -498,6 +540,127 @@ describe('deepLinks', () => {
     })
     expect(context.selectNote).not.toHaveBeenCalled()
     expect(context.isNavigatingHistory.value).toBe(false)
+  })
+
+  it.each([404, 503])(
+    'does not navigate or queue scroll when target fetch fails with %s',
+    async (status) => {
+      const context = await setup()
+      context.goBack.mockReturnValue({ id: 15, type: 'note' })
+      context.getNotesById.mockRejectedValue({ response: { status } })
+      await context.module.navigateBack()
+      expect(context.router.push).not.toHaveBeenCalled()
+      expect(context.initNotesSpace).not.toHaveBeenCalled()
+      expect(context.queueNavigationUIStateRestore).not.toHaveBeenCalled()
+    },
+  )
+
+  it('keeps the Notes route when the final HTTP selection silently fails after a successful preflight', async () => {
+    const context = await setup({ snippetRouteName: 'notes-space' })
+    context.goBack.mockReturnValue({ id: 8, name: 'B', type: 'http-request' })
+    context.historyEntries.value = [
+      { id: 8, name: 'B', type: 'http-request' },
+      { id: 15, name: 'N', type: 'note' },
+    ]
+    context.historyCursor.value = 1
+    // The raw selector catches its final GET failure and retains cached A.
+    context.selectHttpRequest.mockImplementation(async () => {
+      expect(context.getHttpRequests).toHaveBeenCalledOnce()
+      expect(context.router.currentRoute.value.name).toBe('notes-space')
+    })
+    await context.module.navigateBack()
+    expect(context.selectHttpRequest).toHaveBeenCalledWith(8, false, {
+      preservePanel: true,
+    })
+    expect(context.currentRequest.value.id).toBe(7)
+    expect(context.router.push).not.toHaveBeenCalled()
+    expect(context.historyCursor.value).toBe(1)
+    expect(context.historyEntries.value).toHaveLength(2)
+    expect(context.queueNavigationUIStateRestore).not.toHaveBeenCalled()
+  })
+
+  it('preserves the source HTTP folder panel when final request selection fails', async () => {
+    const context = await setup({ snippetRouteName: 'http-space' })
+    Object.assign(context.httpState, {
+      activePanel: 'folder',
+      folderId: 12,
+      requestId: 7,
+    })
+    context.goBack.mockReturnValue({ id: 8, name: 'B', type: 'http-request' })
+    context.selectHttpRequest.mockImplementation(
+      async (_id, _shift, options) => {
+        expect(options).toEqual({ preservePanel: true })
+        context.httpState.requestId = 8
+      },
+    )
+    await context.module.navigateBack()
+    expect(context.httpState).toMatchObject({
+      activePanel: 'folder',
+      folderId: 12,
+      requestId: 7,
+    })
+    expect(context.currentRequest.value.id).toBe(7)
+    expect(context.queueNavigationUIStateRestore).not.toHaveBeenCalled()
+  })
+
+  it('does not restore soft-deleted notes', async () => {
+    const context = await setup()
+    context.goBack.mockReturnValue({ id: 15, type: 'note' })
+    await context.module.navigateBack()
+    expect(context.selectNote).not.toHaveBeenCalled()
+    expect(context.router.push).not.toHaveBeenCalled()
+    expect(context.queueNavigationUIStateRestore).not.toHaveBeenCalled()
+  })
+
+  it('does not change route or fall back when list loading fails after target validation', async () => {
+    const context = await setup({
+      noteResponse: { id: 15, folder: null, isDeleted: 0 },
+    })
+    context.goBack.mockReturnValue({ id: 15, type: 'note' })
+    context.getNotes.mockRejectedValue(new Error('offline'))
+    await context.module.navigateBack()
+    expect(context.getNotesById).toHaveBeenCalledOnce()
+    expect(context.router.push).not.toHaveBeenCalled()
+    expect(context.initNotesSpace).not.toHaveBeenCalled()
+    expect(context.queueNavigationUIStateRestore).not.toHaveBeenCalled()
+  })
+
+  it('initializes a cold Code space before its route and skips warm initialization', async () => {
+    const context = await setup({ snippetRouteName: 'notes-space' })
+    await context.module.openSpaceTarget('code')
+    expect(context.initCodeSpace).toHaveBeenCalledOnce()
+    expect(context.initCodeSpace.mock.invocationCallOrder[0]).toBeLessThan(
+      context.router.push.mock.invocationCallOrder[0]!,
+    )
+    context.isCodeSpaceInitialized.value = true
+    await context.module.openSpaceTarget('code')
+    expect(context.initCodeSpace).toHaveBeenCalledOnce()
+  })
+
+  it.each(['notes', 'http'] as const)(
+    'initializes cold %s before changing the route',
+    async (space) => {
+      const context = await setup()
+      await context.module.openSpaceTarget(space)
+      const init
+        = space === 'notes' ? context.initNotesSpace : context.initHttpSpace
+      expect(init).toHaveBeenCalledOnce()
+      expect(init.mock.invocationCallOrder[0]).toBeLessThan(
+        context.router.push.mock.invocationCallOrder[0]!,
+      )
+    },
+  )
+
+  it('preserves the current route and skips initialization when leaving HTTP is cancelled', async () => {
+    const context = await setup({ snippetRouteName: 'http-space' })
+    context.httpRuntimeNavigation.confirmLeave = vi.fn(async () => false)
+    await context.module.openSpaceTarget('code')
+    expect(context.router.push).not.toHaveBeenCalled()
+    expect(context.initCodeSpace).not.toHaveBeenCalled()
+    context.goBack.mockReturnValue({ id: 42, type: 'snippet' })
+    await context.module.navigateBack()
+    expect(context.getSnippetsById).not.toHaveBeenCalled()
+    expect(context.queueNavigationUIStateRestore).not.toHaveBeenCalled()
   })
 
   it('falls back to notes init when note deep link fails after route change', async () => {

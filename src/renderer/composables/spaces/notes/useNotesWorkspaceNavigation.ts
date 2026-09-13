@@ -32,25 +32,10 @@ export function useNotesWorkspaceNavigation() {
   }
 
   async function openNoteWithOptionalRouteHistory(noteId: number) {
-    const routeName = router.currentRoute.value.name
-    const shouldRecordRouteHistory
-      = routeName === RouterName.notesDashboard
-        || routeName === RouterName.notesGraph
-
-    if (!shouldRecordRouteHistory) {
-      await openNoteInNotesWorkspaceInternal(noteId)
-      return
-    }
-
     const { useNavigationHistory } = await import(
       '@/composables/useNavigationHistory'
     )
-    const { isNavigatingHistory, recordNavigation } = useNavigationHistory()
-
-    if (isNavigatingHistory.value) {
-      await openNoteInNotesWorkspaceInternal(noteId)
-      return
-    }
+    const { recordNavigation } = useNavigationHistory()
 
     await recordNavigation(async () => {
       await openNoteInNotesWorkspaceInternal(noteId)

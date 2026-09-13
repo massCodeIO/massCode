@@ -1,4 +1,6 @@
+import type { DrawingItem } from '@/composables/spaces/drawings/useDrawings'
 import type { NavigationHistoryEntry } from '@/composables/useNavigationHistory'
+import type { SpaceId } from '@/spaceDefinitions'
 import {
   initCodeSpace,
   queueNavigationUIStateRestore,
@@ -13,6 +15,7 @@ import {
   useNoteFolders,
   useNotes,
   useNotesApp,
+  useNoteSearch,
   useNotesSpaceInitialization,
   useSnippets,
   useSonner,
@@ -22,6 +25,7 @@ import { LibraryFilter } from '@/composables/types'
 import { i18n, ipc } from '@/electron'
 import { router, RouterName } from '@/router'
 import { api } from '@/services/api'
+import { getSpaceDefinitions } from '@/spaceDefinitions'
 
 interface InternalTarget {
   type: 'snippet' | 'note' | 'http-request'
@@ -70,8 +74,34 @@ const {
 } = useNoteFolders()
 const { clearNotesState, getNotes, selectNote, withNotesLoading } = useNotes()
 const { initNotesSpace } = useNotesSpaceInitialization()
-const { goBack, goForward, isNavigatingHistory, recordNavigation }
+const { clearSearch: clearNoteSearch } = useNoteSearch()
+const { restoreHistory, isNavigatingHistory, recordNavigation }
   = useNavigationHistory()
+
+class MissingNavigationTarget extends Error {}
+
+async function readNavigationEntity<T extends { isDeleted?: number }>(
+  read: () => Promise<{ data: T }>,
+  history: boolean,
+): Promise<T> {
+  try {
+    const { data } = await read()
+    if (history && data.isDeleted)
+      throw new MissingNavigationTarget()
+    return data
+  }
+  catch (error) {
+    if (
+      history
+      && error instanceof Object
+      && 'response' in error
+      && (error.response as { status?: number })?.status === 404
+    ) {
+      throw new MissingNavigationTarget()
+    }
+    throw error
+  }
+}
 
 function clearCodeNavigationState() {
   highlightedFolderIds.value.clear()
@@ -113,16 +143,19 @@ async function ensureHttpRoute() {
 export async function openSnippetDeepLink(
   snippetId: number,
   legacyFolderId?: number,
+  history = false,
 ): Promise<void> {
   clearCodeNavigationState()
   pendingCodeNavigation.value = true
   isAppLoading.value = true
 
-  await ensureCodeRoute()
+  if (!history)
+    await ensureCodeRoute()
 
   try {
-    const { data: snippet } = await api.snippets.getSnippetsById(
-      String(snippetId),
+    const snippet = await readNavigationEntity(
+      () => api.snippets.getSnippetsById(String(snippetId)),
+      history,
     )
 
     if (snippet.folder?.id) {
@@ -140,10 +173,14 @@ export async function openSnippetDeepLink(
       await getSnippets(snippet.isDeleted ? { isDeleted: 1 } : { isInbox: 1 })
     }
 
+    if (history)
+      await ensureCodeRoute()
     selectSnippet(snippetId)
     isCodeSpaceInitialized.value = true
   }
   catch (error) {
+    if (history)
+      throw error
     if (legacyFolderId) {
       await getFolders(false)
       await selectFolder(legacyFolderId)
@@ -162,21 +199,31 @@ export async function openSnippetDeepLink(
   }
 }
 
-export async function openNoteDeepLink(noteId: number): Promise<void> {
+export async function openNoteDeepLink(
+  noteId: number,
+  history = false,
+): Promise<void> {
   clearNotesNavigationState()
   const isEnteringNotesSpace
     = router.currentRoute.value.name !== RouterName.notesSpace
 
   if (isEnteringNotesSpace) {
     pendingNotesNavigation.value = true
-    clearNotesState()
+    if (!history)
+      clearNotesState()
   }
 
   try {
     await withNotesLoading(async () => {
-      await ensureNotesRoute()
+      if (!history)
+        await ensureNotesRoute()
 
-      const { data: note } = await api.notes.getNotesById(String(noteId))
+      const note = await readNavigationEntity(
+        () => api.notes.getNotesById(String(noteId)),
+        history,
+      )
+
+      clearNoteSearch()
 
       if (note.folder?.id) {
         await getNoteFolders()
@@ -193,11 +240,15 @@ export async function openNoteDeepLink(noteId: number): Promise<void> {
         await getNotes(note.isDeleted ? { isDeleted: 1 } : { isInbox: 1 })
       }
 
+      if (history)
+        await ensureNotesRoute()
       selectNote(noteId)
       isNotesSpaceInitialized.value = true
     })
   }
   catch (error) {
+    if (history)
+      throw error
     console.error('Failed to open note deep link:', error)
 
     if (isEnteringNotesSpace) {
@@ -211,18 +262,28 @@ export async function openNoteDeepLink(noteId: number): Promise<void> {
 
 export async function openHttpRequestDeepLink(
   requestId: number,
+  history = false,
 ): Promise<void> {
-  if (!(await httpRuntimeNavigation.confirmLeave()))
+  if (!history && !(await httpRuntimeNavigation.confirmLeave()))
     return
+  const previousState = {
+    activePanel: httpState.activePanel,
+    folderId: httpState.folderId,
+    libraryFilter: httpState.libraryFilter,
+    requestId: httpState.requestId,
+  }
+  let restored = false
   clearHttpNavigationState()
 
   try {
     // Finish restoring the previous selection before mounting the HTTP space:
     // its initialization must not race with the explicit link target.
     await initHttpSpace()
-    await ensureHttpRoute()
-    const { data: request } = await api.httpRequests.getHttpRequestsById(
-      String(requestId),
+    if (!history)
+      await ensureHttpRoute()
+    const request = await readNavigationEntity(
+      () => api.httpRequests.getHttpRequestsById(String(requestId)),
+      history,
     )
 
     if (request.folderId !== null) {
@@ -244,12 +305,29 @@ export async function openHttpRequestDeepLink(
       )
     }
 
-    await selectHttpRequest(requestId)
+    if (history)
+      await selectHttpRequest(requestId, false, { preservePanel: true })
+    else await selectHttpRequest(requestId)
+    if (history) {
+      if (useHttpRequests().currentRequest.value?.id !== requestId)
+        return
+      await ensureHttpRoute()
+      if (router.currentRoute.value.name !== RouterName.httpSpace)
+        return
+      httpState.activePanel = 'request'
+    }
+    restored = true
     isHttpSpaceInitialized.value = true
   }
   catch (error) {
+    if (history)
+      throw error
     console.error('Failed to open HTTP request deep link:', error)
     await initHttpSpace()
+  }
+  finally {
+    if (history && !restored)
+      Object.assign(httpState, previousState)
   }
 }
 
@@ -259,11 +337,6 @@ export async function openDrawingDeepLink(drawingId: string): Promise<void> {
 }
 
 export async function openDrawingTarget(drawingId: string): Promise<void> {
-  if (isNavigatingHistory.value) {
-    await openDrawingDeepLink(drawingId)
-    return
-  }
-
   await recordNavigation(async () => {
     await openDrawingDeepLink(drawingId)
   })
@@ -272,21 +345,6 @@ export async function openDrawingTarget(drawingId: string): Promise<void> {
 export async function openInternalTarget(
   target: InternalTarget,
 ): Promise<void> {
-  if (isNavigatingHistory.value) {
-    if (target.type === 'snippet') {
-      await openSnippetDeepLink(target.id)
-      return
-    }
-
-    if (target.type === 'http-request') {
-      await openHttpRequestDeepLink(target.id)
-      return
-    }
-
-    await openNoteDeepLink(target.id)
-    return
-  }
-
   await recordNavigation(async () => {
     if (target.type === 'snippet') {
       await openSnippetDeepLink(target.id)
@@ -302,71 +360,121 @@ export async function openInternalTarget(
   })
 }
 
+export async function openSpaceTarget(spaceId: SpaceId): Promise<void> {
+  if (isNavigatingHistory.value)
+    return
+  const space = getSpaceDefinitions().find(item => item.id === spaceId)
+  if (!space)
+    return
+  const navigate = async () => {
+    if (!(await httpRuntimeNavigation.confirmLeave()))
+      return false
+    if (spaceId === 'code' && !isCodeSpaceInitialized.value)
+      await initCodeSpace()
+    else if (spaceId === 'notes')
+      await initNotesSpace()
+    else if (spaceId === 'http')
+      await initHttpSpace()
+    return !(await router.push(space.to))
+  }
+  await recordNavigation(async () => {
+    const opened = await navigate()
+    return spaceId === 'tools' || spaceId === 'math' ? false : opened
+  })
+}
+
 async function restoreNavigationTarget(
   target: NavigationHistoryEntry,
-): Promise<void> {
-  isNavigatingHistory.value = true
-
-  try {
-    queueNavigationUIStateRestore(target)
-
-    if (target.type === 'route') {
-      await router.push({ name: target.routeName })
-      return
-    }
-
-    if (target.type === 'http-folder') {
-      await ensureHttpRoute()
-      await getHttpFolders()
-      await selectHttpFolder(target.id)
-      httpState.activePanel = 'folder'
-      return
-    }
-
-    if (target.type === 'snippet') {
-      await openSnippetDeepLink(target.id)
-      return
-    }
-
-    if (target.type === 'http-request') {
-      await openHttpRequestDeepLink(target.id)
-      return
-    }
-
-    if (target.type === 'drawing') {
-      await openDrawingDeepLink(target.id)
-      return
-    }
-
-    await openNoteDeepLink(target.id)
+): Promise<'restored' | 'missing' | 'cancelled'> {
+  // Validate before changing routes or selections. Only a definite absence
+  // removes an entry; offline/cloud and other transient failures keep it.
+  if (target.type === 'http-folder') {
+    await getHttpFolders()
+    const { folders, getFolderByIdFromTree } = useHttpFolders()
+    if (!getFolderByIdFromTree(folders.value, target.id))
+      return 'missing'
   }
-  finally {
-    isNavigatingHistory.value = false
+  else if (target.type === 'drawing') {
+    const drawings: DrawingItem[] = await ipc.invoke(
+      'spaces:drawings:list',
+      null,
+    )
+    if (!drawings.some(drawing => drawing.id === target.id))
+      return 'missing'
   }
+
+  if (target.type === 'route') {
+    if (await router.push({ name: target.routeName }))
+      return 'cancelled'
+  }
+  else if (target.type === 'http-folder') {
+    await initHttpSpace()
+    await ensureHttpRoute()
+    await selectHttpFolder(target.id)
+    httpState.activePanel = 'folder'
+  }
+  else if (target.type === 'snippet') {
+    await openSnippetDeepLink(target.id, undefined, true)
+    if (
+      useSnippets().selectedSnippet.value?.id !== target.id
+      || router.currentRoute.value.name !== RouterName.main
+    ) {
+      return 'cancelled'
+    }
+  }
+  else if (target.type === 'http-request') {
+    await openHttpRequestDeepLink(target.id, true)
+    if (
+      useHttpRequests().currentRequest.value?.id !== target.id
+      || router.currentRoute.value.name !== RouterName.httpSpace
+    ) {
+      return 'cancelled'
+    }
+  }
+  else if (target.type === 'drawing') {
+    await openDrawingDeepLink(target.id)
+    if (useDrawings().activeDrawing.value?.id !== target.id)
+      return 'cancelled'
+  }
+  else {
+    await openNoteDeepLink(target.id, true)
+    if (
+      useNotes().selectedNote.value?.id !== target.id
+      || router.currentRoute.value.name !== RouterName.notesSpace
+    ) {
+      return 'cancelled'
+    }
+  }
+  queueNavigationUIStateRestore(target)
+  return 'restored'
+}
+
+async function navigateHistory(direction: -1 | 1): Promise<void> {
+  let confirmed = false
+  await restoreHistory(direction, async (target) => {
+    if (!confirmed) {
+      if (!(await httpRuntimeNavigation.confirmLeave()))
+        return 'cancelled'
+      confirmed = true
+    }
+    try {
+      return await restoreNavigationTarget(target)
+    }
+    catch (error) {
+      if (error instanceof MissingNavigationTarget)
+        return 'missing'
+      console.error('Failed to restore navigation history:', error)
+      return 'cancelled'
+    }
+  })
 }
 
 export async function navigateBack(): Promise<void> {
-  if (!(await httpRuntimeNavigation.confirmLeave()))
-    return
-  const target = goBack()
-
-  if (!target) {
-    return
-  }
-
-  await restoreNavigationTarget(target)
+  await navigateHistory(-1)
 }
 
 export async function navigateForward(): Promise<void> {
-  if (!(await httpRuntimeNavigation.confirmLeave()))
-    return
-  const target = goForward()
-
-  if (!target) {
-    return
-  }
-
-  await restoreNavigationTarget(target)
+  await navigateHistory(1)
 }
 
 async function activateLicenseFromDeepLink(key: string): Promise<void> {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import * as Tooltip from '@/components/ui/shadcn/tooltip'
 import { i18n, store } from '@/electron'
+import { openSpaceTarget } from '@/ipc/listeners/deepLinks'
 import { RouterName } from '@/router'
 import { getSpaceDefinitions } from '@/spaceDefinitions'
 import { isMac } from '@/utils'
@@ -37,7 +38,6 @@ watch(
       <RouterLink
         v-for="space in spaces"
         :key="space.id"
-        v-slot="{ navigate }"
         custom
         :to="space.to"
       >
@@ -53,7 +53,7 @@ watch(
               "
               :aria-label="space.label"
               :aria-current="space.active ? 'page' : undefined"
-              @click="navigate"
+              @click="openSpaceTarget(space.id)"
             >
               <component
                 :is="space.icon"

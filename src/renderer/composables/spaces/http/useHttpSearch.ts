@@ -7,6 +7,7 @@ import {
   requests,
   selectFirstRequest,
   selectHttpRequest,
+  useHttpRequests,
 } from './useHttpRequests'
 
 const { httpState, saveHttpStateSnapshot, restoreHttpStateSnapshot }
@@ -49,7 +50,7 @@ async function search() {
   }
 }
 
-function selectSearchRequest(index: number) {
+async function selectSearchRequest(index: number) {
   if (
     !displayedRequests.value
     || index < 0
@@ -59,8 +60,14 @@ function selectSearchRequest(index: number) {
   }
 
   const request = displayedRequests.value[index]
-  selectHttpRequest(request.id)
   searchSelectedIndex.value = index
+  const { useNavigationHistory } = await import(
+    '@/composables/useNavigationHistory'
+  )
+  await useNavigationHistory().recordNavigation(async () => {
+    await selectHttpRequest(request.id)
+    return useHttpRequests().currentRequest.value?.id === request.id
+  })
 }
 
 function clearSearch(restoreState = false) {

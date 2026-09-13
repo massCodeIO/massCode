@@ -838,7 +838,7 @@ async function search() {
   }
 }
 
-function selectSearchSnippet(index: number) {
+async function selectSearchSnippet(index: number) {
   if (
     !displayedSnippets.value
     || index < 0
@@ -848,8 +848,13 @@ function selectSearchSnippet(index: number) {
   }
 
   const snippet = displayedSnippets.value[index]
-  selectSnippet(snippet.id)
   searchSelectedIndex.value = index
+  const { useNavigationHistory } = await import(
+    '@/composables/useNavigationHistory'
+  )
+  await useNavigationHistory().recordNavigation(() =>
+    selectSnippet(snippet.id),
+  )
   nextTick(() => scrollToSnippetIndex(index))
 }
 

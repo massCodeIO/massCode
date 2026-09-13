@@ -46,7 +46,7 @@ async function search() {
   }
 }
 
-function selectSearchNote(index: number) {
+async function selectSearchNote(index: number) {
   if (
     !displayedNotes.value
     || index < 0
@@ -56,8 +56,11 @@ function selectSearchNote(index: number) {
   }
 
   const note = displayedNotes.value[index]
-  selectNote(note.id)
   searchSelectedIndex.value = index
+  const { useNavigationHistory } = await import(
+    '@/composables/useNavigationHistory'
+  )
+  await useNavigationHistory().recordNavigation(() => selectNote(note.id))
 }
 
 function clearSearch(restoreState = false) {

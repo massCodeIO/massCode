@@ -3,6 +3,7 @@ import type { HttpRequestListItem } from '@/composables/spaces/http/useHttpReque
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useHttpApp, useHttpRequests } from '@/composables'
 import { useDateFormat } from '@/composables/useDateFormat'
+import { useNavigationHistory } from '@/composables/useNavigationHistory'
 import { i18n } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
 import { CloudDownload } from 'lucide-vue-next'
@@ -21,7 +22,8 @@ const {
   focusedRequestId,
   httpState,
 } = useHttpApp()
-const { selectHttpRequest, selectedRequestIds } = useHttpRequests()
+const { selectHttpRequest, selectedRequestIds, currentRequest }
+  = useHttpRequests()
 const itemRef = ref<HTMLDivElement>()
 
 const isSelected = computed(() => httpState.requestId === props.request.id)
@@ -40,8 +42,16 @@ const isCloudPending = computed(
   () => props.request.pendingCloudDownload === true,
 )
 
-function onClick(event: MouseEvent) {
-  selectHttpRequest(props.request.id, event.shiftKey)
+async function onClick(event: MouseEvent) {
+  if (event.shiftKey) {
+    await selectHttpRequest(props.request.id, true)
+  }
+  else {
+    await useNavigationHistory().recordNavigation(async () => {
+      await selectHttpRequest(props.request.id)
+      return currentRequest.value?.id === props.request.id
+    })
+  }
   focusedRequestId.value = props.request.id
 }
 

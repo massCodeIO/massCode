@@ -531,8 +531,10 @@ async function updateSnippet(snippetId: number, data: SnippetsUpdate) {
     return
   }
 
-  // Переименование/описание не меняют состав списка — обновляем точечно.
+  // Полную запись обновляем без loading, чтобы не сбрасывать фокус редактора.
   patchSnippetInCollections(snippetId, data)
+  // Название/описание влияют на поиск, а сохранение — на порядок updatedAt.
+  await getSnippets()
 }
 
 async function updateSnippets(snippetIds: number[], data: SnippetsUpdate[]) {

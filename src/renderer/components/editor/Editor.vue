@@ -37,7 +37,8 @@ const {
   displayedSnippetContent,
   selectedSnippetContent,
   selectedSnippet,
-  isEmpty,
+  isEmpty: isSnippetListEmpty,
+  isSearch,
   selectedSnippetIds,
   selectedSnippetRecordStatus,
   isAvailableToCodePreview,
@@ -104,6 +105,9 @@ const scrollBarOpacity = useCssVar(
     initialValue: '1',
   },
 )
+
+// Переименование может убрать последнее совпадение, но не должно закрывать редактор.
+const isEmpty = computed(() => isSnippetListEmpty.value && !isSearch.value)
 
 const isShowHeader = computed(() => {
   if (selectedSnippetIds.value.length > 1)

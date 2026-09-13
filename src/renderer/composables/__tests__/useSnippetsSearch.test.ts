@@ -12,6 +12,8 @@ interface SetupOptions {
   folderId?: number
   libraryFilter?: string
   snippetId?: number
+  sort?: 'name' | 'updatedAt'
+  order?: 'ASC' | 'DESC'
   tagId?: number
 }
 
@@ -56,7 +58,8 @@ async function setup(options: SetupOptions = {}) {
   // чтобы не тянуть electron store в тест.
   vi.doMock('@/composables/useContentSort', () => ({
     useContentSort: () => ({
-      getContentSortQuery: () => ({}),
+      getContentSortQuery: () =>
+        options.sort ? { sort: options.sort, order: options.order } : {},
     }),
   }))
 
@@ -347,5 +350,69 @@ describe('selected snippet full record', () => {
     expect(context.getSnippetsById).toHaveBeenCalledTimes(2)
     expect(context.snippets.selectedSnippetRecordStatus.value).toBe('ready')
     consoleError.mockRestore()
+  })
+})
+
+describe('snippet rename refresh', () => {
+  it.each(['name', 'updatedAt'] as const)(
+    'refreshes %s order without reloading the selected record',
+    async (sort) => {
+      const context = await setup({ snippetId: 1, sort, order: 'ASC' })
+      await context.snippets.refreshSelectedSnippet()
+      await context.snippets.getSnippets()
+      const fullRecordCalls = context.getSnippetsById.mock.calls.length
+      context.getSnippets.mockResolvedValueOnce({
+        data: [
+          { id: 2, name: 'B', contents: [], tags: [] },
+          { id: 1, name: 'Z', contents: [], tags: [] },
+        ],
+      })
+
+      await context.snippets.updateSnippet(1, { name: 'Z' })
+
+      expect(context.getSnippets).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sort, order: 'ASC' }),
+      )
+      expect(
+        context.snippets.displayedSnippets.value?.map(item => item.id),
+      ).toEqual([2, 1])
+      expect(context.snippets.selectedSnippet.value?.name).toBe('Z')
+      expect(context.snippets.displayedSnippetContent.value?.value).toBe(
+        'Content 1',
+      )
+      expect(context.snippets.selectedSnippetRecordStatus.value).toBe('ready')
+      expect(context.getSnippetsById).toHaveBeenCalledTimes(fullRecordCalls)
+    },
+  )
+
+  it('removes and restores a search result while retaining the open record', async () => {
+    const context = await setup({ snippetId: 1 })
+    context.snippets.searchQuery.value = 'needle'
+    await context.snippets.search()
+    await context.snippets.refreshSelectedSnippet()
+    const fullRecordCalls = context.getSnippetsById.mock.calls.length
+    context.getSnippets.mockResolvedValueOnce({ data: [] })
+
+    await context.snippets.updateSnippet(1, { name: 'Renamed' })
+
+    expect(context.getSnippets).toHaveBeenLastCalledWith({ search: 'needle' })
+    expect(context.snippets.displayedSnippets.value).toEqual([])
+    expect(context.state.snippetId).toBe(1)
+    expect(context.state.snippetContentIndex).toBe(0)
+    expect(context.snippets.displayedSnippet.value?.name).toBe('Renamed')
+    expect(context.snippets.displayedSnippetContent.value?.value).toBe(
+      'Content 1',
+    )
+    expect(context.snippets.selectedSnippetRecordStatus.value).toBe('ready')
+
+    context.getSnippets.mockResolvedValueOnce({
+      data: [{ id: 1, name: 'needle again', contents: [], tags: [] }],
+    })
+    await context.snippets.updateSnippet(1, { name: 'needle again' })
+
+    expect(
+      context.snippets.displayedSnippets.value?.map(item => item.id),
+    ).toEqual([1])
+    expect(context.getSnippetsById).toHaveBeenCalledTimes(fullRecordCalls)
   })
 })

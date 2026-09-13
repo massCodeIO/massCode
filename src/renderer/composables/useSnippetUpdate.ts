@@ -146,7 +146,10 @@ function scheduleContentUpdate(key: string, delayMs = UPDATE_DEBOUNCE_TIME) {
 function addToUpdateQueue(snippetId: number, data: SnippetsUpdate) {
   markUserEdit()
   const key = `${snippetId}`
-  updateQueue.value.set(key, { snippetId, data })
+  updateQueue.value.set(key, {
+    snippetId,
+    data: { ...updateQueue.value.get(key)?.data, ...data },
+  })
   // Новый ввод сбрасывает backoff: пользователь активен, сохранение снова
   // пробуется быстро.
   retryAttemptsByKey.value.delete(key)

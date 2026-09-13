@@ -21,20 +21,19 @@ const description = computed({
     }
 
     addToUpdateQueue(selectedSnippet.value!.id, {
-      name: selectedSnippet.value!.name,
       description: v,
-      folderId: selectedSnippet.value!.folder?.id || null,
-      isDeleted: selectedSnippet.value!.isDeleted,
-      isFavorites: selectedSnippet.value!.isFavorites,
     })
   },
 })
 
-watch(displayedSnippet, () => {
-  if (show.value) {
-    show.value = false
-  }
-})
+watch(
+  () => displayedSnippet.value?.id,
+  () => {
+    if (show.value) {
+      show.value = false
+    }
+  },
+)
 </script>
 
 <template>

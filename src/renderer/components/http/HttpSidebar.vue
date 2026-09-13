@@ -53,7 +53,7 @@ const { height } = useElementSize(sections)
 const environmentsHandle = ref<HTMLElement>()
 const trashHandle = ref<HTMLElement>()
 const resizeClass
-  = 'before:bg-border hover:before:bg-primary data-[resizing]:before:bg-primary relative z-10 h-0 shrink-0 cursor-row-resize before:absolute before:inset-x-0 before:top-0 before:h-px after:absolute after:inset-x-0 after:-top-1 after:h-3'
+  = 'before:bg-border hover:before:bg-primary data-[resizing]:before:bg-primary relative z-10 -mx-1 h-0 shrink-0 cursor-row-resize before:absolute before:inset-x-0 before:top-0 before:h-px after:absolute after:inset-x-0 after:-top-1 after:h-3'
 const available = computed(() => Math.max(0, height.value - 108))
 const trashSize = computed(() =>
   Math.min(
@@ -205,7 +205,10 @@ async function onImported() {
 
 <template>
   <div class="flex h-full min-h-0 flex-col px-1 pt-[var(--content-top-offset)]">
-    <HttpRequestsListHeader v-model:favorites="favorites" />
+    <HttpRequestsListHeader
+      v-model:favorites="favorites"
+      class="-mx-1 px-2!"
+    />
     <div
       ref="sections"
       class="flex min-h-0 flex-1 flex-col"
@@ -235,7 +238,7 @@ async function onImported() {
       />
       <section
         ref="environmentsSection"
-        class="min-h-0 overflow-hidden border-t"
+        class="-mx-1 min-h-0 overflow-hidden border-t px-1"
         :class="!collectionsOpen && environmentsOpen ? 'flex-1' : 'shrink-0'"
         :style="{
           height: environmentsOpen ? `${environmentSize + 36}px` : '36px',
@@ -253,7 +256,7 @@ async function onImported() {
       />
       <section
         ref="trashSection"
-        class="flex min-h-0 flex-col border-t"
+        class="-mx-1 flex min-h-0 flex-col border-t px-1"
         :class="
           !collectionsOpen && !environmentsOpen && trashOpen
             ? 'flex-1'

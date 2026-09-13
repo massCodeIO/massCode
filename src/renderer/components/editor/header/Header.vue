@@ -91,11 +91,7 @@ const {
     }
 
     addToUpdateQueue(selectedSnippet.value.id, {
-      name: v,
-      description: selectedSnippet.value.description,
-      folderId: selectedSnippet.value.folder?.id || null,
-      isDeleted: selectedSnippet.value.isDeleted,
-      isFavorites: selectedSnippet.value.isFavorites,
+      name: v.trim(),
     })
   },
 )

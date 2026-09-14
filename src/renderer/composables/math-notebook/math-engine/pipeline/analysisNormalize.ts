@@ -45,8 +45,10 @@ function stripEndOfLineComment(line: string): string {
 function stripParenthesisComments(line: string): string {
   // "$999 (for iPhone 16)" → "$999"
   // Only strip if preceded by space (not function call like sin(...))
-  // and contains at least one word character sequence
-  return line.replace(/(?<=\s)\((?=[^)]*[a-z]{2})[^)]+\)/gi, '').trim()
+  // Only prose without expression operators or nested parentheses is a comment.
+  return line
+    .replace(/(?<=\s)\((?=[^)]*[a-z]{2})[^()=+*/^%_\-]+\)/gi, '')
+    .trim()
 }
 
 export function analysisNormalize(raw: string): AnalysisView {

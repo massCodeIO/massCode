@@ -492,8 +492,8 @@ export function parseExplicitLocalTemporalExpression(
     return null
   }
 
-  // Bare numeric M/D is too ambiguous and should remain arithmetic.
-  if (/^\d{1,2}\/\d{1,2}$/.test(trimmed)) {
+  // Bare numeric M/D and D.M are ambiguous: prefer division and decimals.
+  if (/^\d{1,2}[/.]\d{1,2}$/.test(trimmed)) {
     return null
   }
 

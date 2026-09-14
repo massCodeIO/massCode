@@ -1,22 +1,7 @@
 ---
-layout: home
+layout: page
 titleTemplate: "A free and open source developer workspace"
-description: "Free, open-source developer workspace for code snippets, markdown notes, HTTP, GraphQL and WebSocket APIs, calculations, drawings, and built-in dev tools. Stores data locally."
-hero:
-  image:
-    src: /logo.png
-    alt: massCode
-  name: massCode
-  text: Your developer workspace
-  tagline: |
-    Manage code snippets, write markdown notes, send HTTP requests, solve calculations, sketch diagrams, and use built-in developer tools. Free, open source, and works offline.
-  actions:
-    - theme: brand
-      text: Download Free
-      link: "/download/"
-    - theme: alt
-      text: Documentation
-      link: "/documentation/"
+description: "Organize code snippets, Markdown notes, API requests, diagrams, and calculations in massCode: a free, open-source developer workspace with local storage."
 ---
 
 <TheHome/>

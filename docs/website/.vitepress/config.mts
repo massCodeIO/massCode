@@ -259,7 +259,7 @@ export default defineConfig({
     ],
 
     footer: {
-      message: 'massCode released under the AGPL v3 License.<br>Snippet collection released under the CC-BY-4.0 License.',
+      message: 'massCode released under the AGPL v3 License.',
       copyright: 'Copyright © 2019-present Anton Reshetov',
     },
 

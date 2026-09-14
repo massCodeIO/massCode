@@ -16,19 +16,6 @@ import sponsors from '../sponsors/sponsors.json'
         </h2>
         <p>Thank you to the special sponsors supporting massCode.</p>
       </div>
-      <a
-        class="sponsor-cta"
-        href="https://opencollective.com/masscode/contribute/silver-sponsors-43169/checkout?interval=month&amount=50&contributeAs=me"
-        target="_blank"
-        rel="noopener"
-      ><Heart
-        :size="17"
-        aria-hidden="true"
-      /> Become a sponsor
-        <ArrowUpRight
-          :size="16"
-          aria-hidden="true"
-        /></a>
     </div>
     <div class="sponsor-logos">
       <a
@@ -48,6 +35,19 @@ import sponsors from '../sponsors/sponsors.json'
         >
         <span v-if="sponsor.name === 'Timefall'">Timefall</span>
       </a>
+      <a
+        class="sponsor-cta"
+        href="https://opencollective.com/masscode/contribute/silver-sponsors-43169/checkout?interval=month&amount=50&contributeAs=me"
+        target="_blank"
+        rel="noopener"
+      ><Heart
+        :size="17"
+        aria-hidden="true"
+      /> Become a sponsor
+        <ArrowUpRight
+          :size="16"
+          aria-hidden="true"
+        /></a>
     </div>
   </section>
 </template>
@@ -85,8 +85,7 @@ p {
   flex-shrink: 0;
   min-height: 44px;
   padding: 10px 16px;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 8px;
+
   font-size: 13px;
 }
 .sponsor-cta:hover {
@@ -97,8 +96,10 @@ p {
 }
 .sponsor-logos {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: center;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  padding: 1px;
+  background: var(--vp-c-divider);
   margin-top: 36px;
 }
 .sponsor-logos a {
@@ -108,13 +109,14 @@ p {
   justify-content: center;
   gap: 12px;
   padding: 24px;
-  border-radius: 8px;
+  background: var(--vp-c-bg);
+  min-width: 0;
 }
 .sponsor-logos a:hover {
   background: var(--vp-c-bg-soft);
 }
 img {
-  max-width: 190px;
+  max-width: min(190px, 100%);
   max-height: 40px;
   object-fit: contain;
 }
@@ -125,7 +127,12 @@ img {
 }
 a:focus-visible {
   outline: 2px solid var(--home-highlight);
-  outline-offset: 4px;
+  outline-offset: -3px;
+}
+@media (max-width: 960px) {
+  .sponsor-logos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (max-width: 640px) {
   .home-sponsors {

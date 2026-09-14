@@ -12,7 +12,7 @@ const workflows = [
     description:
       'Useful commands, tried-and-tested functions, and configuration examples. Build a searchable library you can reach for in your next project.',
     detail: 'Folders, tags, and fragments keep related code together.',
-    image: '/code.png',
+    image: '/home-code-2.png',
     link: 'Explore code snippets',
   },
   {

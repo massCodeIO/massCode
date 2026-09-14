@@ -1,10 +1,33 @@
 <script setup lang="ts">
-import { ArrowDown, ArrowRight, Download } from 'lucide-vue-next'
+import {
+  ArrowDown,
+  ArrowRight,
+  Check,
+  Copy,
+  Download,
+  Terminal,
+} from 'lucide-vue-next'
 import { withBase } from 'vitepress'
+import { ref } from 'vue'
 import HomeConnected from './home/HomeConnected.vue'
 import HomeShowcase from './home/HomeShowcase.vue'
 import HomeSponsors from './home/HomeSponsors.vue'
 import HomeWorkflows from './home/HomeWorkflows.vue'
+
+const brewCommand = 'brew install --cask masscode'
+const brewCopied = ref(false)
+const brewError = ref(false)
+
+async function copyBrewCommand() {
+  try {
+    await navigator.clipboard.writeText(brewCommand)
+    brewCopied.value = true
+    brewError.value = false
+  }
+  catch {
+    brewError.value = true
+  }
+}
 </script>
 
 <template>
@@ -41,6 +64,46 @@ import HomeWorkflows from './home/HomeWorkflows.vue'
           aria-hidden="true"
         /> Explore workspaces</a>
       </div>
+      <details class="homebrew">
+        <summary>
+          <Terminal
+            :size="16"
+            aria-hidden="true"
+          /> Install via Homebrew
+        </summary>
+        <div class="brew-command">
+          <code>{{ brewCommand }}</code>
+          <button
+            :aria-label="
+              brewCopied ? 'Copy command again' : 'Copy Homebrew command'
+            "
+            @click="copyBrewCommand"
+          >
+            <Check
+              v-if="brewCopied"
+              :size="16"
+              aria-hidden="true"
+            />
+            <Copy
+              v-else
+              :size="16"
+              aria-hidden="true"
+            />
+          </button>
+        </div>
+        <p
+          class="brew-status"
+          role="status"
+        >
+          {{
+            brewError
+              ? "Select and copy the command above."
+              : brewCopied
+                ? "Command copied."
+                : ""
+          }}
+        </p>
+      </details>
     </section>
     <HomeShowcase />
     <HomeWorkflows />
@@ -187,6 +250,65 @@ h1 span {
 .see-action:hover {
   text-decoration: underline;
   text-underline-offset: 5px;
+}
+.homebrew {
+  width: fit-content;
+  max-width: 100%;
+  margin: 14px auto 0;
+}
+.homebrew summary {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 13px;
+  color: var(--home-text);
+  cursor: pointer;
+  list-style: none;
+}
+.homebrew summary::-webkit-details-marker {
+  display: none;
+}
+.homebrew summary > span {
+  color: var(--home-muted);
+  font-size: 11px;
+}
+.homebrew summary:hover {
+  color: var(--home-highlight);
+}
+.brew-command {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 8px 4px 16px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  background: var(--vp-c-bg-soft);
+}
+.brew-command code {
+  font-size: 13px;
+  user-select: all;
+}
+.brew-command button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 40px;
+  cursor: pointer;
+}
+.brew-status {
+  min-height: 20px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--home-muted);
+}
+.homebrew summary:focus-visible,
+.brew-command button:focus-visible {
+  outline: 2px solid var(--home-highlight);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 .local {
   margin-top: 120px;

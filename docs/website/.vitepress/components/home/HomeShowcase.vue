@@ -25,7 +25,7 @@ const spaces = [
     id: 'notes',
     title: 'Notes',
     icon: FileText,
-    image: '/notes.png',
+    image: '/home-notes.png',
     description:
       'Keep technical notes, project checklists, and ideas alongside your code.',
   },
@@ -33,7 +33,7 @@ const spaces = [
     id: 'http',
     title: 'HTTP client',
     icon: Send,
-    image: '/http.png',
+    image: '/home-http.png',
     description:
       'Organize requests, test your APIs, and inspect responses in one workspace.',
   },
@@ -41,7 +41,7 @@ const spaces = [
     id: 'drawings',
     title: 'Drawings',
     icon: Image,
-    image: '/drawings.png',
+    image: '/home-drawings.png',
     description:
       'Sketch diagrams and ideas on a canvas, then embed them in your notes.',
   },

@@ -232,7 +232,7 @@ async function copyBrewCommand() {
             <h3>Your sync. Your choice.</h3>
             <p>
               Keep your vault on one computer, or sync its folder using iCloud,
-              Dropbox, Syncthing, or Git.
+              Dropbox, other cloud storage, Syncthing, or Git.
             </p>
             <a :href="withBase('/documentation/sync')">Explore sync options <ArrowRight
               :size="16"

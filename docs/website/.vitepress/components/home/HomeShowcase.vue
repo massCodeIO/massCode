@@ -15,6 +15,7 @@ import HomeCard from './HomeCard.vue'
 const spaces = [
   {
     id: 'code',
+    alt: 'Code snippets organized in folders with a TypeScript snippet open in the editor',
     title: 'Code snippets',
     icon: CodeXml,
     image: '/home-code.png',
@@ -23,6 +24,7 @@ const spaces = [
   },
   {
     id: 'notes',
+    alt: 'Markdown notes with a folder library and note editor',
     title: 'Notes',
     icon: FileText,
     image: '/home-notes.png',
@@ -31,6 +33,7 @@ const spaces = [
   },
   {
     id: 'http',
+    alt: 'HTTP client with saved requests, request configuration, and response panel',
     title: 'HTTP client',
     icon: Send,
     image: '/home-http.png',
@@ -39,6 +42,7 @@ const spaces = [
   },
   {
     id: 'drawings',
+    alt: 'Excalidraw canvas in the Drawings workspace',
     title: 'Drawings',
     icon: Image,
     image: '/home-drawings.png',
@@ -110,10 +114,10 @@ function navigateTabs(event: KeyboardEvent, index: number) {
       :aria-labelledby="`tab-${space.id}`"
       tabindex="0"
     >
-      <div class="screenshot-link">
+      <div class="workspace-screenshot">
         <img
           :src="withBase(space.image)"
-          :alt="`massCode ${space.title} workspace`"
+          :alt="space.alt"
           width="1280"
           height="880"
           :loading="index === 0 ? 'eager' : 'lazy'"
@@ -201,7 +205,7 @@ function navigateTabs(event: KeyboardEvent, index: number) {
   padding: 36px 48px 0;
   margin: 0 auto;
 }
-.screenshot-link {
+.workspace-screenshot {
   display: block;
   border-radius: 12px;
 }

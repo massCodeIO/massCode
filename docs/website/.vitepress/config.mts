@@ -3,7 +3,7 @@ import { version } from './_data/assets.json'
 
 const siteUrl = 'https://masscode.io'
 const siteTitle = 'massCode'
-const description = 'Free, open-source developer workspace with code snippets, markdown notes, math notebook, drawings, and built-in dev tools.'
+const description = 'Free, open-source developer workspace for code snippets, Markdown notes, API requests, diagrams, calculations, and built-in developer tools.'
 const ogImage = `${siteUrl}/og-image.png`
 const gsv = 'h-rU1tSutO83wOyvi4syrk_XTvgennlUPkL6fMmq5cI'
 
@@ -45,10 +45,14 @@ function buildSeoHead({
     ['meta', { property: 'og:description', content: pageDescription }],
     ['meta', { property: 'og:url', content: pageUrl }],
     ['meta', { property: 'og:image', content: ogImage }],
+    ['meta', { property: 'og:image:width', content: '1200' }],
+    ['meta', { property: 'og:image:height', content: '630' }],
+    ['meta', { property: 'og:image:alt', content: 'massCode code snippets workspace in light and dark themes' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
     ['meta', { name: 'twitter:title', content: pageTitle }],
     ['meta', { name: 'twitter:description', content: pageDescription }],
     ['meta', { name: 'twitter:image', content: ogImage }],
+    ['meta', { name: 'twitter:image:alt', content: 'massCode code snippets workspace in light and dark themes' }],
   ]
 }
 
@@ -80,6 +84,22 @@ export default defineConfig({
       pageDescription: pageData.description || description,
       isNotFound: pageData.isNotFound,
     })
+
+    if (pageData.relativePath === 'index.md') {
+      head.push(['script', { type: 'application/ld+json' }, JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        'name': siteTitle,
+        'url': `${siteUrl}/`,
+        'description': pageData.description || description,
+        'applicationCategory': 'DeveloperApplication',
+        'operatingSystem': 'macOS, Windows, Linux',
+        'isAccessibleForFree': true,
+        'license': 'https://www.gnu.org/licenses/agpl-3.0.html',
+        'downloadUrl': `${siteUrl}/download/`,
+        'offers': { '@type': 'Offer', 'price': 0, 'priceCurrency': 'USD' },
+      })])
+    }
 
     if (pageData.relativePath.startsWith('compare/') && !pageData.isNotFound) {
       const breadcrumbs = [

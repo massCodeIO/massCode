@@ -1,7 +1,7 @@
 ---
 layout: page
 titleTemplate: "A free and open source developer workspace"
-description: "Free, open-source developer workspace for code snippets, markdown notes, HTTP, GraphQL and WebSocket APIs, calculations, drawings, and built-in dev tools. Stores data locally."
+description: "Organize code snippets, Markdown notes, API requests, diagrams, and calculations in massCode: a free, open-source developer workspace with local storage."
 ---
 
 <TheHome/>

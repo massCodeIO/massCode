@@ -10,6 +10,7 @@
     "preview": "vitepress preview"
   },
   "dependencies": {
+    "lucide-vue-next": "^0.476.0",
     "vue": "^3.5.17",
     "vue-gtag": "^3.7.0"
   },

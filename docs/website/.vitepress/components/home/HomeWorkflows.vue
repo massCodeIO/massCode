@@ -136,10 +136,11 @@ p {
   min-height: 44px;
   margin-top: 12px;
   font-size: 13px;
-  color: var(--home-text);
+  color: var(--home-highlight);
 }
 .workflow-copy a:hover {
-  color: var(--home-highlight);
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 .workflow-visual {
   display: block;

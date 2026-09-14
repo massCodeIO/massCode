@@ -3,34 +3,44 @@ import { ArrowRight } from 'lucide-vue-next'
 import { withBase } from 'vitepress'
 import HomeCard from './HomeCard.vue'
 
-// Existing documentation captures are temporary artwork. Replace each with
-// a scenario-specific light/dark capture when the final screenshots are ready.
 const workflows = [
   {
-    id: 'code',
-    title: 'Keep the code you’ll need again.',
+    id: 'graph',
+    label: 'CONNECTED KNOWLEDGE',
+    title: 'See how your ideas connect.',
     description:
-      'Useful commands, tried-and-tested functions, and configuration examples. Build a searchable library you can reach for in your next project.',
-    detail: 'Folders, tags, and fragments keep related code together.',
-    image: '/home-code-2.png',
-    link: 'Explore code snippets',
+      'Explore the links between your notes in a graph. Connect technical notes to the snippets and API requests they explain, so the next step is always close.',
+    image: '/home-notes-graph.png',
+    width: 1520,
+    height: 1054,
+    alt: 'Notes Graph showing connections between linked notes',
+    href: '/documentation/notes/',
+    link: 'Explore Notes',
   },
   {
-    id: 'notes',
-    title: 'Keep the thinking behind it.',
+    id: 'tasks',
+    label: 'TASK NOTES',
+    title: 'Turn your notes into next steps.',
     description:
-      'A snippet is more useful with its context. Write technical notes in Markdown and connect them to the code and requests they explain.',
-    detail: 'Bring ideas to life with diagrams, checklists, and linked notes.',
-    image: '/notes.png',
-    link: 'Explore notes',
+      'Track tasks with status, priority, and due dates. Link to planned notes, snippets, and API requests. Keep context close and find tasks by due date in Today and Upcoming.',
+    image: '/home-notes-tasks.png',
+    width: 1280,
+    height: 880,
+    alt: 'Task note with status, priority, and due date',
+    href: '/documentation/notes/',
+    link: 'Explore Notes',
   },
   {
-    id: 'http',
-    title: 'Put your APIs to the test.',
+    id: 'api-workflows',
+    label: 'API WORKFLOWS',
+    title: 'Test the whole flow.',
     description:
-      'Build requests, switch environments, and inspect responses. Keep your API collections alongside the code and notes you work with.',
-    detail: 'HTTP, GraphQL, and WebSocket, all in one workspace.',
-    image: '/http.png',
+      'Run saved requests in sequence, pass values between steps, and inspect test results. Follow a workflow from login to its final response and see where it fails.',
+    image: '/home-http-assertions.png',
+    width: 1280,
+    height: 880,
+    alt: 'HTTP request with assertions and passing test results',
+    href: '/documentation/http/',
     link: 'Explore the HTTP client',
   },
 ]
@@ -43,30 +53,21 @@ const workflows = [
   >
     <header class="section-heading">
       <p>LESS SCATTERED. MORE CONNECTED.</p>
-      <h2>A home for the work<br>around your code.</h2>
+      <h2>From saved knowledge<br>to working solutions.</h2>
     </header>
     <HomeCard
       v-for="workflow in workflows"
       :key="workflow.id"
       as="article"
-      :glow="workflow.id === 'notes' ? 'left' : 'right'"
+      :glow="workflow.id === 'tasks' ? 'left' : 'right'"
       class="workflow"
       :class="[`workflow-${workflow.id}`]"
     >
       <div class="workflow-copy">
-        <span class="section-label">{{
-          workflow.id === "code"
-            ? "CODE SNIPPETS"
-            : workflow.id === "notes"
-              ? "MARKDOWN NOTES"
-              : "API WORKSPACE"
-        }}</span>
-        <h2>{{ workflow.title }}</h2>
+        <span class="section-label">{{ workflow.label }}</span>
+        <h3>{{ workflow.title }}</h3>
         <p>{{ workflow.description }}</p>
-        <p class="detail">
-          {{ workflow.detail }}
-        </p>
-        <a :href="withBase(`/documentation/${workflow.id}/`)">
+        <a :href="withBase(workflow.href)">
           {{ workflow.link }} <ArrowRight
             :size="16"
             aria-hidden="true"
@@ -76,9 +77,9 @@ const workflows = [
       <div class="workflow-visual">
         <img
           :src="withBase(workflow.image)"
-          :alt="`massCode ${workflow.id} workspace`"
-          width="1280"
-          height="880"
+          :alt="workflow.alt"
+          :width="workflow.width"
+          :height="workflow.height"
           loading="lazy"
         >
       </div>
@@ -114,7 +115,7 @@ const workflows = [
 .workflow-copy {
   padding: 36px 36px 24px;
 }
-h2 {
+h3 {
   margin-top: 14px;
   font-size: clamp(28px, 3vw, 38px);
   font-weight: 550;
@@ -127,9 +128,6 @@ p {
   color: var(--home-muted);
   font-size: 15px;
   line-height: 1.7;
-}
-p.detail {
-  display: none;
 }
 .workflow-copy a {
   display: inline-flex;
@@ -155,24 +153,24 @@ img {
   display: block;
   transition: transform 250ms;
 }
-.workflow-code {
+.workflow-graph {
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
   align-items: center;
   min-height: 450px;
 }
-.workflow-code .workflow-copy {
+.workflow-graph .workflow-copy {
   padding: 48px;
 }
-.workflow-code h2 {
+.workflow-graph h3 {
   font-size: clamp(34px, 3.8vw, 48px);
 }
-.workflow-code .workflow-visual {
+.workflow-graph .workflow-visual {
   height: 400px;
   margin: 40px 0 0;
 }
-.workflow-code img {
+.workflow-graph img {
   width: 840px;
 }
 a:focus-visible {
@@ -188,16 +186,16 @@ a:focus-visible {
   .section-heading {
     margin-bottom: 16px;
   }
-  .workflow-code {
+  .workflow-graph {
     display: block;
     min-height: 0;
   }
   .workflow-copy,
-  .workflow-code .workflow-copy {
+  .workflow-graph .workflow-copy {
     padding: 28px 24px 16px;
   }
   .workflow-visual,
-  .workflow-code .workflow-visual {
+  .workflow-graph .workflow-visual {
     height: 260px;
     margin: 10px 0 0 12px;
   }

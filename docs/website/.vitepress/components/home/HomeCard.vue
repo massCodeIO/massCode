@@ -35,6 +35,7 @@ withDefaults(
 /* Layout belongs to the caller; the card owns its material and edge treatment.
    --card-glow-strength and --card-fade-height can be overridden per instance. */
 .home-card {
+  --card-image-shadow: 0 18px 20px rgb(0 0 0 / 40%);
   --card-glow-x: 50%;
   --card-glow-strength: 9%;
   --card-fade-height: 80px;
@@ -65,6 +66,10 @@ withDefaults(
 .home-card[data-glow="none"] {
   --card-glow-strength: 0%;
 }
+.home-card :deep(img) {
+  filter: drop-shadow(var(--card-image-shadow));
+}
+
 .card-rim {
   position: absolute;
   inset: 0;

@@ -211,7 +211,6 @@ function navigateTabs(event: KeyboardEvent, index: number) {
   height: auto;
   aspect-ratio: 1280 / 880;
   object-fit: contain;
-  filter: drop-shadow(0 18px 20px rgb(0 0 0 / 40%));
 }
 .caption {
   max-width: 680px;

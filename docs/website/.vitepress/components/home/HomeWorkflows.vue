@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArrowRight } from 'lucide-vue-next'
 import { withBase } from 'vitepress'
+import HomeCard from './HomeCard.vue'
 
 // Existing documentation captures are temporary artwork. Replace each with
 // a scenario-specific light/dark capture when the final screenshots are ready.
@@ -44,9 +45,11 @@ const workflows = [
       <p>LESS SCATTERED. MORE CONNECTED.</p>
       <h2>A home for the work<br>around your code.</h2>
     </header>
-    <article
+    <HomeCard
       v-for="workflow in workflows"
       :key="workflow.id"
+      as="article"
+      :glow="workflow.id === 'notes' ? 'left' : 'right'"
       class="workflow"
       :class="[`workflow-${workflow.id}`]"
     >
@@ -79,7 +82,7 @@ const workflows = [
           loading="lazy"
         >
       </div>
-    </article>
+    </HomeCard>
   </section>
 </template>
 
@@ -107,13 +110,6 @@ const workflows = [
   font-size: clamp(36px, 4.5vw, 58px);
   line-height: 1.08;
   letter-spacing: -0.045em;
-}
-.workflow {
-  min-width: 0;
-  overflow: hidden;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 20px;
-  background: var(--vp-c-bg-soft);
 }
 .workflow-copy {
   padding: 36px 36px 24px;

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArrowRight } from 'lucide-vue-next'
 import { withBase } from 'vitepress'
+import HomeCard from './HomeCard.vue'
 import HomeShortcuts from './HomeShortcuts.vue'
 </script>
 
@@ -24,7 +25,10 @@ import HomeShortcuts from './HomeShortcuts.vue'
           aria-hidden="true"
         /></a>
       </div>
-      <div class="connection-image">
+      <HomeCard
+        class="connection-image"
+        glow="left"
+      >
         <img
           :src="withBase('/notes-internal-links.png')"
           alt="Internal links in massCode Notes connect related work"
@@ -32,7 +36,7 @@ import HomeShortcuts from './HomeShortcuts.vue'
           width="1280"
           height="880"
         >
-      </div>
+      </HomeCard>
     </section>
 
     <section
@@ -80,7 +84,12 @@ import HomeShortcuts from './HomeShortcuts.vue'
         </p>
       </header>
       <div class="utility-grid">
-        <article class="utility">
+        <HomeCard
+          as="article"
+          class="utility"
+          glow="none"
+          :grain="false"
+        >
           <div class="utility-copy">
             <h3>Spot the difference.</h3>
             <p>
@@ -104,8 +113,13 @@ import HomeShortcuts from './HomeShortcuts.vue'
    "retries": 3
 }</code></pre>
           </div>
-        </article>
-        <article class="utility">
+        </HomeCard>
+        <HomeCard
+          as="article"
+          class="utility"
+          glow="none"
+          :grain="false"
+        >
           <div class="utility-copy">
             <h3>Keep the calculation.</h3>
             <p>
@@ -126,7 +140,7 @@ import HomeShortcuts from './HomeShortcuts.vue'
             <div><code>monthly = servers * 25</code><span>100</span></div>
             <div><code>monthly * 12</code><span>1,200</span></div>
           </div>
-        </article>
+        </HomeCard>
       </div>
     </section>
   </div>
@@ -178,11 +192,7 @@ a:focus-visible {
   display: block;
   margin-top: 36px;
   height: 510px;
-  overflow: hidden;
-  border-radius: 20px;
   padding: 28px 64px 0;
-  background: var(--vp-c-bg-soft);
-  border: 1px solid var(--vp-c-divider);
 }
 img {
   display: block;
@@ -213,10 +223,6 @@ img {
 .utility {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  background: var(--vp-c-bg-soft);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 20px;
 }
 .utility-copy {
   padding: 36px 36px 24px;

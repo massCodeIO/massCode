@@ -10,6 +10,7 @@ import {
 } from 'lucide-vue-next'
 import { withBase } from 'vitepress'
 import { computed, ref } from 'vue'
+import HomeCard from './HomeCard.vue'
 
 const spaces = [
   {
@@ -97,11 +98,13 @@ function navigateTabs(event: KeyboardEvent, index: number) {
         {{ space.title }}
       </button>
     </div>
-    <div
+    <HomeCard
       v-for="(space, index) in spaces"
       v-show="selected === index"
       :id="`panel-${space.id}`"
       :key="space.id"
+      glow="center"
+      fade-bottom
       class="preview"
       role="tabpanel"
       :aria-labelledby="`tab-${space.id}`"
@@ -117,7 +120,7 @@ function navigateTabs(event: KeyboardEvent, index: number) {
           :fetchpriority="index === 0 ? 'high' : 'auto'"
         >
       </div>
-    </div>
+    </HomeCard>
     <p
       class="caption"
       aria-live="polite"
@@ -196,12 +199,7 @@ function navigateTabs(event: KeyboardEvent, index: number) {
   width: 100%;
   height: 580px;
   padding: 36px 48px 0;
-  overflow: hidden;
   margin: 0 auto;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 20px;
-  background: color-mix(in srgb, var(--vp-c-brand-1) 8%, var(--vp-c-bg-soft));
-  box-shadow: inset 0 1px 0 #ffffff12;
 }
 .screenshot-link {
   display: block;
@@ -213,6 +211,7 @@ function navigateTabs(event: KeyboardEvent, index: number) {
   height: auto;
   aspect-ratio: 1280 / 880;
   object-fit: contain;
+  filter: drop-shadow(0 18px 20px rgb(0 0 0 / 40%));
 }
 .caption {
   max-width: 680px;

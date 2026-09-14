@@ -1,5 +1,6 @@
-/* Route-scoped colors keep the docs appearance preference untouched.
+/* Shared dark palette for documentation and the always-dark homepage.
    :has also applies on the initial server-rendered page, without a theme flash. */
+html.dark,
 html:has(.masscode-home) {
   color-scheme: dark;
   --vp-c-bg: #191919;
@@ -37,4 +38,3 @@ html:has(.masscode-home) .VPNavBarAppearance,
 html:has(.masscode-home) .VPNavScreenAppearance {
   display: none;
 }
-

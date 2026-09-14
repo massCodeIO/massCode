@@ -197,11 +197,12 @@ a:focus-visible {
   }
   .workflow-visual,
   .workflow-graph .workflow-visual {
-    height: 260px;
-    margin: 10px 0 0 12px;
+    height: auto;
+    margin: 12px 12px -12px;
   }
   .workflow img {
-    width: 550px;
+    width: 100%;
+    max-width: 100%;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -298,21 +298,38 @@ p {
     padding-inline: 12px;
   }
   .key-row {
-    --key-gap: 7px;
-    --shift-width: 79px;
+    --key-gap: 5px;
+    --shift-width: 57px;
   }
   .key-row,
   .shift-slot {
-    gap: 7px;
+    gap: 5px;
   }
   .key {
-    width: 80px;
+    width: 60px;
+    height: 58px;
+    padding: 7px;
+  }
+  .key > span:last-child {
+    font-size: 9px;
+  }
+  .key svg {
+    width: 18px;
+    height: 18px;
+  }
+  .key-row {
+    height: 72px;
+  }
+  .platforms {
+    gap: 10px;
+    flex-wrap: wrap;
   }
   .shift {
-    width: 64px;
+    width: 44px;
   }
   .key.letter {
-    width: 60px;
+    width: 44px;
+    font-size: 22px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

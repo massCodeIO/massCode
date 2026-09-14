@@ -127,3 +127,19 @@ svg {
   .Layout .VPFooter { padding: 24px 20px; }
   .Layout .VPFooter .container { flex-direction: column; align-items: flex-start; gap: 6px; }
 }
+
+/* Full navigation needs more room than the default 768px breakpoint. */
+@media (min-width: 768px) and (max-width: 959px) {
+  .Layout .VPNavBarMenu,
+  .Layout .VPNavBarExtra,
+  .Layout .VPNavBarAppearance,
+  .Layout .VPNavBarSocialLinks {
+    display: none;
+  }
+  .Layout .VPNavBarHamburger {
+    display: flex;
+  }
+  .Layout .VPNavScreen {
+    display: block;
+  }
+}

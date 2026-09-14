@@ -460,6 +460,7 @@ h3 {
   margin-bottom: 12px;
 }
 .details > div {
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
@@ -698,9 +699,55 @@ a:focus-visible {
     font-size: 17px;
   }
   .details {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 32px;
-    margin: 36px 0;
+    margin: 0;
+  }
+}
+@media (max-width: 760px) {
+  .details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .local {
+    padding: 24px 16px;
+  }
+  .vault-visual,
+  .sync-visual {
+    height: auto;
+    min-height: 240px;
+  }
+  .vault-files > div {
+    white-space: normal;
+  }
+  .vault-files > div > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .sync-visual {
+    flex-direction: column;
+    padding-block: 24px;
+    gap: 16px;
+  }
+  .sync-connector {
+    flex: none;
+    width: 1px;
+    height: 24px;
+    margin: 0;
+    background: var(--vp-c-divider);
+  }
+  .sync-connector svg {
+    display: none;
+  }
+  .sync-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    min-width: 0;
+    gap: 8px;
+  }
+  .sync-options > span {
+    padding: 8px 6px;
+    font-size: 11px;
+    gap: 6px;
   }
 }
 </style>

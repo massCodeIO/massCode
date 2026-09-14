@@ -275,13 +275,13 @@ a:focus-visible,
   }
   .preview {
     width: 100%;
-    height: 270px;
+    height: auto;
     padding: 18px 10px 0;
     border-radius: 12px;
   }
   .preview img {
-    width: 530px;
-    max-width: none;
+    width: 100%;
+    max-width: 100%;
   }
   .caption {
     min-height: 48px;

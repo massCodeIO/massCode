@@ -250,13 +250,14 @@ h3 {
     padding: 28px 24px 0;
   }
   .palette-image {
-    margin: 0 0 0 12px;
-    height: 330px;
+    margin: 0 12px -12px;
+    height: auto;
     overflow: hidden;
     align-items: start;
   }
   .palette-image img {
-    width: 550px;
+    width: 100%;
+    max-width: 100%;
   }
   .utility-grid {
     grid-template-columns: 1fr;

@@ -279,8 +279,8 @@ export default defineConfig({
     ],
 
     footer: {
-      message: 'massCode released under the AGPL v3 License.',
-      copyright: 'Copyright © 2019-present Anton Reshetov',
+      message: 'massCode · <a href="https://github.com/massCodeIO/massCode/blob/main/LICENSE">AGPL v3</a>',
+      copyright: '© 2019–present <a href="https://antonreshetov.com/">Anton Reshetov</a>',
     },
 
     editLink: {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArrowDown, ArrowRight, Download } from 'lucide-vue-next'
 import { withBase } from 'vitepress'
+import HomeConnected from './home/HomeConnected.vue'
 import HomeShowcase from './home/HomeShowcase.vue'
 import HomeWorkflows from './home/HomeWorkflows.vue'
 import SponsorsGroup from './sponsors/SponsorsGroup.vue'
@@ -43,6 +44,7 @@ import SponsorsGroup from './sponsors/SponsorsGroup.vue'
     </section>
     <HomeShowcase />
     <HomeWorkflows />
+    <HomeConnected />
     <section
       class="local"
       aria-labelledby="local-title"

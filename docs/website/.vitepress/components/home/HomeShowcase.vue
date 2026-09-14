@@ -120,8 +120,8 @@ function navigateTabs(event: KeyboardEvent, index: number) {
           :alt="space.alt"
           width="1280"
           height="880"
-          :loading="index === 0 ? 'eager' : 'lazy'"
-          :fetchpriority="index === 0 ? 'high' : 'auto'"
+          loading="eager"
+          :fetchpriority="index === 0 ? 'high' : 'low'"
         >
       </div>
     </HomeCard>

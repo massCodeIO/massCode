@@ -121,6 +121,7 @@ function handleActiveLine(line: number) {
     />
     <div class="bg-border/50" />
     <MathNotebookResultsPanel
+      :sheet-id="activeSheet.id"
       :results="results"
       :scroll-top="scrollTop"
       :active-line="activeLine"

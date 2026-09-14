@@ -9,7 +9,7 @@ import {
 } from 'lucide-vue-next'
 import { withBase } from 'vitepress'
 import { ref } from 'vue'
-import HomeConnected from './home/HomeConnected.vue'
+import HomeProductivity from './home/HomeProductivity.vue'
 import HomeShowcase from './home/HomeShowcase.vue'
 import HomeSponsors from './home/HomeSponsors.vue'
 import HomeWorkflows from './home/HomeWorkflows.vue'
@@ -107,7 +107,7 @@ async function copyBrewCommand() {
     </section>
     <HomeShowcase />
     <HomeWorkflows />
-    <HomeConnected />
+    <HomeProductivity />
     <section
       class="local"
       aria-labelledby="local-title"

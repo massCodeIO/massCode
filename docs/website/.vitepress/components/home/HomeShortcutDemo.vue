@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ArrowUp, Command, RotateCcw } from 'lucide-vue-next'
+import { ArrowUp, Command } from 'lucide-vue-next'
 import { onMounted, onUnmounted, ref } from 'vue'
 
+const emit = defineEmits<{ phaseChange: [phase: 'search' | 'commands'] }>()
 const windows = ref(false)
 const playing = ref(false)
 const stage = ref<HTMLElement>()
@@ -56,16 +57,6 @@ onUnmounted(() => observer?.disconnect())
       >
         Windows / Linux
       </button>
-      <button
-        class="replay"
-        aria-label="Replay shortcut animation"
-        @click="replay"
-      >
-        <RotateCcw
-          :size="15"
-          aria-hidden="true"
-        />
-      </button>
     </div>
     <div
       class="key-scene"
@@ -97,7 +88,15 @@ onUnmounted(() => observer?.disconnect())
         class="action-label"
         aria-hidden="true"
       >
-        <span class="search-label">Find your work.</span><span class="command-label">Run a command.</span>
+        <span
+          class="search-label"
+          @animationstart="emit('phaseChange', 'search')"
+          @animationiteration="emit('phaseChange', 'search')"
+        >Find your work.</span><span
+          class="command-label"
+          @animationstart="emit('phaseChange', 'commands')"
+          @animationiteration="emit('phaseChange', 'commands')"
+        >Run a command.</span>
       </div>
     </div>
     <p>
@@ -133,13 +132,7 @@ onUnmounted(() => observer?.disconnect())
 .platforms button[aria-pressed="true"] {
   color: var(--home-text);
 }
-.platforms .replay {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  margin-left: auto;
-}
+
 button:focus-visible {
   outline: 2px solid var(--home-highlight);
   outline-offset: 3px;
@@ -227,23 +220,25 @@ p {
   line-height: 1.6;
 }
 .playing .key {
-  animation: key-press 4.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: key-press 4.8s cubic-bezier(0.16, 1, 0.3, 1) infinite both;
 }
 .playing .letter {
   animation-delay: 100ms;
 }
 .playing .shift-slot {
   display: flex;
-  animation: shift-reveal 4.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: shift-reveal 4.8s cubic-bezier(0.16, 1, 0.3, 1) infinite both;
 }
 .playing .search-label {
-  animation: search-label 4.8s step-end both;
+  /* Match the visible press onset with the fast ease-out of the keys. */
+  animation: search-label 4.8s step-end 0.16s infinite backwards;
 }
 .playing .command-label {
   display: block;
   position: absolute;
   inset: 0;
-  animation: command-label 4.8s step-end both;
+  opacity: 0;
+  animation: command-label 4.8s step-end 2.26s infinite forwards;
 }
 @keyframes key-press {
   0%,
@@ -264,14 +259,16 @@ p {
 }
 @keyframes shift-reveal {
   0%,
-  28% {
+  28%,
+  96%,
+  100% {
     width: 0;
     margin-left: calc(-1 * var(--key-gap));
     opacity: 0;
     transform: translateY(10px) scale(0.94);
   }
   40%,
-  100% {
+  82% {
     width: var(--shift-width);
     margin-left: 0;
     opacity: 1;
@@ -282,18 +279,18 @@ p {
   0% {
     opacity: 1;
   }
-  35%,
+  43.75%,
   100% {
     opacity: 0;
   }
 }
 @keyframes command-label {
   0% {
-    opacity: 0;
-  }
-  35%,
-  100% {
     opacity: 1;
+  }
+  56.25%,
+  100% {
+    opacity: 0;
   }
 }
 @media (max-width: 640px) {

@@ -1,0 +1,40 @@
+/* Route-scoped colors keep the docs appearance preference untouched.
+   :has also applies on the initial server-rendered page, without a theme flash. */
+html:has(.masscode-home) {
+  color-scheme: dark;
+  --vp-c-bg: #191919;
+  --vp-c-bg-alt: #161616;
+  --vp-c-bg-elv: #282828;
+  --vp-c-bg-soft: #212121;
+  --vp-c-text-1: #fff;
+  --vp-c-text-2: #aaa;
+  --vp-c-text-3: #858585;
+  --vp-c-divider: #333;
+  --vp-c-border: #3b3b3b;
+  --vp-c-gutter: #161616;
+  --vp-c-gray-1: #484848;
+  --vp-c-gray-2: #383838;
+  --vp-c-gray-3: #2d2d2d;
+  --vp-c-gray-soft: rgb(255 255 255 / 6%);
+  --vp-c-default-1: #484848;
+  --vp-c-default-2: #383838;
+  --vp-c-default-3: #2d2d2d;
+  --vp-c-default-soft: rgb(255 255 255 / 6%);
+  --vp-c-brand-1: oklch(72% 0.14 260);
+  --vp-c-brand-2: oklch(64% 0.17 260);
+  --vp-c-brand-3: oklch(50% 0.19 260);
+  --vp-c-brand-soft: oklch(72% 0.14 260 / 12%);
+  --vp-c-brand: var(--vp-c-brand-1);
+  --vp-c-tip-1: #65c995;
+  --vp-c-tip-soft: rgb(101 201 149 / 12%);
+  --vp-c-danger-1: #f08080;
+  --vp-c-danger-soft: rgb(240 128 128 / 12%);
+  --vp-nav-bg-color: var(--vp-c-bg);
+  --vp-local-nav-bg-color: var(--vp-c-bg);
+}
+
+html:has(.masscode-home) .VPNavBarAppearance,
+html:has(.masscode-home) .VPNavScreenAppearance {
+  display: none;
+}
+

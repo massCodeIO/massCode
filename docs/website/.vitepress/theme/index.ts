@@ -9,6 +9,7 @@ import AssetsDownload from '../components/global/AssetsDownload.vue'
 import SidebarSponsors from '../components/sponsors/SidebarSponsors.vue'
 
 import './styles.css'
+import './home.css'
 
 function initGtag(context: EnhanceAppContext) {
   if (import.meta.env.SSR || !import.meta.env.VITE_GA)

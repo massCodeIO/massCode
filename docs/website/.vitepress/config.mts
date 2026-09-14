@@ -141,7 +141,7 @@ export default defineConfig({
       { text: 'Documentation', link: '/documentation/' },
       { text: 'Compare', link: '/compare/' },
       { text: 'Blog', link: '/blog/' },
-      { text: 'Sponsor', link: '/sponsor/' },
+      { text: 'Sponsorship', link: '/sponsor/' },
       { text: 'Donate', link: '/donate/' },
       {
         text: version,

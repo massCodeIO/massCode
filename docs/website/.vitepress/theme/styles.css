@@ -82,6 +82,17 @@ svg {
   text-decoration: none !important;
 }
 
+.VPNav a[href$="/donate/"]::before {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  vertical-align: -2px;
+  background-color: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
 /* A quiet closing row aligned with the homepage content. */
 .Layout .VPFooter {
   padding: 28px 32px;

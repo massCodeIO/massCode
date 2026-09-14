@@ -8,6 +8,13 @@
   --font-code: 'SF Mono', Consolas, Menlo, Ubuntu Mono, monospace;
 }
 
+/* Theme and route colors change atomically; normal interaction transitions remain. */
+html.appearance-changing *,
+html.appearance-changing *::before,
+html.appearance-changing *::after {
+  transition: none !important;
+}
+
 code, kbd {
   font-family: var(--font-code);
   padding: 0 4px;

@@ -16,7 +16,7 @@ const spaces = [
     id: 'code',
     title: 'Code snippets',
     icon: CodeXml,
-    image: '/code.png',
+    image: '/home-code.png',
     description:
       'Organize snippets in folders, use tags, and keep useful code within reach.',
   },

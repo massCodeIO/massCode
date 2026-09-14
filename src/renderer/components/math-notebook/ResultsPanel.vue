@@ -8,6 +8,7 @@ import { LoaderCircle, Sigma } from 'lucide-vue-next'
 import { sumNumericResults } from './sumNumericResults'
 
 interface Props {
+  sheetId: string
   results: LineResult[]
   scrollTop: number
   activeLine: number
@@ -97,7 +98,7 @@ function openDocumentation() {
       >
         <div
           v-for="(result, index) in results"
-          :key="index"
+          :key="`${sheetId}:${index}`"
           :class="getResultClasses(result)"
           @click="handleClickResult(result)"
         >

@@ -27,6 +27,32 @@ describe('arithmetic', () => {
   it('exponent', () => expectValue('2 ^ 10', '1,024'))
   it('negative numbers', () => expectValue('-5 + 3', '-2'))
   it('decimal', () => expectValue('0.1 + 0.2', '0.3'))
+  it('keeps a standalone decimal numeric instead of parsing a date', () => {
+    expectValue('6.5', '6.5')
+    expect(evalLine('6.5').numericValue).toBe(6.5)
+  })
+  it('uses decimal assignments in dependent loan calculations', () => {
+    const results = evalLines(
+      [
+        'principal = 350000',
+        'annual_rate = 6.5',
+        'years = 30',
+        'monthly_rate = annual_rate / 100 / 12',
+        'num_payments = years * 12',
+        'monthly_payment = principal * (monthly_rate * (1 + monthly_rate)^num_payments) / ((1 + monthly_rate)^num_payments - 1)',
+        'total_paid = monthly_payment * num_payments',
+        'total_interest = total_paid - principal',
+        'interest_ratio = total_interest / principal * 100',
+      ].join('\n'),
+    )
+
+    expect(results[1].numericValue).toBe(6.5)
+    expect(results[3].numericValue).toBeCloseTo(6.5 / 100 / 12, 6)
+    expect(results[5].numericValue).toBeCloseTo(2212.238082, 5)
+    expect(results[6].numericValue).toBeCloseTo(796405.709601, 4)
+    expect(results[7].numericValue).toBeCloseTo(446405.709601, 4)
+    expect(results[8].numericValue).toBeCloseTo(127.544488, 5)
+  })
   it('decimal comma for comma-decimal locales', () => {
     setFormatSettings('es-ES', 6, 'numeric')
 

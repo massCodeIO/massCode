@@ -95,6 +95,10 @@ function resolveTokenClass(token: string, assignedVariables: Set<string>) {
 }
 
 function highlightLine(line: string, assignedVariables: Set<string>) {
+  if (/^\s*(?:#|\/\/)/.test(line)) {
+    return escapeHtml(line)
+  }
+
   let html = ''
   let lastIndex = 0
 

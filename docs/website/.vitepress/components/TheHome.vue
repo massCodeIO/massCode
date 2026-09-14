@@ -3,8 +3,8 @@ import { ArrowDown, ArrowRight, Download } from 'lucide-vue-next'
 import { withBase } from 'vitepress'
 import HomeConnected from './home/HomeConnected.vue'
 import HomeShowcase from './home/HomeShowcase.vue'
+import HomeSponsors from './home/HomeSponsors.vue'
 import HomeWorkflows from './home/HomeWorkflows.vue'
-import SponsorsGroup from './sponsors/SponsorsGroup.vue'
 </script>
 
 <template>
@@ -99,10 +99,7 @@ import SponsorsGroup from './sponsors/SponsorsGroup.vue'
         />
       </a>
     </p>
-    <SponsorsGroup
-      title="Special"
-      tier="special"
-    />
+    <HomeSponsors />
   </div>
 </template>
 

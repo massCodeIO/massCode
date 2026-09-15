@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import process from 'node:process'
 import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
@@ -39,10 +40,10 @@ function excalidrawFonts() {
         fs.createReadStream(filePath).pipe(res)
       })
     },
-    writeBundle() {
+    writeBundle(options) {
       fs.cpSync(
         excalidrawFontsDir,
-        path.resolve(__dirname, 'build/renderer/fonts'),
+        path.resolve(options.dir || path.resolve(__dirname, 'build/renderer'), 'fonts'),
         { recursive: true },
       )
     },

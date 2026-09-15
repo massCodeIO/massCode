@@ -16,6 +16,7 @@ import {
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
 import { getContiguousSelection } from '@/utils'
+import { benchmarkStart } from '@/utils/benchmark'
 import { LibraryFilter } from '../../types'
 import {
   requestRuntimeDraft,
@@ -303,6 +304,11 @@ const isCurrentRequestDirty = computed(() => {
 })
 
 export async function getHttpRequests(query?: HttpRequestsQuery) {
+  const finishBenchmark = benchmarkStart(
+    'http',
+    'list',
+    (query || queryByLibraryOrFolderOrSearch.value).search,
+  )
   try {
     const resolvedQuery = {
       ...(query || queryByLibraryOrFolderOrSearch.value),
@@ -315,8 +321,10 @@ export async function getHttpRequests(query?: HttpRequestsQuery) {
     else {
       requests.value = data
     }
+    finishBenchmark()
   }
   catch (error) {
+    finishBenchmark('error')
     console.error(error)
   }
 }
@@ -387,6 +395,7 @@ async function loadCurrentRequest(requestId: number, transitionToken: number) {
   const requestToken = ++selectionRequestToken
   isCurrentRequestLoading.value = true
 
+  const finishBenchmark = benchmarkStart('http', 'open')
   try {
     const record = await fetchHttpRequestById(requestId)
 
@@ -394,10 +403,12 @@ async function loadCurrentRequest(requestId: number, transitionToken: number) {
       requestToken !== selectionRequestToken
       || transitionToken !== httpRuntimeNavigation.transitionToken
     ) {
+      finishBenchmark('superseded')
       return
     }
 
     if (httpState.requestId !== requestId) {
+      finishBenchmark('superseded')
       return
     }
 
@@ -408,6 +419,7 @@ async function loadCurrentRequest(requestId: number, transitionToken: number) {
     // До первой загрузки (currentRequest ещё null) откатывать некуда:
     // персистентный выбор сохраняется, его доselect'ит refresh после sync.
     if (!record) {
+      finishBenchmark('error')
       if (currentRequest.value) {
         const previousId = currentRequest.value.id
         httpState.requestId = previousId
@@ -418,6 +430,11 @@ async function loadCurrentRequest(requestId: number, transitionToken: number) {
     }
 
     assignDraft(record)
+    finishBenchmark()
+  }
+  catch (error) {
+    finishBenchmark('error')
+    throw error
   }
   finally {
     if (requestToken === selectionRequestToken) {

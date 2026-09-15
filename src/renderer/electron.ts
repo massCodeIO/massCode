@@ -1,3 +1,3 @@
-const { ipc, store, i18n } = window.electron
+const { ipc, store, i18n, benchmark } = window.electron
 
-export { i18n, ipc, store }
+export { benchmark, i18n, ipc, store }

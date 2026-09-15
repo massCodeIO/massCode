@@ -10,6 +10,7 @@ import { useDonations } from '@/composables/useDonations'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { getContiguousSelection } from '@/utils'
+import { benchmarkStart } from '@/utils/benchmark'
 import { api } from '~/renderer/services/api'
 import { useApp, useDialog, useFolders } from '.'
 import { LibraryFilter } from './types'
@@ -168,6 +169,7 @@ async function refreshSelectedSnippet() {
 
   selectedSnippetRecordStatus.value = 'loading'
 
+  const finishBenchmark = benchmarkStart('code', 'open')
   try {
     const { data } = await api.snippets.getSnippetsById(String(snippetId))
 
@@ -186,9 +188,14 @@ async function refreshSelectedSnippet() {
       displayedSnippetRecord.value = data
       displayedSnippetContent.value = data.contents[contentIndex]
       selectedSnippetRecordStatus.value = 'ready'
+      finishBenchmark()
+    }
+    else {
+      finishBenchmark('superseded')
     }
   }
   catch (error) {
+    finishBenchmark('error')
     if (
       requestToken === selectedSnippetRequestToken
       && state.snippetId === snippetId
@@ -315,17 +322,26 @@ async function getSnippets(query?: SnippetsQuery) {
     ...getContentSortQuery('code'),
   }
 
-  const { data } = await api.snippets.getSnippets(resolvedQuery)
+  const finishBenchmark = benchmarkStart('code', 'list', resolvedQuery.search)
+  try {
+    const { data } = await api.snippets.getSnippets(resolvedQuery)
 
-  if (requestToken !== snippetsRequestToken) {
-    return
-  }
+    if (requestToken !== snippetsRequestToken) {
+      finishBenchmark('superseded')
+      return
+    }
 
-  if (forSearch) {
-    snippetsBySearch.value = data
+    if (forSearch) {
+      snippetsBySearch.value = data
+    }
+    else {
+      snippets.value = data
+    }
+    finishBenchmark()
   }
-  else {
-    snippets.value = data
+  catch (error) {
+    finishBenchmark('error')
+    throw error
   }
 }
 

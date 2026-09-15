@@ -11,6 +11,7 @@ import {
 } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n, store } from '@/electron'
+import { benchmarkStart } from '@/utils/benchmark'
 import { useElementSize } from '@vueuse/core'
 import { Trash2 } from 'lucide-vue-next'
 
@@ -170,6 +171,7 @@ watch(
   },
 )
 watch([searchQuery, favorites], () => {
+  const finishBenchmark = benchmarkStart('http', 'sidebar-filter')
   if (searchQuery.value || favorites.value)
     collectionsOpen.value = true
   const query = searchQuery.value.trim().toLocaleLowerCase()
@@ -191,6 +193,7 @@ watch([searchQuery, favorites], () => {
   ) {
     trashOpen.value = true
   }
+  finishBenchmark()
 })
 resetHttpSearchState()
 async function onImported() {

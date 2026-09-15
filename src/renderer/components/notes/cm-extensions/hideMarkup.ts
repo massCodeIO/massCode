@@ -4,7 +4,11 @@ import type { SyntaxNode } from '@lezer/common'
 import { syntaxTree } from '@codemirror/language'
 import { Decoration, ViewPlugin } from '@codemirror/view'
 import { isStandaloneFencedCode } from './fencedCodeStyles'
-import { getRevealSelection, revealSelectionChanged } from './revealSelection'
+import {
+  getRevealHasFocus,
+  getRevealSelection,
+  revealSelectionChanged,
+} from './revealSelection'
 
 const HIDEABLE_MARKS = new Set([
   'HeaderMark',
@@ -114,7 +118,7 @@ function shouldShowMark(
   },
   alwaysHide: boolean,
 ): boolean {
-  if (!canShowMarkup(alwaysHide, view.hasFocus))
+  if (!canShowMarkup(alwaysHide, getRevealHasFocus(view.state, view.hasFocus)))
     return false
 
   if (LINE_BASED_MARKS.has(node.name)) {

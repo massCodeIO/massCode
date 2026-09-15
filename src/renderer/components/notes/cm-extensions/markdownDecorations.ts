@@ -19,7 +19,11 @@ import {
   buildFencedCodeLineStyle,
   isStandaloneFencedCode,
 } from './fencedCodeStyles'
-import { getRevealSelection, revealSelectionChanged } from './revealSelection'
+import {
+  getRevealHasFocus,
+  getRevealSelection,
+  revealSelectionChanged,
+} from './revealSelection'
 
 class HorizontalRuleWidget extends WidgetType {
   eq(): boolean {
@@ -546,7 +550,7 @@ function buildDecorations(
             const replaceMarker = shouldReplaceCalloutMarker(
               calloutTitleMode,
               isCursorOnLine(view, startLine.number),
-              view.hasFocus,
+              getRevealHasFocus(view.state, view.hasFocus),
             )
 
             if (replaceMarker) {
@@ -612,7 +616,7 @@ function buildDecorations(
           if (
             shouldReplaceHorizontalRule(
               interactiveTaskMarkers,
-              view.hasFocus,
+              getRevealHasFocus(view.state, view.hasFocus),
               isCursorOnLine(view, line.number),
             )
           ) {
@@ -633,7 +637,7 @@ function buildDecorations(
           if (
             shouldReplaceTaskMarker(
               interactiveTaskMarkers,
-              view.hasFocus,
+              getRevealHasFocus(view.state, view.hasFocus),
               isCursorOnLine(view, line.number),
             )
           ) {

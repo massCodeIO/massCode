@@ -30,10 +30,9 @@ export function createWordTrigrams(value: string): string[] {
 
 export function buildSearchTokens(normalizedText: string): Set<string> {
   const tokens = new Set<string>()
-  const words = splitSearchWords(normalizedText)
+  const words = new Set(splitSearchWords(normalizedText))
 
   for (const word of words) {
-    tokens.add(`w:${word}`)
     for (const trigram of createWordTrigrams(word)) {
       tokens.add(`g:${trigram}`)
     }

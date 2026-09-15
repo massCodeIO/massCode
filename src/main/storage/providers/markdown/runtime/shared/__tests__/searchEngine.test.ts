@@ -122,3 +122,81 @@ describe('invalidateSearchIndex', () => {
     expect(index.queryCache.size).toBe(0)
   })
 })
+
+describe('indexed and linear search parity', () => {
+  const items: TestItem[] = [
+    { id: 1, text: 'Café cafe CAFÉ résumé re\u0301sume\u0301' },
+    { id: 2, text: 'Привет, мир! Привет, мир! Ελληνικά' },
+    { id: 3, text: '你好世界 — 東京123' },
+    { id: 4, text: 'a+b :: 🚀\nfoo_bar foo_bar' },
+    { id: 5, text: `${'repeated '.repeat(1000)}tail` },
+    { id: 6, text: '' },
+  ]
+  const queries: [string, number[]][] = [
+    ['', [1, 2, 3, 4, 5, 6]],
+    ['  ', [1, 2, 3, 4, 5, 6]],
+    ['CAFÉ', [1]],
+    ['re\u0301sume\u0301', [1]],
+    ['ПРИВЕТ, МИР', [2]],
+    ['Ελληνικά', [2]],
+    ['世界', [3]],
+    ['東京123', [3]],
+    ['::', [4]],
+    ['🚀', [4]],
+    ['a+b', [4]],
+    ['🚀\nfoo_bar', [4]],
+    ['foo_', [4]],
+    ['repeated repeated', [5]],
+    ['e', [1, 5]],
+    ['mi', []],
+    ['not-present', []],
+    ['cafe résumé', [1]],
+  ]
+
+  it.each(queries)(
+    'matches linear scan for %j, including cached queries',
+    (query, ids) => {
+      const index = buildSearchIndex(items, getSearchText)
+      const linear = querySearchIndex(items, query, null, getSearchText)
+      expect(linear).toEqual(new Set(ids))
+      expect(querySearchIndex(items, query, index, getSearchText)).toEqual(
+        linear,
+      )
+      expect(querySearchIndex(items, query, index, getSearchText)).toEqual(
+        linear,
+      )
+    },
+  )
+
+  it('preserves parity after edits, removals and additions rebuild the index', () => {
+    const index = buildSearchIndex(items, getSearchText)
+    for (const [query] of queries)
+      querySearchIndex(items, query, index, getSearchText)
+
+    const editedItems = [
+      ...items.filter(item => item.id !== 1 && item.id !== 3),
+      { id: 1, text: 'Updated updated 🚀 — новый текст' },
+      { id: 7, text: 'Café 東京123' },
+    ]
+    invalidateSearchIndex(index)
+    const rebuilt = buildSearchIndex(editedItems, getSearchText)
+    for (const query of [
+      ...queries.map(([query]) => query),
+      'updated',
+      'новый',
+    ]) {
+      expect(
+        querySearchIndex(editedItems, query, rebuilt, getSearchText),
+      ).toEqual(querySearchIndex(editedItems, query, null, getSearchText))
+    }
+    expect(
+      querySearchIndex(editedItems, 'cafe', rebuilt, getSearchText),
+    ).toEqual(new Set([7]))
+    expect(
+      querySearchIndex(editedItems, 'updated', rebuilt, getSearchText),
+    ).toEqual(new Set([1]))
+    expect(
+      querySearchIndex(editedItems, '世界', rebuilt, getSearchText),
+    ).toEqual(new Set())
+  })
+})

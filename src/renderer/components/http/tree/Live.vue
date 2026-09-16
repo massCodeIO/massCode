@@ -17,6 +17,7 @@ import {
 import { CloudDownload, Folder, Layers, Star } from 'lucide-vue-next'
 import { folderKey, requestKey, sidebarNodes, UNFILED_ID } from './liveModel'
 import { selectRange, visibleRows } from './model'
+import { useActiveRowReveal } from './useActiveRowReveal'
 
 const props = withDefaults(
   defineProps<{ query?: string, trash?: boolean, favorites?: boolean }>(),
@@ -404,16 +405,7 @@ watch(
   },
   { immediate: true },
 )
-watch(
-  [activeId, treeData],
-  () => {
-    const id = activeId.value
-    if (id) {
-      nextTick(() => treeRef.value?.scrollToId(id))
-    }
-  },
-  { immediate: true },
-)
+useActiveRowReveal(activeId, rows, treeRef)
 </script>
 
 <template>

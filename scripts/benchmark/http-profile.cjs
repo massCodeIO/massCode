@@ -77,11 +77,12 @@ async function main() {
   await app.whenReady()
   const server = await startServer()
   try {
-    const { getHttpRuntimeCache } = load('storage/providers/markdown/http/runtime/sync')
+    const { getHttpRuntimeCache, isHttpVaultDiskReady } = load('storage/providers/markdown/http/runtime/sync')
     const { getHttpPaths } = load('storage/providers/markdown/http/runtime/paths')
     const paths = getHttpPaths(path.join(root, 'vault'))
+    getHttpRuntimeCache(paths)
     const deadline = Date.now() + 120000
-    while (getHttpRuntimeCache(paths).state.provisional) {
+    while (!isHttpVaultDiskReady(paths)) {
       if (Date.now() > deadline)
         throw new Error('HTTP library did not finish syncing')
       await new Promise(resolve => setTimeout(resolve, 50))

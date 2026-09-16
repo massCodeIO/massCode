@@ -7,6 +7,7 @@ import {
   link,
   lstat,
   open,
+  readdir,
   readFile,
   rm,
   unlink,
@@ -461,6 +462,20 @@ export function scheduleNotesAssetsMigration(cache: NotesRuntimeCache): void {
       }
       const nextCache = pendingCache
       pendingCache = null
+      // Most vaults have no legacy assets. Avoid hydrating every note just
+      // to discover references that cannot require migration. Use async I/O
+      // because a cloud directory listing itself may need downloading.
+      try {
+        if ((await readdir(nextCache.paths.legacyAssetsPath)).length === 0)
+          continue
+      }
+      catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT')
+          continue
+        throw error
+      }
+      if (generation !== migrationGeneration)
+        break
       await runNotesAssetsMigration(
         nextCache,
         () => generation !== migrationGeneration,
@@ -484,5 +499,9 @@ export function cancelNotesAssetsMigration(): void {
 }
 
 export async function waitForNotesAssetsMigrationForTests(): Promise<void> {
-  await activeMigration
+  let migration = activeMigration
+  while (migration) {
+    await migration
+    migration = activeMigration
+  }
 }

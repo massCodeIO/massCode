@@ -187,6 +187,7 @@ export interface SnippetsStorage {
   emptyTrash: () => { deletedCount: number }
   getSnippetById: (id: number) => SnippetRecord | null
   getSnippets: (query: SnippetsQueryInput) => SnippetRecord[]
+  getSnippetsAsync?: (query: SnippetsQueryInput) => Promise<SnippetRecord[]>
   getSnippetsCounts: () => SnippetsCount
   updateSnippet: (id: number, input: SnippetUpdateInput) => SnippetUpdateResult
   updateSnippetContent: (
@@ -345,6 +346,7 @@ export interface NotesStorage {
   emptyTrash: () => { deletedCount: number }
   getNoteById: (id: number) => NoteRecord | null
   getNotes: (query: NotesQueryInput) => NoteRecord[]
+  getNotesAsync?: (query: NotesQueryInput) => Promise<NoteRecord[]>
   getNotesCounts: () => NotesCount
   updateNote: (id: number, input: NoteUpdateInput) => NoteUpdateResult
   updateNoteContent: (id: number, content: string) => NoteUpdateResult

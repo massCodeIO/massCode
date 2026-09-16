@@ -38,6 +38,7 @@ export function registerApiRequestHandler(
   expectedRendererUrl: string,
   sessionToken: string,
   port: number,
+  recordTiming?: (name: string, durationMs: number, status: string) => void,
 ): void {
   const origin = `http://127.0.0.1:${port}`
   webContents.ipc.handle(
@@ -65,18 +66,47 @@ export function registerApiRequestHandler(
           headers.set(name, value)
       }
 
-      const response = await fetch(url, {
-        method: payload.method,
-        headers,
-        body: payload.body,
-        redirect: 'error',
-        signal: AbortSignal.timeout(30_000),
-      })
-      return {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Array.from(response.headers.entries()),
-        body: await response.arrayBuffer(),
+      const started = recordTiming ? performance.now() : 0
+      const segments = url.pathname.split('/').filter(Boolean)
+      const domain = ['snippets', 'notes', 'http-requests'].includes(
+        segments[0],
+      )
+        ? segments[0]
+        : 'other'
+      const operation
+        = segments.length === 1
+          ? 'list'
+          : /^\d+$/.test(segments[1]) && segments.length === 2
+            ? 'item'
+            : 'other'
+      try {
+        const response = await fetch(url, {
+          method: payload.method,
+          headers,
+          body: payload.body,
+          redirect: 'error',
+          signal: AbortSignal.timeout(30_000),
+        })
+        const body = await response.arrayBuffer()
+        recordTiming?.(
+          `api.${domain}.${payload.method}.${operation}`,
+          performance.now() - started,
+          response.ok ? 'ok' : 'error',
+        )
+        return {
+          status: response.status,
+          statusText: response.statusText,
+          headers: Array.from(response.headers.entries()),
+          body,
+        }
+      }
+      catch (error) {
+        recordTiming?.(
+          `api.${domain}.${payload.method}.${operation}`,
+          performance.now() - started,
+          'error',
+        )
+        throw error
       }
     },
   )

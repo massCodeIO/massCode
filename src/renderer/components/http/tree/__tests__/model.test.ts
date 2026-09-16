@@ -1,3 +1,4 @@
+import type { HttpTreeNode } from '../types'
 import { describe, expect, it } from 'vitest'
 import { reorderFolderSiblings } from '~/main/storage/providers/markdown/runtime/shared/folderIndex'
 import {
@@ -210,5 +211,88 @@ describe('hTTP folder order persistence', () => {
         .sort((a, b) => a.orderIndex - b.orderIndex)
         .map(node => node.name),
     ).toEqual(['C', 'D', 'A', 'B'])
+  })
+})
+
+describe('tree row construction', () => {
+  it('keeps ancestor closure, sibling order and row metadata while filtering', () => {
+    const nodes: HttpTreeNode[] = [
+      { id: 'root', parentId: null, kind: 'collection', name: 'Root' },
+      { id: 'second', parentId: 'root', kind: 'request', name: 'Match second' },
+      { id: 'folder', parentId: 'root', kind: 'folder', name: 'Nested' },
+      { id: 'hidden', parentId: 'root', kind: 'request', name: 'Hidden' },
+      { id: 'child', parentId: 'folder', kind: 'request', name: 'Match child' },
+      { id: 'last', parentId: 'root', kind: 'request', name: 'Match last' },
+    ]
+    const before = structuredClone(nodes)
+    const expanded = new Set<string>()
+    expect(
+      visibleRows(nodes, expanded, 'match').map(({ node, ...row }) => ({
+        id: node.id,
+        ...row,
+      })),
+    ).toEqual([
+      { id: 'root', depth: 0, position: 1, siblings: 1 },
+      { id: 'second', depth: 1, position: 1, siblings: 3 },
+      { id: 'folder', depth: 1, position: 2, siblings: 3 },
+      { id: 'child', depth: 2, position: 1, siblings: 1 },
+      { id: 'last', depth: 1, position: 3, siblings: 3 },
+    ])
+    expect(nodes).toEqual(before)
+    expect(expanded.size).toBe(0)
+    expect(visibleRows(nodes, expanded).map(row => row.node.id)).toEqual([
+      'root',
+    ])
+    expect(visibleRows(nodes, expanded, 'missing')).toEqual([])
+  })
+
+  it('terminates ancestor lookup for cycles and leaves disconnected rows hidden', () => {
+    const nodes: HttpTreeNode[] = [
+      { id: 'a', parentId: 'b', kind: 'folder', name: 'Cycle A' },
+      { id: 'b', parentId: 'a', kind: 'folder', name: 'Cycle B' },
+      { id: 'self', parentId: 'self', kind: 'folder', name: 'Cycle self' },
+    ]
+    expect(ancestorIds(nodes, 'a')).toEqual(['b', 'a'])
+    expect(ancestorIds(nodes, 'self')).toEqual(['self'])
+    expect(ancestorIds(nodes, 'missing')).toEqual([])
+    expect(visibleRows(nodes, new Set(), 'cycle')).toEqual([])
+    expect(selectedRoots(nodes, ['a', 'b'])).toEqual([])
+  })
+
+  it('preserves all 10000 matching siblings and their positions', () => {
+    const requests: HttpTreeNode[] = Array.from(
+      { length: 10000 },
+      (_, index) => ({
+        id: `request-${index}`,
+        parentId: 'root',
+        kind: 'request',
+        name: `Request ${index}`,
+        method: 'GET',
+        url: `/items/${index}`,
+      }),
+    )
+    const nodes: HttpTreeNode[] = [
+      { id: 'root', parentId: null, kind: 'collection', name: 'Collection' },
+      ...requests,
+    ]
+    const rows = visibleRows(nodes, new Set(), 'request')
+    expect(rows).toHaveLength(10001)
+    expect(
+      rows
+        .slice(1)
+        .every(
+          (row, index) =>
+            row.node === requests[index]
+            && row.position === index + 1
+            && row.siblings === 10000
+            && row.depth === 1,
+        ),
+    ).toBe(true)
+    expect(
+      selectedRoots(
+        nodes,
+        nodes.map(node => node.id),
+      ),
+    ).toEqual([nodes[0]])
   })
 })

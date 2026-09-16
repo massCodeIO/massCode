@@ -8,6 +8,7 @@ import type {
   SnippetTagRelationResult,
   SnippetUpdateResult,
 } from '../../../contracts'
+import type { MarkdownRuntimeCache } from '../runtime/types'
 import path from 'node:path'
 import { scheduleDockBadgeRefresh } from '../../../../dockBadge'
 import { prioritizeCloudDownload } from '../cloudDownloads'
@@ -32,6 +33,10 @@ import {
   writeSnippetToFile,
 } from '../runtime'
 import {
+  getSnippetSearchText,
+  prepareSnippetSearchAsync,
+} from '../runtime/search'
+import {
   assertEntityFileWritable,
   markEntityPendingIfEvicted,
   markEntityPendingIfFileExists,
@@ -48,6 +53,7 @@ import {
   emptyEntityTrashFromStateAndDisk,
   getEntityDeleteCounts,
 } from '../runtime/shared/entityStorage'
+import { querySearchIndex } from '../runtime/shared/searchEngine'
 
 function findContentIndexById(
   snippet: MarkdownSnippet,
@@ -57,6 +63,45 @@ function findContentIndexById(
 }
 
 export function createSnippetsStorage(): SnippetsStorage {
+  function assembleSnippets(
+    { state, snippets }: Pick<MarkdownRuntimeCache, 'state' | 'snippets'>,
+    query: SnippetsQueryInput,
+    searchSnippetIds: Set<number> | null,
+  ) {
+    const search = query.search?.trim().toLowerCase()
+    const result = filterAndSortByQuery({
+      entities: snippets,
+      filters: [
+        snippet =>
+          !search
+          || !query.searchNameOnly
+          || snippet.name.toLowerCase().includes(search),
+        snippet => !searchSnippetIds || searchSnippetIds.has(snippet.id),
+        (snippet, query) =>
+          !query.folderId || snippet.folderId === query.folderId,
+        (snippet, query) => !query.isInbox || snippet.folderId === null,
+        (snippet, query) => !query.tagId || snippet.tags.includes(query.tagId),
+        (snippet, query) => !query.isFavorites || snippet.isFavorites === 1,
+        (snippet, query) =>
+          query.isDeleted ? snippet.isDeleted === 1 : snippet.isDeleted === 0,
+      ],
+      getSortValue: (snippet, sort) => {
+        if (sort === 'name') {
+          return snippet.name.toLowerCase()
+        }
+
+        if (sort === 'updatedAt') {
+          return snippet.updatedAt
+        }
+
+        return snippet.createdAt
+      },
+      query,
+    }).map(snippet => createSnippetRecord(snippet, state))
+
+    return result
+  }
+
   return {
     getSnippets: (query: SnippetsQueryInput) => {
       const paths = getPaths(getVaultPath())
@@ -67,38 +112,31 @@ export function createSnippetsStorage(): SnippetsStorage {
         = search && !query.searchNameOnly
           ? getSnippetIdsBySearchQuery(snippets, search)
           : null
-      const result = filterAndSortByQuery({
-        entities: snippets,
-        filters: [
-          snippet =>
-            !search
-            || !query.searchNameOnly
-            || snippet.name.toLowerCase().includes(search),
-          snippet => !searchSnippetIds || searchSnippetIds.has(snippet.id),
-          (snippet, query) =>
-            !query.folderId || snippet.folderId === query.folderId,
-          (snippet, query) => !query.isInbox || snippet.folderId === null,
-          (snippet, query) =>
-            !query.tagId || snippet.tags.includes(query.tagId),
-          (snippet, query) => !query.isFavorites || snippet.isFavorites === 1,
-          (snippet, query) =>
-            query.isDeleted ? snippet.isDeleted === 1 : snippet.isDeleted === 0,
-        ],
-        getSortValue: (snippet, sort) => {
-          if (sort === 'name') {
-            return snippet.name.toLowerCase()
-          }
-
-          if (sort === 'updatedAt') {
-            return snippet.updatedAt
-          }
-
-          return snippet.createdAt
-        },
-        query,
-      }).map(snippet => createSnippetRecord(snippet, state))
-
-      return result
+      return assembleSnippets({ state, snippets }, query, searchSnippetIds)
+    },
+    getSnippetsAsync: async (query) => {
+      const search = query.search?.trim().toLowerCase()
+      if (!search || query.searchNameOnly) {
+        return assembleSnippets(
+          getRuntimeCache(getPaths(getVaultPath())),
+          query,
+          null,
+        )
+      }
+      while (true) {
+        const prepared = await prepareSnippetSearchAsync(() =>
+          getRuntimeCache(getPaths(getVaultPath())),
+        )
+        if (!prepared.isCurrent())
+          continue
+        const ids = querySearchIndex(
+          prepared.items,
+          search,
+          prepared.index,
+          getSnippetSearchText,
+        )
+        return assembleSnippets(prepared.cache, query, ids)
+      }
     },
     getSnippetById: (id: number) => {
       const paths = getPaths(getVaultPath())
@@ -357,7 +395,7 @@ export function createSnippetsStorage(): SnippetsStorage {
 
       snippet.updatedAt = Date.now()
       writeSnippetToFile(paths, snippet)
-      saveState(paths, state)
+      saveState(paths, state, { searchIndexUpdate: snippet })
 
       return {
         invalidInput: false,

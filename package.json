@@ -29,6 +29,7 @@
     "i18n:copy": "node scripts/i18n/copy-locales.js",
     "license:issue": "node scripts/license/issue.js",
     "i18n:check": "node scripts/i18n/check-locale-parity.mjs",
+    "http:server": "node scripts/http-dev-server/index.mjs",
     "bench:load-test": "node scripts/bench-load-test.js",
     "bench:seed": "node scripts/bench-seed.js",
     "test": "vitest run",
@@ -51,7 +52,10 @@
     "release": "bumpp -c 'build: release v' -t",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "rebuild": "electron-rebuild",
-    "prepare": "simple-git-hooks && npm run rebuild"
+    "prepare": "simple-git-hooks && npm run rebuild",
+    "bench:prepare": "node scripts/benchmark/cli.cjs prepare",
+    "bench:start": "node scripts/benchmark/cli.cjs start",
+    "bench:report": "node scripts/benchmark/cli.cjs report"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.1",

@@ -5,6 +5,7 @@ import { useSonner } from '@/composables/useSonner'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { getContiguousSelection } from '@/utils'
+import { benchmarkStart } from '@/utils/benchmark'
 import { api } from '~/renderer/services/api'
 import { LibraryFilter } from '../../types'
 import { NoteTaskStatus } from './taskProperties'
@@ -153,6 +154,7 @@ export async function refreshSelectedNote() {
 
   selectedNoteRecordStatus.value = 'loading'
 
+  const finishBenchmark = benchmarkStart('notes', 'open')
   try {
     const { data } = await api.notes.getNotesById(String(noteId))
 
@@ -165,9 +167,14 @@ export async function refreshSelectedNote() {
       selectedNoteRecord.value = record
       displayedNoteRecord.value = record
       selectedNoteRecordStatus.value = 'ready'
+      finishBenchmark()
+    }
+    else {
+      finishBenchmark('superseded')
     }
   }
   catch (error) {
+    finishBenchmark('error')
     if (requestToken === selectedNoteRequestToken) {
       selectedNoteRecordStatus.value = 'error'
     }
@@ -425,19 +432,32 @@ export async function getNotes(query?: NotesQuery) {
       resolvedQuery.hideCompletedTasks = 1
     }
 
-    const { data: responseData } = await api.notes.getNotes(resolvedQuery)
+    const finishBenchmark = benchmarkStart(
+      'notes',
+      'list',
+      resolvedQuery.search,
+    )
+    try {
+      const { data: responseData } = await api.notes.getNotes(resolvedQuery)
 
-    if (requestToken !== notesRequestToken) {
-      return
+      if (requestToken !== notesRequestToken) {
+        finishBenchmark('superseded')
+        return
+      }
+
+      const data = responseData as NotesResponse
+
+      if (forSearch) {
+        notesBySearch.value = data
+      }
+      else {
+        notes.value = data
+      }
+      finishBenchmark()
     }
-
-    const data = responseData as NotesResponse
-
-    if (forSearch) {
-      notesBySearch.value = data
-    }
-    else {
-      notes.value = data
+    catch (error) {
+      finishBenchmark('error')
+      throw error
     }
   })
 }

@@ -7,6 +7,11 @@ import { app, BrowserWindow, ipcMain, Menu, protocol, screen } from 'electron'
 import { initApi } from './api'
 import { registerApiRequestHandler } from './api/requestIpc'
 import { resolveApiSessionToken } from './api/sessionAuth'
+import {
+  benchmarkEnabled,
+  recordBenchmark,
+  registerBenchmark,
+} from './benchmark'
 import { cleanupDockBadge, refreshDockBadge } from './dockBadge'
 import { resolveFolderIconResponse } from './folderIcons'
 import { registerIPC } from './ipc'
@@ -136,14 +141,14 @@ export function handleBeforeQuit(event: ElectronEvent): void {
   void requestLifecycleAction()
 }
 
-if (process.defaultApp) {
+if (!benchmarkEnabled && process.defaultApp) {
   if (process.argv.length >= 2) {
     app.setAsDefaultProtocolClient('masscode', process.execPath, [
       path.resolve(process.argv[1]),
     ])
   }
 }
-else {
+else if (!benchmarkEnabled) {
   app.setAsDefaultProtocolClient('masscode')
 }
 
@@ -171,6 +176,7 @@ function createWindow(sessionToken: string) {
         path.join(__dirname, '../../build/renderer/index.html'),
       ).toString()
 
+  registerBenchmark(mainWindow.webContents, rendererUrl)
   registerHttpCookieHandlers(mainWindow.webContents, rendererUrl)
   registerHttpScriptHandlers(mainWindow.webContents, rendererUrl)
   registerHttpTerminalHandlers(mainWindow.webContents, rendererUrl)
@@ -180,6 +186,7 @@ function createWindow(sessionToken: string) {
     rendererUrl,
     sessionToken,
     store.preferences.get('api.port') as number,
+    benchmarkEnabled ? recordBenchmark : undefined,
   )
 
   if (isDev) {
@@ -355,7 +362,8 @@ else {
     }
 
     try {
-      checkForUpdates()
+      if (!benchmarkEnabled)
+        checkForUpdates()
     }
     catch (error) {
       log('Error checking for updates', error)

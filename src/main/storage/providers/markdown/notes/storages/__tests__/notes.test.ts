@@ -1,14 +1,18 @@
 import os from 'node:os'
 import path from 'node:path'
+import { setImmediate } from 'node:timers'
 import fs from 'fs-extra'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import * as cloudDownloads from '../../../cloudDownloads'
 
 import {
   resetCloudFileExemptions,
   setDatalessProbeForTests,
 } from '../../../runtime/shared/cloudFiles'
+import { cancelNotesAssetsMigration } from '../../runtime/assetsMigration'
 import { rewriteBacklinksAfterNoteUpdate } from '../../runtime/backlinks'
 import { getNotesPaths } from '../../runtime/constants'
+import { updateNotesSearchIndex } from '../../runtime/search'
 import { ensureNotesStateFile } from '../../runtime/state'
 import {
   getNotesRuntimeCache,
@@ -95,6 +99,7 @@ vi.mock('electron', () => ({
   },
   BrowserWindow: {
     getAllWindows: () => [],
+    getFocusedWindow: () => null,
   },
 }))
 
@@ -212,6 +217,131 @@ describe('notes storage validations', () => {
     return getNotesRuntimeCache(getNotesPaths(tempVaultPath))
   }
 
+  it('does not hydrate bodies for a whitespace-only async query', async () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Target' })
+    storage.updateNoteContent(id, 'bodytoken')
+    const cache = resyncTwiceForLazyNotes()
+    const index = cache.searchIndex
+    expect(cache.notes[0].content).toBeNull()
+    expect(
+      (await storage.getNotesAsync!({ search: '  \n ' })).map(
+        item => item.id,
+      ),
+    ).toEqual([id])
+    expect(cache.notes[0].content).toBeNull()
+    expect(cache.searchIndex).toBe(index)
+  })
+
+  it('matches synchronous filtering and sorting through asynchronous cold search', async () => {
+    const storage = createNotesNotesStorage()
+    for (const [name, body] of [
+      ['Alpha', 'Café bodytoken'],
+      ['Beta', 'bodytoken different'],
+      ['Gamma', 'unrelated'],
+    ]) {
+      const { id } = storage.createNote({ name })
+      storage.updateNoteContent(id, body)
+    }
+    resyncTwiceForLazyNotes()
+    for (const query of [
+      { search: 'bodytoken', sort: 'name' as const, order: 'ASC' as const },
+      { search: 'cafe' },
+      { search: 'notfound' },
+      { search: 'a', searchNameOnly: 1 },
+      { search: 'bodytoken', isFavorites: 1 },
+      { search: 'bodytoken', isDeleted: 1 },
+      { search: '' },
+      { search: ' \n ' },
+    ]) {
+      expect(await storage.getNotesAsync!(query)).toEqual(
+        storage.getNotes(query),
+      )
+    }
+  })
+
+  it('keeps unavailable bodies partial without repeating failed reads at the end', async () => {
+    const storage = createNotesNotesStorage()
+    for (const [name, body] of [
+      ['Resident', 'bodytoken'],
+      ['Unavailable', 'hiddenbody'],
+      ['Failure', 'failedbody'],
+    ]) {
+      const { id } = storage.createNote({ name })
+      storage.updateNoteContent(id, body)
+    }
+    const cache = resyncTwiceForLazyNotes()
+    cancelNotesAssetsMigration()
+    const pending = cache.notes.find(item => item.name === 'Unavailable')!
+    pending.pendingCloudDownload = true
+    const failed = cache.notes.find(item => item.name === 'Failure')!
+    const failedPath = path.join(cache.paths.notesRoot, failed.filePath)
+    const pendingPath = path.join(cache.paths.notesRoot, pending.filePath)
+    const enqueue = vi
+      .spyOn(cloudDownloads, 'enqueueCloudDownload')
+      .mockImplementation(() => {})
+    const read = fs.readFileSync.bind(fs)
+    let failures = 0
+    let pendingReads = 0
+    const readSpy = vi.spyOn(fs, 'readFileSync').mockImplementation(((
+      file: string,
+      ...args: any[]
+    ) => {
+      if (file === failedPath) {
+        failures++
+        throw new Error('simulated read failure')
+      }
+      if (file === pendingPath)
+        pendingReads++
+      return (read as any)(file, ...args)
+    }) as typeof fs.readFileSync)
+    const syncGetter = vi.spyOn(storage, 'getNotes')
+    try {
+      const result = await storage.getNotesAsync!({ search: 'bodytoken' })
+      expect(result.map(item => item.name)).toEqual(['Resident'])
+      expect(syncGetter).not.toHaveBeenCalled()
+      expect(failures).toBe(1)
+      expect(enqueue).toHaveBeenCalledWith(failedPath)
+      expect(pendingReads).toBe(0)
+      expect(cache.searchIndex.dirty).toBe(false)
+    }
+    finally {
+      readSpy.mockRestore()
+      enqueue.mockRestore()
+      syncGetter.mockRestore()
+    }
+  })
+
+  it('retries a body edit made while cold asynchronous search is yielded', async () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Target' })
+    storage.updateNoteContent(id, 'oldword')
+    const other = storage.createNote({ name: 'Other' })
+    storage.updateNoteContent(other.id, 'stable')
+    resyncTwiceForLazyNotes()
+    let time = 0
+    const clock = vi
+      .spyOn(performance, 'now')
+      .mockImplementation(() => (time += 9))
+    let edited = false
+    setImmediate(() => {
+      storage.updateNoteContent(id, 'newword')
+      edited = true
+    })
+    try {
+      expect(
+        (await storage.getNotesAsync!({ search: 'newword' })).map(
+          item => item.id,
+        ),
+      ).toEqual([id])
+      expect(edited).toBe(true)
+      expect(await storage.getNotesAsync!({ search: 'oldword' })).toEqual([])
+    }
+    finally {
+      clock.mockRestore()
+    }
+  })
+
   it('materializes lazy note content on getNoteById', () => {
     const storage = createNotesNotesStorage()
     const { id } = storage.createNote({ name: 'Lazy Read' })
@@ -234,6 +364,93 @@ describe('notes storage validations', () => {
 
     const results = storage.getNotes({ search: 'needle-note-body' })
     expect(results.some(note => note.id === id)).toBe(true)
+  })
+
+  it.each(['state', 'entity'] as const)(
+    'invalidates rather than patching an unrelated %s',
+    (mismatch) => {
+      const storage = createNotesNotesStorage()
+      const { id } = storage.createNote({ name: 'Original' })
+      storage.getNotes({ search: 'Original' })
+      const cache = getNotesRuntimeCache(getNotesPaths(tempVaultPath))
+      const note = cache.notes.find(item => item.id === id)!
+      updateNotesSearchIndex(
+        mismatch === 'state' ? { ...cache.state } : cache.state,
+        mismatch === 'entity' ? { ...note, name: 'Wrong' } : note,
+      )
+      expect(cache.searchIndex.dirty).toBe(true)
+      expect(
+        storage.getNotes({ search: 'Original' }).map(item => item.id),
+      ).toEqual([id])
+      expect(storage.getNotes({ search: 'Wrong' })).toEqual([])
+    },
+  )
+
+  it('updates a warm search index after body edits and clears cached misses', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Indexed name' })
+    storage.updateNote(id, { description: 'indexed description' })
+    storage.updateNoteContent(id, 'oldtoken shared')
+    const other = storage.createNote({ name: 'Other' })
+    storage.updateNoteContent(other.id, 'shared untouched')
+    const find = (search: string) =>
+      storage
+        .getNotes({ search })
+        .map(item => item.id)
+        .sort()
+    expect(find('oldtoken')).toEqual([id])
+    expect(find('newtoken')).toEqual([])
+    const cache = getNotesRuntimeCache(getNotesPaths(tempVaultPath))
+    const index = cache.searchIndex
+    storage.updateNoteContent(id, 'newtoken shared')
+    expect(cache.searchIndex).toBe(index)
+    expect(index.dirty).toBe(false)
+    expect(find('newtoken')).toEqual([id])
+    expect(find('oldtoken')).toEqual([])
+    expect(find('indexed name')).toEqual([id])
+    expect(find('indexed description')).toEqual([id])
+    expect(find('shared')).toEqual([id, other.id].sort())
+    expect(cache.searchIndex).toBe(index)
+  })
+
+  it('keeps full invalidation for cold edits, metadata, creation, deletion and external sync', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Original' })
+    storage.updateNoteContent(id, 'oldtoken')
+    const sibling = storage.createNote({ name: 'Sibling' })
+    storage.updateNoteContent(sibling.id, 'latentword')
+    const cache = resyncTwiceForLazyNotes()
+    storage.updateNoteContent(id, 'newtoken')
+    expect(
+      cache.notes.find(note => note.id === sibling.id)?.content,
+    ).toBeNull()
+    const find = (search: string) =>
+      storage.getNotes({ search }).map(item => item.id)
+    expect(find('newtoken')).toEqual([id])
+    expect(find('oldtoken')).toEqual([])
+    expect(find('latentword')).toEqual([sibling.id])
+    storage.updateNote(id, { name: 'Renamed' })
+    expect(cache.searchIndex.dirty).toBe(true)
+    expect(find('Renamed')).toEqual([id])
+    expect(find('Original')).toEqual([])
+    const added = storage.createNote({ name: 'Added' })
+    expect(cache.searchIndex.dirty).toBe(true)
+    expect(find('Added')).toEqual([added.id])
+    storage.deleteNote(added.id)
+    expect(cache.searchIndex.dirty).toBe(true)
+    expect(find('Added')).toEqual([])
+    const note = cache.notes.find(item => item.id === id)!
+    const absolutePath = path.join(cache.paths.notesRoot, note.filePath)
+    fs.writeFileSync(
+      absolutePath,
+      fs
+        .readFileSync(absolutePath, 'utf8')
+        .replace('newtoken', 'externaltoken'),
+    )
+    syncNoteFileWithDisk(cache.paths, note.filePath)
+    expect(cache.searchIndex.dirty).toBe(true)
+    expect(find('externaltoken')).toEqual([id])
+    expect(find('newtoken')).toEqual([])
   })
 
   it('keeps note body intact when renaming a lazy note', () => {

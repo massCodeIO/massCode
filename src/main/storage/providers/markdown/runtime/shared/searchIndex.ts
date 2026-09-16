@@ -28,12 +28,24 @@ export function createWordTrigrams(value: string): string[] {
   return trigrams
 }
 
-export function buildSearchTokens(normalizedText: string): Set<string> {
+export function buildSearchTokens(
+  normalizedText: string | readonly string[],
+): Set<string> {
   const tokens = new Set<string>()
-  const words = splitSearchWords(normalizedText)
+  const words = new Set<string>()
+  // Newlines cannot belong to search words. Tokenize identical lines only
+  // once across all fragments, without changing substring verification.
+  const lines = new Set<string>()
+  for (const part of typeof normalizedText === 'string'
+    ? [normalizedText]
+    : normalizedText) {
+    for (const line of part.split('\n')) lines.add(line)
+  }
+  for (const line of lines) {
+    for (const word of splitSearchWords(line)) words.add(word)
+  }
 
   for (const word of words) {
-    tokens.add(`w:${word}`)
     for (const trigram of createWordTrigrams(word)) {
       tokens.add(`g:${trigram}`)
     }

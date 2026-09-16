@@ -2,6 +2,7 @@ import type { InjectionKey, Ref } from 'vue'
 import type { DropPosition, TreeNode } from './types'
 
 export interface TreeInjection {
+  dragSourceChanged?: (id: string | number | undefined) => void
   rootNodes: Ref<TreeNode[]>
   clickNode: (id: string | number, event?: MouseEvent) => void
   dblclickNode: (node: TreeNode) => void

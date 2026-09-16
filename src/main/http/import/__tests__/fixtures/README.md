@@ -1,10 +1,10 @@
 # HTTP import demos
 
-These local fixtures use the existing `scripts/http-scripts-demo.mjs` server at
+These local fixtures use the scripts service of the shared HTTP dev server at
 `http://127.0.0.1:5189`. From the repository root, run:
 
 ```sh
-node scripts/http-scripts-demo.mjs
+pnpm http:server
 ```
 
 Use the already running massCode dev application. In HTTP, choose **Import** and

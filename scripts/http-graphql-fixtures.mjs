@@ -1,4 +1,4 @@
-// Local development only. Start: node scripts/http-graphql-demo.mjs
+// Local development only. Start: pnpm http:server
 // In the running dev app console, import its /services/api/index.ts API and this
 // module through /@fs/<absolute-repository-path>/scripts/http-graphql-fixtures.mjs,
 // then call seedGraphqlDemo(api). Reload the HTTP folder list afterward.
@@ -95,7 +95,7 @@ export async function seedGraphqlDemo(client) {
       bodyType: 'graphql',
       body: JSON.stringify({ query, variables, operationName }),
       auth: { type: 'bearer', token: 'graphql-demo' },
-      description: `# Local GraphQL demo\n\nStart: node scripts/http-graphql-demo.mjs\n\n${instructions}\n\nFetch / axios / curl preview should contain a JSON envelope with query, variables and operationName. No schema requests are sent automatically.`,
+      description: `# Local GraphQL demo\n\nStart: pnpm http:server\n\n${instructions}\n\nFetch / axios / curl preview should contain a JSON envelope with query, variables and operationName. No schema requests are sent automatically.`,
     })
     if (name.startsWith('08')) {
       const saved = await api(`/http-requests/${request.id}`, 'GET')

@@ -77,9 +77,14 @@ app
   // Получение списка сниппетов c возможностью фильтрации
   .get(
     '/',
-    ({ query }) => {
+    async ({ query }) => {
       const storage = useStorage()
-      const result = storage.snippets.getSnippets(query)
+      const result
+        = query.search
+          && !query.searchNameOnly
+          && storage.snippets.getSnippetsAsync
+          ? await storage.snippets.getSnippetsAsync(query)
+          : storage.snippets.getSnippets(query)
 
       // Тела фрагментов не сериализуются в список: контент выбранного
       // сниппета загружается через GET /snippets/:id.

@@ -1,13 +1,16 @@
-import type { MarkdownNote, NotesState } from './types'
+import type { SearchText } from '../../runtime/shared/searchDocument'
+import type { MarkdownNote, NotesRuntimeCache, NotesState } from './types'
+import { createAsyncSearchPreparation } from '../../runtime/shared/asyncSearch'
 import {
   buildSearchIndex,
   invalidateSearchIndex,
   querySearchIndex,
+  updateSearchIndexItem,
 } from '../../runtime/shared/searchEngine'
 import { notesRuntimeRef } from './constants'
-import { ensureAllNoteContentsLoaded } from './notes'
+import { ensureAllNoteContentsLoaded, ensureNoteContentLoaded } from './notes'
 
-export function buildNoteSearchText(note: MarkdownNote): string {
+export function buildNoteSearchText(note: MarkdownNote): SearchText {
   const parts: string[] = [note.name]
   if (note.description) {
     parts.push(note.description)
@@ -15,7 +18,7 @@ export function buildNoteSearchText(note: MarkdownNote): string {
   if (note.content) {
     parts.push(note.content)
   }
-  return parts.join(' ')
+  return { parts, separator: ' ' }
 }
 
 export function getNoteIdsBySearchQuery(
@@ -53,4 +56,37 @@ export function invalidateNotesSearchIndex(state: NotesState): void {
   invalidateSearchIndex(cache.searchIndex)
 }
 
+export function updateNotesSearchIndex(
+  state: NotesState,
+  note: MarkdownNote,
+): void {
+  const cache = notesRuntimeRef.cache
+  if (!cache) {
+    return
+  }
+
+  if (
+    cache.state !== state
+    || cache.notes.find(item => item.id === note.id) !== note
+    || !cache.searchIndex.textById.has(note.id)
+  ) {
+    invalidateSearchIndex(cache.searchIndex)
+    return
+  }
+
+  updateSearchIndexItem(cache.searchIndex, note.id, buildNoteSearchText(note))
+}
+
 export { buildSearchIndex }
+
+export const prepareNoteSearchAsync = createAsyncSearchPreparation<
+  MarkdownNote,
+  NotesRuntimeCache
+>(
+  cache => cache.notes,
+  (cache, note) => {
+    if (!note.pendingCloudDownload && note.content === null)
+      ensureNoteContentLoaded(cache.paths, note)
+  },
+  buildNoteSearchText,
+)

@@ -10,7 +10,11 @@ import type {
   NoteUpdateInput,
   NoteUpdateResult,
 } from '../../../../contracts'
-import type { MarkdownNote, NotesState } from '../runtime/types'
+import type {
+  MarkdownNote,
+  NotesRuntimeCache,
+  NotesState,
+} from '../runtime/types'
 import path from 'node:path'
 import { isAfter, isToday, parseISO, startOfToday } from 'date-fns'
 import { scheduleDockBadgeRefresh } from '../../../../../dockBadge'
@@ -33,6 +37,7 @@ import {
   emptyEntityTrashFromStateAndDisk,
   getEntityDeleteCounts,
 } from '../../runtime/shared/entityStorage'
+import { querySearchIndex } from '../../runtime/shared/searchEngine'
 import {
   assertUniqueSiblingEntryName,
   assertVaultNotHydrating,
@@ -53,8 +58,10 @@ import {
 } from '../runtime/notes'
 import { findNotesFolderById } from '../runtime/paths'
 import {
+  buildNoteSearchText,
   getNoteIdsBySearchQuery,
-  invalidateNotesSearchIndex,
+  prepareNoteSearchAsync,
+  updateNotesSearchIndex,
 } from '../runtime/search'
 import { saveNotesState } from '../runtime/state'
 import { getNotesRuntimeCache } from '../runtime/sync'
@@ -229,6 +236,62 @@ export function createNotesNotesStorage(): NotesStorage {
     return getNotesRuntimeCache(resolvePaths())
   }
 
+  function assembleNotes(
+    { state, notes }: Pick<NotesRuntimeCache, 'state' | 'notes'>,
+    query: NotesQueryInput,
+    matchedIds: Set<number> | null,
+    hydrateContent = true,
+  ) {
+    const search = query.search?.trim().toLowerCase()
+    const filtered = filterAndSortByQuery({
+      entities: notes,
+      filters: [
+        note =>
+          !search
+          || !query.searchNameOnly
+          || note.name.toLowerCase().includes(search),
+        note => !matchedIds || matchedIds.has(note.id),
+        (note, query) =>
+          query.isDeleted !== undefined
+            ? note.isDeleted === normalizeFlag(query.isDeleted)
+            : note.isDeleted === 0,
+        (note, query) =>
+          query.folderId === undefined || note.folderId === query.folderId,
+        (note, query) =>
+          !(query.isInbox !== undefined && query.isInbox)
+          || (note.folderId === null && note.isDeleted === 0),
+        (note, query) =>
+          !(query.isFavorites !== undefined && query.isFavorites)
+          || note.isFavorites === 1,
+        (note, query) =>
+          query.tagId === undefined || note.tags.includes(query.tagId),
+        (note, query) => applyNotePropertyFilters(note, query),
+      ],
+      getSortValue: (note, sort) => {
+        if (sort === 'name') {
+          return note.name.toLowerCase()
+        }
+
+        if (sort === 'updatedAt') {
+          return note.updatedAt
+        }
+
+        return note.createdAt
+      },
+      query,
+    })
+
+    // Контент дочитывается до построения records: снимок content в record
+    // не обновился бы от более поздней материализации.
+    if (query.withContent && hydrateContent) {
+      filtered.forEach((note) => {
+        ensureNoteContentLoaded(resolvePaths(), note)
+      })
+    }
+
+    return filtered.map(n => createNoteRecord(n, state))
+  }
+
   return {
     getNotes(query: NotesQueryInput): NoteRecord[] {
       const { state, notes } = getCache()
@@ -237,53 +300,24 @@ export function createNotesNotesStorage(): NotesStorage {
         = search && !query.searchNameOnly
           ? getNoteIdsBySearchQuery(notes, search)
           : null
-      const filtered = filterAndSortByQuery({
-        entities: notes,
-        filters: [
-          note =>
-            !search
-            || !query.searchNameOnly
-            || note.name.toLowerCase().includes(search),
-          note => !matchedIds || matchedIds.has(note.id),
-          (note, query) =>
-            query.isDeleted !== undefined
-              ? note.isDeleted === normalizeFlag(query.isDeleted)
-              : note.isDeleted === 0,
-          (note, query) =>
-            query.folderId === undefined || note.folderId === query.folderId,
-          (note, query) =>
-            !(query.isInbox !== undefined && query.isInbox)
-            || (note.folderId === null && note.isDeleted === 0),
-          (note, query) =>
-            !(query.isFavorites !== undefined && query.isFavorites)
-            || note.isFavorites === 1,
-          (note, query) =>
-            query.tagId === undefined || note.tags.includes(query.tagId),
-          (note, query) => applyNotePropertyFilters(note, query),
-        ],
-        getSortValue: (note, sort) => {
-          if (sort === 'name') {
-            return note.name.toLowerCase()
-          }
-
-          if (sort === 'updatedAt') {
-            return note.updatedAt
-          }
-
-          return note.createdAt
-        },
-        query,
-      })
-
-      // Контент дочитывается до построения records: снимок content в record
-      // не обновился бы от более поздней материализации.
-      if (query.withContent) {
-        filtered.forEach((note) => {
-          ensureNoteContentLoaded(resolvePaths(), note)
-        })
+      return assembleNotes({ state, notes }, query, matchedIds)
+    },
+    getNotesAsync: async (query) => {
+      const search = query.search?.trim().toLowerCase()
+      if (!search || query.searchNameOnly)
+        return assembleNotes(getCache(), query, null)
+      while (true) {
+        const prepared = await prepareNoteSearchAsync(getCache)
+        if (!prepared.isCurrent())
+          continue
+        const ids = querySearchIndex(
+          prepared.items,
+          search,
+          prepared.index,
+          buildNoteSearchText,
+        )
+        return assembleNotes(prepared.cache, query, ids, false)
       }
-
-      return filtered.map(n => createNoteRecord(n, state))
     },
     getNoteById(id: number): NoteRecord | null {
       const { state, notes } = getCache()
@@ -474,7 +508,7 @@ export function createNotesNotesStorage(): NotesStorage {
       const result = updateEntityBodyContent({
         content,
         entity: note,
-        onAfterPersist: () => invalidateNotesSearchIndex(state),
+        onAfterPersist: () => updateNotesSearchIndex(state, note!),
         persistEntity: note => writeNoteToFile(paths, note),
       })
 

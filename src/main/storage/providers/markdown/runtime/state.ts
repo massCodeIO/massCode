@@ -1,5 +1,13 @@
-import type { MarkdownState, MarkdownStateFile, Paths } from './types'
-import { invalidateRuntimeSearchIndex } from './search'
+import type {
+  MarkdownSnippet,
+  MarkdownState,
+  MarkdownStateFile,
+  Paths,
+} from './types'
+import {
+  invalidateRuntimeSearchIndex,
+  updateRuntimeSearchIndex,
+} from './search'
 import { createStateAdapter } from './shared/stateAdapter'
 import {
   syncFolderIdByPathWithFolders,
@@ -72,11 +80,33 @@ const adapter = createStateAdapter<MarkdownState, MarkdownStateFile, Paths>({
   onBeforeSave: (state) => {
     syncFolderUiWithFolders(state)
     syncFolderIdByPathWithFolders(state)
-    invalidateRuntimeSearchIndex(state)
   },
 })
 
-export const { ensureStateFile, loadState, saveState } = adapter
+export const { ensureStateFile, loadState } = adapter
+
+interface SaveStateOptions {
+  immediate?: boolean
+  searchIndexUpdate?: MarkdownSnippet
+}
+
+export function saveState(
+  paths: Paths,
+  state: MarkdownState,
+  options?: SaveStateOptions,
+): void {
+  if (state.provisional) {
+    return
+  }
+
+  if (options?.searchIndexUpdate) {
+    updateRuntimeSearchIndex(state, options.searchIndexUpdate)
+  }
+  else {
+    invalidateRuntimeSearchIndex(state)
+  }
+  adapter.saveState(paths, state, options)
+}
 
 export function flushPendingStateWrite(paths: Paths): void {
   adapter.flushPendingWrite(paths)

@@ -1,12 +1,15 @@
 import os from 'node:os'
 import path from 'node:path'
+import { setImmediate } from 'node:timers'
 import fs from 'fs-extra'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import * as cloudDownloads from '../../cloudDownloads'
 
 import { getRuntimeCache, writeSnippetToFile } from '../../runtime'
 import { getPaths } from '../../runtime/paths'
+import { updateRuntimeSearchIndex } from '../../runtime/search'
 import { ensureStateFile } from '../../runtime/state'
-import { resetRuntimeCache } from '../../runtime/sync'
+import { resetRuntimeCache, syncSnippetFileWithDisk } from '../../runtime/sync'
 import { createFoldersStorage } from '../folders'
 import { createSnippetsStorage } from '../snippets'
 
@@ -57,6 +60,9 @@ vi.mock('electron-store', () => {
 })
 
 vi.mock('electron', () => ({
+  BrowserWindow: {
+    getFocusedWindow: () => null,
+  },
   app: {
     getPath: () => os.tmpdir(),
   },
@@ -125,6 +131,152 @@ describe('code snippets storage validations', () => {
     return getRuntimeCache(getPaths(tempVaultPath))
   }
 
+  it('does not hydrate bodies for a whitespace-only async query', async () => {
+    const storage = createSnippetsStorage()
+    const { id } = storage.createSnippet({ name: 'Target' })
+    storage.createSnippetContent(id, {
+      label: 'Body',
+      language: 'text',
+      value: 'bodytoken',
+    })
+    const cache = resyncTwiceForLazySnippets()
+    const index = cache.searchIndex
+    expect(cache.snippets[0].contents[0].value).toBeNull()
+    expect(
+      (await storage.getSnippetsAsync!({ search: '  \n ' })).map(
+        item => item.id,
+      ),
+    ).toEqual([id])
+    expect(cache.snippets[0].contents[0].value).toBeNull()
+    expect(cache.searchIndex).toBe(index)
+  })
+
+  it('matches synchronous filtering and sorting through asynchronous cold search', async () => {
+    const storage = createSnippetsStorage()
+    for (const [name, body] of [
+      ['Alpha', 'Café bodytoken'],
+      ['Beta', 'bodytoken different'],
+      ['Gamma', 'unrelated'],
+    ]) {
+      const { id } = storage.createSnippet({ name })
+      storage.createSnippetContent(id, {
+        label: 'Body',
+        language: 'text',
+        value: body,
+      })
+    }
+    resyncTwiceForLazySnippets()
+    for (const query of [
+      { search: 'bodytoken', sort: 'name' as const, order: 'ASC' as const },
+      { search: 'cafe' },
+      { search: 'notfound' },
+      { search: 'a', searchNameOnly: 1 },
+      { search: 'bodytoken', isFavorites: 1 },
+      { search: 'bodytoken', isDeleted: 1 },
+      { search: '' },
+      { search: ' \n ' },
+    ]) {
+      expect(await storage.getSnippetsAsync!(query)).toEqual(
+        storage.getSnippets(query),
+      )
+    }
+  })
+
+  it('keeps unavailable bodies partial without repeating failed reads at the end', async () => {
+    const storage = createSnippetsStorage()
+    for (const [name, body] of [
+      ['Resident', 'bodytoken'],
+      ['Unavailable', 'hiddenbody'],
+      ['Failure', 'failedbody'],
+    ]) {
+      const { id } = storage.createSnippet({ name })
+      storage.createSnippetContent(id, {
+        label: 'Body',
+        language: 'text',
+        value: body,
+      })
+    }
+    const cache = resyncTwiceForLazySnippets()
+    const pending = cache.snippets.find(item => item.name === 'Unavailable')!
+    pending.pendingCloudDownload = true
+    const failed = cache.snippets.find(item => item.name === 'Failure')!
+    const failedPath = path.join(cache.paths.vaultPath, failed.filePath)
+    const pendingPath = path.join(cache.paths.vaultPath, pending.filePath)
+    const enqueue = vi
+      .spyOn(cloudDownloads, 'enqueueCloudDownload')
+      .mockImplementation(() => {})
+    const read = fs.readFileSync.bind(fs)
+    let failures = 0
+    let pendingReads = 0
+    const readSpy = vi.spyOn(fs, 'readFileSync').mockImplementation(((
+      file: string,
+      ...args: any[]
+    ) => {
+      if (file === failedPath) {
+        failures++
+        throw new Error('simulated read failure')
+      }
+      if (file === pendingPath)
+        pendingReads++
+      return (read as any)(file, ...args)
+    }) as typeof fs.readFileSync)
+    const syncGetter = vi.spyOn(storage, 'getSnippets')
+    try {
+      const result = await storage.getSnippetsAsync!({ search: 'bodytoken' })
+      expect(result.map(item => item.name)).toEqual(['Resident'])
+      expect(syncGetter).not.toHaveBeenCalled()
+      expect(failures).toBe(1)
+      expect(enqueue).toHaveBeenCalledWith(failedPath)
+      expect(pendingReads).toBe(0)
+      expect(cache.searchIndex.dirty).toBe(false)
+    }
+    finally {
+      readSpy.mockRestore()
+      enqueue.mockRestore()
+      syncGetter.mockRestore()
+    }
+  })
+
+  it('retries a body edit made while cold asynchronous search is yielded', async () => {
+    const storage = createSnippetsStorage()
+    const { id } = storage.createSnippet({ name: 'Target' })
+    const fragment = storage.createSnippetContent(id, {
+      label: 'Body',
+      language: 'text',
+      value: 'oldword',
+    })
+    const other = storage.createSnippet({ name: 'Other' })
+    storage.createSnippetContent(other.id, {
+      label: 'Other',
+      language: 'text',
+      value: 'stable',
+    })
+    resyncTwiceForLazySnippets()
+    let time = 0
+    const clock = vi
+      .spyOn(performance, 'now')
+      .mockImplementation(() => (time += 9))
+    let edited = false
+    setImmediate(() => {
+      storage.updateSnippetContent(id, fragment.id, { value: 'newword' })
+      edited = true
+    })
+    try {
+      expect(
+        (await storage.getSnippetsAsync!({ search: 'newword' })).map(
+          item => item.id,
+        ),
+      ).toEqual([id])
+      expect(edited).toBe(true)
+      expect(await storage.getSnippetsAsync!({ search: 'oldword' })).toEqual(
+        [],
+      )
+    }
+    finally {
+      clock.mockRestore()
+    }
+  })
+
   it('materializes lazy fragment bodies on getSnippetById', () => {
     const storage = createSnippetsStorage()
     const { id } = storage.createSnippet({ name: 'Lazy Read' })
@@ -155,6 +307,113 @@ describe('code snippets storage validations', () => {
 
     const results = storage.getSnippets({ search: 'needle-body-text' })
     expect(results.some(snippet => snippet.id === id)).toBe(true)
+  })
+
+  it.each(['state', 'entity'] as const)(
+    'invalidates rather than patching an unrelated %s',
+    (mismatch) => {
+      const storage = createSnippetsStorage()
+      const { id } = storage.createSnippet({ name: 'Original' })
+      storage.getSnippets({ search: 'Original' })
+      const cache = getRuntimeCache(getPaths(tempVaultPath))
+      const snippet = cache.snippets.find(item => item.id === id)!
+      updateRuntimeSearchIndex(
+        mismatch === 'state' ? { ...cache.state } : cache.state,
+        mismatch === 'entity' ? { ...snippet, name: 'Wrong' } : snippet,
+      )
+      expect(cache.searchIndex.dirty).toBe(true)
+      expect(
+        storage.getSnippets({ search: 'Original' }).map(item => item.id),
+      ).toEqual([id])
+      expect(storage.getSnippets({ search: 'Wrong' })).toEqual([])
+    },
+  )
+
+  it('updates a warm search index after body edits without losing sibling fragments', () => {
+    const storage = createSnippetsStorage()
+    const { id } = storage.createSnippet({ name: 'Indexed name' })
+    storage.updateSnippet(id, { description: 'indexed description' })
+    const first = storage.createSnippetContent(id, {
+      label: 'First',
+      language: 'text',
+      value: 'oldtoken shared',
+    })
+    storage.createSnippetContent(id, {
+      label: 'Second',
+      language: 'text',
+      value: 'siblingtoken shared',
+    })
+    const other = storage.createSnippet({ name: 'Other' })
+    storage.createSnippetContent(other.id, {
+      label: 'Other',
+      language: 'text',
+      value: 'shared untouched',
+    })
+    const find = (search: string) =>
+      storage
+        .getSnippets({ search })
+        .map(item => item.id)
+        .sort()
+    expect(find('oldtoken')).toEqual([id])
+    expect(find('newtoken')).toEqual([])
+    const cache = getRuntimeCache(getPaths(tempVaultPath))
+    const index = cache.searchIndex
+
+    storage.updateSnippetContent(id, first.id, { value: 'newtoken shared' })
+    expect(cache.searchIndex).toBe(index)
+    expect(index.dirty).toBe(false)
+    expect(find('newtoken')).toEqual([id])
+    expect(find('oldtoken')).toEqual([])
+    expect(find('siblingtoken')).toEqual([id])
+    expect(find('indexed name')).toEqual([id])
+    expect(find('indexed description')).toEqual([id])
+    expect(find('shared')).toEqual([id, other.id].sort())
+    expect(cache.searchIndex).toBe(index)
+  })
+
+  it('keeps full invalidation for cold edits, metadata, creation, deletion and external sync', () => {
+    const storage = createSnippetsStorage()
+    const { id } = storage.createSnippet({ name: 'Original' })
+    const first = storage.createSnippetContent(id, {
+      label: 'First',
+      language: 'text',
+      value: 'oldtoken',
+    })
+    storage.createSnippetContent(id, {
+      label: 'Second',
+      language: 'text',
+      value: 'siblingtoken',
+    })
+    const cache = resyncTwiceForLazySnippets()
+    storage.updateSnippetContent(id, first.id, { value: 'newtoken' })
+    expect(cache.searchIndex.dirty).toBe(true)
+    const find = (search: string) =>
+      storage.getSnippets({ search }).map(item => item.id)
+    expect(find('newtoken')).toEqual([id])
+    expect(find('siblingtoken')).toEqual([id])
+    expect(find('oldtoken')).toEqual([])
+    storage.updateSnippet(id, { name: 'Renamed' })
+    expect(cache.searchIndex.dirty).toBe(true)
+    expect(find('Renamed')).toEqual([id])
+    expect(find('Original')).toEqual([])
+    const added = storage.createSnippet({ name: 'Added' })
+    expect(cache.searchIndex.dirty).toBe(true)
+    expect(find('Added')).toEqual([added.id])
+    storage.deleteSnippet(added.id)
+    expect(cache.searchIndex.dirty).toBe(true)
+    expect(find('Added')).toEqual([])
+    const snippet = cache.snippets.find(item => item.id === id)!
+    const absolutePath = path.join(cache.paths.vaultPath, snippet.filePath)
+    fs.writeFileSync(
+      absolutePath,
+      fs
+        .readFileSync(absolutePath, 'utf8')
+        .replace('newtoken', 'externaltoken'),
+    )
+    syncSnippetFileWithDisk(cache.paths, snippet.filePath)
+    expect(cache.searchIndex.dirty).toBe(true)
+    expect(find('externaltoken')).toEqual([id])
+    expect(find('newtoken')).toEqual([])
   })
 
   it('keeps fragment bodies intact when renaming a lazy snippet', () => {

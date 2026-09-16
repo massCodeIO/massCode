@@ -1,18 +1,24 @@
-import type { MarkdownSnippet, Paths } from './types'
+import type { SearchText } from './shared/searchDocument'
+import type { MarkdownRuntimeCache, MarkdownSnippet, Paths } from './types'
 import { runtimeRef } from './cache'
+import { createAsyncSearchPreparation } from './shared/asyncSearch'
 import {
   buildSearchIndex,
   invalidateSearchIndex,
   querySearchIndex,
+  updateSearchIndexItem,
 } from './shared/searchEngine'
 import { ensureSnippetContentLoaded } from './snippets'
 
-export function getSnippetSearchText(snippet: MarkdownSnippet): string {
-  return [
-    snippet.name,
-    snippet.description || '',
-    ...snippet.contents.map(content => content.value || ''),
-  ].join('\n')
+export function getSnippetSearchText(snippet: MarkdownSnippet): SearchText {
+  return {
+    parts: [
+      snippet.name,
+      snippet.description || '',
+      ...snippet.contents.map(content => content.value || ''),
+    ],
+    separator: '\n',
+  }
 }
 
 // Полнотекстовый поиск требует тел: ленивые записи (построенные из индекса
@@ -72,4 +78,45 @@ export function invalidateRuntimeSearchIndex(state: { version: number }): void {
   invalidateSearchIndex(cache.searchIndex)
 }
 
+export function updateRuntimeSearchIndex(
+  state: { version: number },
+  snippet: MarkdownSnippet,
+): void {
+  const cache = runtimeRef.cache
+  if (!cache) {
+    return
+  }
+
+  if (
+    cache.state !== state
+    || cache.snippets.find(item => item.id === snippet.id) !== snippet
+    || !cache.searchIndex.textById.has(snippet.id)
+  ) {
+    invalidateSearchIndex(cache.searchIndex)
+    return
+  }
+
+  updateSearchIndexItem(
+    cache.searchIndex,
+    snippet.id,
+    getSnippetSearchText(snippet),
+  )
+}
+
 export { buildSearchIndex }
+
+export const prepareSnippetSearchAsync = createAsyncSearchPreparation<
+  MarkdownSnippet,
+  MarkdownRuntimeCache
+>(
+  cache => cache.snippets,
+  (cache, snippet) => {
+    if (
+      !snippet.pendingCloudDownload
+      && snippet.contents.some(content => content.value === null)
+    ) {
+      ensureSnippetContentLoaded(cache.paths, snippet)
+    }
+  },
+  getSnippetSearchText,
+)

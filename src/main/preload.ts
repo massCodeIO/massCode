@@ -1,10 +1,16 @@
 import type { EventCallback } from './types'
 import type { Channel } from './types/ipc'
+import process from 'node:process'
 import { contextBridge, ipcRenderer } from 'electron'
 import i18n from './i18n'
 import { store } from './store'
 
 contextBridge.exposeInMainWorld('electron', {
+  benchmark: {
+    enabled: Boolean(process.env.MASSCODE_BENCHMARK_ROOT),
+    record: (event: unknown) =>
+      ipcRenderer.invoke('system:benchmark-event', event),
+  },
   ipc: {
     on: (channel: Channel, cb: EventCallback) => ipcRenderer.on(channel, cb),
     send: (channel: Channel, data: any, cb: EventCallback) => {

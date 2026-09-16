@@ -1,5 +1,6 @@
-import type { MarkdownSnippet, Paths } from './types'
+import type { MarkdownRuntimeCache, MarkdownSnippet, Paths } from './types'
 import { runtimeRef } from './cache'
+import { createAsyncSearchPreparation } from './shared/asyncSearch'
 import {
   buildSearchIndex,
   invalidateSearchIndex,
@@ -99,3 +100,19 @@ export function updateRuntimeSearchIndex(
 }
 
 export { buildSearchIndex }
+
+export const prepareSnippetSearchAsync = createAsyncSearchPreparation<
+  MarkdownSnippet,
+  MarkdownRuntimeCache
+>(
+  cache => cache.snippets,
+  (cache, snippet) => {
+    if (
+      !snippet.pendingCloudDownload
+      && snippet.contents.some(content => content.value === null)
+    ) {
+      ensureSnippetContentLoaded(cache.paths, snippet)
+    }
+  },
+  getSnippetSearchText,
+)

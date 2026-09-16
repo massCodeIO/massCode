@@ -11,6 +11,7 @@ export interface SearchIndex {
   tokenToIds: Map<string, Set<number>>
   queryCache: Map<string, number[]>
   dirty: boolean
+  revision: number
 }
 
 export function buildSearchIndex<T extends { id: number }>(
@@ -35,7 +36,13 @@ export function buildSearchIndex<T extends { id: number }>(
     }
   }
 
-  return { textById, tokenToIds, queryCache: new Map(), dirty: false }
+  return {
+    textById,
+    tokenToIds,
+    queryCache: new Map(),
+    dirty: false,
+    revision: 0,
+  }
 }
 
 export function querySearchIndex<T extends { id: number }>(
@@ -120,6 +127,7 @@ export function querySearchIndex<T extends { id: number }>(
 }
 
 export function invalidateSearchIndex(index: SearchIndex): void {
+  index.revision += 1
   index.dirty = true
   index.queryCache.clear()
 }
@@ -129,6 +137,7 @@ export function updateSearchIndexItem(
   id: number,
   text: string,
 ): void {
+  index.revision += 1
   if (index.dirty) {
     return
   }

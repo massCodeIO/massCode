@@ -73,9 +73,12 @@ app
   .use(notesDTO)
   .get(
     '/',
-    ({ query }) => {
+    async ({ query }) => {
       const storage = useNotesStorage()
-      const result = storage.notes.getNotes(query)
+      const result
+        = query.search && !query.searchNameOnly && storage.notes.getNotesAsync
+          ? await storage.notes.getNotesAsync(query)
+          : storage.notes.getNotes(query)
 
       // Контент заметок не сериализуется в список: контент выбранной
       // заметки загружается через GET /notes/:id.

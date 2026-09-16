@@ -67,6 +67,7 @@ async function setup(
   const Tree = (await import('../Tree.vue')).default
   const props = reactive({
     virtual: true,
+    activeId: undefined as number | undefined,
     modelValue:
       nodes
       ?? (Array.from({ length: 10000 }, (_, id) => ({
@@ -138,6 +139,44 @@ async function setup(
 afterEach(() => cleanup.splice(0).forEach(dispose => dispose()))
 
 describe('virtual tree interaction state', () => {
+  it('reveals numeric folder navigation but preserves scroll after rename, reorder and refresh', async () => {
+    const { props, bindings } = await setup()
+    props.activeId = 9000
+    await nextTick()
+    expect(bindings.containerRef.value.scrollTop).toBeGreaterThan(200000)
+    bindings.scrollToId(0)
+    props.modelValue = props.modelValue.map(node => ({
+      ...node,
+      label: `${node.label} renamed`,
+    }))
+    await nextTick()
+    expect(bindings.containerRef.value.scrollTop).toBe(0)
+    props.modelValue = [...props.modelValue].reverse()
+    await nextTick()
+    expect(bindings.containerRef.value.scrollTop).toBe(0)
+    props.activeId = 1
+    await nextTick()
+    expect(bindings.containerRef.value.scrollTop).toBeGreaterThan(200000)
+  })
+
+  it('waits for a selected nested folder to expand and preserves position when it is reparented', async () => {
+    const child = { id: 10000, label: 'Nested folder' }
+    const { props, bindings } = await setup()
+    props.modelValue[9999].children = [child]
+    props.activeId = child.id
+    await nextTick()
+    expect(bindings.containerRef.value.scrollTop).toBe(0)
+    props.modelValue[9999].isExpanded = true
+    await nextTick()
+    expect(bindings.containerRef.value.scrollTop).toBeGreaterThan(200000)
+    bindings.scrollToId(0)
+    props.modelValue[9999].children = []
+    props.modelValue[0].children = [child]
+    props.modelValue[0].isExpanded = true
+    await nextTick()
+    expect(bindings.containerRef.value.scrollTop).toBe(0)
+  })
+
   it('keeps the offscreen source through drop capture until native dragend', async () => {
     const { bindings, injection, props, events, captureDrop } = await setup()
     bindings.scrollToId(9000)

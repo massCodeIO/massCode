@@ -3,6 +3,7 @@ import type { DropPosition, TreeNode } from './types'
 import { onClickOutside, useVirtualList } from '@vueuse/core'
 import { treeInjectionKey } from './keys'
 import TreeNodeComponent from './TreeNode.vue'
+import { useActiveRowReveal } from './useActiveRowReveal'
 import {
   clampScrollTop,
   flattenTree,
@@ -32,6 +33,7 @@ interface Props {
   highlightedIds?: Set<string | number>
   indent?: number
   virtual?: boolean
+  activeId?: string | number
   getValidationMessage?: (node: TreeNode, value: string) => string
   canDrop?: (
     nodes: TreeNode[],
@@ -250,6 +252,11 @@ watch(
       nextTick(() => scrollToId(id))
   },
   { flush: 'post', immediate: true },
+)
+useActiveRowReveal(
+  computed(() => props.activeId),
+  flatRows,
+  computed(() => (containerRef.value ? { scrollToId } : undefined)),
 )
 defineExpose({ scrollToId })
 

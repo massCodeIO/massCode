@@ -4,7 +4,7 @@ import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
 
-import { getContiguousSelection, scrollToElement } from '@/utils'
+import { getContiguousSelection } from '@/utils'
 
 import {
   findParentFolderIds,
@@ -355,7 +355,6 @@ async function createNoteFolderAndSelect(parentId?: number) {
   if (id) {
     await selectNoteFolder(Number(id))
     clearNotesState()
-    scrollToElement(`[id="${id}"]`)
     renameFolderId.value = Number(id)
   }
 }
@@ -441,7 +440,6 @@ async function deleteSelectedNoteFolders(fallbackFolderId?: number) {
 
     if (fallbackId) {
       await selectNoteFolder(fallbackId)
-      scrollToElement(`[id="${fallbackId}"]`)
     }
     else {
       clearFolderSelection()

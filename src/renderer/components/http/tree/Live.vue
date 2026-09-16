@@ -17,7 +17,6 @@ import {
 import { CloudDownload, Folder, Layers, Star } from 'lucide-vue-next'
 import { folderKey, requestKey, sidebarNodes, UNFILED_ID } from './liveModel'
 import { selectRange, visibleRows } from './model'
-import { useActiveRowReveal } from './useActiveRowReveal'
 
 const props = withDefaults(
   defineProps<{ query?: string, trash?: boolean, favorites?: boolean }>(),
@@ -53,7 +52,6 @@ const { nodes, open, move, validateMove, refresh, loadError, busy }
   = useHttpNavigationTree()
 if (!props.trash)
   watch(requests, refresh, { immediate: true })
-const treeRef = ref<{ scrollToId: (id: string | number) => void }>()
 const editableId = ref<string | number | null>(null)
 const anchor = ref<string>()
 const contextNode = ref<HttpTreeNode>()
@@ -405,7 +403,6 @@ watch(
   },
   { immediate: true },
 )
-useActiveRowReveal(activeId, rows, treeRef)
 </script>
 
 <template>
@@ -416,11 +413,11 @@ useActiveRowReveal(activeId, rows, treeRef)
     <ContextMenu.ContextMenu>
       <ContextMenu.ContextMenuTrigger as-child>
         <UiTree
-          ref="treeRef"
           v-model:selected-ids="selectedIds"
           v-model:focused-id="focusedId"
           v-model:highlighted-ids="highlightedIds"
           v-model:editable-id="editableId"
+          :active-id="activeId"
           virtual
           :model-value="treeData"
           :get-validation-message="validation"

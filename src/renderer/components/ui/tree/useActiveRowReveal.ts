@@ -1,12 +1,11 @@
 import type { Ref } from 'vue'
-import type { TreeRow } from './types'
 
 export function useActiveRowReveal(
-  activeId: Readonly<Ref<string | undefined>>,
-  rows: Readonly<Ref<TreeRow[]>>,
+  activeId: Readonly<Ref<string | number | undefined>>,
+  rows: Readonly<Ref<{ node: { id: string | number } }[]>>,
   tree: Ref<{ scrollToId: (id: string | number) => void } | undefined>,
 ) {
-  let pendingId: string | undefined
+  let pendingId: string | number | undefined
 
   watch(
     [

@@ -1,4 +1,4 @@
-import type { TreeRow } from '../types'
+import type { FlatTreeRow } from '../virtualRows'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { effectScope, nextTick, ref, watch } from 'vue'
 import { useActiveRowReveal } from '../useActiveRowReveal'
@@ -7,18 +7,19 @@ Object.assign(globalThis, { watch })
 const cleanup: Array<() => void> = []
 afterEach(() => cleanup.splice(0).forEach(dispose => dispose()))
 
-function row(id: string): TreeRow {
+function row(id: string): FlatTreeRow {
   return {
-    node: { id, name: id, kind: 'request', parentId: null },
+    node: { id, label: id },
     depth: 0,
-    position: 1,
-    siblings: 1,
+    index: 0,
+    offset: 0,
+    siblings: [],
   }
 }
 
 function setup() {
   const activeId = ref<string>()
-  const rows = ref<TreeRow[]>([])
+  const rows = ref<FlatTreeRow[]>([])
   const scrollToId = vi.fn()
   const tree = ref<{ scrollToId: typeof scrollToId }>()
   const scope = effectScope()
@@ -27,7 +28,7 @@ function setup() {
   return { activeId, rows, tree, scrollToId }
 }
 
-describe('hTTP active row reveal', () => {
+describe('active tree row reveal', () => {
   it('preserves manual scroll through move, rename and background refresh', async () => {
     const state = setup()
     let scrollTop = 0
@@ -45,7 +46,7 @@ describe('hTTP active row reveal', () => {
     await nextTick()
     state.rows.value = state.rows.value.map(item => ({
       ...item,
-      node: { ...item.node, name: `${item.node.name} renamed` },
+      node: { ...item.node, label: `${item.node.label} renamed` },
     }))
     await nextTick()
     state.rows.value = state.rows.value.map(item => ({ ...item }))

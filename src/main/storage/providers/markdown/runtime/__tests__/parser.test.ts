@@ -45,6 +45,36 @@ function createSnippet(value: string): MarkdownSnippet {
 }
 
 describe('parser snippet content roundtrip', () => {
+  it.each(['\n', '\r\n'])(
+    'preserves declared fragments with %j line endings',
+    (newline) => {
+      const snippet = createSnippet('')
+      const values = [
+        '',
+        'const café = "Поиск 東京 😀";\nconsole.log(café)',
+        '## Fragment: user heading\n```python\nprint("nested")\n```\n',
+        'SELECT "Привет", \'café\' FROM records;\n'.repeat(2000),
+      ]
+      snippet.contents = values.map((value, index) => ({
+        id: index + 1,
+        label: `Part ${index}`,
+        language: 'plain_text',
+        value,
+      }))
+      const { body, frontmatter } = splitFrontmatter(
+        serializeSnippet(snippet).replace(/\n/g, newline),
+      )
+      const result = parseBodyFragmentsWithMetadata(
+        body,
+        frontmatter.contents || [],
+      )
+      expect(result.legacyRecovery).toBe('none')
+      expect(result.fragments).toEqual(
+        snippet.contents.map(({ id: _id, ...fragment }) => fragment),
+      )
+    },
+  )
+
   it('preserves content with inner fenced code blocks', () => {
     const input = 'line 1\n```\ninner fence\n```\nline 2\nline 3'
     const serialized = serializeSnippet(createSnippet(input))

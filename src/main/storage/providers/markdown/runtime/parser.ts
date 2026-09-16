@@ -226,9 +226,11 @@ function hasNonEmptyTail(lines: string[], cursor: number): boolean {
   return false
 }
 
-function parseBodyFragmentsStrict(body: string): StrictBodyFragmentParseResult {
+function parseBodyFragmentsStrict(
+  body: string,
+  lines = body.split(NEW_LINE_SPLIT_RE),
+): StrictBodyFragmentParseResult {
   const fragments: MarkdownBodyFragment[] = []
-  const lines = body.split(NEW_LINE_SPLIT_RE)
   let lastCursor = 0
 
   let lineIndex = 0
@@ -353,14 +355,13 @@ function buildLegacyOpeningSequences(
 }
 
 function parseLegacyTripleFenceFragments(
-  body: string,
+  lines: string[],
   metadata: MarkdownFrontmatterContent[],
 ): BodyFragmentParseResult {
   if (metadata.length === 0) {
     return { fragments: [], legacyRecovery: 'none' }
   }
 
-  const lines = body.split(NEW_LINE_SPLIT_RE)
   const openingsByFragment = findLegacyFragmentOpenings(lines, metadata)
   if (openingsByFragment.some(openings => openings.length === 0)) {
     return { fragments: [], legacyRecovery: 'none' }
@@ -416,6 +417,12 @@ function parseLegacyTripleFenceFragments(
       continue
     }
 
+    // With one valid opening sequence there is no competing recovery to
+    // deduplicate. Avoid serializing every fragment body in this common case.
+    if (sequences.length === 1) {
+      return { fragments, legacyRecovery: 'recovered' }
+    }
+
     recoveredFragmentsBySignature.set(JSON.stringify(fragments), fragments)
   }
 
@@ -437,21 +444,29 @@ export function parseBodyFragmentsWithMetadata(
   body: string,
   metadata: MarkdownFrontmatterContent[],
 ): BodyFragmentParseResult {
-  const strictResult = parseBodyFragmentsStrict(body)
+  const lines = body.split(NEW_LINE_SPLIT_RE)
+  const strictResult = parseBodyFragmentsStrict(body, lines)
   const declaredFragmentCount = metadata.length
 
   if (declaredFragmentCount === 0) {
     return { fragments: strictResult.fragments, legacyRecovery: 'none' }
   }
 
-  const legacyResult = parseLegacyTripleFenceFragments(body, metadata)
+  const legacyResult = parseLegacyTripleFenceFragments(lines, metadata)
   const hasSuspiciousTail
     = strictResult.fragments.length >= declaredFragmentCount
-      && hasNonEmptyTail(body.split(NEW_LINE_SPLIT_RE), strictResult.lastCursor)
+      && hasNonEmptyTail(lines, strictResult.lastCursor)
   const hasLegacyMismatch
     = legacyResult.legacyRecovery === 'recovered'
-      && JSON.stringify(legacyResult.fragments)
-      !== JSON.stringify(strictResult.fragments)
+      && (legacyResult.fragments.length !== strictResult.fragments.length
+        || legacyResult.fragments.some((fragment, index) => {
+          const strict = strictResult.fragments[index]
+          return (
+            fragment.label !== strict.label
+            || fragment.language !== strict.language
+            || fragment.value !== strict.value
+          )
+        }))
 
   if (
     strictResult.fragments.length === declaredFragmentCount

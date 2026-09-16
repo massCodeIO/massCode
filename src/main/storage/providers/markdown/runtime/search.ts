@@ -1,3 +1,4 @@
+import type { SearchText } from './shared/searchDocument'
 import type { MarkdownRuntimeCache, MarkdownSnippet, Paths } from './types'
 import { runtimeRef } from './cache'
 import { createAsyncSearchPreparation } from './shared/asyncSearch'
@@ -9,12 +10,15 @@ import {
 } from './shared/searchEngine'
 import { ensureSnippetContentLoaded } from './snippets'
 
-export function getSnippetSearchText(snippet: MarkdownSnippet): string {
-  return [
-    snippet.name,
-    snippet.description || '',
-    ...snippet.contents.map(content => content.value || ''),
-  ].join('\n')
+export function getSnippetSearchText(snippet: MarkdownSnippet): SearchText {
+  return {
+    parts: [
+      snippet.name,
+      snippet.description || '',
+      ...snippet.contents.map(content => content.value || ''),
+    ],
+    separator: '\n',
+  }
 }
 
 // Полнотекстовый поиск требует тел: ленивые записи (построенные из индекса

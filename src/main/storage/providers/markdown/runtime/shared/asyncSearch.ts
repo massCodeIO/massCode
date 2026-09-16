@@ -1,3 +1,4 @@
+import type { SearchText } from './searchDocument'
 import type { SearchIndex } from './searchEngine'
 import { setImmediate } from 'node:timers/promises'
 import { buildSearchIndex, updateSearchIndexItem } from './searchEngine'
@@ -33,7 +34,7 @@ export function createAsyncSearchPreparation<
 >(
   getItems: (cache: C) => T[],
   hydrate: (cache: C, item: T) => void,
-  getSearchText: (item: T) => string,
+  getSearchText: (item: T) => SearchText,
 ) {
   const inFlight = new WeakMap<C, Promise<boolean>>()
 

@@ -1,3 +1,4 @@
+import type { SearchText } from '../../runtime/shared/searchDocument'
 import type { MarkdownNote, NotesRuntimeCache, NotesState } from './types'
 import { createAsyncSearchPreparation } from '../../runtime/shared/asyncSearch'
 import {
@@ -9,7 +10,7 @@ import {
 import { notesRuntimeRef } from './constants'
 import { ensureAllNoteContentsLoaded, ensureNoteContentLoaded } from './notes'
 
-export function buildNoteSearchText(note: MarkdownNote): string {
+export function buildNoteSearchText(note: MarkdownNote): SearchText {
   const parts: string[] = [note.name]
   if (note.description) {
     parts.push(note.description)
@@ -17,7 +18,7 @@ export function buildNoteSearchText(note: MarkdownNote): string {
   if (note.content) {
     parts.push(note.content)
   }
-  return parts.join(' ')
+  return { parts, separator: ' ' }
 }
 
 export function getNoteIdsBySearchQuery(

@@ -28,9 +28,16 @@ export function createWordTrigrams(value: string): string[] {
   return trigrams
 }
 
-export function buildSearchTokens(normalizedText: string): Set<string> {
+export function buildSearchTokens(
+  normalizedText: string | readonly string[],
+): Set<string> {
   const tokens = new Set<string>()
-  const words = new Set(splitSearchWords(normalizedText))
+  const words = new Set<string>()
+  for (const part of typeof normalizedText === 'string'
+    ? [normalizedText]
+    : normalizedText) {
+    for (const word of splitSearchWords(part)) words.add(word)
+  }
 
   for (const word of words) {
     for (const trigram of createWordTrigrams(word)) {

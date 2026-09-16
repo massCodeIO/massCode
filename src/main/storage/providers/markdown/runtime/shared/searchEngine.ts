@@ -1,3 +1,5 @@
+import type { SearchText } from './searchDocument'
+import { normalizeSearchText, searchTextIncludes } from './searchDocument'
 import {
   buildSearchTokens,
   createWordTrigrams,
@@ -7,7 +9,7 @@ import {
 } from './searchIndex'
 
 export interface SearchIndex {
-  textById: Map<number, string>
+  textById: Map<number, SearchText>
   tokenToIds: Map<string, Set<number>>
   queryCache: Map<string, number[]>
   dirty: boolean
@@ -16,16 +18,20 @@ export interface SearchIndex {
 
 export function buildSearchIndex<T extends { id: number }>(
   items: T[],
-  getSearchText: (item: T) => string,
+  getSearchText: (item: T) => SearchText,
 ): SearchIndex {
-  const textById = new Map<number, string>()
+  const textById = new Map<number, SearchText>()
   const tokenToIds = new Map<string, Set<number>>()
 
   for (const item of items) {
-    const normalizedText = normalizeSearchValue(getSearchText(item))
+    const normalizedText = normalizeSearchText(getSearchText(item))
     textById.set(item.id, normalizedText)
 
-    const tokens = buildSearchTokens(normalizedText)
+    const tokens = buildSearchTokens(
+      typeof normalizedText === 'string'
+        ? normalizedText
+        : normalizedText.parts,
+    )
     for (const token of tokens) {
       let ids = tokenToIds.get(token)
       if (!ids) {
@@ -49,7 +55,7 @@ export function querySearchIndex<T extends { id: number }>(
   items: T[],
   query: string,
   index: SearchIndex | null,
-  getSearchText: (item: T) => string,
+  getSearchText: (item: T) => SearchText,
 ): Set<number> {
   const normalizedQuery = normalizeSearchValue(query).trim()
   if (!normalizedQuery) {
@@ -60,7 +66,10 @@ export function querySearchIndex<T extends { id: number }>(
     return new Set(
       items
         .filter(item =>
-          normalizeSearchValue(getSearchText(item)).includes(normalizedQuery),
+          searchTextIncludes(
+            normalizeSearchText(getSearchText(item)),
+            normalizedQuery,
+          ),
         )
         .map(item => item.id),
     )
@@ -117,7 +126,7 @@ export function querySearchIndex<T extends { id: number }>(
 
   idsToCheck.forEach((id) => {
     const searchText = index.textById.get(id) || ''
-    if (searchText.includes(normalizedQuery)) {
+    if (searchTextIncludes(searchText, normalizedQuery)) {
       matchedIds.push(id)
     }
   })
@@ -135,7 +144,7 @@ export function invalidateSearchIndex(index: SearchIndex): void {
 export function updateSearchIndexItem(
   index: SearchIndex,
   id: number,
-  text: string,
+  text: SearchText,
 ): void {
   index.revision += 1
   if (index.dirty) {
@@ -144,7 +153,9 @@ export function updateSearchIndexItem(
 
   const previousText = index.textById.get(id)
   if (previousText !== undefined) {
-    for (const token of buildSearchTokens(previousText)) {
+    for (const token of buildSearchTokens(
+      typeof previousText === 'string' ? previousText : previousText.parts,
+    )) {
       const ids = index.tokenToIds.get(token)
       ids?.delete(id)
       if (ids?.size === 0) {
@@ -153,9 +164,11 @@ export function updateSearchIndexItem(
     }
   }
 
-  const normalizedText = normalizeSearchValue(text)
+  const normalizedText = normalizeSearchText(text)
   index.textById.set(id, normalizedText)
-  for (const token of buildSearchTokens(normalizedText)) {
+  for (const token of buildSearchTokens(
+    typeof normalizedText === 'string' ? normalizedText : normalizedText.parts,
+  )) {
     let ids = index.tokenToIds.get(token)
     if (!ids) {
       ids = new Set()

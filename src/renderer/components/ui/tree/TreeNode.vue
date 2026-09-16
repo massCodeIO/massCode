@@ -17,6 +17,7 @@ const props = withDefaults(defineProps<Props>(), {
   index: 0,
   deep: 0,
   indent: 10,
+  renderChildren: true,
 })
 
 defineSlots<{ icon?: (props: { node: TreeNode }) => unknown }>()
@@ -24,6 +25,7 @@ defineSlots<{ icon?: (props: { node: TreeNode }) => unknown }>()
 interface Props {
   index: number
   deep?: number
+  renderChildren?: boolean
   node: TreeNode
   nodes: TreeNode[]
   indent?: number
@@ -32,6 +34,7 @@ interface Props {
 
 const {
   rootNodes,
+  dragSourceChanged,
   clickNode,
   dblclickNode,
   dragNode,
@@ -140,14 +143,18 @@ watch(
   },
 )
 
-watch(isEditing, (editing) => {
-  if (editing) {
-    nextTick(() => {
-      editInputRef.value?.focus()
-      editInputRef.value?.select()
-    })
-  }
-})
+watch(
+  isEditing,
+  (editing) => {
+    if (editing) {
+      nextTick(() => {
+        editInputRef.value?.focus()
+        editInputRef.value?.select()
+      })
+    }
+  },
+  { immediate: true },
+)
 
 onClickOutside(rowRef, () => {
   if (focusedId.value === props.node.id) {
@@ -266,6 +273,7 @@ function onDragStart(e: DragEvent) {
   dragStore.dragNode = draggedNodes[0] || props.node
   isHoveredByIdDisabled.value = true
   isDragged.value = true
+  dragSourceChanged?.(props.node.id)
 
   const el = document.createElement('div')
   el.className
@@ -293,6 +301,8 @@ function onDragStart(e: DragEvent) {
 }
 
 function onDragEnd() {
+  if (isDragged.value)
+    dragSourceChanged?.(undefined)
   dragStore.dragNode = undefined
   dragStore.dragNodes = undefined
   dragStore.dragEnterNode = undefined
@@ -378,6 +388,11 @@ function onDrop(e: DragEvent) {
 
   overPosition.value = undefined
 }
+
+onBeforeUnmount(() => {
+  if (isDragged.value)
+    onDragEnd()
+})
 
 // --- Inline Edit ---
 
@@ -496,7 +511,7 @@ function onCancelEdit() {
         </UiInputValidationTooltip>
       </span>
     </div>
-    <template v-if="node.children">
+    <template v-if="renderChildren && node.children">
       <TreeNode
         v-for="(child, idx) in node.children"
         v-show="node.isExpanded"

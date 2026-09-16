@@ -388,6 +388,60 @@ describe('runNotesAssetsMigration', () => {
     expect(fs.pathExistsSync(path.join(paths.assetsPath, lateName))).toBe(true)
   })
 
+  it.each(['missing', 'empty'])(
+    'keeps note bodies lazy when legacy assets are %s',
+    async (kind) => {
+      const paths = createPaths()
+      if (kind === 'empty')
+        fs.ensureDirSync(paths.legacyAssetsPath)
+      const note = createNote(1, null)
+      fs.writeFileSync(
+        path.join(paths.notesRoot, note.filePath),
+        '---\nid: 1\nname: Note 1\n---\nbody',
+      )
+      const cache = createCache(paths, [note])
+      scheduleNotesAssetsMigration(cache)
+      await waitForNotesAssetsMigrationForTests()
+      expect(note.content).toBeNull()
+      expect(enqueueCloudDownload).not.toHaveBeenCalled()
+    },
+  )
+
+  it('rechecks legacy assets on a later scheduled run', async () => {
+    const paths = createPaths()
+    const name = 'abcdefghijklmnop.png'
+    const cache = createCache(paths, [createNote(1, assetUrl(name))])
+    scheduleNotesAssetsMigration(cache)
+    await waitForNotesAssetsMigrationForTests()
+    writeLegacyAsset(paths, name, 'late asset')
+    scheduleNotesAssetsMigration(cache)
+    await waitForNotesAssetsMigrationForTests()
+    expect(fs.readFileSync(path.join(paths.assetsPath, name), 'utf8')).toBe(
+      'late asset',
+    )
+    expect(fs.existsSync(path.join(paths.legacyAssetsPath, name))).toBe(false)
+  })
+
+  it('starts the new vault migration after cancelling an in-flight directory check', async () => {
+    const oldPaths = createPaths()
+    const nextPaths = createPaths()
+    const name = 'abcdefghijklmnop.png'
+    writeLegacyAsset(oldPaths, name, 'old')
+    writeLegacyAsset(nextPaths, name, 'new')
+    scheduleNotesAssetsMigration(
+      createCache(oldPaths, [createNote(1, assetUrl(name))]),
+    )
+    cancelNotesAssetsMigration()
+    scheduleNotesAssetsMigration(
+      createCache(nextPaths, [createNote(1, assetUrl(name))]),
+    )
+    await waitForNotesAssetsMigrationForTests()
+    expect(fs.existsSync(path.join(oldPaths.assetsPath, name))).toBe(false)
+    expect(fs.readFileSync(path.join(nextPaths.assetsPath, name), 'utf8')).toBe(
+      'new',
+    )
+  })
+
   it('cancels a scheduled run before rename or source deletion', async () => {
     const paths = createPaths()
     const fileName = 'abcdefghijklmnop.png'

@@ -420,6 +420,10 @@ function onCancelEdit() {
       'has-children': hasChildren,
       'is-dragged': isDragged,
     }"
+    :style="{
+      '--ui-tree-indent': indentStyle,
+      '--ui-tree-hover-offset': hoveredOffsetStyle,
+    }"
     :draggable="canDrag?.(node) ?? true"
     @dragstart.stop="onDragStart"
     @dragleave.stop="onDragLeave"
@@ -555,7 +559,7 @@ function onCancelEdit() {
       @apply text-accent-foreground;
       &::before {
         content: "";
-        left: v-bind(hoveredOffsetStyle);
+        left: var(--ui-tree-hover-offset);
         @apply absolute top-0 right-0 bottom-0 z-0 rounded-md;
       }
     }
@@ -565,7 +569,7 @@ function onCancelEdit() {
       @apply text-accent-foreground;
       &::before {
         content: "";
-        left: v-bind(hoveredOffsetStyle);
+        left: var(--ui-tree-hover-offset);
         @apply bg-accent-hover absolute top-0 right-0 bottom-0 z-0 rounded-md;
       }
     }
@@ -598,7 +602,7 @@ function onCancelEdit() {
     }
   }
   .children {
-    padding-left: v-bind(indentStyle);
+    padding-left: var(--ui-tree-indent);
   }
 }
 </style>

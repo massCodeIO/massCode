@@ -18,6 +18,7 @@ const { values } = parseArgs({
     'record-index': { type: 'string' },
     'label': { type: 'string', default: 'current' },
     'cpu': { type: 'boolean', default: false },
+    'heap': { type: 'boolean', default: false },
   },
 })
 if (!values.output || !/^[a-z0-9-]+$/i.test(values.label))
@@ -43,8 +44,12 @@ const tokenModule = path.resolve(
   values.tokens
   || path.join(buildRoot, 'main', runtime, 'shared/searchIndex.js'),
 )
-load(`${runtime}shared/searchIndex`).buildSearchTokens
-  = require(tokenModule).buildSearchTokens
+if (values.tokens) {
+  const tokenize = require(tokenModule).buildSearchTokens
+  // Historical tokenizer builds accept one string, not segmented text.
+  load(`${runtime}shared/searchIndex`).buildSearchTokens = text =>
+    tokenize(Array.isArray(text) ? text.join(' ') : text)
+}
 let phases = null
 function instrument(module, key, name) {
   const original = module[key]
@@ -104,6 +109,7 @@ instrument(extraFs, 'readFileSync', 'readFiles')
 const rows = []
 const editedContentChars = {}
 const cpuProfiles = []
+const heapProfiles = []
 app
   .whenReady()
   .then(async () => {
@@ -135,12 +141,19 @@ app
     async function measureCall(space, scenario, operation) {
       let session
       let post
-      if (values.cpu && scenario === 'first-all') {
+      if ((values.cpu || values.heap) && scenario === 'first-all') {
         session = new Session()
         session.connect()
         post = method => new Promise((resolve, reject) => session.post(method, (error, result) => error ? reject(error) : resolve(result)))
-        await post('Profiler.enable')
-        await post('Profiler.start')
+        if (values.cpu) {
+          await post('Profiler.enable')
+          await post('Profiler.start')
+        }
+        if (values.heap) {
+          await post('HeapProfiler.enable')
+          await post('HeapProfiler.collectGarbage')
+          await post('HeapProfiler.startSampling')
+        }
       }
       const memoryBefore = process.memoryUsage()
       let sampledPeakRss = memoryBefore.rss
@@ -173,11 +186,21 @@ app
         sample()
         clearInterval(heartbeat)
         if (session) {
-          const { profile } = await post('Profiler.stop')
+          if (values.cpu) {
+            const { profile } = await post('Profiler.stop')
+            const file = path.join(root, `cpu-${values.label}-${space}-${Date.now()}.cpuprofile`)
+            fs.writeFileSync(file, JSON.stringify(profile))
+            cpuProfiles.push(file)
+          }
+          if (values.heap) {
+            await post('HeapProfiler.collectGarbage')
+            const retainedMemory = process.memoryUsage()
+            const { profile } = await post('HeapProfiler.stopSampling')
+            const file = path.join(root, `heap-${values.label}-${space}-${Date.now()}.heapprofile`)
+            fs.writeFileSync(file, JSON.stringify(profile))
+            heapProfiles.push({ space, file, retainedMemory })
+          }
           session.disconnect()
-          const file = path.join(root, `cpu-${values.label}-${space}-${Date.now()}.cpuprofile`)
-          fs.writeFileSync(file, JSON.stringify(profile))
-          cpuProfiles.push(file)
         }
       }
       const measuredPhases = phases
@@ -278,6 +301,7 @@ app
       recordIndex,
       editedContentChars,
       cpuProfiles,
+      heapProfiles,
       tokenModule,
       tokenSha256: crypto
         .createHash('sha256')

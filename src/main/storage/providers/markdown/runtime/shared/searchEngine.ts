@@ -123,3 +123,36 @@ export function invalidateSearchIndex(index: SearchIndex): void {
   index.dirty = true
   index.queryCache.clear()
 }
+
+export function updateSearchIndexItem(
+  index: SearchIndex,
+  id: number,
+  text: string,
+): void {
+  if (index.dirty) {
+    return
+  }
+
+  const previousText = index.textById.get(id)
+  if (previousText !== undefined) {
+    for (const token of buildSearchTokens(previousText)) {
+      const ids = index.tokenToIds.get(token)
+      ids?.delete(id)
+      if (ids?.size === 0) {
+        index.tokenToIds.delete(token)
+      }
+    }
+  }
+
+  const normalizedText = normalizeSearchValue(text)
+  index.textById.set(id, normalizedText)
+  for (const token of buildSearchTokens(normalizedText)) {
+    let ids = index.tokenToIds.get(token)
+    if (!ids) {
+      ids = new Set()
+      index.tokenToIds.set(token, ids)
+    }
+    ids.add(id)
+  }
+  index.queryCache.clear()
+}

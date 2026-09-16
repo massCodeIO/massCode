@@ -4,6 +4,7 @@ import {
   buildSearchIndex,
   invalidateSearchIndex,
   querySearchIndex,
+  updateSearchIndexItem,
 } from './shared/searchEngine'
 import { ensureSnippetContentLoaded } from './snippets'
 
@@ -70,6 +71,31 @@ export function invalidateRuntimeSearchIndex(state: { version: number }): void {
   }
 
   invalidateSearchIndex(cache.searchIndex)
+}
+
+export function updateRuntimeSearchIndex(
+  state: { version: number },
+  snippet: MarkdownSnippet,
+): void {
+  const cache = runtimeRef.cache
+  if (!cache) {
+    return
+  }
+
+  if (
+    cache.state !== state
+    || cache.snippets.find(item => item.id === snippet.id) !== snippet
+    || !cache.searchIndex.textById.has(snippet.id)
+  ) {
+    invalidateSearchIndex(cache.searchIndex)
+    return
+  }
+
+  updateSearchIndexItem(
+    cache.searchIndex,
+    snippet.id,
+    getSnippetSearchText(snippet),
+  )
 }
 
 export { buildSearchIndex }

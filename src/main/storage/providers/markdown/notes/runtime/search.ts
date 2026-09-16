@@ -3,6 +3,7 @@ import {
   buildSearchIndex,
   invalidateSearchIndex,
   querySearchIndex,
+  updateSearchIndexItem,
 } from '../../runtime/shared/searchEngine'
 import { notesRuntimeRef } from './constants'
 import { ensureAllNoteContentsLoaded } from './notes'
@@ -51,6 +52,27 @@ export function invalidateNotesSearchIndex(state: NotesState): void {
   }
 
   invalidateSearchIndex(cache.searchIndex)
+}
+
+export function updateNotesSearchIndex(
+  state: NotesState,
+  note: MarkdownNote,
+): void {
+  const cache = notesRuntimeRef.cache
+  if (!cache) {
+    return
+  }
+
+  if (
+    cache.state !== state
+    || cache.notes.find(item => item.id === note.id) !== note
+    || !cache.searchIndex.textById.has(note.id)
+  ) {
+    invalidateSearchIndex(cache.searchIndex)
+    return
+  }
+
+  updateSearchIndexItem(cache.searchIndex, note.id, buildNoteSearchText(note))
 }
 
 export { buildSearchIndex }

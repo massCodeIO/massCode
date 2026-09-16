@@ -9,6 +9,7 @@ import {
 } from '../../../runtime/shared/cloudFiles'
 import { rewriteBacklinksAfterNoteUpdate } from '../../runtime/backlinks'
 import { getNotesPaths } from '../../runtime/constants'
+import { updateNotesSearchIndex } from '../../runtime/search'
 import { ensureNotesStateFile } from '../../runtime/state'
 import {
   getNotesRuntimeCache,
@@ -234,6 +235,93 @@ describe('notes storage validations', () => {
 
     const results = storage.getNotes({ search: 'needle-note-body' })
     expect(results.some(note => note.id === id)).toBe(true)
+  })
+
+  it.each(['state', 'entity'] as const)(
+    'invalidates rather than patching an unrelated %s',
+    (mismatch) => {
+      const storage = createNotesNotesStorage()
+      const { id } = storage.createNote({ name: 'Original' })
+      storage.getNotes({ search: 'Original' })
+      const cache = getNotesRuntimeCache(getNotesPaths(tempVaultPath))
+      const note = cache.notes.find(item => item.id === id)!
+      updateNotesSearchIndex(
+        mismatch === 'state' ? { ...cache.state } : cache.state,
+        mismatch === 'entity' ? { ...note, name: 'Wrong' } : note,
+      )
+      expect(cache.searchIndex.dirty).toBe(true)
+      expect(
+        storage.getNotes({ search: 'Original' }).map(item => item.id),
+      ).toEqual([id])
+      expect(storage.getNotes({ search: 'Wrong' })).toEqual([])
+    },
+  )
+
+  it('updates a warm search index after body edits and clears cached misses', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Indexed name' })
+    storage.updateNote(id, { description: 'indexed description' })
+    storage.updateNoteContent(id, 'oldtoken shared')
+    const other = storage.createNote({ name: 'Other' })
+    storage.updateNoteContent(other.id, 'shared untouched')
+    const find = (search: string) =>
+      storage
+        .getNotes({ search })
+        .map(item => item.id)
+        .sort()
+    expect(find('oldtoken')).toEqual([id])
+    expect(find('newtoken')).toEqual([])
+    const cache = getNotesRuntimeCache(getNotesPaths(tempVaultPath))
+    const index = cache.searchIndex
+    storage.updateNoteContent(id, 'newtoken shared')
+    expect(cache.searchIndex).toBe(index)
+    expect(index.dirty).toBe(false)
+    expect(find('newtoken')).toEqual([id])
+    expect(find('oldtoken')).toEqual([])
+    expect(find('indexed name')).toEqual([id])
+    expect(find('indexed description')).toEqual([id])
+    expect(find('shared')).toEqual([id, other.id].sort())
+    expect(cache.searchIndex).toBe(index)
+  })
+
+  it('keeps full invalidation for cold edits, metadata, creation, deletion and external sync', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Original' })
+    storage.updateNoteContent(id, 'oldtoken')
+    const sibling = storage.createNote({ name: 'Sibling' })
+    storage.updateNoteContent(sibling.id, 'latentword')
+    const cache = resyncTwiceForLazyNotes()
+    storage.updateNoteContent(id, 'newtoken')
+    expect(
+      cache.notes.find(note => note.id === sibling.id)?.content,
+    ).toBeNull()
+    const find = (search: string) =>
+      storage.getNotes({ search }).map(item => item.id)
+    expect(find('newtoken')).toEqual([id])
+    expect(find('oldtoken')).toEqual([])
+    expect(find('latentword')).toEqual([sibling.id])
+    storage.updateNote(id, { name: 'Renamed' })
+    expect(cache.searchIndex.dirty).toBe(true)
+    expect(find('Renamed')).toEqual([id])
+    expect(find('Original')).toEqual([])
+    const added = storage.createNote({ name: 'Added' })
+    expect(cache.searchIndex.dirty).toBe(true)
+    expect(find('Added')).toEqual([added.id])
+    storage.deleteNote(added.id)
+    expect(cache.searchIndex.dirty).toBe(true)
+    expect(find('Added')).toEqual([])
+    const note = cache.notes.find(item => item.id === id)!
+    const absolutePath = path.join(cache.paths.notesRoot, note.filePath)
+    fs.writeFileSync(
+      absolutePath,
+      fs
+        .readFileSync(absolutePath, 'utf8')
+        .replace('newtoken', 'externaltoken'),
+    )
+    syncNoteFileWithDisk(cache.paths, note.filePath)
+    expect(cache.searchIndex.dirty).toBe(true)
+    expect(find('externaltoken')).toEqual([id])
+    expect(find('newtoken')).toEqual([])
   })
 
   it('keeps note body intact when renaming a lazy note', () => {

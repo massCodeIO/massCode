@@ -3,6 +3,7 @@ import {
   buildSearchIndex,
   invalidateSearchIndex,
   querySearchIndex,
+  updateSearchIndexItem,
 } from '../searchEngine'
 
 interface TestItem {
@@ -198,5 +199,50 @@ describe('indexed and linear search parity', () => {
     expect(
       querySearchIndex(editedItems, '世界', rebuilt, getSearchText),
     ).toEqual(new Set())
+  })
+})
+
+describe('updateSearchIndexItem', () => {
+  it('replaces postings and clears positive and negative cached results', () => {
+    const items = [
+      { id: 1, text: 'oldtoken shared café' },
+      { id: 2, text: 'shared untouched' },
+    ]
+    const index = buildSearchIndex(items, getSearchText)
+    for (const query of ['oldtoken', 'newtoken', 'shared'])
+      querySearchIndex(items, query, index, getSearchText)
+
+    items[0].text = 'newtoken shared 東京'
+    updateSearchIndexItem(index, 1, items[0].text)
+    expect(index.dirty).toBe(false)
+    expect(index.queryCache.size).toBe(0)
+    expect(index.tokenToIds.has('g:old')).toBe(false)
+    expect(index.tokenToIds.get('g:sha')).toEqual(new Set([1, 2]))
+    for (const query of [
+      'oldtoken',
+      'newtoken',
+      'shared',
+      'cafe',
+      '東京',
+      'a',
+      'untouched',
+    ]) {
+      expect(querySearchIndex(items, query, index, getSearchText)).toEqual(
+        querySearchIndex(items, query, null, getSearchText),
+      )
+    }
+  })
+
+  it('leaves a dirty index untouched until its full rebuild', () => {
+    const index = buildSearchIndex([{ id: 1, text: 'before' }], getSearchText)
+    invalidateSearchIndex(index)
+    const previousText = new Map(index.textById)
+    const previousTokens = new Map(
+      [...index.tokenToIds].map(([token, ids]) => [token, new Set(ids)]),
+    )
+    updateSearchIndexItem(index, 1, 'after')
+    expect(index.dirty).toBe(true)
+    expect(index.textById).toEqual(previousText)
+    expect(index.tokenToIds).toEqual(previousTokens)
   })
 })

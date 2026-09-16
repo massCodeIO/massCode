@@ -357,7 +357,7 @@ export function createSnippetsStorage(): SnippetsStorage {
 
       snippet.updatedAt = Date.now()
       writeSnippetToFile(paths, snippet)
-      saveState(paths, state)
+      saveState(paths, state, { searchIndexUpdate: snippet })
 
       return {
         invalidInput: false,

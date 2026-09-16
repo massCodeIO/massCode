@@ -54,7 +54,7 @@ import {
 import { findNotesFolderById } from '../runtime/paths'
 import {
   getNoteIdsBySearchQuery,
-  invalidateNotesSearchIndex,
+  updateNotesSearchIndex,
 } from '../runtime/search'
 import { saveNotesState } from '../runtime/state'
 import { getNotesRuntimeCache } from '../runtime/sync'
@@ -474,7 +474,7 @@ export function createNotesNotesStorage(): NotesStorage {
       const result = updateEntityBodyContent({
         content,
         entity: note,
-        onAfterPersist: () => invalidateNotesSearchIndex(state),
+        onAfterPersist: () => updateNotesSearchIndex(state, note!),
         persistEntity: note => writeNoteToFile(paths, note),
       })
 

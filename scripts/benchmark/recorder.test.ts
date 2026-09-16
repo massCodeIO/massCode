@@ -79,12 +79,38 @@ describe('opt-in recorder', () => {
         content: 'never record',
       },
     )
+    for (const status of ['error', 'superseded', 'ok', 'ok']) {
+      await handle(
+        {},
+        { name: 'code.search-first.state-presented', durationMs: 20, status },
+      )
+    }
     await vi.advanceTimersByTimeAsync(1000)
     const log = fs.readFileSync(path.join(root, 'events.jsonl'), 'utf8')
     expect(log).toContain('code.open.state-presented')
     expect(log).not.toContain('private content')
     expect(log).not.toContain('never record')
     expect(log).not.toContain('Infinity')
+    const events = log
+      .trim()
+      .split('\n')
+      .map(line => JSON.parse(line))
+    expect(
+      events.every(
+        event => Number.isFinite(event.elapsedMs) && event.elapsedMs >= 0,
+      ),
+    ).toBe(true)
+    const memory = fs
+      .readFileSync(path.join(root, 'memory.jsonl'), 'utf8')
+      .trim()
+      .split('\n')
+      .map(line => JSON.parse(line))
+    expect(
+      memory.filter(
+        row => row.milestone === 'code.search-first.state-presented',
+      ),
+    ).toHaveLength(1)
+    expect(memory.every(row => Number.isFinite(row.elapsedMs))).toBe(true)
     expect(process.env.MASSCODE_BENCHMARK_ROOT).toBe(root)
   })
 })

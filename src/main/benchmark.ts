@@ -30,6 +30,7 @@ function resolveRoot(): string | undefined {
 const root = resolveRoot()
 export const benchmarkEnabled = Boolean(root)
 const session = `${Date.now()}-${process.pid}`
+const startedAt = Number(process.env.MASSCODE_BENCHMARK_STARTED || 0)
 let buffer: string[] = []
 const memoryMilestones = new Set<string>()
 let memoryBuffer: string[] = []
@@ -60,6 +61,7 @@ function recordMemory(milestone: string) {
     JSON.stringify({
       session,
       milestone,
+      elapsedMs: performance.now() - startedAt,
       processes: app
         .getAppMetrics()
         .map(({ pid, type, memory }) => ({ pid, type, memory })),
@@ -87,6 +89,7 @@ export function recordBenchmark(
       durationMs,
       status,
       timestamp: Date.now(),
+      elapsedMs: performance.now() - startedAt,
     }),
   )
   if (!timer) {
@@ -123,7 +126,7 @@ export function registerBenchmark(
         return
       }
       recordBenchmark(name, durationMs, String(status))
-      if (status === 'ok' && /\.(?:list|open)\./.test(name))
+      if (status === 'ok' && /\.(?:list|open|search-first)\./.test(name))
         recordMemory(name)
     },
   )

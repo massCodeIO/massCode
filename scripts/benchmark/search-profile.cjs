@@ -11,18 +11,24 @@ const { validateRoot } = require('./common.cjs')
 const { values } = parseArgs({
   args: process.argv.slice(2),
   options: {
-    output: { type: 'string' },
-    tokens: { type: 'string' },
-    label: { type: 'string', default: 'current' },
+    'output': { type: 'string' },
+    'tokens': { type: 'string' },
+    'build': { type: 'string' },
+    'record-index': { type: 'string' },
+    'label': { type: 'string', default: 'current' },
   },
 })
 if (!values.output || !/^[a-z0-9-]+$/i.test(values.label))
   throw new Error('Expected --output benchmark-root and a simple --label')
+const recordIndex = values['record-index'] === undefined ? undefined : Number(values['record-index'])
+if (recordIndex !== undefined && (!Number.isSafeInteger(recordIndex) || recordIndex < 0))
+  throw new Error('Expected nonnegative --record-index')
 const { root, marker } = validateRoot(values.output)
 const seed = JSON.parse(fs.readFileSync(path.join(root, 'seed.json'), 'utf8'))
 app.setPath('userData', path.join(root, 'profile'))
 app.setName('massCode search profile')
-const load = relative => require(path.join(root, 'build/main', relative))
+const buildRoot = path.resolve(values.build || path.join(root, 'build'))
+const load = relative => require(path.join(buildRoot, 'main', relative))
 const { store } = load('store')
 if (
   store.preferences.get('storage.vaultPath') !== path.join(root, 'vault')
@@ -33,7 +39,7 @@ if (
 const runtime = 'storage/providers/markdown/runtime/'
 const tokenModule = path.resolve(
   values.tokens
-  || path.join(root, 'build/main', runtime, 'shared/searchIndex.js'),
+  || path.join(buildRoot, 'main', runtime, 'shared/searchIndex.js'),
 )
 load(`${runtime}shared/searchIndex`).buildSearchTokens
   = require(tokenModule).buildSearchTokens
@@ -65,10 +71,14 @@ instrument(
 )
 instrument(load(`${runtime}shared/searchEngine`), 'buildSearchIndex', 'index')
 instrument(load(`${runtime}shared/searchEngine`), 'querySearchIndex', 'query')
+if (typeof load(`${runtime}shared/searchEngine`).updateSearchIndexItem === 'function') {
+  instrument(load(`${runtime}shared/searchEngine`), 'updateSearchIndexItem', 'updateIndex')
+}
 const extraFs = require('fs-extra')
 
 instrument(extraFs, 'readFileSync', 'readFiles')
 const rows = []
+const editedContentChars = {}
 app
   .whenReady()
   .then(async () => {
@@ -97,7 +107,7 @@ app
       }
       return response.json()
     }
-    async function measure(space, scenario, query, expected) {
+    async function measureCall(space, scenario, operation) {
       const start = performance.now()
       // Таймер ставится до запроса: его задержка показывает занятость main,
       // но не является замером отрисовки или задержки ввода пользователя.
@@ -105,27 +115,25 @@ app
         setTimeout(() => resolve(performance.now() - start), 0),
       )
       phases = {}
-      const result = await call(
-        'GET',
-        `/${space}/?search=${encodeURIComponent(query)}`,
-      )
+      const result = await operation()
       const durationMs = performance.now() - start
       const measuredPhases = phases
       phases = null
       const timerDelayMs = await timer
-      if (result.length !== expected) {
-        throw new Error(
-          `${space}/${scenario}: expected ${expected}, got ${result.length}`,
-        )
-      }
       rows.push({
         space,
         scenario,
         durationMs,
         timerDelayMs,
         phases: measuredPhases,
-        count: result.length,
+        count: Array.isArray(result) ? result.length : undefined,
       })
+      return result
+    }
+    async function measure(space, scenario, query, expected) {
+      const result = await measureCall(space, scenario, () =>
+        call('GET', `/${space}/?search=${encodeURIComponent(query)}`))
+      assert.equal(result.length, expected, `${space}/${scenario}`)
     }
     for (const [space, key] of [
       ['snippets', 'code'],
@@ -148,8 +156,12 @@ app
       await measure(space, 'repeat-all', 'needle', count)
       const items = await call('GET', `/${space}/`)
       await measure(space, 'selective', items[0].name, 1)
-      await measure(space, 'no-hit', 'absentsearchsentinelxyz', 0)
-      const selected = await call('GET', `/${space}/${items[0].id}`)
+      await measure(space, 'no-hit', 'editedsearchsentinelxyz', 0)
+      const candidate = recordIndex === undefined
+        ? items[0]
+        : items.find(item => item.name === `bench-${key}-${String(recordIndex).padStart(6, '0')}`)
+      assert.ok(candidate, `Missing benchmark record ${key}/${recordIndex}`)
+      const selected = await call('GET', `/${space}/${candidate.id}`)
       const endpoint
         = key === 'code'
           ? `/${space}/${selected.id}/contents/${selected.contents[0].id}`
@@ -157,9 +169,11 @@ app
       const field = key === 'code' ? 'value' : 'content'
       const original
         = key === 'code' ? selected.contents[0].value : selected.content
+      editedContentChars[key] = original.length
       const sentinel = 'editedsearchsentinelxyz'
       try {
-        await call('PATCH', endpoint, { [field]: `${original}\n${sentinel}` })
+        await measureCall(space, 'edit', () =>
+          call('PATCH', endpoint, { [field]: `${original}\n${sentinel}` }))
         await measure(space, 'after-edit', sentinel, 1)
         await measure(space, 'after-edit-repeat', sentinel, 1)
       }
@@ -172,13 +186,29 @@ app
               content => content.id === selected.contents[0].id,
             )?.value
             : restored.content
-        assert.equal(restoredContent, original, `Failed to restore ${space}/${selected.id}`)
+        assert.equal(
+          restoredContent,
+          original,
+          `Failed to restore ${space}/${selected.id}`,
+        )
+        const restoredSearch = await call(
+          'GET',
+          `/${space}/?search=${sentinel}`,
+        )
+        assert.equal(
+          restoredSearch.length,
+          0,
+          `Stale search after restoring ${space}`,
+        )
       }
     }
     load(`${runtime}shared/stateWriter`).flushPendingStateWritesOrThrow()
     const result = {
       label: values.label,
       root,
+      buildRoot,
+      recordIndex,
+      editedContentChars,
       tokenModule,
       tokenSha256: crypto
         .createHash('sha256')

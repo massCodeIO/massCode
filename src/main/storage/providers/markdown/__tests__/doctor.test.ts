@@ -4,7 +4,11 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { applyVaultDoctor, previewVaultDoctor } from '../doctor'
+import {
+  applyVaultDoctor,
+  previewVaultDoctor,
+  previewVaultDoctorAsync,
+} from '../doctor'
 import { resetHttpRuntimeCache } from '../http/runtime'
 import { resetNotesRuntimeCache } from '../notes/runtime'
 import { waitForNotesAssetsMigrationForTests } from '../notes/runtime/assetsMigration'
@@ -135,6 +139,57 @@ afterEach(() => {
 })
 
 describe('vault doctor', () => {
+  it('keeps async preview findings identical while allowing event-loop work', async () => {
+    writeFile('code/Original.md', snippetSource(5, 'Original'))
+    writeFile('code/Copy.md', snippetSource(5, 'Copy'))
+    writeFile('notes/Invalid.md', '---\nid: [\n---\ntext')
+    writeFile(
+      'http/Conflict.md',
+      `${httpRequestSource(3, 'Conflict')}\n<<<<<<< ours\n`,
+    )
+    const expected = previewVaultDoctor()
+    let clock = 0
+    const now = vi
+      .spyOn(performance, 'now')
+      .mockImplementation(() => (clock += 10))
+    let serviced = false
+    setImmediate(() => {
+      serviced = true
+    })
+    try {
+      const actual = await previewVaultDoctorAsync()
+      expect(actual).toEqual(expected)
+      expect(actual.summary.conflicts).toBeGreaterThanOrEqual(3)
+      expect(serviced).toBe(true)
+    }
+    finally {
+      now.mockRestore()
+    }
+  })
+
+  it('discards an async preview if the active vault changes between slices', async () => {
+    writeFile('code/Original.md', snippetSource(5, 'Original'))
+    const originalPath = tempVaultPath
+    let clock = 0
+    const now = vi
+      .spyOn(performance, 'now')
+      .mockImplementation(() => (clock += 10))
+    setImmediate(() => {
+      tempVaultPath = `${originalPath}-other`
+    })
+    try {
+      const result = await previewVaultDoctorAsync({ spaces: ['code'] })
+      expect(result.notReady).toBe(true)
+      expect(result.items).toEqual([])
+      expect(result.conflictGroups).toEqual([])
+      expect(fs.existsSync(`${originalPath}-other`)).toBe(false)
+    }
+    finally {
+      tempVaultPath = originalPath
+      now.mockRestore()
+    }
+  })
+
   it('reports files missing from the state index as pending registrations', () => {
     // Файл с валидным frontmatter-id, но не зарегистрированный в state:
     // приложение его не отображает, doctor обязан это показать.

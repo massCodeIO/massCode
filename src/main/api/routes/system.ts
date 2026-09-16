@@ -2,7 +2,7 @@ import { Elysia } from 'elysia'
 import { resetRuntimeCache } from '../../storage/providers/markdown'
 import {
   applyVaultDoctor,
-  previewVaultDoctor,
+  previewVaultDoctorAsync,
 } from '../../storage/providers/markdown/doctor'
 import { getVaultPath } from '../../storage/providers/markdown/runtime'
 import { vaultDoctorDTO } from '../dto/vault-doctor'
@@ -41,8 +41,8 @@ app.post(
 
 app.post(
   '/vault-doctor/preview',
-  ({ body }) => {
-    return previewVaultDoctor(body)
+  async ({ body }) => {
+    return previewVaultDoctorAsync(body)
   },
   {
     body: 'vaultDoctorInput',

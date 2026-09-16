@@ -768,7 +768,7 @@ function applyDuplicateIdDecisions(
   return appliedItems
 }
 
-function scanCode(context: ScanContext): void {
+function* scanCode(context: ScanContext): Generator<void> {
   const paths = getPaths(getVaultPath())
   const records: EntityScanRecord[] = []
   const skipRootNames = new Set([META_DIR_NAME, 'inbox', TRASH_DIR_NAME])
@@ -795,7 +795,7 @@ function scanCode(context: ScanContext): void {
     snippetFiles.map(filePath => path.join(paths.vaultPath, filePath)),
   )
 
-  snippetFiles.forEach((filePath) => {
+  for (const filePath of snippetFiles) {
     const record = inspectMarkdownEntity({
       context,
       filePath,
@@ -806,7 +806,8 @@ function scanCode(context: ScanContext): void {
     if (record) {
       records.push(record)
     }
-  })
+    yield
+  }
 
   collectDuplicateIds(context, records)
   collectUnindexedFiles(context, 'code', records)
@@ -843,7 +844,7 @@ function readNotesFolderIdFromMetadata(metaPath: string): number | null {
   }
 }
 
-function scanNotes(context: ScanContext): void {
+function* scanNotes(context: ScanContext): Generator<void> {
   const paths = getNotesPaths(getVaultPath())
   const records: EntityScanRecord[] = []
   const diskFolderIds = new Set<number>()
@@ -883,7 +884,7 @@ function scanNotes(context: ScanContext): void {
     noteFiles.map(filePath => path.join(paths.notesRoot, filePath)),
   )
 
-  noteFiles.forEach((filePath) => {
+  for (const filePath of noteFiles) {
     const record = inspectMarkdownEntity({
       context,
       filePath,
@@ -894,7 +895,8 @@ function scanNotes(context: ScanContext): void {
     if (record) {
       records.push(record)
     }
-  })
+    yield
+  }
 
   collectDuplicateIds(context, records)
   collectUnindexedFiles(context, 'notes', records)
@@ -914,7 +916,7 @@ function scanNotes(context: ScanContext): void {
   }
 }
 
-function scanHttp(context: ScanContext): void {
+function* scanHttp(context: ScanContext): Generator<void> {
   const paths = getHttpPaths(getVaultPath())
   const records: EntityScanRecord[] = []
   const state = loadHttpState(paths)
@@ -924,7 +926,7 @@ function scanHttp(context: ScanContext): void {
     httpFiles.map(filePath => path.join(paths.httpRoot, filePath)),
   )
 
-  httpFiles.forEach((filePath) => {
+  for (const filePath of httpFiles) {
     const record = inspectMarkdownEntity({
       context,
       filePath,
@@ -935,7 +937,8 @@ function scanHttp(context: ScanContext): void {
     if (record) {
       records.push(record)
     }
-  })
+    yield
+  }
 
   const seenEnvironmentIds = new Set<number>()
   let hasEnvironmentRepair = false
@@ -1120,9 +1123,9 @@ function createContext(): ScanContext {
   }
 }
 
-export function previewVaultDoctor(
+function* scanVaultDoctor(
   input?: VaultDoctorInput,
-): VaultDoctorResponse {
+): Generator<void, VaultDoctorResponse> {
   const context = createContext()
   const spaces = normalizeSpaces(input)
 
@@ -1151,13 +1154,13 @@ export function previewVaultDoctor(
   }
 
   if (spaces.includes('code')) {
-    scanCode(context)
+    yield * scanCode(context)
   }
   if (spaces.includes('notes')) {
-    scanNotes(context)
+    yield * scanNotes(context)
   }
   if (spaces.includes('http')) {
-    scanHttp(context)
+    yield * scanHttp(context)
   }
   if (spaces.includes('math')) {
     scanMath(context)
@@ -1168,6 +1171,44 @@ export function previewVaultDoctor(
     items: context.items,
     summary: buildSummary(context),
     warnings: context.warnings,
+  }
+}
+
+// Apply keeps a synchronous scan so no mutation can interleave with repairs.
+export function previewVaultDoctor(
+  input?: VaultDoctorInput,
+): VaultDoctorResponse {
+  const scan = scanVaultDoctor(input)
+  let step = scan.next()
+  while (!step.done) step = scan.next()
+  return step.value
+}
+
+// Read-only previews yield between files; requestIdleCallback in renderer
+// alone cannot prevent a synchronous audit from blocking the main process.
+export async function previewVaultDoctorAsync(
+  input?: VaultDoctorInput,
+): Promise<VaultDoctorResponse> {
+  const vaultPath = getVaultPath()
+  const scan = scanVaultDoctor(input)
+  let sliceStarted = performance.now()
+  for (;;) {
+    const step = scan.next()
+    if (step.done)
+      return step.value
+    if (performance.now() - sliceStarted >= 8) {
+      await new Promise<void>(resolve => setImmediate(resolve))
+      if (getVaultPath() !== vaultPath) {
+        return {
+          conflictGroups: [],
+          items: [],
+          notReady: true,
+          summary: buildSummary(createContext()),
+          warnings: [],
+        }
+      }
+      sliceStarted = performance.now()
+    }
   }
 }
 

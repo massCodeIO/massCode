@@ -6,7 +6,7 @@ import { useApp, useDialog, useSnippets } from '@/composables'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
-import { getContiguousSelection, scrollToElement } from '../utils'
+import { getContiguousSelection } from '../utils'
 
 const { state } = useApp()
 
@@ -371,7 +371,6 @@ async function createFolderAndSelect(parentId?: number) {
   if (id) {
     await selectFolder(Number(id))
     clearSnippetsState()
-    scrollToElement(`[id="${id}"]`)
     renameFolderId.value = Number(id)
   }
 }
@@ -458,7 +457,6 @@ async function deleteSelectedFolders(fallbackFolderId?: number) {
 
     if (fallbackId) {
       await selectFolder(fallbackId)
-      scrollToElement(`[id="${fallbackId}"]`)
     }
     else {
       clearFolderSelection()

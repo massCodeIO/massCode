@@ -67,6 +67,7 @@ const {
   updateNoteFolder,
   getFolderByIdFromTree,
   selectedFolderIds,
+  renameFolderId,
   selectNoteFolder,
 } = useNoteFolders()
 const { getNotes, withNotesLoading, selectFirstNote, isRestoreStateBlocked }
@@ -108,6 +109,13 @@ const selectedIds = computed({
 })
 
 const editableId = ref<string | number | null>(null)
+
+watch(renameFolderId, (id) => {
+  if (id !== null) {
+    editableId.value = id
+    renameFolderId.value = null
+  }
+})
 
 const focusedId = computed({
   get: () => focusedFolderId.value as string | number | undefined,
@@ -283,6 +291,8 @@ useDeleteShortcut({
           <ContextMenu.ContextMenuTrigger as-child>
             <UiTree
               v-if="treeData.length"
+              virtual
+              :active-id="selectedIds.length === 1 ? selectedIds[0] : undefined"
               :model-value="treeData"
               :selected-ids="selectedIds"
               :editable-id="editableId"

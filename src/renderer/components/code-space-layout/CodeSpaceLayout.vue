@@ -3,7 +3,6 @@ import { initCodeSpace, useApp, useSnippets } from '@/composables'
 import { getCodePanels } from '@/composables/layoutModes'
 import { scrollToSnippetIndex } from '@/composables/useSnippetScroller'
 import { store } from '@/electron'
-import { scrollToElement } from '@/utils'
 
 const {
   codeLayoutMode,
@@ -51,8 +50,6 @@ async function initApp() {
   await initCodeSpace()
 
   nextTick(() => {
-    scrollToElement(`[id="${state.folderId}"]`)
-
     const index
       = displayedSnippets.value?.findIndex(s => s.id === state.snippetId) ?? -1
     if (index >= 0) {

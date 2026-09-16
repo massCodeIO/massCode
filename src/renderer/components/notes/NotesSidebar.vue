@@ -1,29 +1,11 @@
 <script setup lang="ts">
-import {
-  useImportDialog,
-  useNavigationHistory,
-  useNotesApp,
-} from '@/composables'
+import { useImportDialog, useNavigationHistory } from '@/composables'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
-import { scrollToElement } from '@/utils'
 import { LayoutGrid, Upload } from 'lucide-vue-next'
 
-const { notesState } = useNotesApp()
 const { isNavigatingHistory, recordNavigation } = useNavigationHistory()
 const { openImportDialog } = useImportDialog()
-
-function scrollToCurrentFolder() {
-  if (!notesState.folderId) {
-    return
-  }
-
-  scrollToElement(`[id="${notesState.folderId}"]`)
-}
-
-nextTick(() => {
-  scrollToCurrentFolder()
-})
 
 async function openDashboard() {
   if (router.currentRoute.value.name === RouterName.notesDashboard) {

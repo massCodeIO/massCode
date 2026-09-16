@@ -48,6 +48,7 @@ const {
   getFolderByIdFromTree,
   getFolders,
   selectedFolderIds,
+  renameFolderId,
 } = useFolders()
 const {
   state,
@@ -88,6 +89,13 @@ const selectedIds = computed({
 })
 
 const editableId = ref<string | number | null>(null)
+
+watch(renameFolderId, (id) => {
+  if (id !== null) {
+    editableId.value = id
+    renameFolderId.value = null
+  }
+})
 
 const focusedId = computed({
   get: () => focusedFolderId.value as string | number | undefined,
@@ -364,6 +372,8 @@ useDeleteShortcut({
     <ContextMenu.ContextMenu>
       <ContextMenu.ContextMenuTrigger as-child>
         <UiTree
+          virtual
+          :active-id="selectedIds.length === 1 ? selectedIds[0] : undefined"
           :model-value="treeData"
           :selected-ids="selectedIds"
           :editable-id="editableId"

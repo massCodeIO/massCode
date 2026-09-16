@@ -52,7 +52,6 @@ const { nodes, open, move, validateMove, refresh, loadError, busy }
   = useHttpNavigationTree()
 if (!props.trash)
   watch(requests, refresh, { immediate: true })
-const treeRef = ref<{ scrollToId: (id: string | number) => void }>()
 const editableId = ref<string | number | null>(null)
 const anchor = ref<string>()
 const contextNode = ref<HttpTreeNode>()
@@ -404,16 +403,6 @@ watch(
   },
   { immediate: true },
 )
-watch(
-  [activeId, treeData],
-  () => {
-    const id = activeId.value
-    if (id) {
-      nextTick(() => treeRef.value?.scrollToId(id))
-    }
-  },
-  { immediate: true },
-)
 </script>
 
 <template>
@@ -424,11 +413,11 @@ watch(
     <ContextMenu.ContextMenu>
       <ContextMenu.ContextMenuTrigger as-child>
         <UiTree
-          ref="treeRef"
           v-model:selected-ids="selectedIds"
           v-model:focused-id="focusedId"
           v-model:highlighted-ids="highlightedIds"
           v-model:editable-id="editableId"
+          :active-id="activeId"
           virtual
           :model-value="treeData"
           :get-validation-message="validation"

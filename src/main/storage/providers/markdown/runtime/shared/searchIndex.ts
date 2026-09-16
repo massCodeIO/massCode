@@ -33,10 +33,16 @@ export function buildSearchTokens(
 ): Set<string> {
   const tokens = new Set<string>()
   const words = new Set<string>()
+  // Newlines cannot belong to search words. Tokenize identical lines only
+  // once across all fragments, without changing substring verification.
+  const lines = new Set<string>()
   for (const part of typeof normalizedText === 'string'
     ? [normalizedText]
     : normalizedText) {
-    for (const word of splitSearchWords(part)) words.add(word)
+    for (const line of part.split('\n')) lines.add(line)
+  }
+  for (const line of lines) {
+    for (const word of splitSearchWords(line)) words.add(word)
   }
 
   for (const word of words) {

@@ -1,6 +1,7 @@
 const crypto = require('node:crypto')
 const fs = require('node:fs')
 const path = require('node:path')
+const { variedDocumentFor } = require('./varied-corpus.cjs')
 
 const markerName = '.masscode-benchmark.json'
 function validateRoot(value) {
@@ -14,7 +15,11 @@ function validateRoot(value) {
   }
   return { root, marker }
 }
-function documentFor(seed, index, space) {
+function documentFor(seed, index, space, corpus = 'repeated') {
+  if (corpus === 'varied')
+    return variedDocumentFor(seed, index, space)
+  if (corpus !== 'repeated')
+    throw new Error('Unknown benchmark corpus')
   const size = [512, 4096, 32768][index % 3]
   const token = crypto.createHash('sha256').update(`${seed}:${space}:${index}`).digest('hex')
   const line = space === 'notes' ? `- benchmark needle ${token}\n` : `// benchmark needle ${token}\n`

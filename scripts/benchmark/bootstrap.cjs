@@ -40,14 +40,14 @@ else if (mode === 'seed') {
     let contentBytes = 0
     for (let index = 0; index < marker.count * (marker.space === 'all' ? 3 : 1); index++) {
       const space = marker.space === 'all' ? ['code', 'notes', 'http'][index % 3] : marker.space === 'mixed' ? (index % 10 < 6 ? 'code' : index % 10 < 9 ? 'notes' : 'http') : marker.space
-      const { name, body } = documentFor(marker.seed, marker.space === 'all' ? Math.floor(index / 3) : index, space)
+      const { name, body, language } = documentFor(marker.seed, marker.space === 'all' ? Math.floor(index / 3) : index, space, marker.corpus)
       const route = { code: 'snippets', notes: 'notes', http: 'http-requests' }[space]
       const { id } = await call('POST', `/${route}/`, { name, ...(space === 'http' ? { method: 'POST', url: 'http://127.0.0.1:5191/echo' } : {}) })
       let expected
       if (space === 'code') {
         expected = [0, 1, 2].map(fragment => `${body}\nexport const fragment = ${fragment}\n`)
         for (const [fragment, value] of expected.entries())
-          await call('POST', `/snippets/${id}/contents`, { label: `Fragment ${fragment + 1}`, language: 'typescript', value })
+          await call('POST', `/snippets/${id}/contents`, { label: `Fragment ${fragment + 1}`, language: language || 'typescript', value })
       }
       else if (space === 'notes') {
         expected = `# ${name}\n\n${body}\n\n\x60\x60\x60typescript\nconst benchmark = true\n\x60\x60\x60\n`
@@ -72,7 +72,7 @@ else if (mode === 'seed') {
         throw new Error(`Seed count mismatch: ${space}`)
     }
     load('storage/providers/markdown/runtime/shared/stateWriter').flushPendingStateWritesOrThrow()
-    fs.writeFileSync(path.join(root, 'seed.json'), JSON.stringify({ counts, total: Object.values(counts).reduce((sum, count) => sum + count, 0), contentBytes, contentSha256: hash.digest('hex'), seed: marker.seed, note: 'Content deterministic; storage UUIDs and timestamps are not.' }, null, 2))
+    fs.writeFileSync(path.join(root, 'seed.json'), JSON.stringify({ counts, total: Object.values(counts).reduce((sum, count) => sum + count, 0), contentBytes, contentSha256: hash.digest('hex'), seed: marker.seed, corpus: marker.corpus || 'repeated', note: 'Content deterministic; storage UUIDs and timestamps are not.' }, null, 2))
     app.exit(0)
   }).catch((error) => {
     console.error(error)

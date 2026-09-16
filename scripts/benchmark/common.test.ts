@@ -12,6 +12,24 @@ afterEach(() =>
     .forEach(root => fs.rmSync(root, { recursive: true, force: true })),
 )
 describe('benchmark dataset and isolation', () => {
+  it('reproduces a varied corpus with Unicode, languages, and large documents', () => {
+    const samples = Array.from({ length: 6 }, (_, index) =>
+      documentFor('pilot', index, 'code', 'varied'))
+    expect(new Set(samples.map(sample => sample.language)).size).toBe(6)
+    expect(
+      samples.every(
+        sample =>
+          sample.body.includes('needle')
+          && sample.body.includes('Поиск 東京 😀'),
+      ),
+    ).toBe(true)
+    expect(samples[0].body.length).toBeGreaterThanOrEqual(131072)
+    expect(samples[0]).toEqual(documentFor('pilot', 0, 'code', 'varied'))
+    expect(samples[0]).not.toEqual(documentFor('other', 0, 'code', 'varied'))
+    expect(samples[5].body).toContain('```typescript')
+    expect(() => documentFor('pilot', 0, 'code', 'unknown')).toThrow()
+  })
+
   it('reproduces content and varies seed, size and space', () => {
     expect(documentFor('pilot', 1, 'code')).toEqual(
       documentFor('pilot', 1, 'code'),

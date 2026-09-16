@@ -13,6 +13,7 @@ const { positionals, values } = parseArgs({ allowPositionals: true, options: {
   count: { type: 'string', default: '1000' },
   space: { type: 'string', default: 'mixed' },
   seed: { type: 'string', default: 'masscode-pilot-1' },
+  corpus: { type: 'string', default: 'repeated' },
   port: { type: 'string', default: '54321' },
 } })
 function run(command, args, env = {}) {
@@ -27,6 +28,8 @@ function git(args) {
 }
 const command = positionals[0]
 if (command === 'prepare') {
+  if (!['repeated', 'varied'].includes(values.corpus))
+    throw new Error('Expected corpus repeated|varied')
   const count = Number(values.count)
   const port = Number(values.port)
   if (!Number.isSafeInteger(count) || count < 1 || count > 100000 || !['mixed', 'all', 'code', 'notes', 'http'].includes(values.space))
@@ -40,7 +43,7 @@ if (command === 'prepare') {
   const root = fs.realpathSync(output)
   fs.mkdirSync(path.join(root, 'profile/v2'), { recursive: true })
   fs.mkdirSync(path.join(root, 'vault'))
-  const marker = { version: 1, root, count, space: values.space, seed: values.seed, port }
+  const marker = { version: 1, root, count, space: values.space, seed: values.seed, corpus: values.corpus, port }
   fs.writeFileSync(path.join(root, markerName), JSON.stringify(marker, null, 2))
   fs.writeFileSync(path.join(root, 'profile/v2/preferences.json'), JSON.stringify({ storage: { rootPath: path.join(root, 'vault'), vaultPath: path.join(root, 'vault'), sqliteMigrated: true }, api: { port }, updates: { autoUpdate: false } }))
   const manifest = { ...marker, createdAt: new Date().toISOString(), commit: git(['rev-parse', 'HEAD']), dirty: git(['status', '--porcelain']), buildMode: 'production', packageVersion: require('../../package.json').version, node: process.versions.node, electron: require('electron/package.json').version, platform: os.platform(), release: os.release(), arch: os.arch(), cpu: os.cpus()[0]?.model, logicalCpus: os.cpus().length, memoryBytes: os.totalmem() }
@@ -102,5 +105,5 @@ else if (command === 'report') {
   console.log(report)
 }
 else {
-  throw new Error('Usage: cli.cjs prepare|start|report [--output NEW_DIRECTORY] [--count 1000] [--space mixed|all|code|notes|http] [--seed TEXT] [--port 54321]')
+  throw new Error('Usage: cli.cjs prepare|start|report [--output NEW_DIRECTORY] [--count 1000] [--space mixed|all|code|notes|http] [--seed TEXT] [--corpus repeated|varied] [--port 54321]')
 }

@@ -1,7 +1,9 @@
 import type { DropTarget, HttpTreeNode, MoveResult, TreeRow } from './types'
 
-export function ancestorIds(nodes: HttpTreeNode[], id: string): string[] {
-  const byId = new Map(nodes.map(node => [node.id, node]))
+function ancestorsFromMap(
+  byId: Map<string, HttpTreeNode>,
+  id: string,
+): string[] {
   const result: string[] = []
   let parent = byId.get(id)?.parentId
   while (parent && !result.includes(parent)) {
@@ -9,6 +11,10 @@ export function ancestorIds(nodes: HttpTreeNode[], id: string): string[] {
     parent = byId.get(parent)?.parentId
   }
   return result
+}
+
+export function ancestorIds(nodes: HttpTreeNode[], id: string): string[] {
+  return ancestorsFromMap(new Map(nodes.map(node => [node.id, node])), id)
 }
 
 export function visibleRows(
@@ -19,6 +25,7 @@ export function visibleRows(
   const search = query.trim().toLocaleLowerCase()
   const included = new Set<string>()
   if (search) {
+    const byId = new Map(nodes.map(node => [node.id, node]))
     for (const node of nodes) {
       if (
         `${node.name} ${node.method ?? ''} ${node.url ?? ''}`
@@ -26,17 +33,17 @@ export function visibleRows(
           .includes(search)
       ) {
         included.add(node.id)
-        ancestorIds(nodes, node.id).forEach(id => included.add(id))
+        ancestorsFromMap(byId, node.id).forEach(id => included.add(id))
       }
     }
   }
   const children = new Map<string | null, HttpTreeNode[]>()
   for (const node of nodes) {
     if (!search || included.has(node.id)) {
-      children.set(node.parentId, [
-        ...(children.get(node.parentId) ?? []),
-        node,
-      ])
+      const siblings = children.get(node.parentId)
+      if (siblings)
+        siblings.push(node)
+      else children.set(node.parentId, [node])
     }
   }
   const rows: TreeRow[] = []
@@ -78,10 +85,11 @@ export function selectedRoots(
   ids: string[],
 ): HttpTreeNode[] {
   const selection = new Set(ids)
+  const byId = new Map(nodes.map(node => [node.id, node]))
   return nodes.filter(
     node =>
       selection.has(node.id)
-      && !ancestorIds(nodes, node.id).some(id => selection.has(id)),
+      && !ancestorsFromMap(byId, node.id).some(id => selection.has(id)),
   )
 }
 

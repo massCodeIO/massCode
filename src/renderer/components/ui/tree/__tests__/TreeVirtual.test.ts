@@ -1,6 +1,9 @@
 import type { Ref } from 'vue'
 import type { TreeNode } from '../types'
+import fs from 'node:fs'
+import { compileFunction } from 'node:vm'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import * as Vue from 'vue'
 import {
   computed,
   createRenderer,
@@ -12,10 +15,21 @@ import {
   ssrContextKey,
   watch,
 } from 'vue'
+import { compileTemplate, parse } from 'vue/compiler-sfc'
 import { treeInjectionKey } from '../keys'
 
 Object.assign(globalThis, { computed, ref, watch, provide, nextTick })
 const cleanup: Array<() => void> = []
+const filename = new URL('../Tree.vue', import.meta.url).pathname
+const descriptor = parse(fs.readFileSync(filename, 'utf8')).descriptor
+const template = compileTemplate({
+  source: descriptor.template!.content,
+  filename,
+  id: 'tree-drop-regression',
+  compilerOptions: { mode: 'function' },
+})
+// Use the actual template listeners: a setup-only test misses capture cleanup.
+const renderTemplate = compileFunction(template.code, ['Vue'])(Vue)
 const outside = vi.hoisted(() => ({
   callback: undefined as undefined | (() => void),
 }))
@@ -66,6 +80,7 @@ async function setup(
     indent: 10,
   })
   let bindings: any
+  let rootVNode: Vue.VNode
   const events: unknown[][] = []
   const renderer = createRenderer({
     patchProp() {},
@@ -81,6 +96,7 @@ async function setup(
   })
   const app = renderer.createApp(
     defineComponent({
+      components: { TreeNodeComponent: { render: () => null } },
       setup() {
         bindings = Tree.setup!(
           props as never,
@@ -93,7 +109,15 @@ async function setup(
             },
           } as never,
         )
-        return () => null
+        const context = Vue.proxyRefs({
+          ...Vue.toRefs(props),
+          ...bindings,
+          $slots: {},
+        })
+        return () => {
+          rootVNode = renderTemplate(context, [])
+          return null
+        }
       },
     }),
   )
@@ -107,12 +131,44 @@ async function setup(
     injection,
     events,
     clickOutside: outside.callback!,
+    captureDrop: () => rootVNode.props?.onDropCapture?.(new Event('drop')),
   }
 }
 
 afterEach(() => cleanup.splice(0).forEach(dispose => dispose()))
 
 describe('virtual tree interaction state', () => {
+  it('keeps the offscreen source through drop capture until native dragend', async () => {
+    const { bindings, injection, props, events, captureDrop } = await setup()
+    bindings.scrollToId(9000)
+    injection.dragSourceChanged(9000)
+    await nextTick()
+    bindings.scrollToId(0)
+    await nextTick()
+    captureDrop()
+    // Native event delivery can drain microtasks between capture and target
+    // listeners. Removing the pinned source here also clears its drag store.
+    await new Promise<void>(resolve => queueMicrotask(resolve))
+    await nextTick()
+    expect(
+      bindings.renderedRows.value.some((row: any) => row.node.id === 9000),
+    ).toBe(true)
+    injection.dragNode([props.modelValue[9000]], props.modelValue[0], 'center')
+    expect(events).toContainEqual([
+      'dragNode',
+      {
+        nodes: [props.modelValue[9000]],
+        target: props.modelValue[0],
+        position: 'center',
+      },
+    ])
+    injection.dragSourceChanged(undefined)
+    await nextTick()
+    expect(
+      bindings.renderedRows.value.some((row: any) => row.node.id === 9000),
+    ).toBe(false)
+  })
+
   it('leaves another tree shared focus intact on refresh and inside/outside clicks', async () => {
     const focusedId = ref<number | undefined>(999)
     const live = await setup([{ id: 999, label: 'Live' }], focusedId)

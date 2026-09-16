@@ -184,13 +184,6 @@ function scrollToId(id: string | number) {
   )
   containerProps.onScroll()
 }
-function releaseDragSource() {
-  if (dragSourceId.value !== undefined) {
-    queueMicrotask(() => {
-      dragSourceId.value = undefined
-    })
-  }
-}
 function clearOffscreenInteraction() {
   if (!props.virtual)
     return
@@ -289,7 +282,6 @@ provide(treeInjectionKey, {
     v-if="modelValue.length"
     ref="treeRef"
     class="h-full min-h-0"
-    @drop.capture="releaseDragSource"
     @click.capture="clearOffscreenInteraction"
     @contextmenu.capture="clearOffscreenInteraction"
   >

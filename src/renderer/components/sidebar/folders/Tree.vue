@@ -19,6 +19,7 @@ import {
   getEntryNameConflictMessage,
   getEntryNameValidationMessage,
 } from '@/utils'
+import { api } from '@/services/api'
 import { Folder } from 'lucide-vue-next'
 import CustomIcons from './custom-icons/CustomIcons.vue'
 
@@ -45,6 +46,7 @@ const {
   deleteSelectedFolders,
   folders,
   updateFolder,
+  updateFolderDefaultLanguage,
   getFolderByIdFromTree,
   getFolders,
   selectedFolderIds,
@@ -115,6 +117,10 @@ const highlightedIds = computed({
 // --- Context menu state ---
 
 const contextNode = ref<Node | null>(null)
+const isDefaultLanguageDialogOpen = ref(false)
+const pendingDefaultLanguage = ref<string | null>(null)
+const hasDescendantFolders = ref(false)
+const hasSnippetContents = ref(false)
 
 const isContextMultiSelection = computed(() => {
   if (!contextNode.value)
@@ -304,10 +310,47 @@ function onRenameFolder() {
   }, 100)
 }
 
-function onSelectLanguage(language: string) {
+async function onSelectLanguage(language: string) {
   if (!contextNode.value)
     return
-  updateFolder(contextNode.value.id, { defaultLanguage: language })
+
+  const folderIds = flattenFolders([contextNode.value]).map(folder => folder.id)
+  hasDescendantFolders.value = folderIds.length > 1
+  const { data: snippets } = await api.snippets.getSnippets({})
+  hasSnippetContents.value = snippets.some(
+    snippet =>
+      !snippet.isDeleted
+      && snippet.folder
+      && folderIds.includes(snippet.folder.id)
+      && snippet.contents.length > 0,
+  )
+
+  if (!hasDescendantFolders.value && !hasSnippetContents.value) {
+    await updateFolderDefaultLanguage(contextNode.value.id, {
+      language,
+      updateDescendantFolders: false,
+      updateSnippetContents: false,
+    })
+    return
+  }
+
+  pendingDefaultLanguage.value = language
+  isDefaultLanguageDialogOpen.value = true
+}
+
+async function onConfirmDefaultLanguageUpdate(options: {
+  updateDescendantFolders: boolean
+  updateSnippetContents: boolean
+}) {
+  if (!contextNode.value || !pendingDefaultLanguage.value)
+    return
+
+  await updateFolderDefaultLanguage(contextNode.value.id, {
+    language: pendingDefaultLanguage.value,
+    ...options,
+  })
+  isDefaultLanguageDialogOpen.value = false
+  pendingDefaultLanguage.value = null
 }
 
 function scrollToSelectedLanguage(el: any, isSelected: boolean) {
@@ -369,6 +412,12 @@ useDeleteShortcut({
     data-code-folders-tree
     class="h-full min-h-0"
   >
+    <SidebarFoldersDefaultLanguageUpdateDialog
+      v-model:open="isDefaultLanguageDialogOpen"
+      :has-descendant-folders="hasDescendantFolders"
+      :has-snippet-contents="hasSnippetContents"
+      @confirm="onConfirmDefaultLanguageUpdate"
+    />
     <ContextMenu.ContextMenu>
       <ContextMenu.ContextMenuTrigger as-child>
         <UiTree
@@ -455,7 +504,7 @@ useDeleteShortcut({
                         contextNodeDefaultLanguage === language.value,
                       )
                   "
-                  :checked="contextNodeDefaultLanguage === language.value"
+                  :model-value="contextNodeDefaultLanguage === language.value"
                   @click="onSelectLanguage(language.value)"
                 >
                   {{ language.name }}

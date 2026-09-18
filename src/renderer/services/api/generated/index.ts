@@ -155,6 +155,12 @@ export interface FoldersAdd {
   parentId?: number | null;
 }
 
+export interface FoldersDefaultLanguageUpdate {
+  language: string;
+  updateDescendantFolders: boolean;
+  updateSnippetContents: boolean;
+}
+
 export type FoldersResponse = {
   id: number;
   name: string;
@@ -2159,6 +2165,26 @@ export class Api<
     ) =>
       this.request<void, any>({
         path: `/folders/${id}`,
+        method: "PATCH",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Folders
+     * @name PatchFoldersByIdDefaultLanguage
+     * @request PATCH:/folders/{id}/default-language
+     */
+    patchFoldersByIdDefaultLanguage: (
+      id: string,
+      data: FoldersDefaultLanguageUpdate,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/folders/${id}/default-language`,
         method: "PATCH",
         body: data,
         type: ContentType.Json,

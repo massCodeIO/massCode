@@ -149,6 +149,33 @@ app
       },
     },
   )
+  .patch(
+    '/:id/default-language',
+    ({ params, body, status }) => {
+      const storage = useStorage()
+      try {
+        const { notFound } = storage.folders.updateFolderDefaultLanguage(
+          Number(params.id),
+          body,
+        )
+
+        if (notFound) {
+          return status(404, { message: 'Folder not found' })
+        }
+
+        return { message: 'Folder language updated' }
+      }
+      catch (error) {
+        return mapStorageError(status, error)
+      }
+    },
+    {
+      body: 'foldersDefaultLanguageUpdate',
+      detail: {
+        tags: ['Folders'],
+      },
+    },
+  )
   // Удаление папки
   .delete(
     '/:id',

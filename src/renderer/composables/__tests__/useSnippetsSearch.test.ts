@@ -34,6 +34,8 @@ async function setup(options: SetupOptions = {}) {
     tagId: options.tagId,
   })
 
+  const stateSnapshots = { beforeSearch: {} }
+
   const getSnippets = vi.fn(async () => ({
     data: [{ contents: [], id: 1, name: 'Search result', tags: [] }],
   }))
@@ -108,8 +110,13 @@ async function setup(options: SetupOptions = {}) {
     useApp: () => ({
       focusSnippetNameInput: vi.fn(),
       isFocusedSearch: ref(false),
-      restoreStateSnapshot: vi.fn(),
-      saveStateSnapshot: vi.fn(),
+      restoreStateSnapshot: vi.fn(() =>
+        Object.assign(state, stateSnapshots.beforeSearch),
+      ),
+      saveStateSnapshot: vi.fn(() => {
+        stateSnapshots.beforeSearch = { ...state }
+      }),
+      stateSnapshots,
       state,
     }),
     useDialog: () => ({
@@ -142,6 +149,32 @@ beforeEach(() => {
 })
 
 describe('useSnippets search', () => {
+  it('discards the previous vault search and selection snapshot on reset', async () => {
+    const { snippets, state, getSnippets } = await setup({
+      folderId: 7,
+      snippetId: 1,
+    })
+    snippets.searchQuery.value = 'old vault'
+    await snippets.search()
+
+    snippets.resetSnippetSearchState()
+    Object.assign(state, { folderId: 20, snippetId: 2 })
+    snippets.clearSearch(true)
+
+    expect(snippets.searchQuery.value).toBe('')
+    expect(snippets.isSearch.value).toBe(false)
+    expect(snippets.searchSelectedIndex.value).toBe(-1)
+    expect(state.folderId).toBe(20)
+    expect(state.snippetId).toBe(2)
+    await snippets.getSnippets()
+    expect(getSnippets).toHaveBeenLastCalledWith({ folderId: 20 })
+
+    snippets.searchQuery.value = 'new vault'
+    await snippets.search()
+    snippets.clearSearch(true)
+    expect(state.snippetId).toBe(2)
+  })
+
   it('combines search with the selected tag context', async () => {
     const context = await setup({ tagId: 12 })
 

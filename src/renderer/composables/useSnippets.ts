@@ -43,6 +43,7 @@ const {
   state,
   saveStateSnapshot,
   restoreStateSnapshot,
+  stateSnapshots,
   focusSnippetNameInput,
 } = useApp()
 const { folders, getFolderByIdFromTree } = useFolders()
@@ -886,6 +887,13 @@ function clearSearch(restoreState = false) {
   searchSelectedIndex.value = -1
 }
 
+function resetSnippetSearchState() {
+  clearSearch()
+  snippetsBySearch.value = undefined
+  stateSnapshots.beforeSearch = {}
+  isRestoreStateBlocked.value = false
+}
+
 export function useSnippets() {
   return {
     addTagToSnippet,
@@ -914,6 +922,7 @@ export function useSnippets() {
     createSnippetAndSelect,
     refreshSelectedSnippet,
     retrySelectedSnippet,
+    resetSnippetSearchState,
     search,
     searchQuery,
     searchSelectedIndex,

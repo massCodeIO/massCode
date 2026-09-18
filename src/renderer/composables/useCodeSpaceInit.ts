@@ -1,6 +1,7 @@
 import { useApp } from './useApp'
 import { normalizeCodeSelectionState } from './useCodeSelectionNormalization'
 import { useFolders } from './useFolders'
+import { useSnippets } from './useSnippets'
 import { useTags } from './useTags'
 
 const { isCodeSpaceInitialized } = useApp()
@@ -8,6 +9,7 @@ const { getFolders } = useFolders()
 const { getTags } = useTags()
 
 export function resetCodeSpaceInitialization(): void {
+  useSnippets().resetSnippetSearchState()
   isCodeSpaceInitialized.value = false
 }
 

@@ -25,11 +25,13 @@ import {
   syncFolderMetadataFiles,
   throwStorageError,
   validateEntryName,
+  writeSnippetToFile,
 } from '../runtime'
 import {
   getFileAvailability,
   markAppWrittenFileAsLocal,
 } from '../runtime/shared/cloudFiles'
+import { assertEntityFileWritable } from '../runtime/shared/cloudGuards'
 import {
   applyFolderParentAndOrder,
   assertFolderMoveTargetValid,
@@ -101,6 +103,63 @@ export function createFoldersStorage(): FoldersStorage {
       saveState(paths, state)
 
       return { id }
+    },
+    updateFolderDefaultLanguage: (id, input): FolderUpdateResult => {
+      const paths = getPaths(getVaultPath())
+      const { state, snippets } = getRuntimeCache(paths)
+      const folder = findFolderById(state, id)
+
+      if (!folder) {
+        return { invalidInput: false, notFound: true }
+      }
+
+      const descendantFolderIds = collectDescendantIds(state.folders, id)
+      const contentFolderIds = new Set(descendantFolderIds)
+      contentFolderIds.add(id)
+      const snippetsToUpdate = input.updateSnippetContents
+        ? snippets.filter(
+            snippet =>
+              snippet.isDeleted !== 1
+              && snippet.folderId !== null
+              && contentFolderIds.has(snippet.folderId),
+          )
+        : []
+
+      snippetsToUpdate.forEach((snippet) => {
+        assertEntityFileWritable(
+          path.join(paths.vaultPath, snippet.filePath),
+          snippet,
+        )
+      })
+
+      const now = Date.now()
+      folder.defaultLanguage = input.language || folder.defaultLanguage
+      folder.updatedAt = now
+
+      if (input.updateDescendantFolders) {
+        state.folders.forEach((childFolder) => {
+          if (!descendantFolderIds.has(childFolder.id)) {
+            return
+          }
+
+          childFolder.defaultLanguage
+            = input.language || childFolder.defaultLanguage
+          childFolder.updatedAt = now
+        })
+      }
+
+      snippetsToUpdate.forEach((snippet) => {
+        snippet.contents.forEach((content) => {
+          content.language = input.language || content.language
+        })
+        snippet.updatedAt = now
+        writeSnippetToFile(paths, snippet)
+      })
+
+      syncFolderMetadataFiles(paths, state)
+      saveState(paths, state)
+
+      return { invalidInput: false, notFound: false }
     },
     updateFolder: (id, input): FolderUpdateResult => {
       const paths = getPaths(getVaultPath())

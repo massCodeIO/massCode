@@ -59,11 +59,21 @@ export interface FolderUpdateResult {
   notFound: boolean
 }
 
+export interface FolderDefaultLanguageUpdateInput {
+  language: string
+  updateDescendantFolders: boolean
+  updateSnippetContents: boolean
+}
+
 export interface FoldersStorage {
   createFolder: (input: FolderCreateInput) => { id: number }
   deleteFolder: (id: number) => { deleted: boolean }
   getFolders: () => FolderRecord[]
   getFoldersTree: () => FolderTreeRecord[]
+  updateFolderDefaultLanguage: (
+    id: number,
+    input: FolderDefaultLanguageUpdateInput,
+  ) => FolderUpdateResult
   updateFolder: (id: number, input: FolderUpdateInput) => FolderUpdateResult
 }
 

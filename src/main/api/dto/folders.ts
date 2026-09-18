@@ -14,6 +14,12 @@ const foldersUpdate = t.Object({
   orderIndex: t.Optional(t.Number()),
 })
 
+const foldersDefaultLanguageUpdate = t.Object({
+  language: t.String(),
+  updateDescendantFolders: t.Boolean(),
+  updateSnippetContents: t.Boolean(),
+})
+
 const foldersItem = t.Object({
   id: t.Number(),
   name: t.String(),
@@ -38,6 +44,7 @@ const foldersTreeResponse = t.Array(foldersItemWithChildren)
 
 export const foldersDTO = new Elysia().model({
   foldersAdd,
+  foldersDefaultLanguageUpdate,
   foldersResponse,
   foldersUpdate,
   foldersTreeResponse,

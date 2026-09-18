@@ -1197,6 +1197,11 @@
   },
   "folder": {
     "untitled": "Untitled folder",
+    "defaultLanguageDialog": {
+      "title": "Update nested content",
+      "descendantFolders": "Update the default language for all nested folders",
+      "snippetContents": "Update the language for all nested snippet contents"
+    },
     "iconPicker": {
       "searchPlaceholder": "Search icons...",
       "emojiSearchPlaceholder": "Search emoji...",
@@ -1242,6 +1247,7 @@
     "back": "Back",
     "cancel": "Cancel",
     "confirm": "Confirm",
+    "yes": "Yes",
     "copy": "Copy",
     "fit": "Fit",
     "generate": "Generate",

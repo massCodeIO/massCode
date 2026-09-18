@@ -1200,6 +1200,11 @@
   },
   "folder": {
     "untitled": "Папка без названия",
+    "defaultLanguageDialog": {
+      "title": "Обновить вложенные файлы",
+      "descendantFolders": "Обновить язык по умолчанию для всех вложенных папок",
+      "snippetContents": "Обновить язык для всех вложенных сниппетов"
+    },
     "iconPicker": {
       "searchPlaceholder": "Поиск иконок...",
       "emojiSearchPlaceholder": "Поиск эмодзи...",
@@ -1245,6 +1250,7 @@
     "back": "Назад",
     "cancel": "Отмена",
     "confirm": "Подтвердить",
+    "yes": "Да",
     "copy": "Копировать",
     "fit": "По размеру",
     "generate": "Сгенерировать",

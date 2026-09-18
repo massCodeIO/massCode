@@ -14,6 +14,7 @@ import {
 import { ensureStateFile } from '../../runtime/state'
 import { resetRuntimeCache } from '../../runtime/sync'
 import { createFoldersStorage } from '../folders'
+import { createSnippetsStorage } from '../snippets'
 
 let tempVaultPath = ''
 
@@ -136,6 +137,39 @@ describe('code folders storage validations', () => {
     const result = storage.updateFolder(id, {})
 
     expect(result).toEqual({ invalidInput: true, notFound: false })
+  })
+
+  it('updates the selected folder and opted-in nested content language', () => {
+    const folders = createFoldersStorage()
+    const snippets = createSnippetsStorage()
+    const { id: parentId } = folders.createFolder({ name: 'Parent' })
+    const { id: childId } = folders.createFolder({ name: 'Child', parentId })
+    const parentSnippet = snippets.createSnippet({
+      name: 'Parent snippet',
+      folderId: parentId,
+    })
+    const childSnippet = snippets.createSnippet({
+      name: 'Child snippet',
+      folderId: childId,
+    })
+    snippets.createSnippetContent(parentSnippet.id, {
+      label: 'Fragment 1', language: 'plain_text', value: '',
+    })
+    snippets.createSnippetContent(childSnippet.id, {
+      label: 'Fragment 1', language: 'plain_text', value: '',
+    })
+
+    const result = folders.updateFolderDefaultLanguage(parentId, {
+      language: 'typescript',
+      updateDescendantFolders: true,
+      updateSnippetContents: true,
+    })
+
+    expect(result).toEqual({ invalidInput: false, notFound: false })
+    expect(folders.getFolders().find(folder => folder.id === parentId)?.defaultLanguage).toBe('typescript')
+    expect(folders.getFolders().find(folder => folder.id === childId)?.defaultLanguage).toBe('typescript')
+    expect(snippets.getSnippetById(parentSnippet.id)?.contents[0]?.language).toBe('typescript')
+    expect(snippets.getSnippetById(childSnippet.id)?.contents[0]?.language).toBe('typescript')
   })
 
   it('moving folder into sibling level with same name auto-resolves unique name', () => {

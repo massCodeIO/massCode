@@ -391,6 +391,30 @@ async function updateFolder(folderId: number, data: FoldersUpdate) {
   }
 }
 
+async function updateFolderDefaultLanguage(
+  folderId: number,
+  data: {
+    language: string
+    updateDescendantFolders: boolean
+    updateSnippetContents: boolean
+  },
+) {
+  try {
+    markPersistedStorageMutation()
+    await api.folders.patchFoldersByIdDefaultLanguage(String(folderId), data)
+    await getFolders(false)
+
+    const { getSnippets, refreshSelectedSnippet } = useSnippets()
+    if (folderId === state.folderId) {
+      await getSnippets({ folderId })
+    }
+    await refreshSelectedSnippet()
+  }
+  catch (error) {
+    console.error(error)
+  }
+}
+
 async function deleteFolder(folderId: number, shouldRefresh = true) {
   try {
     markPersistedStorageMutation()
@@ -513,5 +537,6 @@ export function useFolders() {
     setFolderSelection,
     selectFolder,
     updateFolder,
+    updateFolderDefaultLanguage,
   }
 }

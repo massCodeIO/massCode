@@ -21,34 +21,34 @@
       "label": "Notes",
       "tooltip": "Notes",
       "title": "Notes",
-      "allNotes": "All Notes"
+      "allNotes": "Toutes les notes"
     },
     "math": {
       "label": "Math",
-      "tooltip": "Math notebook",
-      "title": "Math Notebook",
-      "sheetList": "Sheet List",
-      "newSheet": "New Sheet",
-      "untitled": "Untitled",
-      "currencyUnavailable": "Currency rates service unavailable"
+      "tooltip": "Cahier de maths",
+      "title": "Cahier de maths",
+      "sheetList": "Liste des feuilles",
+      "newSheet": "Nouvelle feuille",
+      "untitled": "Sans nom",
+      "currencyUnavailable": "Le service de taux de change n'est pas disponible"
     },
     "tools": {
-      "label": "Tools",
-      "tooltip": "Developer tools"
+      "label": "Outils",
+      "tooltip": "Outils développeur"
     }
   },
   "snippet": {
-    "untitled": "Snippet sans titre",
-    "selectedMultiple": "{{count}} snippets sélectionnés",
-    "noSelected": "Aucun snippet sélectionné"
+    "untitled": "Extrait sans titre",
+    "selectedMultiple": "{{count}} extraits sélectionnés",
+    "noSelected": "Aucun extrait sélectionné"
   },
   "notes": {
-    "untitled": "Untitled note",
+    "untitled": "Note sans titre",
     "plural": "Notes",
-    "words": "Words",
-    "symbols": "Symbols",
-    "selectedMultiple": "{{count}} Notes Selected",
-    "noSelected": "No Note Selected"
+    "words": "Mots",
+    "symbols": "Symboles",
+    "selectedMultiple": "{{count}} notes sélectionnées",
+    "noSelected": "Aucune note sélectionnée"
   },
   "folder": {
     "untitled": "Dossier sans titre"
@@ -70,7 +70,7 @@
     "toggleDarkMode": "Basculer le mode sombre",
     "background": "Arrière-plan",
     "goToDownload": "Aller au téléchargement",
-    "goToSettings": "Go to Settings",
+    "goToSettings": "Allez aux préférences",
     "refreshPreview": "Actualiser l'aperçu",
     "laserPointer": "Pointeur laser",
     "fullscreen": "Plein écran",
@@ -89,18 +89,18 @@
     "hide": "Masquer",
     "showSidebar": "Afficher la barre latérale",
     "hideSidebar": "Masquer la barre latérale",
-    "showSidebarAndList": "Show Sidebar and List",
-    "hideSidebarAndList": "Hide Sidebar and List",
+    "showSidebarAndList": "Afficher la barre latérale et la liste",
+    "hideSidebarAndList": "Masquer la barre latérale et la liste",
     "new": {
       "storage": "Nouveau stockage",
       "folder": "Nouveau dossier",
-      "snippet": "Nouveau snippet",
+      "snippet": "Nouvel extrait",
       "fragment": "Nouveau fragment",
-      "note": "New Note"
+      "note": "Nouvelle note"
     },
     "add": {
       "description": "Ajouter une description",
-      "tag": "Ajouter un tag",
+      "tag": "Ajouter une étiquette",
       "toFavorites": "Ajouter aux favoris"
     },
     "open": {
@@ -114,12 +114,12 @@
       "fromFavorites": "Retirer des favoris"
     },
     "reveal": {
-      "inFinder": "Reveal in Finder",
-      "inFileManager": "Show in File Manager"
+      "inFinder": "Afficher dans l'explorateur",
+      "inFileManager": "Afficher dans le gestionnaire de fichiers"
     },
     "reload": {
       "storage": "Recharger le stockage",
-      "app": "Reload massCode"
+      "app": "Recharger massCode"
     },
     "delete": {
       "common": "Supprimer",
@@ -128,7 +128,7 @@
       "trash": "Vider la corbeille"
     },
     "migrate": {
-      "fromSnippetsLab": "Depuis SnippetsLab",
+      "fromSnippetsLab": "Depuis le laboratoire d'extrait",
       "fromV3": "Depuis massCode v3"
     },
     "export": {
@@ -138,18 +138,18 @@
       "snippetLink": "Copier le lien du snippet"
     },
     "select": {
-      "directory": "Select Directory"
+      "directory": "choisissez un répertoire"
     }
   },
   "placeholder": {
-    "emptyTagList": "Ajoutez des tags aux snippets pour les voir ici",
-    "emptyNotesTagList": "Add tags to notes to see them here",
+    "emptyTagList": "Ajoutez des étiquettes aux extraits pour les voir ici",
+    "emptyNotesTagList": "Ajoutez des étiquettes à vos notes pour les voir ici",
     "emptyFoldersList": "Aucun dossier",
-    "emptySnippetsList": "Aucun snippet",
-    "emptyNotesList": "No Notes",
-    "searchNotes": "Search notes...",
-    "emptySheetList": "No Sheets",
+    "emptySnippetsList": "Aucun extrait",
+    "emptyNotesList": "Aucune note",
+    "searchNotes": "Rechercher dans les notes...",
+    "emptySheetList": "Aucune feuille",
     "search": "Rechercher",
-    "addTag": "Ajouter un tag"
+    "addTag": "Ajouter une étiquette"
   }
 }

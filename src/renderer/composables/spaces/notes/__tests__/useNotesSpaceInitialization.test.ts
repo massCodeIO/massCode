@@ -39,6 +39,7 @@ async function setup(options: SetupOptions = {}) {
   })
   const hideNotesViewModes = vi.fn()
   const showAllNotesPanels = vi.fn()
+  const resetNoteSearchState = vi.fn()
 
   vi.doMock('../useNotesApp', () => ({
     useNotesApp: () => ({
@@ -62,7 +63,7 @@ async function setup(options: SetupOptions = {}) {
     normalizeNotesSelectionState,
   }))
   vi.doMock('../useNoteSearch', () => ({
-    useNoteSearch: () => ({ displayedNotes }),
+    useNoteSearch: () => ({ displayedNotes, resetNoteSearchState }),
   }))
 
   const { useNotesSpaceInitialization } = await import(
@@ -71,6 +72,7 @@ async function setup(options: SetupOptions = {}) {
 
   return {
     callOrder,
+    resetNoteSearchState,
     getNoteFolders,
     getNotes,
     getNoteTags,
@@ -190,6 +192,7 @@ describe('useNotesSpaceInitialization', () => {
     )
 
     resetNotesSpaceInitialization()
+    expect(context.resetNoteSearchState).toHaveBeenCalledTimes(1)
     await context.initNotesSpace()
 
     expect(context.getNoteFolders).toHaveBeenCalledTimes(1)

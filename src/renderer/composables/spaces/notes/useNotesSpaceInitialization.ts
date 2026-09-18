@@ -14,10 +14,11 @@ const {
 } = useNotesApp()
 const { getNoteFolders } = useNoteFolders()
 const { selectFirstNote } = useNotes()
-const { displayedNotes } = useNoteSearch()
+const { displayedNotes, resetNoteSearchState } = useNoteSearch()
 const { getNoteTags } = useNoteTags()
 
 export function resetNotesSpaceInitialization() {
+  resetNoteSearchState()
   isNotesSpaceInitialized.value = false
 }
 

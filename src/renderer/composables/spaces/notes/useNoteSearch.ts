@@ -7,7 +7,8 @@ import {
 } from './useNotes'
 import { useNotesApp } from './useNotesApp'
 
-const { saveNotesStateSnapshot, restoreNotesStateSnapshot } = useNotesApp()
+const { saveNotesStateSnapshot, restoreNotesStateSnapshot, stateSnapshots }
+  = useNotesApp()
 
 // --- Module-level state ---
 
@@ -73,11 +74,19 @@ function clearSearch(restoreState = false) {
   searchSelectedIndex.value = -1
 }
 
+function resetNoteSearchState() {
+  clearSearch()
+  notesBySearch.value = undefined
+  stateSnapshots.beforeSearch = {}
+  isRestoreStateBlocked.value = false
+}
+
 export function useNoteSearch() {
   return {
     clearSearch,
     displayedNotes,
     isSearch,
+    resetNoteSearchState,
     search,
     searchQuery,
     searchSelectedIndex,

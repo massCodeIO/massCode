@@ -112,6 +112,7 @@ export function useHttpApp() {
     isHttpListHidden,
     restoreHttpStateSnapshot,
     saveHttpStateSnapshot,
+    stateSnapshots,
     setHttpLayoutMode,
     focusRequestNameInput,
     toggleHttpSidebar,

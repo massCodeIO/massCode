@@ -10,8 +10,12 @@ import {
   useHttpRequests,
 } from './useHttpRequests'
 
-const { httpState, saveHttpStateSnapshot, restoreHttpStateSnapshot }
-  = useHttpApp()
+const {
+  httpState,
+  saveHttpStateSnapshot,
+  restoreHttpStateSnapshot,
+  stateSnapshots,
+} = useHttpApp()
 
 // --- Module-level state ---
 
@@ -101,6 +105,8 @@ function resetHttpSearchState() {
   searchQuery.value = ''
   isSearch.value = false
   searchSelectedIndex.value = -1
+  stateSnapshots.beforeSearch = {}
+  isRestoreStateBlocked.value = false
 }
 
 export function useHttpSearch() {

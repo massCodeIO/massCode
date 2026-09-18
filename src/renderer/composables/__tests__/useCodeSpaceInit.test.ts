@@ -7,6 +7,7 @@ async function setup() {
   vi.resetModules()
 
   const callOrder: string[] = []
+  const resetSnippetSearchState = vi.fn()
   const isCodeSpaceInitialized = ref(false)
   const getFolders = vi.fn(async () => {
     callOrder.push('getFolders')
@@ -42,6 +43,7 @@ async function setup() {
   vi.doMock('../useSnippets', () => ({
     useSnippets: () => ({
       getSnippets,
+      resetSnippetSearchState,
     }),
   }))
 
@@ -55,6 +57,7 @@ async function setup() {
 
   return {
     callOrder,
+    resetSnippetSearchState,
     initCodeSpace,
     isCodeSpaceInitialized,
     normalizeCodeSelectionState,
@@ -72,6 +75,7 @@ describe('initCodeSpace', () => {
     context.isCodeSpaceInitialized.value = true
 
     context.resetCodeSpaceInitialization()
+    expect(context.resetSnippetSearchState).toHaveBeenCalledTimes(1)
 
     expect(context.isCodeSpaceInitialized.value).toBe(false)
 

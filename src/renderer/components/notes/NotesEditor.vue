@@ -384,6 +384,7 @@ function createEditorState(doc: string): EditorState {
           if (
             revision === contentSearchRevision
             && view?.state === expectedState
+            && !update.view.hasFocus
           ) {
             refreshVisibleSearch(false)
           }

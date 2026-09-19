@@ -3,6 +3,7 @@ import HomeClosing from './home/HomeClosing.vue'
 import HomeDeveloperTools from './home/HomeDeveloperTools.vue'
 import HomeHero from './home/HomeHero.vue'
 import HomeLocal from './home/HomeLocal.vue'
+import HomeMcp from './home/HomeMcp.vue'
 import HomeShowcase from './home/HomeShowcase.vue'
 import HomeSponsors from './home/HomeSponsors.vue'
 import HomeWorkflows from './home/HomeWorkflows.vue'
@@ -13,6 +14,7 @@ import HomeWorkflows from './home/HomeWorkflows.vue'
     <HomeHero />
     <HomeShowcase />
     <HomeWorkflows />
+    <HomeMcp />
     <HomeDeveloperTools />
     <HomeLocal />
     <HomeClosing />

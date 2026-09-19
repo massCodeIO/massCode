@@ -318,7 +318,7 @@
       "label": "MCP",
       "enabled": {
         "label": "Enable MCP access",
-        "description": "Allow agents with your API token to search and read all snippets and notes, and create new ones. Requires API integrations to be enabled."
+        "description": "Allow agents with your API token to read and create snippets, notes, and HTTP requests, and send saved requests using the active environment. Requires API integrations to be enabled."
       },
       "endpoint": {
         "label": "Server URL",

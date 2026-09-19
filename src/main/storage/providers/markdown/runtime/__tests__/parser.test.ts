@@ -70,8 +70,25 @@ describe('parser snippet content roundtrip', () => {
       )
       expect(result.legacyRecovery).toBe('none')
       expect(result.fragments).toEqual(
-        snippet.contents.map(({ id: _id, ...fragment }) => fragment),
+        snippet.contents.map(({ id: _id, ...fragment }) => ({
+          ...fragment,
+          value: fragment.value?.replace(/\n/g, newline),
+        })),
       )
+    },
+  )
+
+  it.each(['a\r\nb\r\n', 'a\rb\r', '\r', 'a\r\nb\nc\rd\r', 'a\r\n```\r\nb\r'])(
+    'preserves exact content separators %j',
+    (value) => {
+      const { body, frontmatter } = splitFrontmatter(
+        serializeSnippet(createSnippet(value)),
+      )
+      expect(parseBodyFragments(body)[0].value).toBe(value)
+      expect(
+        parseBodyFragmentsWithMetadata(body, frontmatter.contents || [])
+          .fragments[0].value,
+      ).toBe(value)
     },
   )
 
@@ -87,6 +104,15 @@ describe('parser snippet content roundtrip', () => {
 })
 
 describe('legacy snippet fence recovery', () => {
+  it('preserves CRLF content when recovering legacy inner fences', () => {
+    const value = 'Before\r\n```\r\ninner\r\n```\r\nAfter\r\n'
+    const body = `## Fragment: Fragment 1\r\n\`\`\`markdown\r\n${value}\r\n\`\`\`\r\n`
+    const result = parseBodyFragmentsWithMetadata(body, [
+      { id: 1, label: 'Fragment 1', language: 'markdown' },
+    ])
+    expect(result.legacyRecovery).toBe('recovered')
+    expect(result.fragments[0].value).toBe(value)
+  })
   it('recovers a legacy triple-backtick wrapper with inner fenced blocks', () => {
     const body = [
       '## Fragment: Fragment 1',

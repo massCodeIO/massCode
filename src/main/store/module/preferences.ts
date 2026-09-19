@@ -68,6 +68,7 @@ const PREFERENCES_DEFAULTS: PreferencesStore = {
   },
   api: {
     port: 4321,
+    mcp: { enabled: false },
     integrations: API_INTEGRATIONS_DEFAULTS,
   },
   storage: {
@@ -341,6 +342,7 @@ function sanitizePreferences(value: unknown): PreferencesStore {
         'port',
         readNumber(source, 'apiPort', PREFERENCES_DEFAULTS.api.port),
       ),
+      mcp: { enabled: asRecord(apiSource.mcp).enabled === true },
       integrations: sanitizeApiIntegrationsSettings(apiSource.integrations),
     },
     storage: {

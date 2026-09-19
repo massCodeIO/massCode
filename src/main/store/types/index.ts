@@ -277,6 +277,9 @@ export interface PreferencesStore {
   }
   api: {
     port: number
+    mcp: {
+      enabled: boolean
+    }
     integrations: {
       enabled: boolean
       tokenHash: string | null

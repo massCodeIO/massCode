@@ -112,6 +112,21 @@ afterEach(() => {
 })
 
 describe('preferences store sanitization', () => {
+  it.each([undefined, null, 'true', 1, false, true])(
+    'enables MCP only for explicit true (%s)',
+    async (enabled) => {
+      persistedStateByName.preferences = { api: { mcp: { enabled } } }
+      const { default: preferences } = await import('../module/preferences')
+      expect(preferences.get('api.mcp.enabled')).toBe(enabled === true)
+    },
+  )
+
+  it('defaults MCP to disabled for existing preferences', async () => {
+    persistedStateByName.preferences = { api: { port: 4321 } }
+    const { default: preferences } = await import('../module/preferences')
+    expect(preferences.get('api.mcp.enabled')).toBe(false)
+  })
+
   it.each(['locale', 'dd.MM.yyyy', 'MM/dd/yyyy', 'dd/MM/yyyy', 'yyyy-MM-dd'])(
     'keeps saved date format %s',
     async (dateFormat) => {

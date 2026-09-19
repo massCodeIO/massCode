@@ -1,5 +1,6 @@
 import { swagger } from '@elysiajs/swagger'
 import { Elysia } from 'elysia'
+import { createMcpRoute } from './mcp/route'
 import captures from './routes/captures'
 import folders from './routes/folders'
 import httpEnvironments from './routes/http-environments'
@@ -72,6 +73,10 @@ export function createApiApp(
           return { message: 'Forbidden request host' }
         }
 
+        if (url.pathname === '/mcp' || url.pathname === '/mcp/') {
+          return
+        }
+
         if (isCaptureRequest(request.method, url.pathname)) {
           if (request.method === 'OPTIONS') {
             return new Response(null, {
@@ -109,6 +114,7 @@ export function createApiApp(
         },
       }),
     )
+    .use(createMcpRoute(port, version))
     .use(captures)
     .options('/captures', () => '', { detail: { hide: true } })
     .options('/captures/', () => '', { detail: { hide: true } })

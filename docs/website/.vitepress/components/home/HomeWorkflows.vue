@@ -2,6 +2,7 @@
 import { ArrowRight } from 'lucide-vue-next'
 import { withBase } from 'vitepress'
 import HomeCard from './HomeCard.vue'
+import HomeCommandPalette from './HomeCommandPalette.vue'
 
 const workflows = [
   {
@@ -84,6 +85,7 @@ const workflows = [
         >
       </div>
     </HomeCard>
+    <HomeCommandPalette />
   </section>
 </template>
 
@@ -118,7 +120,6 @@ const workflows = [
 h3 {
   margin-top: 14px;
   font-size: clamp(28px, 3vw, 38px);
-  font-weight: 550;
   line-height: 1.12;
   letter-spacing: -0.035em;
   text-wrap: balance;

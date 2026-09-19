@@ -177,6 +177,16 @@ Save web content from Chrome, Firefox, or Safari into the local massCode app.
 - Save pages or links as HTTP `GET` requests
 - Connect through the local Integration API with an API token
 
+### MCP Integration
+
+Connect Codex, Claude Code, Cursor, or VS Code Copilot to your massCode vault through the built-in MCP server.
+
+- Find and read snippets, notes, and saved HTTP requests from your coding agent
+- Save code, Markdown notes, and HTTP requests directly to Inbox
+- Send saved HTTP requests using the active massCode environment
+
+See the [MCP setup guide](https://masscode.io/documentation/mcp/) to connect your agent.
+
 ## Markdown Vault
 
 Your snippets, notes, and HTTP requests live as plain `.md` files on disk with frontmatter metadata, so the data stays readable and portable.

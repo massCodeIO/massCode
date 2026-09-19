@@ -12,6 +12,7 @@ import type {
 } from '../runtime/types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { PartialCreateError } from '../../../../partialCreateError'
 import { prioritizeCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
@@ -306,10 +307,14 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       }
 
       writeRequestFile(paths.httpRoot, record)
-      state.requests.push({ filePath, id })
-      cache.requestById.set(id, record)
-
-      saveHttpState(paths, state)
+      try {
+        state.requests.push({ filePath, id })
+        cache.requestById.set(id, record)
+        saveHttpState(paths, state)
+      }
+      catch (error) {
+        throw new PartialCreateError(id, error)
+      }
 
       return { id }
     },

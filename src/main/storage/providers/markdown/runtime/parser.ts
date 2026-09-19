@@ -14,11 +14,7 @@ import {
   enqueueCloudDownload,
   prioritizeCloudDownload,
 } from '../cloudDownloads'
-import {
-  LEGACY_FOLDER_META_FILE_NAME,
-  META_FILE_NAME,
-  NEW_LINE_SPLIT_RE,
-} from './constants'
+import { LEGACY_FOLDER_META_FILE_NAME, META_FILE_NAME } from './constants'
 import { rememberAppFileChange } from './shared/appChanges'
 import {
   getFileAvailability,
@@ -228,7 +224,7 @@ function hasNonEmptyTail(lines: string[], cursor: number): boolean {
 
 function parseBodyFragmentsStrict(
   body: string,
-  lines = body.split(NEW_LINE_SPLIT_RE),
+  lines = body.split('\n'),
 ): StrictBodyFragmentParseResult {
   const fragments: MarkdownBodyFragment[] = []
   let lastCursor = 0
@@ -260,12 +256,12 @@ function parseBodyFragmentsStrict(
     const language = fenceLine.slice(fenceLength).trim() || 'plain_text'
     lineIndex += 1
 
-    const valueLines: string[] = []
+    const contentStart = lineIndex
     while (lineIndex < lines.length && lines[lineIndex].trim() !== fence) {
-      valueLines.push(lines[lineIndex])
       lineIndex += 1
     }
 
+    const value = readFragmentValue(lines, contentStart, lineIndex, fenceLine)
     if (lineIndex < lines.length && lines[lineIndex].trim() === fence) {
       lineIndex += 1
     }
@@ -274,7 +270,7 @@ function parseBodyFragmentsStrict(
     fragments.push({
       label,
       language,
-      value: valueLines.join('\n'),
+      value,
     })
   }
 
@@ -287,6 +283,21 @@ function parseBodyFragmentsStrict(
   }
 
   return { fragments, lastCursor }
+}
+
+function readFragmentValue(
+  lines: string[],
+  start: number,
+  end: number,
+  fenceLine: string,
+): string {
+  const value = lines.slice(start, end).join('\n')
+  // Keep content CRs. Only remove the CR belonging to a CRLF wrapper's
+  // separator before the closing fence; our serializer uses LF wrappers.
+  if (end < lines.length && fenceLine.endsWith('\r') && value.endsWith('\r')) {
+    return value.slice(0, -1)
+  }
+  return value
 }
 
 function findLegacyFragmentOpenings(
@@ -409,7 +420,12 @@ function parseLegacyTripleFenceFragments(
       fragments.push({
         label,
         language,
-        value: lines.slice(openingIndex + 2, closingIndex).join('\n'),
+        value: readFragmentValue(
+          lines,
+          openingIndex + 2,
+          closingIndex,
+          fenceLine,
+        ),
       })
     }
 
@@ -444,7 +460,7 @@ export function parseBodyFragmentsWithMetadata(
   body: string,
   metadata: MarkdownFrontmatterContent[],
 ): BodyFragmentParseResult {
-  const lines = body.split(NEW_LINE_SPLIT_RE)
+  const lines = body.split('\n')
   const strictResult = parseBodyFragmentsStrict(body, lines)
   const declaredFragmentCount = metadata.length
 

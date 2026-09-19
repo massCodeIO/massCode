@@ -14,6 +14,7 @@ const context = vi.hoisted(() => ({
     createSnippet: vi.fn(),
     createSnippetContent: vi.fn(),
   },
+  requests: { getRequests: vi.fn(() => []) },
   notes: {
     getNotes: vi.fn(),
     getNotesAsync: vi.fn(),
@@ -43,6 +44,7 @@ vi.mock('../integrations/auth', () => ({
 vi.mock('../../storage', () => ({
   useStorage: () => ({ snippets: context.snippets }),
   useNotesStorage: () => ({ notes: context.notes }),
+  useHttpStorage: () => ({ requests: context.requests }),
 }))
 
 function request(
@@ -129,7 +131,7 @@ beforeEach(() => {
 })
 
 describe('mCP protocol and tools', () => {
-  it('initializes and discovers only the four MVP tools', async () => {
+  it('initializes and discovers the vault and HTTP tools', async () => {
     const initialized = await rpc('initialize', {
       protocolVersion: '2025-03-26',
       capabilities: {},
@@ -142,7 +144,14 @@ describe('mCP protocol and tools', () => {
     const listed = await rpc('tools/list')
     expect(
       listed.result.tools.map((tool: { name: string }) => tool.name),
-    ).toEqual(['search', 'get_item', 'create_snippet', 'create_note'])
+    ).toEqual([
+      'search',
+      'get_item',
+      'create_snippet',
+      'create_note',
+      'create_http_request',
+      'execute_http_request',
+    ])
   })
 
   it('searches full text, excludes trash and paginates a deterministic metadata-only merged list', async () => {

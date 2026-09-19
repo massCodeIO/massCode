@@ -66,7 +66,6 @@ import sponsors from '../sponsors/sponsors.json'
 }
 h2 {
   font-size: clamp(26px, 3vw, 36px);
-  font-weight: 550;
   letter-spacing: -0.03em;
   line-height: 1.2;
   text-wrap: balance;

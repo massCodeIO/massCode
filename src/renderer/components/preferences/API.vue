@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/shadcn/button'
 import { Switch } from '@/components/ui/shadcn/switch'
+import { useSonner } from '@/composables/useSonner'
 import { i18n, ipc, store } from '@/electron'
 
 interface ApiTokenGenerateResult {
@@ -16,6 +17,9 @@ const tokenPreview = ref<string | null>(
   store.preferences.get('api.integrations.tokenPreview') as string | null,
 )
 const generatedToken = ref('')
+const mcpEnabled = ref(store.preferences.get('api.mcp.enabled') === true)
+const mcpEndpoint = computed(() => `http://127.0.0.1:${apiPort.value}/mcp`)
+const { sonner } = useSonner()
 
 watch(apiPort, (value) => {
   const port = Number(value)
@@ -27,6 +31,20 @@ watch(apiPort, (value) => {
 watch(integrationsEnabled, (value) => {
   store.preferences.set('api.integrations.enabled', value)
 })
+
+watch(mcpEnabled, (value) => {
+  store.preferences.set('api.mcp.enabled', value)
+})
+
+async function copyMcpEndpoint() {
+  try {
+    await navigator.clipboard.writeText(mcpEndpoint.value)
+    sonner({ type: 'success', message: i18n.t('messages:success.copied') })
+  }
+  catch {
+    sonner({ type: 'error', message: i18n.t('messages:error.copyFailed') })
+  }
+}
 
 async function generateApiToken() {
   const result = (await ipc.invoke(
@@ -132,6 +150,47 @@ async function copyGeneratedToken() {
         </div>
         <template #description>
           {{ i18n.t("preferences:api.integrations.token.description") }}
+        </template>
+      </UiMenuFormItem>
+    </UiMenuFormSection>
+    <UiMenuFormSection :label="i18n.t('preferences:api.mcp.label')">
+      <UiMenuFormItem :label="i18n.t('preferences:api.mcp.enabled.label')">
+        <Switch
+          :checked="mcpEnabled"
+          @update:checked="mcpEnabled = $event"
+        />
+        <template #description>
+          {{ i18n.t("preferences:api.mcp.enabled.description") }}
+        </template>
+      </UiMenuFormItem>
+      <UiMenuFormItem :label="i18n.t('preferences:api.mcp.endpoint.label')">
+        <div class="flex flex-wrap items-center gap-2">
+          <UiInput
+            :model-value="mcpEndpoint"
+            readonly
+            size="sm"
+            class="w-72"
+          />
+          <Button
+            variant="outline"
+            @click="copyMcpEndpoint"
+          >
+            {{ i18n.t("button.copy") }}
+          </Button>
+          <Button
+            variant="outline"
+            @click="
+              ipc.invoke(
+                'system:open-external',
+                'https://masscode.io/documentation/mcp',
+              )
+            "
+          >
+            {{ i18n.t("preferences:api.mcp.setup") }}
+          </Button>
+        </div>
+        <template #description>
+          {{ i18n.t("preferences:api.mcp.endpoint.description") }}
         </template>
       </UiMenuFormItem>
     </UiMenuFormSection>

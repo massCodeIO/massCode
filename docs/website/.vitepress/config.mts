@@ -199,6 +199,7 @@ export default defineConfig({
             { text: 'Sync', link: '/documentation/sync' },
             { text: 'Imports', link: '/documentation/imports' },
             { text: 'Clipper', link: '/documentation/clipper' },
+            { text: 'MCP', link: '/documentation/mcp' },
             { text: 'Appearance', link: '/documentation/themes' },
           ],
         },

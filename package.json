@@ -76,6 +76,7 @@
     "@lezer/highlight": "^1.2.3",
     "@lezer/markdown": "^1.6.3",
     "@lydell/node-pty": "^1.1.0",
+    "@modelcontextprotocol/server": "^2.0.0",
     "@sinclair/typebox": "^0.34.41",
     "@types/d3-force": "^3.0.10",
     "@types/d3-scale": "^4.0.9",

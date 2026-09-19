@@ -11,6 +11,7 @@ import type {
 import type { MarkdownRuntimeCache } from '../runtime/types'
 import path from 'node:path'
 import { scheduleDockBadgeRefresh } from '../../../../dockBadge'
+import { PartialCreateError } from '../../../partialCreateError'
 import { prioritizeCloudDownload } from '../cloudDownloads'
 import {
   assertUniqueSiblingEntryName,
@@ -213,8 +214,13 @@ export function createSnippetsStorage(): SnippetsStorage {
         persistEntity: snippet => persistSnippet(paths, state, snippet),
       })
 
-      saveState(paths, state)
-      scheduleDockBadgeRefresh()
+      try {
+        saveState(paths, state)
+        scheduleDockBadgeRefresh()
+      }
+      catch (error) {
+        throw new PartialCreateError(result.id, error)
+      }
 
       return result
     },

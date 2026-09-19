@@ -18,6 +18,7 @@ import type {
 import path from 'node:path'
 import { isAfter, isToday, parseISO, startOfToday } from 'date-fns'
 import { scheduleDockBadgeRefresh } from '../../../../../dockBadge'
+import { PartialCreateError } from '../../../../partialCreateError'
 import { prioritizeCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
@@ -399,15 +400,20 @@ export function createNotesNotesStorage(): NotesStorage {
           }),
       })
 
-      promoteBareBacklinksAfterNoteCreate({
-        newNoteId: result.id,
-        notes,
-        paths,
-        state,
-      })
+      try {
+        promoteBareBacklinksAfterNoteCreate({
+          newNoteId: result.id,
+          notes,
+          paths,
+          state,
+        })
 
-      saveNotesState(paths, state)
-      scheduleDockBadgeRefresh()
+        saveNotesState(paths, state)
+        scheduleDockBadgeRefresh()
+      }
+      catch (error) {
+        throw new PartialCreateError(result.id, error)
+      }
 
       return result
     },

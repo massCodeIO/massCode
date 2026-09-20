@@ -45,6 +45,7 @@ type MainMenuAction =
 type DBAction = 'migrate-to-markdown'
 
 type SystemAction =
+  | `ai:${'settings' | 'configure' | 'models' | 'start' | 'cancel' | 'event'}`
   | 'activate-license'
   | 'api-request'
   | 'api-token-generate'

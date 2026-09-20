@@ -203,6 +203,7 @@ it('continues with a natural response after delivering a validated proposal', as
   await flush()
   expect(owner.send.mock.calls.map(([, event]) => event.type)).toEqual([
     'tools',
+    'protocol',
     'delta',
     'done',
   ])
@@ -224,6 +225,7 @@ it('keeps the proposal reviewable when its explanatory response fails', async ()
   await flush()
   expect(owner.send.mock.calls.map(([, event]) => event.type)).toEqual([
     'tools',
+    'protocol',
     'notice',
     'done',
   ])

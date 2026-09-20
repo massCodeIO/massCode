@@ -26,6 +26,8 @@ export interface ChatMessage extends AiMessage {
   rejected?: boolean
   calls?: AiToolCall[]
   toolContent?: string
+  protocol?: AiMessage[]
+  protocolContentLength?: number
   replacement?: string
   proposalSummary?: string
   editRequested?: boolean
@@ -82,9 +84,13 @@ function onEvent(_event: unknown, event: AiEvent) {
     conversation.error = event.error
     return
   }
+  if (event.type === 'protocol') {
+    message.protocol = event.messages
+    message.protocolContentLength = message.content.length
+    return
+  }
   if (event.type === 'tools') {
     message.toolContent = message.content
-    message.content = ''
     message.calls = event.calls
     if (message.edit) {
       message.replacement = buildReplacement(message.edit, event.calls)
@@ -232,6 +238,38 @@ async function send(
         || message.calls?.length,
     )
     .flatMap((message): AiMessage[] => {
+      if (message.protocol) {
+        const protocol = message.protocol.map((item, index) => {
+          if (
+            item.role !== 'tool'
+            || !message.calls?.some(call => call.id === item.tool_call_id)
+            || index
+            !== message.protocol!.findLastIndex(
+              candidate =>
+                candidate.role === 'tool'
+                && candidate.tool_call_id === item.tool_call_id,
+            )
+          ) {
+            return item
+          }
+          return {
+            ...item,
+            content: JSON.stringify({
+              status: message.applied
+                ? 'applied'
+                : message.rejected
+                  ? 'rejected'
+                  : 'awaiting_user_review',
+              applied: Boolean(message.applied),
+              note: 'The latest code-context is authoritative.',
+            }),
+          }
+        })
+        const tail = message.content.slice(message.protocolContentLength ?? 0)
+        if (tail.trim())
+          protocol.push({ role: 'assistant', content: tail })
+        return protocol
+      }
       if (!message.calls?.length) {
         return [
           {
@@ -268,8 +306,15 @@ async function send(
             note: 'Only applied means the editor was modified. The latest code-context is authoritative.',
           }),
         })),
-        ...(message.content
-          ? [{ role: 'assistant' as const, content: message.content }]
+        ...(message.content.slice(message.toolContent?.length ?? 0).trim()
+          ? [
+              {
+                role: 'assistant' as const,
+                content: message.content.slice(
+                  message.toolContent?.length ?? 0,
+                ),
+              },
+            ]
           : []),
       ]
     })

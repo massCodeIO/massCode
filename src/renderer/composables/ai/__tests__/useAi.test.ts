@@ -259,9 +259,53 @@ describe('structured edit proposals', () => {
     expect(JSON.parse(messages[2].content).status).toBe('applied')
     expect(messages[3]).toMatchObject({
       role: 'assistant',
-      content: message.content,
+      content: message.content.slice(message.toolContent?.length ?? 0),
     })
     expect(message.content).toContain('Example:')
+    expect(message.content).toContain('Examples:')
+  })
+  it('preserves rejected tool history when a later proposal reuses its call ID', async () => {
+    const { ai, request, emit } = await setup()
+    ai.contextMode.value = 'fragment'
+    await ai.send('Fix')
+    const proposed = propose(request(), 'const secret = 1', 'const secret = 2')
+    emit(proposed)
+    const call = proposed.calls[0]
+    emit({
+      requestId: request().requestId,
+      type: 'protocol',
+      messages: [
+        { role: 'assistant', content: '', tool_calls: [call] },
+        {
+          role: 'tool',
+          tool_call_id: call.id,
+          content: JSON.stringify({ status: 'validation_failed' }),
+        },
+        { role: 'assistant', content: '', tool_calls: [call] },
+        {
+          role: 'tool',
+          tool_call_id: call.id,
+          content: JSON.stringify({ status: 'awaiting_user_review' }),
+        },
+      ],
+    })
+    emit({
+      requestId: request().requestId,
+      type: 'delta',
+      text: 'Proposal explanation',
+    })
+    emit({ requestId: request().requestId, type: 'done' })
+    const message = ai.conversation.value!.messages.at(-1)!
+    message.rejected = true
+    await ai.send('Explain')
+    const messages = request().messages
+    const results = messages.filter(
+      (item: { role: string }) => item.role === 'tool',
+    )
+    expect(JSON.parse(results[0].content).status).toBe('validation_failed')
+    expect(JSON.parse(results[1].content).status).toBe('rejected')
+    expect(messages.at(-2)?.content).toBe('Proposal explanation')
+    expect(aiStartSchema.safeParse(request()).success).toBe(true)
   })
   it('never derives edits from Markdown', async () => {
     const { ai, request, emit, write } = await setup()

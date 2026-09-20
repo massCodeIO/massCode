@@ -55,11 +55,20 @@ export const aiToolCallSchema = z
   })
   .strict()
 export type AiToolCall = z.infer<typeof aiToolCallSchema>
+export const aiProtocolCallSchema = aiToolCallSchema.extend({
+  function: z
+    .object({
+      name: z.string().min(1).max(256),
+      arguments: z.string().max(AI_LIMITS.outputBytes),
+    })
+    .strict(),
+})
+export type AiProtocolCall = z.infer<typeof aiProtocolCallSchema>
 export const aiMessageSchema = z
   .object({
     role: z.enum(['user', 'assistant', 'tool']),
     content: z.string().max(AI_LIMITS.inputBytes),
-    tool_calls: z.array(aiToolCallSchema).min(1).max(8).optional(),
+    tool_calls: z.array(aiProtocolCallSchema).min(1).max(8).optional(),
     tool_call_id: z.string().min(1).max(256).optional(),
   })
   .strict()
@@ -147,6 +156,7 @@ export type AiResult<T> =
 export type AiEvent =
   | { requestId: string, type: 'delta', text: string }
   | { requestId: string, type: 'tools', calls: AiToolCall[] }
+  | { requestId: string, type: 'protocol', messages: AiMessage[] }
   | { requestId: string, type: 'notice', error: AiErrorCode }
   | { requestId: string, type: 'historyOmitted' }
   | { requestId: string, type: 'done' | 'cancelled' }

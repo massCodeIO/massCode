@@ -97,6 +97,19 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
     }
     try {
       let toolContent = ''
+      let responseMessages = request.messages
+      const publishProtocol = (messages: AiStart['messages']) => {
+        const start = messages.findLastIndex(
+          message => message.role === 'user',
+        )
+        if (active === session) {
+          send({
+            requestId: request.requestId,
+            type: 'protocol',
+            messages: messages.slice(start + 1),
+          })
+        }
+      }
       const calls = await streamAiChat(
         connection,
         request.messages,
@@ -111,26 +124,38 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
         1,
         undefined,
         historyOmitted,
+        (messages, answer) => {
+          responseMessages = messages
+          toolContent = answer
+        },
       )
       if (active === session && calls?.length) {
         send({ requestId: request.requestId, type: 'tools', calls })
         try {
+          if (toolContent)
+            send({ requestId: request.requestId, type: 'delta', text: '\n\n' })
+          const continuation = [
+            ...responseMessages,
+            {
+              role: 'assistant' as const,
+              content: toolContent,
+              tool_calls: calls,
+            },
+            ...calls.map(call => ({
+              role: 'tool' as const,
+              tool_call_id: call.id,
+              content: JSON.stringify({
+                status: 'awaiting_user_review',
+                applied: false,
+                instruction:
+                  'The proposal is validated and available for review. Now answer the original user naturally in their language using Markdown: explain the change, show the proposed code, and include useful examples when appropriate. Do not mention internal tools or validation. Do not claim the code has been applied; the user must confirm it in Review changes.',
+              }),
+            })),
+          ]
+          publishProtocol(continuation)
           await streamAiChat(
             connection,
-            [
-              ...request.messages,
-              { role: 'assistant', content: toolContent, tool_calls: calls },
-              ...calls.map(call => ({
-                role: 'tool' as const,
-                tool_call_id: call.id,
-                content: JSON.stringify({
-                  status: 'awaiting_user_review',
-                  applied: false,
-                  instruction:
-                    'The proposal is validated and available for review. Now answer the original user naturally in their language using Markdown: explain the change, show the proposed code, and include useful examples when appropriate. Do not mention internal tools or validation. Do not claim the code has been applied; the user must confirm it in Review changes.',
-                }),
-              })),
-            ],
+            continuation,
             AbortSignal.any([session.controller.signal, timeout]),
             (text) => {
               if (active === session)
@@ -139,8 +164,15 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
             undefined,
             undefined,
             1,
-            request.messages.length - 1,
+            responseMessages.findLastIndex(
+              message => message.role === 'user',
+            ),
             historyOmitted,
+            (messages, answer) =>
+              publishProtocol([
+                ...messages,
+                { role: 'assistant', content: answer },
+              ]),
           )
         }
         catch {
@@ -152,6 +184,12 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
             })
           }
         }
+      }
+      if (!calls.length && toolContent) {
+        publishProtocol([
+          ...responseMessages,
+          { role: 'assistant', content: toolContent },
+        ])
       }
       if (active === session)
         send({ requestId: request.requestId, type: 'done' })

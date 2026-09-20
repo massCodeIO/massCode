@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { renderMarkdown } from '../markdown'
+import { renderMarkdown, renderMarkdownBlocks } from '../markdown'
 
 describe('aI response Markdown', () => {
   it('renders headings, lists, tables and code', () => {
@@ -30,5 +30,60 @@ describe('aI response Markdown', () => {
     expect(renderMarkdown('[site](https://example.com)')).toContain(
       'href="https://example.com"',
     )
+  })
+})
+
+describe('verified vault references', () => {
+  const item = {
+    type: 'http_request' as const,
+    id: 470,
+    name: 'Recent orders',
+  }
+
+  it('links known names in prose, emphasis and inline code', () => {
+    const result = renderMarkdownBlocks(
+      'Recent orders, **Recent orders**, `Recent orders`.',
+      [item],
+    )
+    expect(result.references).toEqual([item, item, item])
+    expect(result.html.match(/data-ai-reference=/g)).toHaveLength(3)
+  })
+
+  it('does not link ambiguous names, unknown records or partial words', () => {
+    expect(
+      renderMarkdownBlocks('Recent orders', [item, { ...item, id: 471 }])
+        .references,
+    ).toEqual([])
+    expect(
+      renderMarkdownBlocks('Recent orders', [item, { ...item, type: 'note' }])
+        .references,
+    ).toEqual([])
+    expect(
+      renderMarkdownBlocks('Recent ordersXYZ and Unknown', [item]).references,
+    ).toEqual([])
+    expect(
+      renderMarkdownBlocks('Recent orders', [item, item]).references,
+    ).toEqual([item])
+  })
+
+  it('preserves external links and fenced code', () => {
+    const result = renderMarkdownBlocks(
+      '[Recent orders](https://example.com)\n\n```js\nRecent orders\n```',
+      [item],
+    )
+    expect(result.references).toEqual([])
+    expect(result.html).toContain('href="https://example.com"')
+    expect(result.blocks[0]?.code).toBe('Recent orders\n')
+  })
+
+  it('escapes HTML and matches punctuation in record names literally', () => {
+    const special = { type: 'snippet' as const, id: 2, name: 'C++ (example)' }
+    const result = renderMarkdownBlocks(
+      '<script>alert(1)</script> C++ (example)',
+      [special],
+    )
+    expect(result.references).toEqual([special])
+    expect(result.html).not.toContain('<script>')
+    expect(result.html).toContain('&lt;script&gt;')
   })
 })

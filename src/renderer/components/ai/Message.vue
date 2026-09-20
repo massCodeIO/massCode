@@ -1,19 +1,28 @@
 <script setup lang="ts">
+import type { AiVaultItem } from '~/shared/ai'
 import { ipc } from '@/electron'
 import { refThrottled } from '@vueuse/core'
 import { renderMarkdownBlocks } from './markdown'
 
-const props = defineProps<{ content: string }>()
+const props = defineProps<{ content: string, items?: AiVaultItem[] }>()
 const content = computed(() => props.content)
 const throttled = refThrottled(content, 150)
-const rendered = computed(() => renderMarkdownBlocks(throttled.value))
+const rendered = computed(() =>
+  renderMarkdownBlocks(throttled.value, props.items),
+)
 const container = ref<HTMLElement>()
 const targets = shallowRef<HTMLElement[]>([])
+const referenceTargets = shallowRef<HTMLElement[]>([])
 watch(
   rendered,
   async () => {
     targets.value = []
+    referenceTargets.value = []
     await nextTick()
+    referenceTargets.value = Array.from(
+      container.value?.querySelectorAll<HTMLElement>('[data-ai-reference]')
+      ?? [],
+    )
     targets.value = Array.from(
       container.value?.querySelectorAll<HTMLElement>('[data-ai-code]') ?? [],
     )
@@ -44,6 +53,13 @@ function openLink(event: MouseEvent) {
       @click="openLink"
       v-html="rendered.html"
     />
+    <Teleport
+      v-for="(target, index) in referenceTargets"
+      :key="`ref-${index}`"
+      :to="target"
+    >
+      <AiVaultLink :item="rendered.references[index]!" />
+    </Teleport>
     <Teleport
       v-for="(target, index) in targets"
       :key="index"

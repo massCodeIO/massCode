@@ -22,24 +22,20 @@ defineProps<{ result: AiSearchResults }>()
         v-for="item in result.items"
         :key="`${item.type}:${item.id}`"
       >
-        <UiText
-          variant="sm"
-          weight="medium"
-          as="p"
-        >
-          {{ item.name }}
-        </UiText>
-        <UiText
-          variant="caption"
-          muted
-        >
-          {{ i18n.t(`ai.itemTypes.${item.type}`) }} #{{ item.id }}
-        </UiText>
+        <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <AiVaultLink :item="item" />
+          <UiText
+            variant="caption"
+            muted
+          >
+            {{ i18n.t(`ai.itemTypes.${item.type}`) }} #{{ item.id }}
+          </UiText>
+        </div>
         <UiText
           v-if="item.url"
           variant="caption"
           as="p"
-          class="font-mono break-all select-text"
+          class="mt-1 font-mono break-all select-text"
         >
           {{ item.method }} {{ item.url }}
         </UiText>

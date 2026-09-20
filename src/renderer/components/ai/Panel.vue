@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { AiVaultItem } from '~/shared/ai'
 import { Button } from '@/components/ui/shadcn/button'
 import { useAi } from '@/composables/ai/useAi'
 import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
@@ -19,6 +20,15 @@ const {
   canRetry,
   refreshSettings,
 } = useAi()
+const messageReferences = computed(() => {
+  const items: AiVaultItem[] = []
+  return (conversation.value?.messages ?? []).map((message) => {
+    items.push(...(message.attachments ?? []))
+    for (const result of message.searchResults ?? [])
+      items.push(...result.items)
+    return [...items]
+  })
+})
 const copy = useCopyToClipboard()
 const profile = computed(
   () => settings.value?.profiles[settings.value.provider],
@@ -168,6 +178,7 @@ onMounted(() => {
           <AiMessage
             v-if="message.role === 'assistant'"
             :content="message.content"
+            :items="messageReferences[index]"
           />
           <UiText
             v-else

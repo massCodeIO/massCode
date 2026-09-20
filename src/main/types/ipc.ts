@@ -3,6 +3,7 @@ import type { OpenDialogOptions } from 'electron'
 export type CombineWith<T extends string, U extends string> = `${U}:${T}`
 
 type MainMenuAction =
+  | 'open-ai'
   | 'add-description'
   | 'copy-note'
   | 'copy-snippet'

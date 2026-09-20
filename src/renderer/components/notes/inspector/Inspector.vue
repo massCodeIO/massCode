@@ -9,6 +9,7 @@ import { i18n } from '@/electron'
 import { X } from 'lucide-vue-next'
 
 defineProps<{
+  embedded?: boolean
   noteId: number
   content: string
   cursor: number
@@ -27,8 +28,12 @@ const { notesInspectorTab: tab } = useNotesApp()
 </script>
 
 <template>
-  <div class="flex h-full min-h-0 flex-col pt-[var(--content-top-offset)]">
+  <div
+    class="flex h-full min-h-0 flex-col"
+    :class="!embedded && 'pt-[var(--content-top-offset)]'"
+  >
     <div
+      v-if="!embedded"
       class="flex h-[calc(41px-var(--content-top-offset))] shrink-0 items-center justify-between gap-2 border-b px-3 pb-1"
     >
       <UiText

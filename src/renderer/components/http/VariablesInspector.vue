@@ -10,6 +10,7 @@ import { useSonner } from '@/composables/useSonner'
 import { i18n } from '@/electron'
 import { ChevronDown, X } from 'lucide-vue-next'
 
+defineProps<{ embedded?: boolean }>()
 const { collection, draft, unavailable, saving } = useHttpCollection()
 const { inspectorOpen } = useHttpPanels()
 const { layers, variables, isRequest, activeEnvironment }
@@ -87,8 +88,12 @@ const variableExample = '{{userId}}'
 </script>
 
 <template>
-  <div class="flex h-full min-h-0 flex-col pt-[var(--content-top-offset)]">
+  <div
+    class="flex h-full min-h-0 flex-col"
+    :class="!embedded && 'pt-[var(--content-top-offset)]'"
+  >
     <div
+      v-if="!embedded"
       class="flex h-[calc(40px-var(--content-top-offset))] shrink-0 items-center justify-between gap-2 border-b px-3 pb-1"
     >
       <UiText

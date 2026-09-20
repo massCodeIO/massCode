@@ -36,7 +36,7 @@ async function open() {
     variant="ghost"
     class="ai-vault-link"
     :disabled="opening"
-    :title="`${i18n.t(`ai.itemTypes.${item.type}`)} · ${item.name} #${item.id}`"
+    :title="`${i18n.t(`ai.itemTypes.${item.type}`)} · ${item.name}`"
     @click="open"
   >
     <component

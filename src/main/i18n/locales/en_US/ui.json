@@ -1501,7 +1501,7 @@
       "http_request": "HTTP"
     },
     "searchResults": {
-      "title": "Vault matches",
+      "title": "Found records",
       "empty": "No matches for the checked phrases.",
       "limited": "Showing {{shown}} of {{total}} matches",
       "unexpanded": "Query expansion was unavailable; searched the original phrase.",

@@ -6,14 +6,15 @@ defineProps<{ result: AiSearchResults }>()
 </script>
 
 <template>
-  <div class="bg-muted/40 space-y-2 rounded-lg border p-3">
-    <UiText
-      variant="xs"
-      weight="medium"
-      as="p"
-    >
-      {{ i18n.t("ai.searchResults.title") }}
-    </UiText>
+  <details class="bg-muted/40 space-y-2 rounded-lg border p-3">
+    <summary class="cursor-pointer">
+      <UiText
+        variant="xs"
+        weight="medium"
+      >
+        {{ i18n.t("ai.searchResults.title") }} · {{ result.items.length }}
+      </UiText>
+    </summary>
     <ol
       v-if="result.items.length"
       class="space-y-2"
@@ -28,7 +29,7 @@ defineProps<{ result: AiSearchResults }>()
             variant="caption"
             muted
           >
-            {{ i18n.t(`ai.itemTypes.${item.type}`) }} #{{ item.id }}
+            {{ i18n.t(`ai.itemTypes.${item.type}`) }}
           </UiText>
         </div>
         <UiText
@@ -70,21 +71,5 @@ defineProps<{ result: AiSearchResults }>()
     >
       {{ i18n.t("ai.searchResults.unexpanded") }}
     </UiText>
-    <details v-if="result.queries.length">
-      <summary class="cursor-pointer">
-        <UiText
-          variant="caption"
-          muted
-        >
-          {{ i18n.t("ai.searchResults.queries") }}
-        </UiText>
-      </summary>
-      <UiText
-        variant="caption"
-        muted
-      >
-        {{ result.queries.join(" · ") }}
-      </UiText>
-    </details>
-  </div>
+  </details>
 </template>

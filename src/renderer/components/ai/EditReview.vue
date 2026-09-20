@@ -53,17 +53,28 @@ function apply() {
     {{ i18n.t("ai.edit.rejected") }}
   </UiText>
   <template v-else-if="message.status !== 'streaming'">
-    <Button
+    <div
       v-if="replacement !== undefined"
-      variant="outline"
-      size="sm"
-      @click="
-        open = true;
-        failed = false;
-      "
+      class="flex flex-wrap items-center gap-2"
     >
-      {{ i18n.t("ai.edit.review") }}
-    </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        @click="
+          open = true;
+          failed = false;
+        "
+      >
+        {{ i18n.t("ai.edit.review") }}
+      </Button>
+      <UiText
+        variant="caption"
+        muted
+        role="status"
+      >
+        {{ i18n.t("ai.edit.pending") }}
+      </UiText>
+    </div>
     <UiText
       v-else-if="message.editRequested || message.calls?.length"
       variant="caption"
@@ -81,9 +92,7 @@ function apply() {
       <Dialog.DialogHeader>
         <Dialog.DialogTitle>{{ i18n.t("ai.edit.review") }}</Dialog.DialogTitle>
         <Dialog.DialogDescription>
-          {{
-            i18n.t("ai.edit.description")
-          }}
+          {{ i18n.t("ai.edit.description") }}
         </Dialog.DialogDescription>
       </Dialog.DialogHeader>
       <UiText

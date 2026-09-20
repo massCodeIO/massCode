@@ -181,35 +181,24 @@ onMounted(() => {
         <div
           v-for="(message, index) in conversation?.messages"
           :key="index"
-          class="space-y-2"
+          class="min-w-0 space-y-2 text-left"
+          :class="
+            message.role === 'user'
+              ? 'ml-auto w-fit max-w-[90%]'
+              : 'mr-auto w-full'
+          "
         >
-          <div class="flex items-center justify-between">
-            <UiText
-              variant="caption"
-              weight="medium"
-            >
-              {{ i18n.t(`ai.roles.${message.role}`) }}
-            </UiText>
+          <div
+            v-if="message.content && message.role === 'assistant'"
+            class="flex justify-end"
+          >
             <UiActionButton
-              v-if="message.content && message.role === 'assistant'"
               :tooltip="i18n.t('action.copy')"
               @click="copy(message.content)"
             >
               <Copy class="size-3" />
             </UiActionButton>
           </div>
-          <UiText
-            v-if="
-              message.calls?.length && !message.applied && !message.rejected
-            "
-            as="p"
-            variant="caption"
-            weight="medium"
-            class="bg-muted rounded-md border px-2 py-1"
-            role="status"
-          >
-            {{ i18n.t("ai.edit.pending") }}
-          </UiText>
           <AiMessage
             v-if="message.role === 'assistant'"
             :content="message.content"
@@ -218,7 +207,7 @@ onMounted(() => {
             v-else
             as="div"
             variant="sm"
-            class="break-words whitespace-pre-wrap select-text"
+            class="bg-muted rounded-lg px-3 py-2 break-words whitespace-pre-wrap select-text"
           >
             {{ message.content }}
           </UiText>
@@ -234,7 +223,7 @@ onMounted(() => {
             :message="message"
           />
           <details v-if="message.context">
-            <summary class="cursor-pointer">
+            <summary class="cursor-pointer text-right">
               <UiText
                 variant="xs"
                 muted

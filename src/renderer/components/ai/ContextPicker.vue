@@ -163,10 +163,10 @@ function add(item: AiVaultItem) {
     </Popover.Popover>
     <div
       v-if="contextMode !== 'none'"
-      class="bg-muted flex max-w-full items-center gap-1 rounded-md px-2 py-1"
+      class="bg-muted flex h-5 max-w-full items-center gap-0.5 rounded px-1"
     >
       <UiText
-        variant="xs"
+        variant="caption"
         class="truncate"
       >
         {{ attachedEditor?.name || i18n.t("ai.fragment")
@@ -175,6 +175,7 @@ function add(item: AiVaultItem) {
         }}
       </UiText>
       <UiActionButton
+        class="size-4 shrink-0 p-0 [&_svg]:size-2.5"
         :tooltip="i18n.t('ai.removeContext')"
         @click="removeEditorContext"
       >
@@ -184,15 +185,16 @@ function add(item: AiVaultItem) {
     <div
       v-for="(item, index) in attachments"
       :key="`${item.type}:${item.id}`"
-      class="bg-muted flex max-w-full items-center gap-1 rounded-md px-2 py-1"
+      class="bg-muted flex h-5 max-w-full items-center gap-0.5 rounded px-1"
     >
       <UiText
-        variant="xs"
+        variant="caption"
         class="truncate"
       >
         {{ item.name }}
       </UiText>
       <UiActionButton
+        class="size-4 shrink-0 p-0 [&_svg]:size-2.5"
         :tooltip="i18n.t('ai.removeContext')"
         @click="removeAttachment(index)"
       >

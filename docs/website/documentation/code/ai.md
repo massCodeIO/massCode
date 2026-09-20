@@ -31,6 +31,10 @@ Use **+** below the message box to search for snippets, notes or saved HTTP requ
 
 You can send a message without attachments. The assistant can answer directly or search Code, Notes and HTTP, then read records relevant to your question. Search and read activity lists the records it used. Each request has a bounded number of tool rounds and a content-size budget; oversized records are reported rather than silently shortened.
 
+The assistant determines whether your request needs vault retrieval before answering. An attached item helps interpret phrases such as “explain this” or “compare it with other saved requests”; it does not restrict a question about the rest of the vault.
+
+For vault searches, massCode expands the initial query into a small set of multilingual phrases and ranks the matches before displaying them. Exact names come before broader matches. The **Vault matches** card shows names and IDs directly from storage, with the saved method and URL for HTTP requests. Expand **Search phrases** to inspect what was checked. No matches means those phrases did not match; it does not prove that the record is absent. Query translation and the assistant’s explanatory text still depend on the selected model.
+
 HTTP context is the saved request definition. The assistant does not send requests, execute scripts, read upload files, or resolve environment secrets. Authentication settings and standard credential headers are excluded; literal values elsewhere in saved content are still content you share with the configured provider.
 
 Use **Stop** to interrupt a response. Partial text remains available to read and copy. If the assistant has already prepared a valid edit proposal, stopping its explanation keeps the proposal available for review.

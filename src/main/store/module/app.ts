@@ -31,6 +31,7 @@ import {
 const APP_STORE_DEFAULTS: AppStore = {
   window: {
     bounds: {},
+    devToolsOpen: true,
   },
   ui: {
     compactListMode: false,
@@ -523,6 +524,10 @@ function sanitizeAppStore(value: unknown): AppStore {
 
   return {
     window: {
+      devToolsOpen:
+        typeof windowSource.devToolsOpen === 'boolean'
+          ? windowSource.devToolsOpen
+          : APP_STORE_DEFAULTS.window.devToolsOpen,
       bounds: isRecord(windowSource.bounds)
         ? windowSource.bounds
         : isRecord(source.bounds)

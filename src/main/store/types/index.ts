@@ -119,6 +119,7 @@ export interface DonationsState {
 export interface AppStore {
   window: {
     bounds: object
+    devToolsOpen: boolean
   }
   ui: {
     compactListMode: boolean

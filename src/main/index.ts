@@ -192,8 +192,19 @@ function createWindow(sessionToken: string) {
   )
 
   if (isDev) {
+    mainWindow.webContents.on('devtools-opened', () => {
+      store.app.set('window.devToolsOpen', true)
+    })
+    mainWindow.webContents.on('devtools-closed', () => {
+      if (!isQuitting() && !mainWindow.isDestroyed()) {
+        store.app.set('window.devToolsOpen', false)
+      }
+    })
+
     mainWindow.loadURL(rendererUrl)
-    mainWindow.webContents.openDevTools()
+    if (store.app.get('window.devToolsOpen')) {
+      mainWindow.webContents.openDevTools()
+    }
   }
   else {
     mainWindow.loadFile(

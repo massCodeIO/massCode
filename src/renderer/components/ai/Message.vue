@@ -1,9 +1,25 @@
 <script setup lang="ts">
 import { ipc } from '@/electron'
-import { renderMarkdown } from './markdown'
+import { refThrottled } from '@vueuse/core'
+import { renderMarkdownBlocks } from './markdown'
 
 const props = defineProps<{ content: string }>()
-const html = computed(() => renderMarkdown(props.content))
+const content = computed(() => props.content)
+const throttled = refThrottled(content, 150)
+const rendered = computed(() => renderMarkdownBlocks(throttled.value))
+const container = ref<HTMLElement>()
+const targets = shallowRef<HTMLElement[]>([])
+watch(
+  rendered,
+  async () => {
+    targets.value = []
+    await nextTick()
+    targets.value = Array.from(
+      container.value?.querySelectorAll<HTMLElement>('[data-ai-code]') ?? [],
+    )
+  },
+  { immediate: true },
+)
 
 function openLink(event: MouseEvent) {
   const target = event.target as HTMLElement
@@ -24,9 +40,20 @@ function openLink(event: MouseEvent) {
     class="ai-markdown min-w-0 break-words select-text"
   >
     <div
+      ref="container"
       @click="openLink"
-      v-html="html"
+      v-html="rendered.html"
     />
+    <Teleport
+      v-for="(target, index) in targets"
+      :key="index"
+      :to="target"
+    >
+      <AiCodeBlock
+        :code="rendered.blocks[index]!.code"
+        :language="rendered.blocks[index]!.language"
+      />
+    </Teleport>
   </UiText>
 </template>
 

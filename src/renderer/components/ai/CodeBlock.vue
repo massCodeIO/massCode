@@ -1,11 +1,18 @@
 <script setup lang="ts">
 import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
+import { useTheme } from '@/composables/useTheme'
 import { i18n } from '@/electron'
 import { Copy } from 'lucide-vue-next'
 import { escapeCode, highlightCode } from './highlight'
+import 'codemirror/theme/neo.css'
+import 'codemirror/theme/oceanic-next.css'
 
 const props = defineProps<{ code: string, language: string }>()
 const copy = useCopyToClipboard()
+const { editorThemeName } = useTheme()
+const themeClasses = computed(() =>
+  editorThemeName.value.split(/\s+/).map(name => `cm-s-${name}`),
+)
 const html = ref('')
 watch(
   () => [props.code, props.language],
@@ -39,27 +46,9 @@ watch(
         <Copy class="size-3" />
       </UiActionButton>
     </div>
-    <pre class="scrollbar overflow-x-auto p-3"><code v-html="html" /></pre>
+    <pre
+      :class="themeClasses"
+      class="scrollbar overflow-x-auto p-3"
+    ><code v-html="html" /></pre>
   </div>
 </template>
-
-<style scoped>
-:deep(.tok-keyword),
-:deep(.tok-operator) {
-  color: var(--primary);
-}
-:deep(.tok-string),
-:deep(.tok-number),
-:deep(.tok-bool) {
-  color: var(--chart-2);
-}
-:deep(.tok-comment),
-:deep(.tok-meta) {
-  color: var(--muted-foreground);
-}
-:deep(.tok-typeName),
-:deep(.tok-className),
-:deep(.tok-function) {
-  color: var(--chart-4);
-}
-</style>

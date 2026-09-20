@@ -1,9 +1,18 @@
 import type { GrammarOption, Language } from '../types'
 import { activateLanguage, addGrammar } from 'codemirror-textmate'
+import { loadWASM } from 'onigasm'
+import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
 import { auxGrammars } from './auxiliary-grammars'
 import { languages } from './languages'
 
-export async function loadGrammars() {
+let ready: Promise<void> | undefined
+
+export function loadGrammars() {
+  return (ready ??= initializeGrammars())
+}
+
+async function initializeGrammars() {
+  await loadWASM(onigasmFile)
   const grammars: Record<string, GrammarOption> = {}
 
   languages

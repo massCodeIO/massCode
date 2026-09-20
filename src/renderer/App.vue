@@ -15,8 +15,6 @@ import { router, RouterName } from '@/router'
 import { getSpaceDefinitions, isSpaceRouteName } from '@/spaceDefinitions'
 import { isMac } from '@/utils'
 import { LoaderCircle } from 'lucide-vue-next'
-import { loadWASM } from 'onigasm'
-import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
 import { useRoute } from 'vue-router'
 import { Toaster } from 'vue-sonner'
 import { repository, version } from '../../package.json'
@@ -217,7 +215,6 @@ async function init() {
   registerIPCListeners()
   ipc.send('system:renderer-ready', null, () => {})
   restoreSavedSpace()
-  loadWASM(onigasmFile)
   await loadGrammars()
   useActivityTracker()
   useCopyTracker()

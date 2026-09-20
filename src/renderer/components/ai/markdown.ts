@@ -41,7 +41,12 @@ export function renderMarkdownBlocks(
       'gu',
     )
     : undefined
+  const linked = new Set<string>()
   const reference = (item: AiVaultItem) => {
+    const key = `${item.type}:${item.id}`
+    if (linked.has(key))
+      return markdown.utils.escapeHtml(item.name)
+    linked.add(key)
     const index = references.push(item) - 1
     return `<span data-ai-reference="${index}"></span>`
   }

@@ -40,13 +40,13 @@ describe('verified vault references', () => {
     name: 'Recent orders',
   }
 
-  it('links known names in prose, emphasis and inline code', () => {
+  it('links only the first mention across prose, emphasis and inline code', () => {
     const result = renderMarkdownBlocks(
       'Recent orders, **Recent orders**, `Recent orders`.',
       [item],
     )
-    expect(result.references).toEqual([item, item, item])
-    expect(result.html.match(/data-ai-reference=/g)).toHaveLength(3)
+    expect(result.references).toEqual([item])
+    expect(result.html.match(/data-ai-reference=/g)).toHaveLength(1)
   })
 
   it('does not link ambiguous names, unknown records or partial words', () => {

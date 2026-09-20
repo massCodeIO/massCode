@@ -11,7 +11,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import packageJson from '../../../../package.json'
 
 const route = useRoute()
-const { open: aiOpen, setOpen: setAiOpen } = useAi()
+const { open: aiOpen, openAndFocus: openAi } = useAi()
 
 const spaces = computed(() => {
   return getSpaceDefinitions().map(space => ({
@@ -19,6 +19,12 @@ const spaces = computed(() => {
     active: space.isActive(route.name),
   }))
 })
+
+const supportsAi = computed(() =>
+  spaces.value.some(
+    space => space.active && ['code', 'notes', 'http'].includes(space.id),
+  ),
+)
 
 watch(
   () => spaces.value.find(s => s.active)?.id,
@@ -73,15 +79,10 @@ watch(
       class="mt-auto flex min-h-0 flex-1 flex-col items-center justify-end gap-2 overflow-hidden pb-2"
     >
       <UiActionButton
-        v-if="
-          spaces.some(
-            (space) =>
-              space.active && ['code', 'notes', 'http'].includes(space.id),
-          )
-        "
-        :tooltip="i18n.t('ai.title')"
+        v-if="supportsAi"
+        :tooltip="`${i18n.t('ai.title')} (${isMac ? '⌘L' : 'Ctrl+L'})`"
         :aria-pressed="aiOpen"
-        @click="setAiOpen(!aiOpen)"
+        @click="openAi"
       >
         <MessageSquare class="size-4" />
       </UiActionButton>

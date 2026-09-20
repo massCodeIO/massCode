@@ -39,6 +39,7 @@ function onKeydown(event: KeyboardEvent) {
     >
       <Textarea
         v-model="draft"
+        data-ai-prompt
         variant="ghost"
         :rows="1"
         class="scrollbar max-h-48 min-h-10 resize-none rounded-none px-3 py-2 text-sm"

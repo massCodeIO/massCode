@@ -283,6 +283,12 @@ function setOpen(value: boolean) {
   }
 }
 
+async function openAndFocus() {
+  setOpen(true)
+  await nextTick()
+  document.querySelector<HTMLTextAreaElement>('[data-ai-prompt]')?.focus()
+}
+
 function registerEditor(
   reader: () => AiContext | undefined,
   writer?: typeof editorWriter,
@@ -610,6 +616,7 @@ export function useAi() {
       () => active.value?.key === currentKey.value && Boolean(active.value),
     ),
     setOpen,
+    openAndFocus,
     setContext,
     setVaultContext,
     registerEditor,

@@ -475,3 +475,66 @@ describe('unsupported tools', () => {
     expect(fetch).toHaveBeenCalledOnce()
   })
 })
+
+describe('vault tool loop', () => {
+  it('reads vault data and continues the original conversation without requiring an editor', async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          stream([
+            toolDelta(0, '{"query":"QA","type":"all"}', true).replace(
+              'propose_edit',
+              'search_vault',
+            ),
+            toolFinish,
+          ]),
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          stream([
+            toolDelta(0, '{"type":"note","id":2}', true).replace(
+              'propose_edit',
+              'read_vault_item',
+            ),
+            toolFinish,
+          ]),
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          stream([`data: ${delta('Found QA note')}\n\ndata: ${finish}\n\n`]),
+        ),
+      )
+    vi.stubGlobal('fetch', fetch)
+    const execute = vi
+      .fn()
+      .mockResolvedValue({ name: 'QA note', content: 'document' })
+    const response = vi.fn()
+    const output: string[] = []
+    expect(
+      await streamAiChat(
+        { baseURL: 'http://localhost/v1', model: 'local' },
+        [{ role: 'user', content: 'Find QA' }],
+        new AbortController().signal,
+        text => output.push(text),
+        undefined,
+        undefined,
+        1,
+        0,
+        undefined,
+        response,
+        { tools: [], execute, remaining: 2 },
+      ),
+    ).toEqual([])
+    expect(execute).toHaveBeenCalledTimes(2)
+    expect(output.join('')).toBe('Found QA note')
+    const final = JSON.parse(fetch.mock.calls[2][1].body)
+    expect(final.tools).toBeUndefined()
+    expect(
+      final.messages.filter((m: { role: string }) => m.role === 'tool'),
+    ).toHaveLength(2)
+    expect(response).toHaveBeenCalled()
+  })
+})

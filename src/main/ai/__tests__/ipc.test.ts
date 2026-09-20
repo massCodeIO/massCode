@@ -12,6 +12,16 @@ vi.mock('../client', () => ({
   streamAiChat: mocks.stream,
   listAiModels: mocks.models,
 }))
+vi.mock('../vault', () => ({
+  vaultIdentity: () => '/vault',
+  vaultTools: [],
+  vaultSearchSchema: {
+    safeParse: (value: unknown) => ({ success: true, data: value }),
+  },
+  searchVault: vi.fn(async () => []),
+  readVaultItem: vi.fn(ref => ({ ...ref, name: 'QA', content: 'fixture' })),
+  executeVaultTool: vi.fn(async () => ({ items: [] })),
+}))
 vi.mock('../settings', () => ({
   configureAi: mocks.configure,
   getAiSettings: () => ({ provider: 'ollama' }),

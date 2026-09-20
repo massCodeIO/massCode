@@ -88,9 +88,19 @@ export const aiMessageSchema = z
     )
   })
 export type AiMessage = z.infer<typeof aiMessageSchema>
+export const aiVaultRefSchema = z
+  .object({
+    type: z.enum(['snippet', 'note', 'http_request']),
+    id: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  })
+  .strict()
+export type AiVaultRef = z.infer<typeof aiVaultRefSchema>
+export type AiVaultItem = AiVaultRef & { name: string }
 export const aiStartSchema = z
   .object({
     requestId: z.uuid(),
+    attachments: z.array(aiVaultRefSchema).max(8).optional(),
+    vaultAccess: z.boolean().optional(),
     editContextId: z.uuid().optional(),
     editContextText: z.string().min(1).max(AI_LIMITS.inputBytes).optional(),
     messages: z.array(aiMessageSchema).min(1).max(AI_LIMITS.messages),
@@ -140,6 +150,7 @@ export type AiErrorCode =
   | 'notConfigured'
   | 'busy'
   | 'connection'
+  | 'contextUnavailable'
   | 'authentication'
   | 'rateLimit'
   | 'modelUnavailable'
@@ -155,6 +166,7 @@ export type AiResult<T> =
   | { ok: false, error: AiErrorCode }
 export type AiEvent =
   | { requestId: string, type: 'delta', text: string }
+  | { requestId: string, type: 'activity', name: string, detail: string }
   | { requestId: string, type: 'tools', calls: AiToolCall[] }
   | { requestId: string, type: 'protocol', messages: AiMessage[] }
   | { requestId: string, type: 'notice', error: AiErrorCode }

@@ -69,6 +69,7 @@ The Code editor is built for editing and reusing snippets:
 - Prettier formatting for supported languages
 - HTML and CSS preview for quick experiments
 - JSON Visualizer for nested JSON snippets
+- [AI Chat](/documentation/code/ai) with your own OpenAI key, Ollama, or LM Studio
 
 See [Snippets](/documentation/code/snippets) for the full snippet workflow.
 

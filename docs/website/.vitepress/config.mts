@@ -210,6 +210,7 @@ export default defineConfig({
             { text: 'Snippets', link: '/documentation/code/snippets' },
             { text: 'Fragments', link: '/documentation/code/fragments' },
             { text: 'Description', link: '/documentation/code/description' },
+            { text: 'AI Chat', link: '/documentation/code/ai' },
             { text: 'Library', link: '/documentation/code/library' },
             { text: 'Folders', link: '/documentation/code/folders' },
             { text: 'Tags', link: '/documentation/code/tags' },

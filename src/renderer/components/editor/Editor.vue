@@ -9,6 +9,7 @@ import {
   useSnippetUpdate,
   useTheme,
 } from '@/composables'
+import { useAi } from '@/composables/ai/useAi'
 import { i18n, ipc } from '@/electron'
 import { getContentSearchMatches } from '@/utils/contentSearch'
 import {
@@ -20,6 +21,7 @@ import {
   useCssVar,
   useDebounceFn,
   useEventListener,
+  useResizeObserver,
 } from '@vueuse/core'
 import CodeMirror from 'codemirror'
 import 'codemirror/addon/edit/closebrackets'
@@ -31,6 +33,7 @@ import 'codemirror/lib/codemirror.css'
 import 'codemirror/theme/neo.css'
 import 'codemirror/theme/oceanic-next.css'
 
+const { setContext: setAiContext, registerEditor: registerAiEditor } = useAi()
 const { settings, cursorPosition } = useEditor()
 const {
   displayedSnippet,
@@ -72,6 +75,8 @@ let contentSearchScrollFrame: number | undefined
 let contentSearchFocusRevision = 0
 let isContentSearchFocusPending = false
 
+const editorMountRef = useTemplateRef('editorMountRef')
+useResizeObserver(editorMountRef, () => editor?.refresh())
 const previewHandleRef = ref<HTMLElement>()
 const contentSearchPanelRef = useTemplateRef('contentSearchPanelRef')
 const isContentSearchOpen = ref(false)
@@ -133,6 +138,37 @@ const isSelectedSnippetContentReady = computed(
     && selectedSnippet.value?.id === state.snippetId
     && selectedSnippetContent.value?.value !== undefined,
 )
+function readAiContext() {
+  const content = selectedSnippetContent.value
+  const snippet = selectedSnippet.value
+  if (
+    !editor
+    || !content
+    || !snippet
+    || !isSelectedSnippetContentReady.value
+    || selectedSnippetIds.value.length !== 1
+    || content.id !== lastAppliedContentId
+  ) {
+    return undefined
+  }
+  return {
+    snippetId: snippet.id,
+    contentId: content.id,
+    text: editor.getValue(),
+    selection: editor.getSelection(),
+    language: content.language || 'plain_text',
+  }
+}
+function updateAiContext() {
+  setAiContext(readAiContext())
+}
+watch(
+  [isSelectedSnippetContentReady, selectedSnippetContent, selectedSnippetIds],
+  updateAiContext,
+  { flush: 'sync' },
+)
+let unregisterAiEditor: (() => void) | undefined
+
 const isSelectedSnippetLoadingVisible = ref(false)
 let selectedSnippetLoadingTimer: ReturnType<typeof setTimeout> | undefined
 
@@ -244,6 +280,9 @@ async function init() {
   })
 
   editor.on('cursorActivity', getCursorPosition)
+  editor.on('cursorActivity', updateAiContext)
+  editor.on('change', updateAiContext)
+  unregisterAiEditor = registerAiEditor(readAiContext)
 
   editor.on('scroll', () => {
     scrollBarOpacity.value = '1'
@@ -334,6 +373,7 @@ async function init() {
       // Не сохраняем вьюпорт при смене фрагмента/сниппета
       setValue(nextValue, true, !isNewValue)
       lastAppliedContentId = contentId
+      updateAiContext()
       if (contentSearchQuery.value)
         refreshContentSearch()
       focusPendingContentSearch()
@@ -702,6 +742,7 @@ ipc.on('main-menu:normalize-code-line-breaks', normalizeTerminalOutput)
 // прокси и removeListener по ссылке не срабатывает; владелец каналов — только
 // этот компонент.
 onBeforeUnmount(() => {
+  unregisterAiEditor?.()
   contentSearchRevision += 1
   if (contentSearchScrollFrame !== undefined)
     cancelAnimationFrame(contentSearchScrollFrame)
@@ -829,6 +870,7 @@ onMounted(() => {
         />
         <div
           id="editor"
+          ref="editorMountRef"
           data-editor-mount
           class="min-h-0 flex-1"
         />

@@ -43,6 +43,8 @@ const APP_STORE_DEFAULTS: AppStore = {
     },
     layout: {
       mode: 'all-panels',
+      inspectorOpen: false,
+      inspectorWidth: 340,
       tagsListHeight: LAYOUT_DEFAULTS.tags.height,
     },
   },
@@ -548,6 +550,11 @@ function sanitizeAppStore(value: unknown): AppStore {
           'mode',
           ['all-panels', 'list-editor', 'editor-only'] as const,
           getLegacyCodeLayoutMode(asRecord(source.state)),
+        ),
+        inspectorOpen: codeLayoutSource.inspectorOpen === true,
+        inspectorWidth: Math.max(
+          240,
+          readNumber(codeLayoutSource, 'inspectorWidth', 340),
         ),
         tagsListHeight: (() => {
           const raw = readNumber(

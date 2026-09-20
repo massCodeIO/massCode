@@ -1389,5 +1389,84 @@
   "contentLoad": {
     "failed": "Failed to load content.",
     "retry": "Try again"
+  },
+  "ai": {
+    "title": "AI assistant",
+    "settings": "AI settings",
+    "ask": "Ask AI",
+    "provider": "Connection",
+    "providers": {
+      "openai": "OpenAI",
+      "ollama": "Ollama",
+      "lmstudio": "LM Studio"
+    },
+    "baseURL": "Server URL",
+    "apiKey": "API key or token",
+    "model": "Model",
+    "modelPlaceholder": "Enter a model ID",
+    "chooseModel": "Choose an available model",
+    "modelHint": "Check the connection to load model IDs, or enter one manually. A successful check does not guarantee that a model supports chat.",
+    "settingsHint": "Connect your own account or a running model server. AI is available in the Code space.",
+    "cloudHint": "Requests go directly to OpenAI and use your API account billing.",
+    "localHint": "Start the server in Ollama or LM Studio. Code stays on your device only when using a local model on this computer; remote servers and cloud models send it elsewhere. No automatic fallback to the cloud.",
+    "keyHint": "Stored with system encryption outside your vault. Leave blank to keep the saved key for this server. Changing the server clears its saved key.",
+    "keySaved": "Key saved — enter to replace",
+    "keyPlaceholder": "Optional for local servers",
+    "removeKey": "Remove key",
+    "keyWillRemove": "The key will be removed when you save.",
+    "save": "Save",
+    "check": "Save and check connection",
+    "checking": "Connecting…",
+    "saved": "Settings saved.",
+    "connected": "Connected. Choose a chat model and save your selection.",
+    "notConfigured": "Model not selected",
+    "setupHint": "Open AI settings to configure a connection and select a model.",
+    "context": "Context to send",
+    "selection": "Selected code",
+    "fragment": "Entire fragment",
+    "previewContext": "Preview context to send",
+    "sentContext": "View sent context",
+    "selectFragment": "Select a loaded code fragment to chat.",
+    "intro": "Ask about your code. Only the chosen context and this conversation are sent to the configured server.",
+    "roles": {
+      "user": "You",
+      "assistant": "AI"
+    },
+    "cancelled": "Generation stopped.",
+    "generating": "Generating…",
+    "placeholder": "Ask about this code…",
+    "newChat": "New chat",
+    "stop": "Stop",
+    "send": "Send",
+    "sessionHint": "Conversations are kept in memory until restart. AI answers may be incorrect; review suggested code.",
+    "actions": {
+      "explain": "Explain",
+      "findProblem": "Find a problem",
+      "improve": "Suggest changes"
+    },
+    "prompts": {
+      "explain": "Explain this code.",
+      "findProblem": "Check this code for bugs and explain any problems.",
+      "improve": "Suggest improvements to this code and explain the changes."
+    },
+    "errors": {
+      "invalidRequest": "Check the server URL and request settings.",
+      "unauthorized": "This window cannot access AI.",
+      "encryptionUnavailable": "System encryption is unavailable. Keys cannot be stored; unauthenticated local servers can still be used.",
+      "keyUnavailable": "The API key is missing or cannot be decrypted. Save a new key in AI settings.",
+      "notConfigured": "Choose a model in AI settings.",
+      "busy": "A request is already running. Stop it before starting another.",
+      "connection": "Cannot reach the server. Check that it is running and the address is correct.",
+      "authentication": "Authentication failed. Check your API key or token.",
+      "rateLimit": "The provider limit was reached. Check your quota and try again later.",
+      "modelUnavailable": "Model or endpoint not found. Check the server URL and model ID.",
+      "upstream": "The provider rejected the request. Check model compatibility and server settings.",
+      "invalidResponse": "The server returned an unsupported or incomplete response.",
+      "inputLimit": "The conversation or code is too large. Start a new chat or select less code.",
+      "outputLimit": "The response exceeded the size limit. Ask for a shorter answer.",
+      "timeout": "The server did not finish in time. Check model loading and try again."
+    },
+    "keyRequired": "Enter your OpenAI API key",
+    "keyUnreadable": "Saved key unavailable — replace or remove it"
   }
 }

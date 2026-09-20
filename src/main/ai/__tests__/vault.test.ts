@@ -2,6 +2,12 @@ import { describe, expect, it, vi } from 'vitest'
 import { executeVaultTool, readVaultItem, searchVault } from '../vault'
 
 const data = vi.hoisted(() => ({
+  extraHttp: [] as {
+    id: number
+    name: string
+    updatedAt: number
+    isDeleted: number
+  }[],
   snippet: {
     id: 1,
     name: 'QA code',
@@ -11,7 +17,7 @@ const data = vi.hoisted(() => ({
   note: { id: 2, name: 'QA note', isDeleted: 0, content: 'Documentation' },
   http: {
     id: 3,
-    name: 'QA request',
+    name: 'QA request Order details',
     isDeleted: 0,
     method: 'GET',
     url: 'https://example.test',
@@ -33,16 +39,38 @@ vi.mock('../../store', () => ({
 vi.mock('../../storage', () => ({
   useStorage: () => ({
     snippets: {
-      getSnippets: () => [data.snippet],
+      getSnippets: (filter: { search?: string }) =>
+        [data.snippet].filter(
+          item =>
+            !filter.search
+            || `${item.name} ${item.contents[0].value}`
+              .toLowerCase()
+              .includes(filter.search.toLowerCase()),
+        ),
       getSnippetById: () => data.snippet,
     },
   }),
   useNotesStorage: () => ({
-    notes: { getNotes: () => [data.note], getNoteById: () => data.note },
+    notes: {
+      getNotes: (filter: { search?: string }) =>
+        [data.note].filter(
+          item =>
+            !filter.search
+            || `${item.name} ${item.content}`
+              .toLowerCase()
+              .includes(filter.search.toLowerCase()),
+        ),
+      getNoteById: () => data.note,
+    },
   }),
   useHttpStorage: () => ({
     requests: {
-      getRequests: () => [data.http],
+      getRequests: (filter: { search?: string }) =>
+        [data.http, ...data.extraHttp].filter(
+          item =>
+            !filter.search
+            || item.name.toLowerCase().includes(filter.search.toLowerCase()),
+        ),
       getRequestById: () => data.http,
     },
   }),
@@ -89,4 +117,145 @@ describe('unavailable data', () => {
       error: 'UNKNOWN_TOOL',
     })
   })
+})
+
+it('reports an empty literal search without asserting the record is absent and supports translated retries', async () => {
+  const first = await executeVaultTool(
+    'search_vault',
+    JSON.stringify({ query: 'заказ', type: 'http_request' }),
+  )
+  expect(first).toMatchObject({
+    status: 'no_matches',
+    queries: ['заказ'],
+    items: [],
+    total: 0,
+  })
+  const retry = await executeVaultTool(
+    'search_vault',
+    JSON.stringify({ query: 'order', type: 'http_request' }),
+  )
+  expect(retry).toMatchObject({
+    items: [{ id: 3, name: 'QA request Order details' }],
+  })
+})
+
+it('ranks exact names above newer partial and URL-only matches before limiting results', async () => {
+  data.extraHttp = Array.from({ length: 35 }, (_, i) => ({
+    id: 100 + i,
+    name: 'Order details archive',
+    updatedAt: 1000 + i,
+    isDeleted: 0,
+  }))
+  data.extraHttp.push({
+    id: 99,
+    name: 'Order details',
+    updatedAt: 1,
+    isDeleted: 0,
+  })
+  try {
+    const items = await searchVault({
+      query: 'order details',
+      type: 'http_request',
+    })
+    expect(items).toHaveLength(30)
+    expect(items[0]).toMatchObject({ id: 99, name: 'Order details' })
+  }
+  finally {
+    data.extraHttp = []
+  }
+})
+
+it('retrieves multilingual variants with stable ranking and excludes URL scheme distractors', async () => {
+  const { retrieveVaultItems } = await import('../vault')
+  data.extraHttp = Array.from({ length: 40 }, (_, i) => ({
+    id: 100 + i,
+    name: 'Get a post',
+    updatedAt: 1000 + i,
+    isDeleted: 0,
+  }))
+  data.extraHttp.push({
+    id: 469,
+    name: 'Order details',
+    updatedAt: 1,
+    isDeleted: 0,
+  })
+  try {
+    const found = await retrieveVaultItems('http_request', [
+      'детали заказа',
+      'order details',
+      'order',
+    ])
+    expect(found.items.map(item => item.id)).toEqual([469, 3])
+    expect(found.total).toBe(2)
+    expect(found.items[0]).toMatchObject({
+      matchedField: 'name',
+      matchedQuery: 'order details',
+    })
+    expect((await retrieveVaultItems('http_request', ['http'])).items).toEqual(
+      [],
+    )
+    expect((await retrieveVaultItems('http_request', [''])).items).toEqual([])
+    expect(
+      (await retrieveVaultItems('http_request', ['payment receipt'])).items,
+    ).toEqual([])
+    expect((await retrieveVaultItems('note', ['order details'])).items).toEqual(
+      [],
+    )
+    expect(
+      (await retrieveVaultItems('http_request', ['details order'])).items[0].id,
+    ).toBe(469)
+  }
+  finally {
+    data.extraHttp = []
+  }
+})
+
+it('preserves content search and exact names containing function words', async () => {
+  const { retrieveVaultItems } = await import('../vault')
+  expect(
+    (await retrieveVaultItems('snippet', ['const x'])).items[0],
+  ).toMatchObject({ id: 1, matchedField: 'stored_text' })
+  expect(
+    (await retrieveVaultItems('note', ['Documentation'])).items[0].id,
+  ).toBe(2)
+  data.extraHttp = [
+    { id: 50, name: 'Create an order', updatedAt: 1, isDeleted: 0 },
+    { id: 51, name: 'Create order helper', updatedAt: 2, isDeleted: 0 },
+  ]
+  try {
+    expect(
+      (await retrieveVaultItems('http_request', ['Create an order'])).items[0]
+        .id,
+    ).toBe(50)
+    expect(
+      (await retrieveVaultItems('http_request', ['with order details']))
+        .items[0].id,
+    ).toBe(3)
+  }
+  finally {
+    data.extraHttp = []
+  }
+})
+
+it('distinguishes C++ and C# names', async () => {
+  const { retrieveVaultItems } = await import('../vault')
+  data.extraHttp = [
+    { id: 50, name: 'C++ example', updatedAt: 1, isDeleted: 0 },
+    { id: 51, name: 'C# example', updatedAt: 2, isDeleted: 0 },
+  ]
+  try {
+    expect(
+      (await retrieveVaultItems('http_request', ['C++'])).items.map(
+        item => item.id,
+      ),
+    ).toEqual([50])
+    expect(
+      (await retrieveVaultItems('http_request', ['C#'])).items.map(
+        item => item.id,
+      ),
+    ).toEqual([51])
+  }
+  finally {
+    data.extraHttp = []
+  }
 })

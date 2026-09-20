@@ -25,6 +25,7 @@ export interface AiContext {
   language: string
 }
 export interface ChatMessage extends AiMessage {
+  createdAt?: number
   role: 'user' | 'assistant'
   rejected?: boolean
   calls?: AiToolCall[]
@@ -478,6 +479,7 @@ async function send(
   })
   conversation.messages.push({
     role: 'assistant',
+    createdAt: Date.now(),
     content: '',
     status: 'streaming',
     edit,

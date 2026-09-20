@@ -40,7 +40,7 @@ watch(
         {{ language }}
       </UiText>
       <UiActionButton
-        :tooltip="i18n.t('action.copy')"
+        :tooltip="i18n.t('menu:edit.copy')"
         @click="copy(code)"
       >
         <Copy class="size-3" />

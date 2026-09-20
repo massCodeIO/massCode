@@ -3,6 +3,7 @@ import type { AiVaultItem } from '~/shared/ai'
 import { Button } from '@/components/ui/shadcn/button'
 import { useAi } from '@/composables/ai/useAi'
 import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
+import { useDateFormat } from '@/composables/useDateFormat'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
 import { useResizeObserver } from '@vueuse/core'
@@ -29,6 +30,7 @@ const messageReferences = computed(() => {
     return [...items]
   })
 })
+const { formatDateTime } = useDateFormat()
 const copy = useCopyToClipboard()
 const profile = computed(
   () => settings.value?.profiles[settings.value.provider],
@@ -53,25 +55,6 @@ useResizeObserver(messagesContent, () => {
   if (followBottom.value)
     scroll.value?.scrollTo({ top: scroll.value.scrollHeight })
 })
-function activitySummary(detail: string) {
-  try {
-    const result = JSON.parse(detail)
-    if (result.error)
-      return i18n.t('ai.contextReadFailed')
-    const items = Array.isArray(result) ? result : (result.items ?? [result])
-    return items.length
-      ? items
-          .map(
-            (item: { name: string, type: string, id: number }) =>
-              `${item.name} · ${i18n.t(`ai.itemTypes.${item.type}`)} #${item.id}`,
-          )
-          .join('\n')
-      : i18n.t('ai.noResults')
-  }
-  catch {
-    return i18n.t('ai.contextReadFailed')
-  }
-}
 onMounted(() => {
   void refreshSettings().catch(() => {})
 })
@@ -159,17 +142,6 @@ onMounted(() => {
               : 'mr-auto w-full'
           "
         >
-          <div
-            v-if="message.content && message.role === 'assistant'"
-            class="flex justify-end"
-          >
-            <UiActionButton
-              :tooltip="i18n.t('action.copy')"
-              @click="copy(message.content)"
-            >
-              <Copy class="size-3" />
-            </UiActionButton>
-          </div>
           <AiSearchResults
             v-for="(result, resultIndex) in message.searchResults"
             :key="resultIndex"
@@ -195,30 +167,6 @@ onMounted(() => {
           >
             {{ message.proposalSummary }}
           </UiText>
-          <details
-            v-for="(activity, activityIndex) in message.activity"
-            :key="activityIndex"
-          >
-            <summary class="cursor-pointer">
-              <UiText
-                variant="caption"
-                muted
-              >
-                {{
-                  i18n.t(
-                    `ai.activity.${["search_vault", "read_vault_item", "attachments"].includes(activity.name) ? activity.name : "other"}`,
-                  )
-                }}
-              </UiText>
-            </summary>
-            <UiText
-              as="pre"
-              variant="xs"
-              class="scrollbar max-h-32 overflow-auto whitespace-pre-wrap"
-            >
-              {{ activitySummary(activity.detail) }}
-            </UiText>
-          </details>
           <div
             v-if="message.attachments?.length"
             class="flex flex-wrap justify-end gap-1"
@@ -233,10 +181,6 @@ onMounted(() => {
               {{ item.name }}
             </UiText>
           </div>
-          <AiEditReview
-            v-if="message.edit"
-            :message="message"
-          />
           <details v-if="message.context">
             <summary class="cursor-pointer text-right">
               <UiText
@@ -262,18 +206,43 @@ onMounted(() => {
           >
             {{ i18n.t("ai.cancelled") }}
           </UiText>
+          <div
+            v-if="
+              message.role === 'assistant'
+                && (message.content || message.edit || canRetry(message))
+            "
+            class="flex flex-wrap items-center gap-2"
+          >
+            <UiActionButton
+              v-if="message.content"
+              :tooltip="i18n.t('menu:edit.copy')"
+              @click="copy(message.content)"
+            >
+              <Copy class="size-3" />
+            </UiActionButton>
+            <AiEditReview
+              v-if="message.edit"
+              :message="message"
+            />
+            <Button
+              v-if="canRetry(message)"
+              variant="outline"
+              size="sm"
+              @click="retry(message)"
+            >
+              {{ i18n.t("ai.retry") }}
+            </Button>
+            <UiText
+              v-if="message.createdAt"
+              as="time"
+              variant="caption"
+              muted
+              :datetime="new Date(message.createdAt).toISOString()"
+            >
+              {{ formatDateTime(message.createdAt) }}
+            </UiText>
+          </div>
         </div>
-        <Button
-          v-if="
-            conversation?.messages.at(-1)
-              && canRetry(conversation.messages.at(-1)!)
-          "
-          variant="outline"
-          size="sm"
-          @click="retry(conversation!.messages.at(-1)!)"
-        >
-          {{ i18n.t("ai.retry") }}
-        </Button>
         <UiText
           v-if="conversation?.historyOmitted"
           as="p"

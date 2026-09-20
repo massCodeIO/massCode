@@ -96,6 +96,12 @@ export const aiVaultRefSchema = z
   .strict()
 export type AiVaultRef = z.infer<typeof aiVaultRefSchema>
 export type AiVaultItem = AiVaultRef & { name: string }
+export interface AiSearchResults {
+  queries: string[]
+  items: (AiVaultItem & { method?: string, url?: string })[]
+  total: number
+  expanded: boolean
+}
 export const aiStartSchema = z
   .object({
     requestId: z.uuid(),
@@ -165,6 +171,8 @@ export type AiResult<T> =
   | { ok: true, data: T }
   | { ok: false, error: AiErrorCode }
 export type AiEvent =
+  | { requestId: string, type: 'answerReset' }
+  | { requestId: string, type: 'searchResults', result: AiSearchResults }
   | { requestId: string, type: 'delta', text: string }
   | { requestId: string, type: 'activity', name: string, detail: string }
   | { requestId: string, type: 'tools', calls: AiToolCall[] }

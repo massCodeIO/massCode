@@ -1,5 +1,6 @@
 import type { IpcMainInvokeEvent, WebContents } from 'electron'
 import type { AiEvent, AiResult, AiStart } from '../../shared/ai'
+import { randomUUID } from 'node:crypto'
 import {
   AI_LIMITS,
   aiCancelSchema,
@@ -9,10 +10,12 @@ import {
 import { isTrustedApiRequest } from '../api/requestIpc'
 import { listAiModels, streamAiChat } from './client'
 import { AiError, aiErrorCode } from './errors'
+import { planVaultSearch, planVaultTurn } from './searchPlan'
 import { configureAi, getAiConnection, getAiSettings } from './settings'
 import {
   executeVaultTool,
   readVaultItem,
+  retrieveVaultItems,
   searchVault,
   vaultIdentity,
   vaultSearchSchema,
@@ -116,6 +119,12 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
         if (vaultIdentity() !== currentVault)
           throw new AiError('invalidRequest')
       }
+      const searchConversation = request.messages.map(message => ({
+        ...message,
+      }))
+      let initialSearchPlanned = false
+      const planningRecords: { type: string, name: string, preview: string }[]
+        = []
       if (request.attachments?.length) {
         const records = request.attachments.map((ref) => {
           try {
@@ -129,6 +138,13 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
             )
           }
         })
+        planningRecords.push(
+          ...records.map(record => ({
+            type: record.type,
+            name: record.name,
+            preview: JSON.stringify(record.content).slice(0, 2000),
+          })),
+        )
         if (active === session) {
           send({
             requestId: request.requestId,
@@ -145,6 +161,66 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
               }
             : message,
         )
+      }
+      if (request.vaultAccess) {
+        const signal = AbortSignal.any([session.controller.signal, timeout])
+        const plan = await planVaultTurn(
+          connection,
+          searchConversation,
+          signal,
+          {
+            records: planningRecords,
+            editorText: request.editContextText?.slice(0, 2000),
+          },
+        )
+        assertVault()
+        if (plan.scope === 'vault') {
+          const found = {
+            ...(await retrieveVaultItems(plan.type, plan.queries)),
+            expanded: true,
+          }
+          assertVault()
+          initialSearchPlanned = true
+          const callId = `vault_${randomUUID()}`
+          request.messages = [
+            ...request.messages,
+            {
+              role: 'assistant',
+              content: '',
+              tool_calls: [
+                {
+                  id: callId,
+                  type: 'function',
+                  function: {
+                    name: 'search_vault',
+                    arguments: JSON.stringify({
+                      query: plan.queries[0],
+                      type: plan.type,
+                    }),
+                  },
+                },
+              ],
+            },
+            {
+              role: 'tool',
+              tool_call_id: callId,
+              content: JSON.stringify(found),
+            },
+          ]
+          if (active === session) {
+            send({
+              requestId: request.requestId,
+              type: 'searchResults',
+              result: found,
+            })
+            send({
+              requestId: request.requestId,
+              type: 'activity',
+              name: 'search_vault',
+              detail: JSON.stringify(found),
+            })
+          }
+        }
       }
       let toolContent = ''
       let responseMessages = request.messages
@@ -181,10 +257,72 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
         request.vaultAccess
           ? {
               tools: vaultTools,
-              remaining: 6,
+              remaining: initialSearchPlanned ? 5 : 6,
+              onToolRound: () => {
+                toolContent = ''
+                if (active === session)
+                  send({ requestId: request.requestId, type: 'answerReset' })
+              },
               execute: async (name, args) => {
                 assertVault()
-                const result = await executeVaultTool(name, args)
+                let result: unknown
+                if (name === 'search_vault') {
+                  const parsed = vaultSearchSchema.safeParse(
+                    (() => {
+                      try {
+                        return JSON.parse(args)
+                      }
+                      catch {
+                        return null
+                      }
+                    })(),
+                  )
+                  if (!parsed.success) {
+                    result = { error: 'INVALID_ARGUMENTS' }
+                  }
+                  else {
+                    const search = parsed.data
+                    let queries: string[] | undefined = initialSearchPlanned
+                      ? [search.query]
+                      : undefined
+                    let expanded = true
+                    if (!queries) {
+                      initialSearchPlanned = true
+                      try {
+                        queries = await planVaultSearch(
+                          connection,
+                          searchConversation,
+                          search.query,
+                          AbortSignal.any([session.controller.signal, timeout]),
+                        )
+                      }
+                      catch {
+                        assertVault()
+                        if (timeout.aborted)
+                          throw new AiError('timeout')
+                        queries = [search.query]
+                        expanded = false
+                      }
+                    }
+                    assertVault()
+                    const found = {
+                      ...(await retrieveVaultItems(search.type, queries)),
+                      expanded,
+                    }
+                    assertVault()
+                    if (active === session) {
+                      send({
+                        requestId: request.requestId,
+                        type: 'searchResults',
+                        result: found,
+                      })
+                    }
+                    result = found
+                  }
+                }
+                else {
+                  result = await executeVaultTool(name, args)
+                }
                 assertVault()
                 if (active === session) {
                   send({

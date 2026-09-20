@@ -4,6 +4,7 @@ import type {
   AiEvent,
   AiMessage,
   AiResult,
+  AiSearchResults,
   AiSettings,
   AiToolCall,
   AiVaultItem,
@@ -40,6 +41,7 @@ export interface ChatMessage extends AiMessage {
   attachments?: AiVaultItem[]
   editorSnapshot?: AiContext
   activity?: { name: string, detail: string }[]
+  searchResults?: AiSearchResults[]
   context?: string
   status?: 'streaming' | 'done' | 'cancelled' | 'error'
 }
@@ -97,6 +99,14 @@ function onEvent(_event: unknown, event: AiEvent) {
   syncVault()
   if (event.requestId !== active.value?.requestId)
     return
+  if (event.type === 'answerReset') {
+    message.content = ''
+    return
+  }
+  if (event.type === 'searchResults') {
+    (message.searchResults ??= []).push(event.result)
+    return
+  }
   if (event.type === 'activity') {
     if (event.name === 'attachments') {
       const user = conversation.messages.at(-2)

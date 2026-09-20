@@ -7,6 +7,9 @@ const mocks = vi.hoisted(() => ({
   stream: vi.fn(),
   models: vi.fn(),
   configure: vi.fn(),
+  plan: vi.fn(),
+  turnPlan: vi.fn(async () => ({ scope: 'context' })),
+  retrieve: vi.fn(),
 }))
 vi.mock('../client', () => ({
   streamAiChat: mocks.stream,
@@ -18,9 +21,14 @@ vi.mock('../vault', () => ({
   vaultSearchSchema: {
     safeParse: (value: unknown) => ({ success: true, data: value }),
   },
+  retrieveVaultItems: mocks.retrieve,
   searchVault: vi.fn(async () => []),
   readVaultItem: vi.fn(ref => ({ ...ref, name: 'QA', content: 'fixture' })),
   executeVaultTool: vi.fn(async () => ({ items: [] })),
+}))
+vi.mock('../searchPlan', () => ({
+  planVaultSearch: mocks.plan,
+  planVaultTurn: mocks.turnPlan,
 }))
 vi.mock('../settings', () => ({
   configureAi: mocks.configure,
@@ -239,4 +247,138 @@ it('keeps the proposal reviewable when its explanatory response fails', async ()
     'notice',
     'done',
   ])
+})
+
+it('plans only the first search and publishes storage results before the answer', async () => {
+  mocks.plan.mockResolvedValue(['детали заказа', 'order details'])
+  mocks.retrieve.mockResolvedValue({
+    items: [{ type: 'http_request', id: 469, name: 'Order details' }],
+    total: 1,
+    queries: ['order details'],
+  })
+  mocks.stream.mockReset().mockImplementation(async (...args) => {
+    const vault = args[10]
+    await vault.execute(
+      'search_vault',
+      JSON.stringify({ query: 'http', type: 'http_request' }),
+    )
+    await vault.execute(
+      'search_vault',
+      JSON.stringify({ query: 'Create an order', type: 'http_request' }),
+    )
+    return []
+  })
+  const { invoke, owner } = setup()
+  await invoke('start', { ...request(id1), vaultAccess: true })
+  await flush()
+  expect(mocks.plan).toHaveBeenCalledTimes(1)
+  expect(mocks.retrieve.mock.calls).toEqual([
+    ['http_request', ['детали заказа', 'order details']],
+    ['http_request', ['Create an order']],
+  ])
+  expect(
+    owner.send.mock.calls.filter(([, event]) => event.type === 'searchResults'),
+  ).toHaveLength(2)
+})
+
+it('falls back to literal search when the plan is invalid without claiming expansion succeeded', async () => {
+  mocks.plan.mockRejectedValue(new Error('invalid plan'))
+  mocks.retrieve.mockResolvedValue({ items: [], total: 0, queries: ['order'] })
+  mocks.stream.mockReset().mockImplementation(async (...args) => {
+    await args[10].execute(
+      'search_vault',
+      JSON.stringify({ query: 'order', type: 'http_request' }),
+    )
+    return []
+  })
+  const { invoke, owner } = setup()
+  await invoke('start', { ...request(id1), vaultAccess: true })
+  await flush()
+  expect(mocks.retrieve).toHaveBeenCalledWith('http_request', ['order'])
+  expect(
+    owner.send.mock.calls.find(
+      ([, event]) => event.type === 'searchResults',
+    )?.[1].result.expanded,
+  ).toBe(false)
+})
+
+it('does not search or publish cards after cancellation during rewriting', async () => {
+  let finish!: (value: string[]) => void
+  mocks.plan.mockImplementation(
+    () => new Promise(resolve => (finish = resolve)),
+  )
+  mocks.stream.mockReset().mockImplementation(async (...args) => {
+    await args[10].execute(
+      'search_vault',
+      JSON.stringify({ query: 'order', type: 'http_request' }),
+    )
+    return []
+  })
+  const { invoke, owner } = setup()
+  await invoke('start', { ...request(id1), vaultAccess: true })
+  await flush()
+  await invoke('cancel', { requestId: id1 })
+  finish(['order'])
+  await flush()
+  expect(mocks.retrieve).not.toHaveBeenCalled()
+  expect(
+    owner.send.mock.calls.some(([, event]) => event.type === 'searchResults'),
+  ).toBe(false)
+})
+
+it('searches the vault before answering even with an unrelated attachment', async () => {
+  mocks.turnPlan.mockResolvedValueOnce({
+    scope: 'vault',
+    type: 'http_request',
+    queries: ['последние заказы', 'recent orders'],
+  } as any)
+  const found = {
+    items: [{ type: 'http_request', id: 471, name: 'Recent orders' }],
+    queries: ['recent orders'],
+    total: 1,
+  }
+  mocks.retrieve.mockResolvedValue(found)
+  mocks.stream.mockReset().mockImplementation(async (_connection, messages) => {
+    expect(messages[0].content).toContain('Attached saved records')
+    expect(messages.at(-1)).toMatchObject({ role: 'tool' })
+    expect(JSON.parse(messages.at(-1).content).items[0].name).toBe(
+      'Recent orders',
+    )
+    expect(messages.at(-2).tool_calls[0].id).toBe(messages.at(-1).tool_call_id)
+    return []
+  })
+  const { invoke, owner } = setup()
+  await invoke('start', {
+    ...request(id1),
+    vaultAccess: true,
+    attachments: [{ type: 'http_request', id: 465 }],
+  })
+  await flush()
+  expect(mocks.retrieve).toHaveBeenCalledWith('http_request', [
+    'последние заказы',
+    'recent orders',
+  ])
+  expect(mocks.plan).not.toHaveBeenCalled()
+  expect(
+    owner.send.mock.calls.some(([, event]) => event.type === 'searchResults'),
+  ).toBe(true)
+})
+
+it('does not answer or retrieve after cancellation during scope planning', async () => {
+  let finish!: (value: any) => void
+  mocks.turnPlan.mockImplementationOnce(
+    () => new Promise(resolve => (finish = resolve)),
+  )
+  mocks.stream.mockReset()
+  const { invoke, owner } = setup()
+  await invoke('start', { ...request(id1), vaultAccess: true })
+  await flush()
+  await invoke('cancel', { requestId: id1 })
+  finish({ scope: 'vault', type: 'http_request', queries: ['recent orders'] })
+  await flush()
+  expect(mocks.retrieve).not.toHaveBeenCalled()
+  expect(mocks.stream).not.toHaveBeenCalled()
+  expect(
+    owner.send.mock.calls.some(([, event]) => event.type === 'searchResults'),
+  ).toBe(false)
 })

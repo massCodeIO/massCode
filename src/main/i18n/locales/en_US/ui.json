@@ -1500,6 +1500,13 @@
       "note": "Note",
       "http_request": "HTTP"
     },
+    "searchResults": {
+      "title": "Vault matches",
+      "empty": "No matches for the checked phrases.",
+      "limited": "Showing {{shown}} of {{total}} matches",
+      "unexpanded": "Query expansion was unavailable; searched the original phrase.",
+      "queries": "Search phrases"
+    },
     "activity": {
       "search_vault": "Searched vault",
       "read_vault_item": "Read record",

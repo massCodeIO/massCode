@@ -71,6 +71,26 @@ async function setup() {
 beforeEach(() => vi.clearAllMocks())
 
 describe('aI chat context and request lifecycle', () => {
+  it('replaces search commentary with the final answer while retaining activity', async () => {
+    const { ai, emit, request } = await setup()
+    await ai.send('Find order details')
+    const requestId = request().requestId
+    emit({ requestId, type: 'delta', text: 'Maybe an unrelated item' })
+    emit({ requestId, type: 'answerReset' })
+    emit({
+      requestId,
+      type: 'activity',
+      name: 'search_vault',
+      detail: '{"items":[]}',
+    })
+    emit({ requestId, type: 'delta', text: 'Order details' })
+    emit({ requestId, type: 'done' })
+    expect(ai.conversation.value.messages.at(-1)?.content).toBe(
+      'Order details',
+    )
+    expect(ai.conversation.value.messages.at(-1)?.activity).toHaveLength(1)
+  })
+
   it('follows the open editor and respects removal', async () => {
     const { ai, setSnapshot } = await setup()
     ai.setOpen(true)
@@ -485,4 +505,20 @@ describe('retry, stopped proposals and history budget', () => {
     expect(ai.conversation.value!.messages).toHaveLength(48)
     expect(ai.conversation.value!.historyOmitted).toBe(true)
   })
+})
+
+it('retains authoritative search cards when intermediate assistant text is reset', async () => {
+  const { ai, request, emit } = await setup()
+  await ai.send('Find order')
+  const result = {
+    items: [{ type: 'http_request' as const, id: 469, name: 'Order details' }],
+    queries: ['order'],
+    total: 1,
+    expanded: true,
+  }
+  emit({ requestId: request().requestId, type: 'searchResults', result })
+  emit({ requestId: request().requestId, type: 'answerReset' })
+  expect(ai.conversation.value!.messages.at(-1)!.searchResults).toEqual([
+    result,
+  ])
 })

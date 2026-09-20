@@ -160,6 +160,11 @@ onMounted(() => {
               <Copy class="size-3" />
             </UiActionButton>
           </div>
+          <AiSearchResults
+            v-for="(result, resultIndex) in message.searchResults"
+            :key="resultIndex"
+            :result="result"
+          />
           <AiMessage
             v-if="message.role === 'assistant'"
             :content="message.content"

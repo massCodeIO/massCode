@@ -483,6 +483,7 @@ describe('vault tool loop', () => {
       .mockResolvedValueOnce(
         new Response(
           stream([
+            `data: ${delta('Searching, maybe an unrelated item')}\n\n`,
             toolDelta(0, '{"query":"QA","type":"all"}', true).replace(
               'propose_edit',
               'search_vault',
@@ -525,7 +526,14 @@ describe('vault tool loop', () => {
         0,
         undefined,
         response,
-        { tools: [], execute, remaining: 2 },
+        {
+          tools: [],
+          execute,
+          remaining: 2,
+          onToolRound: () => {
+            output.length = 0
+          },
+        },
       ),
     ).toEqual([])
     expect(execute).toHaveBeenCalledTimes(2)
@@ -535,6 +543,11 @@ describe('vault tool loop', () => {
     expect(
       final.messages.filter((m: { role: string }) => m.role === 'tool'),
     ).toHaveLength(2)
+    expect(
+      final.messages.some((m: { content?: string }) =>
+        m.content?.includes('Searching, maybe an unrelated item'),
+      ),
+    ).toBe(true)
     expect(response).toHaveBeenCalled()
   })
 })

@@ -2,9 +2,10 @@
 import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import { useAi } from '@/composables/ai/useAi'
-import { useSonner } from '@/composables/useSonner'
+import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
+import { useResizeObserver } from '@vueuse/core'
 import { Copy, Settings, X } from 'lucide-vue-next'
 
 const {
@@ -17,9 +18,11 @@ const {
   send,
   cancel,
   clearConversation,
+  retry,
+  canRetry,
   refreshSettings,
 } = useAi()
-const { sonner } = useSonner()
+const copy = useCopyToClipboard()
 const profile = computed(
   () => settings.value?.profiles[settings.value.provider],
 )
@@ -45,36 +48,24 @@ const canSend = computed(
   () => ready.value && Boolean(contextText.value?.trim()) && !isStreaming.value,
 )
 const scroll = ref<HTMLElement>()
+const messagesContent = ref<HTMLElement>()
 const followBottom = ref(true)
 function onScroll() {
   const el = scroll.value
   if (el)
     followBottom.value = el.scrollHeight - el.scrollTop - el.clientHeight < 60
 }
-watch(
-  () => conversation.value?.messages.at(-1)?.content,
-  () => {
-    if (followBottom.value) {
-      nextTick(() =>
-        scroll.value?.scrollTo({ top: scroll.value.scrollHeight }),
-      )
-    }
-  },
-)
-async function copy(text: string) {
-  try {
-    await navigator.clipboard.writeText(text)
-    sonner({ type: 'success', message: i18n.t('messages:success.copied') })
-  }
-  catch {
-    sonner({ type: 'error', message: i18n.t('messages:error.copyFailed') })
-  }
-}
-function submit(prompt = String(draft.value)) {
+// Markdown rendering, code block mounting and review controls can resize after
+// the streamed text changes. Follow the rendered layout rather than raw tokens.
+useResizeObserver(messagesContent, () => {
+  if (followBottom.value)
+    scroll.value?.scrollTo({ top: scroll.value.scrollHeight })
+})
+function submit(prompt = String(draft.value), proposeEdit = false) {
   if (!canSend.value)
     return
   followBottom.value = true
-  void send(prompt)
+  void send(prompt, proposeEdit)
 }
 function onKeydown(event: KeyboardEvent) {
   if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
@@ -172,93 +163,141 @@ onMounted(() => {
     </div>
     <div
       ref="scroll"
-      class="scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto p-3"
+      class="scrollbar min-h-0 flex-1 overflow-y-auto p-3"
       @scroll="onScroll"
     >
-      <UiText
-        v-if="!conversation?.messages.length"
-        as="p"
-        variant="sm"
-        muted
-      >
-        {{ i18n.t("ai.intro") }}
-      </UiText>
       <div
-        v-for="(message, index) in conversation?.messages"
-        :key="index"
-        class="space-y-2"
+        ref="messagesContent"
+        class="space-y-4"
       >
-        <div class="flex items-center justify-between">
-          <UiText
-            variant="caption"
-            weight="medium"
-          >
-            {{ i18n.t(`ai.roles.${message.role}`) }}
-          </UiText>
-          <UiActionButton
-            v-if="message.content && message.role === 'assistant'"
-            :tooltip="i18n.t('action.copy')"
-            @click="copy(message.content)"
-          >
-            <Copy class="size-3" />
-          </UiActionButton>
-        </div>
-        <AiMessage
-          v-if="message.role === 'assistant'"
-          :content="message.content"
-        />
         <UiText
-          v-else
-          as="div"
+          v-if="!conversation?.messages.length"
+          as="p"
           variant="sm"
-          class="break-words whitespace-pre-wrap select-text"
-        >
-          {{ message.content }}
-        </UiText>
-        <details v-if="message.context">
-          <summary class="cursor-pointer">
-            <UiText
-              variant="xs"
-              muted
-            >
-              {{ i18n.t("ai.sentContext") }}
-            </UiText>
-          </summary>
-          <UiText
-            as="pre"
-            variant="xs"
-            mono
-            class="scrollbar max-h-40 overflow-auto break-words whitespace-pre-wrap"
-          >
-            {{ message.context }}
-          </UiText>
-        </details>
-        <UiText
-          v-if="message.status === 'cancelled'"
-          variant="caption"
           muted
         >
-          {{ i18n.t("ai.cancelled") }}
+          {{ i18n.t("ai.intro") }}
+        </UiText>
+        <div
+          v-for="(message, index) in conversation?.messages"
+          :key="index"
+          class="space-y-2"
+        >
+          <div class="flex items-center justify-between">
+            <UiText
+              variant="caption"
+              weight="medium"
+            >
+              {{ i18n.t(`ai.roles.${message.role}`) }}
+            </UiText>
+            <UiActionButton
+              v-if="message.content && message.role === 'assistant'"
+              :tooltip="i18n.t('action.copy')"
+              @click="copy(message.content)"
+            >
+              <Copy class="size-3" />
+            </UiActionButton>
+          </div>
+          <UiText
+            v-if="
+              message.calls?.length && !message.applied && !message.rejected
+            "
+            as="p"
+            variant="caption"
+            weight="medium"
+            class="bg-muted rounded-md border px-2 py-1"
+            role="status"
+          >
+            {{ i18n.t("ai.edit.pending") }}
+          </UiText>
+          <AiMessage
+            v-if="message.role === 'assistant'"
+            :content="message.content"
+          />
+          <UiText
+            v-else
+            as="div"
+            variant="sm"
+            class="break-words whitespace-pre-wrap select-text"
+          >
+            {{ message.content }}
+          </UiText>
+          <UiText
+            v-if="message.proposalSummary && !message.content"
+            as="p"
+            variant="sm"
+          >
+            {{ message.proposalSummary }}
+          </UiText>
+          <AiEditReview
+            v-if="message.edit"
+            :message="message"
+          />
+          <details v-if="message.context">
+            <summary class="cursor-pointer">
+              <UiText
+                variant="xs"
+                muted
+              >
+                {{ i18n.t("ai.sentContext") }}
+              </UiText>
+            </summary>
+            <UiText
+              as="pre"
+              variant="xs"
+              mono
+              class="scrollbar max-h-40 overflow-auto break-words whitespace-pre-wrap"
+            >
+              {{ message.context }}
+            </UiText>
+          </details>
+          <UiText
+            v-if="message.status === 'cancelled'"
+            variant="caption"
+            muted
+          >
+            {{ i18n.t("ai.cancelled") }}
+          </UiText>
+        </div>
+        <Button
+          v-if="
+            conversation?.messages.at(-1)
+              && canRetry(conversation.messages.at(-1)!)
+          "
+          variant="outline"
+          size="sm"
+          @click="retry(conversation!.messages.at(-1)!)"
+        >
+          {{ i18n.t("ai.retry") }}
+        </Button>
+        <UiText
+          v-if="conversation?.historyOmitted"
+          as="p"
+          variant="caption"
+          muted
+          role="status"
+        >
+          {{ i18n.t("ai.historyOmitted") }}
+        </UiText>
+        <UiText
+          v-if="isStreaming"
+          as="p"
+          variant="caption"
+          muted
+          role="status"
+        >
+          {{ i18n.t("ai.generating") }}
+        </UiText>
+        <UiText
+          v-if="conversation?.error"
+          as="p"
+          variant="sm"
+          class="text-destructive"
+          role="alert"
+        >
+          {{ i18n.t(`ai.errors.${conversation.error}`) }}
         </UiText>
       </div>
-      <UiText
-        v-if="isStreaming"
-        as="p"
-        variant="caption"
-        muted
-        role="status"
-      >
-        {{ i18n.t("ai.generating") }}
-      </UiText>
-      <UiText
-        v-if="conversation?.error"
-        as="p"
-        variant="sm"
-        class="text-destructive"
-        role="alert"
-      >
-        {{ i18n.t(`ai.errors.${conversation.error}`) }}
-      </UiText>
     </div>
     <div class="space-y-2 border-t p-3">
       <div

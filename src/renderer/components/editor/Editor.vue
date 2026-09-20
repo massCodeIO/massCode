@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Language } from '@/components/editor/types'
+import type { EditSnapshot } from '@/composables/ai/edit'
 import {
   useApp,
   useDonations,
@@ -9,8 +10,9 @@ import {
   useSnippetUpdate,
   useTheme,
 } from '@/composables'
+import { matchesSnapshot } from '@/composables/ai/edit'
 import { useAi } from '@/composables/ai/useAi'
-import { i18n, ipc } from '@/electron'
+import { i18n, ipc, store } from '@/electron'
 import { getContentSearchMatches } from '@/utils/contentSearch'
 import {
   mapNormalizedCursorIndex,
@@ -156,9 +158,41 @@ function readAiContext() {
     contentId: content.id,
     text: editor.getValue(),
     selection: editor.getSelection(),
+    selectionFrom:
+      editor.listSelections().length === 1
+        ? editor.indexFromPos(editor.getCursor('from'))
+        : undefined,
+    selectionTo:
+      editor.listSelections().length === 1
+        ? editor.indexFromPos(editor.getCursor('to'))
+        : undefined,
     language: content.language || 'plain_text',
   }
 }
+function applyAiEdit(snapshot: EditSnapshot, replacement: string) {
+  if (
+    !editor
+    || !matchesSnapshot(
+      snapshot,
+      readAiContext(),
+      store.preferences.get<string>('storage.vaultPath') ?? '',
+    )
+  ) {
+    return false
+  }
+  editor.operation(() => {
+    editor!.getDoc().changeGeneration(true)
+    editor!.replaceRange(
+      replacement,
+      editor!.posFromIndex(snapshot.from),
+      editor!.posFromIndex(snapshot.to),
+      'ai-edit',
+    )
+    editor!.getDoc().changeGeneration(true)
+  })
+  return true
+}
+
 function updateAiContext() {
   setAiContext(readAiContext())
 }
@@ -282,7 +316,7 @@ async function init() {
   editor.on('cursorActivity', getCursorPosition)
   editor.on('cursorActivity', updateAiContext)
   editor.on('change', updateAiContext)
-  unregisterAiEditor = registerAiEditor(readAiContext)
+  unregisterAiEditor = registerAiEditor(readAiContext, applyAiEdit)
 
   editor.on('scroll', () => {
     scrollBarOpacity.value = '1'

@@ -1,0 +1,64 @@
+import type { AiToolCall } from '../../shared/ai'
+import { aiProposalSchema, aiToolCallSchema } from '../../shared/ai'
+import { AiError } from './errors'
+
+export function editTool(contextId: string) {
+  return {
+    type: 'function',
+    function: {
+      name: 'propose_edit',
+      description:
+        'Propose edits to the current code context for user review. This does NOT modify the snippet. Use when the user asks to change or fix code. Each old_text must match exactly once in the original supplied context, including whitespace. Edits must not overlap. Include enough surrounding text to make each match unique. All edits refer to the original, not to earlier edits. Preserve unrelated code.',
+      strict: true,
+      parameters: {
+        type: 'object',
+        properties: {
+          context_id: { type: 'string', enum: [contextId] },
+          summary: {
+            type: 'string',
+            description:
+              'Describe the proposed changes in the user language, using future or conditional tense. They are not applied yet.',
+          },
+          edits: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                old_text: { type: 'string' },
+                new_text: { type: 'string' },
+              },
+              required: ['old_text', 'new_text'],
+              additionalProperties: false,
+            },
+          },
+        },
+        required: ['context_id', 'summary', 'edits'],
+        additionalProperties: false,
+      },
+    },
+  }
+}
+
+export function validateToolCalls(
+  calls: unknown[],
+  contextId?: string,
+): AiToolCall[] {
+  if (!contextId || calls.length > 8)
+    throw new AiError('invalidResponse')
+  try {
+    const ids = new Set<string>()
+    return calls.map((value) => {
+      const call = aiToolCallSchema.parse(value)
+      const proposal = aiProposalSchema.parse(
+        JSON.parse(call.function.arguments),
+      )
+      if (proposal.context_id !== contextId || ids.has(call.id))
+        throw new AiError('invalidResponse')
+      ids.add(call.id)
+      return call
+    })
+  }
+  catch {
+    throw new AiError('invalidResponse')
+  }
+}

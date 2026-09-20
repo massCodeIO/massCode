@@ -154,3 +154,224 @@ describe('aI compatible transport', () => {
     ).toEqual(['a', 'b'])
   })
 })
+
+const contextId = '11111111-1111-4111-8111-111111111111'
+const args = JSON.stringify({
+  context_id: contextId,
+  summary: 'Fix',
+  edits: [{ old_text: 'a + b', new_text: 'a - b' }],
+})
+function toolDelta(index: number, argument: string, first = false) {
+  return `data: ${JSON.stringify({ choices: [{ delta: { tool_calls: [{ index, ...(first ? { id: `call_${index}`, type: 'function' } : {}), function: { ...(first ? { name: 'propose_edit' } : {}), arguments: argument } }] } }] })}\n\n`
+}
+const toolFinish = `data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: 'tool_calls' }] })}\n\ndata: [DONE]\n\n`
+
+describe('streamed tool calls', () => {
+  it('accumulates interleaved calls and accepts tool-only completions', async () => {
+    const calls = await readAiStream(
+      stream([
+        toolDelta(0, args.slice(0, 30), true),
+        toolDelta(1, args.slice(0, 10), true),
+        toolDelta(0, args.slice(30)),
+        toolDelta(1, args.slice(10)),
+        toolFinish,
+      ]),
+      () => {},
+    )
+    expect(calls).toHaveLength(2)
+    expect(calls.map(call => call.function.arguments)).toEqual([args, args])
+  })
+  it('rejects calls without a successful finish and limits tool bytes', async () => {
+    await expect(
+      readAiStream(
+        stream([toolDelta(0, args, true), 'data: [DONE]\n\n']),
+        () => {},
+      ),
+    ).rejects.toMatchObject({ code: 'invalidResponse' })
+    const truncated = `data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: 'length' }] })}\n\n`
+    await expect(
+      readAiStream(stream([toolDelta(0, args, true), truncated]), () => {}),
+    ).rejects.toMatchObject({ code: 'invalidResponse' })
+    await expect(
+      readAiStream(
+        stream(
+          Array.from({ length: 12 }, (_, i) =>
+            toolDelta(0, 'x'.repeat(100000), i === 0)),
+        ),
+        () => {},
+      ),
+    ).rejects.toMatchObject({ code: 'outputLimit' })
+  })
+  it('sends the tool definition and rejects malformed arguments or wrong targets', async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(stream([toolDelta(0, args, true), toolFinish])),
+      )
+    vi.stubGlobal('fetch', fetch)
+    const run = () =>
+      streamAiChat(
+        { baseURL: 'http://localhost/v1', model: 'qwen' },
+        [{ role: 'user', content: 'Fix' }],
+        new AbortController().signal,
+        () => {},
+        contextId,
+      )
+    expect(await run()).toHaveLength(1)
+    expect(JSON.parse(fetch.mock.calls[0][1].body).tools[0].function.name).toBe(
+      'propose_edit',
+    )
+    for (const invalid of [
+      '{',
+      args.replace(contextId, '22222222-2222-4222-8222-222222222222'),
+    ]) {
+      fetch.mockResolvedValueOnce(
+        new Response(stream([toolDelta(0, invalid, true), toolFinish])),
+      )
+      await expect(run()).rejects.toMatchObject({ code: 'invalidResponse' })
+    }
+  })
+})
+
+describe('edit validation feedback', () => {
+  it('returns a validation error to the model and accepts one corrected proposal', async () => {
+    const wrong = JSON.stringify({
+      context_id: contextId,
+      summary: 'Fix',
+      edits: [{ old_text: 'a+b', new_text: 'a-b' }],
+    })
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(stream([toolDelta(0, wrong, true), toolFinish])),
+      )
+      .mockResolvedValueOnce(
+        new Response(stream([toolDelta(0, args, true), toolFinish])),
+      )
+    vi.stubGlobal('fetch', fetch)
+    const result = await streamAiChat(
+      { baseURL: 'http://localhost/v1', model: 'qwen' },
+      [{ role: 'user', content: 'Fix a + b' }],
+      new AbortController().signal,
+      () => {},
+      contextId,
+      'a + b',
+    )
+    expect(result[0].function.arguments).toBe(args)
+    expect(fetch).toHaveBeenCalledTimes(2)
+    const feedback = JSON.parse(fetch.mock.calls[1][1].body).messages.find(
+      (message: { role: string }) => message.role === 'tool',
+    )
+    expect(JSON.parse(feedback.content)).toMatchObject({
+      status: 'validation_failed',
+      reason: 'missing',
+      applied: false,
+      original_code: 'a + b',
+    })
+  })
+  it('stops after one correction instead of looping or exposing invalid edits', async () => {
+    const wrong = args.replace('a + b', 'not in original')
+    const fetch = vi
+      .fn()
+      .mockImplementation(
+        async () =>
+          new Response(stream([toolDelta(0, wrong, true), toolFinish])),
+      )
+    vi.stubGlobal('fetch', fetch)
+    await expect(
+      streamAiChat(
+        { baseURL: 'http://localhost/v1', model: 'qwen' },
+        [{ role: 'user', content: 'Fix' }],
+        new AbortController().signal,
+        () => {},
+        contextId,
+        'a + b',
+      ),
+    ).rejects.toMatchObject({ code: 'invalidEdits' })
+    expect(fetch).toHaveBeenCalledTimes(2)
+  })
+  it('does not issue a correction after cancellation', async () => {
+    const controller = new AbortController()
+    const fetch = vi.fn().mockImplementation(async () => {
+      controller.abort()
+      return new Response(stream([toolDelta(0, args, true), toolFinish]))
+    })
+    vi.stubGlobal('fetch', fetch)
+    await expect(
+      streamAiChat(
+        { baseURL: 'http://localhost/v1', model: 'qwen' },
+        [{ role: 'user', content: 'Fix' }],
+        controller.signal,
+        () => {},
+        contextId,
+        'different',
+      ),
+    ).rejects.toBeDefined()
+    expect(fetch).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('bounded request history', () => {
+  it('drops oldest complete turns for repair without discarding the original current turn', async () => {
+    const wrong = args.replace('a + b', 'missing')
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(stream([toolDelta(0, wrong, true), toolFinish])),
+      )
+      .mockResolvedValueOnce(
+        new Response(stream([toolDelta(0, args, true), toolFinish])),
+      )
+    vi.stubGlobal('fetch', fetch)
+    const history = Array.from({ length: 19 }, (_, i) => [
+      { role: 'user' as const, content: `Old ${i}` },
+      { role: 'assistant' as const, content: `Answer ${i}` },
+    ]).flat()
+    const omitted = vi.fn()
+    await streamAiChat(
+      { baseURL: 'http://localhost/v1', model: 'qwen' },
+      [...history, { role: 'user', content: 'CURRENT a + b' }],
+      new AbortController().signal,
+      () => {},
+      contextId,
+      'a + b',
+      1,
+      history.length,
+      omitted,
+    )
+    const repair = JSON.parse(fetch.mock.calls[1][1].body).messages.slice(1)
+    expect(repair.length).toBeLessThanOrEqual(AI_LIMITS.messages)
+    expect(repair[0]).toMatchObject({ role: 'user', content: 'Old 1' })
+    expect(
+      repair.some(
+        (message: { content: string }) => message.content === 'CURRENT a + b',
+      ),
+    ).toBe(true)
+    expect(
+      repair.some((message: { role: string }) => message.role === 'tool'),
+    ).toBe(true)
+    expect(omitted).toHaveBeenCalledOnce()
+  })
+
+  it('fails oversized repair rather than dropping its original code context', async () => {
+    const wrong = args.replace('a + b', 'missing')
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(stream([toolDelta(0, wrong, true), toolFinish])),
+      )
+    vi.stubGlobal('fetch', fetch)
+    const code = 'я'.repeat(70000)
+    await expect(
+      streamAiChat(
+        { baseURL: 'http://localhost/v1', model: 'qwen' },
+        [{ role: 'user', content: code }],
+        new AbortController().signal,
+        () => {},
+        contextId,
+        code,
+      ),
+    ).rejects.toMatchObject({ code: 'inputLimit' })
+    expect(fetch).toHaveBeenCalledOnce()
+  })
+})

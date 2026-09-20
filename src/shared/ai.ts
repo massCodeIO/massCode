@@ -24,20 +24,92 @@ export const aiConfigureSchema = z
   })
   .strict()
 export type AiConfigure = z.infer<typeof aiConfigureSchema>
-export const aiMessageSchema = z
+export const aiProposalSchema = z
   .object({
-    role: z.enum(['user', 'assistant']),
-    content: z.string().min(1).max(AI_LIMITS.inputBytes),
+    context_id: z.string().uuid(),
+    summary: z.string().min(1).max(2000),
+    edits: z
+      .array(
+        z
+          .object({
+            old_text: z.string().min(1).max(AI_LIMITS.inputBytes),
+            new_text: z.string().max(AI_LIMITS.inputBytes),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(64),
   })
   .strict()
+export type AiProposal = z.infer<typeof aiProposalSchema>
+export const aiToolCallSchema = z
+  .object({
+    id: z.string().min(1).max(256),
+    type: z.literal('function'),
+    function: z
+      .object({
+        name: z.literal('propose_edit'),
+        arguments: z.string().max(AI_LIMITS.outputBytes),
+      })
+      .strict(),
+  })
+  .strict()
+export type AiToolCall = z.infer<typeof aiToolCallSchema>
+export const aiMessageSchema = z
+  .object({
+    role: z.enum(['user', 'assistant', 'tool']),
+    content: z.string().max(AI_LIMITS.inputBytes),
+    tool_calls: z.array(aiToolCallSchema).min(1).max(8).optional(),
+    tool_call_id: z.string().min(1).max(256).optional(),
+  })
+  .strict()
+  .refine((message) => {
+    if (message.role === 'user') {
+      return (
+        Boolean(message.content) && !message.tool_calls && !message.tool_call_id
+      )
+    }
+    if (message.role === 'tool') {
+      return (
+        Boolean(message.content && message.tool_call_id) && !message.tool_calls
+      )
+    }
+    return (
+      Boolean(message.content || message.tool_calls) && !message.tool_call_id
+    )
+  })
 export type AiMessage = z.infer<typeof aiMessageSchema>
 export const aiStartSchema = z
   .object({
     requestId: z.uuid(),
+    editContextId: z.uuid().optional(),
+    editContextText: z.string().min(1).max(AI_LIMITS.inputBytes).optional(),
     messages: z.array(aiMessageSchema).min(1).max(AI_LIMITS.messages),
   })
   .strict()
+  .refine(
+    value =>
+      Boolean(value.editContextId) === (value.editContextText !== undefined),
+  )
   .refine(value => value.messages.at(-1)?.role === 'user')
+  .refine((value) => {
+    const pending = new Set<string>()
+    for (const message of value.messages) {
+      if (message.role === 'tool') {
+        if (!pending.delete(message.tool_call_id!))
+          return false
+        continue
+      }
+      if (pending.size)
+        return false
+      for (const call of message.tool_calls ?? []) {
+        if (pending.has(call.id))
+          return false
+        pending.add(call.id)
+      }
+    }
+    return pending.size === 0
+  })
 export const aiCancelSchema = z.object({ requestId: z.uuid() }).strict()
 export type AiStart = z.infer<typeof aiStartSchema>
 export interface AiProfile {
@@ -64,6 +136,8 @@ export type AiErrorCode =
   | 'modelUnavailable'
   | 'upstream'
   | 'invalidResponse'
+  | 'invalidEdits'
+  | 'explanation'
   | 'inputLimit'
   | 'outputLimit'
   | 'timeout'
@@ -72,5 +146,8 @@ export type AiResult<T> =
   | { ok: false, error: AiErrorCode }
 export type AiEvent =
   | { requestId: string, type: 'delta', text: string }
+  | { requestId: string, type: 'tools', calls: AiToolCall[] }
+  | { requestId: string, type: 'notice', error: AiErrorCode }
+  | { requestId: string, type: 'historyOmitted' }
   | { requestId: string, type: 'done' | 'cancelled' }
   | { requestId: string, type: 'error', error: AiErrorCode }

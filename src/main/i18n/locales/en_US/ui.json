@@ -1391,6 +1391,8 @@
     "retry": "Try again"
   },
   "ai": {
+    "retry": "Retry",
+    "historyOmitted": "Some earlier messages were omitted from this request to make room for the current code. Your chat remains visible.",
     "title": "AI assistant",
     "settings": "AI settings",
     "ask": "Ask AI",
@@ -1464,9 +1466,24 @@
       "invalidResponse": "The server returned an unsupported or incomplete response.",
       "inputLimit": "The conversation or code is too large. Start a new chat or select less code.",
       "outputLimit": "The response exceeded the size limit. Ask for a shorter answer.",
-      "timeout": "The server did not finish in time. Check model loading and try again."
+      "timeout": "The server did not finish in time. Check model loading and try again.",
+      "invalidEdits": "The proposed edits could not be matched to the original code, even after correction. No changes were applied. Try a smaller selection.",
+      "explanation": "The edit proposal is ready, but its explanation could not be completed. You can still review the changes."
     },
     "keyRequired": "Enter your OpenAI API key",
-    "keyUnreadable": "Saved key unavailable — replace or remove it"
+    "keyUnreadable": "Saved key unavailable — replace or remove it",
+    "edit": {
+      "propose": "Propose edit",
+      "review": "Review changes",
+      "apply": "Apply changes",
+      "applied": "Changes applied. Use editor Undo to revert.",
+      "description": "Review the replacement for the context sent with this request. Removed lines are marked − and added lines +.",
+      "invalid": "No valid edit proposal is available. The proposed replacements must match the original code exactly and must not overlap.",
+      "stale": "The original fragment has changed or is no longer available. Request a new edit before applying.",
+      "cancel": "Cancel",
+      "reject": "Reject changes",
+      "rejected": "Changes rejected.",
+      "pending": "Proposed changes — not applied"
+    }
   }
 }

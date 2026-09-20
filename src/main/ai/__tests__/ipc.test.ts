@@ -148,3 +148,83 @@ describe('aI owner scoped IPC', () => {
     expect(owner.send).toHaveBeenCalledTimes(1)
   })
 })
+
+it('rejects orphaned tool results and unanswered tool calls', async () => {
+  const { invoke } = setup()
+  const last = { role: 'user', content: 'Continue' }
+  for (const messages of [
+    [{ role: 'tool', content: 'applied', tool_call_id: 'missing' }, last],
+    [
+      {
+        role: 'assistant',
+        content: '',
+        tool_calls: [
+          {
+            id: 'c1',
+            type: 'function',
+            function: { name: 'propose_edit', arguments: '{}' },
+          },
+        ],
+      },
+      last,
+    ],
+  ]) {
+    expect(await invoke('start', { requestId: id1, messages })).toEqual({
+      ok: false,
+      error: 'invalidRequest',
+    })
+  }
+})
+
+it('continues with a natural response after delivering a validated proposal', async () => {
+  const calls = [
+    {
+      id: 'call_1',
+      type: 'function',
+      function: { name: 'propose_edit', arguments: '{}' },
+    },
+  ]
+  mocks.stream.mockReset()
+  mocks.stream
+    .mockResolvedValueOnce(calls)
+    .mockImplementationOnce(async (_connection, messages, _signal, delta) => {
+      expect(messages.at(-1)).toMatchObject({
+        role: 'tool',
+        tool_call_id: 'call_1',
+      })
+      expect(JSON.parse(messages.at(-1).content).status).toBe(
+        'awaiting_user_review',
+      )
+      delta('Explanation\n```js\ncode\n```\nExamples\n```js\nexample\n```')
+      return []
+    })
+  const { invoke, owner } = setup()
+  await invoke('start', request(id1))
+  await flush()
+  expect(owner.send.mock.calls.map(([, event]) => event.type)).toEqual([
+    'tools',
+    'delta',
+    'done',
+  ])
+})
+
+it('keeps the proposal reviewable when its explanatory response fails', async () => {
+  mocks.stream.mockReset()
+  mocks.stream
+    .mockResolvedValueOnce([
+      {
+        id: 'call_1',
+        type: 'function',
+        function: { name: 'propose_edit', arguments: '{}' },
+      },
+    ])
+    .mockRejectedValueOnce(new Error('network'))
+  const { invoke, owner } = setup()
+  await invoke('start', request(id1))
+  await flush()
+  expect(owner.send.mock.calls.map(([, event]) => event.type)).toEqual([
+    'tools',
+    'notice',
+    'done',
+  ])
+})

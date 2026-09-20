@@ -155,6 +155,7 @@ function readAiContext() {
   }
   return {
     snippetId: snippet.id,
+    name: snippet.name,
     contentId: content.id,
     text: editor.getValue(),
     selection: editor.getSelection(),

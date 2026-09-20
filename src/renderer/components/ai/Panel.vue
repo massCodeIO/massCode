@@ -1,22 +1,19 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/shadcn/button'
-import * as Select from '@/components/ui/shadcn/select'
 import { useAi } from '@/composables/ai/useAi'
 import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
 import { useResizeObserver } from '@vueuse/core'
-import { Copy, Settings, X } from 'lucide-vue-next'
+import { Copy, Settings, SquarePen, X } from 'lucide-vue-next'
+
+defineProps<{ embedded?: boolean }>()
 
 const {
   settings,
-  context,
-  contextMode,
   conversation,
   isStreaming,
   setOpen,
-  send,
-  cancel,
   clearConversation,
   retry,
   canRetry,
@@ -32,21 +29,6 @@ const ready = computed(() =>
     && (settings.value?.provider !== 'openai' || profile.value.hasKey),
   ),
 )
-const contextText = computed(() =>
-  contextMode.value === 'selection'
-    ? context.value?.selection
-    : context.value?.text,
-)
-const draft = computed({
-  get: () => conversation.value?.draft ?? '',
-  set: (value: string | number) => {
-    if (conversation.value)
-      conversation.value.draft = String(value)
-  },
-})
-const canSend = computed(
-  () => ready.value && Boolean(contextText.value?.trim()) && !isStreaming.value,
-)
 const scroll = ref<HTMLElement>()
 const messagesContent = ref<HTMLElement>()
 const followBottom = ref(true)
@@ -61,16 +43,23 @@ useResizeObserver(messagesContent, () => {
   if (followBottom.value)
     scroll.value?.scrollTo({ top: scroll.value.scrollHeight })
 })
-function submit(prompt = String(draft.value), proposeEdit = false) {
-  if (!canSend.value)
-    return
-  followBottom.value = true
-  void send(prompt, proposeEdit)
-}
-function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
-    event.preventDefault()
-    submit()
+function activitySummary(detail: string) {
+  try {
+    const result = JSON.parse(detail)
+    if (result.error)
+      return i18n.t('ai.contextReadFailed')
+    const items = Array.isArray(result) ? result : (result.items ?? [result])
+    return items.length
+      ? items
+          .map(
+            (item: { name: string, type: string, id: number }) =>
+              `${item.name} · ${i18n.t(`ai.itemTypes.${item.type}`)} #${item.id}`,
+          )
+          .join('\n')
+      : i18n.t('ai.noResults')
+  }
+  catch {
+    return i18n.t('ai.contextReadFailed')
   }
 }
 onMounted(() => {
@@ -79,8 +68,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex h-full min-h-0 flex-col pt-[var(--content-top-offset)]">
+  <div
+    class="flex h-full min-h-0 flex-col"
+    :class="!embedded && 'pt-[var(--content-top-offset)]'"
+  >
     <div
+      v-if="!embedded"
       class="flex h-[calc(41px-var(--content-top-offset))] shrink-0 items-center justify-between gap-2 border-b px-3 pb-1"
     >
       <UiText
@@ -104,7 +97,7 @@ onMounted(() => {
         </UiActionButton>
       </div>
     </div>
-    <div class="space-y-2 border-b p-3">
+    <div class="flex shrink-0 items-center justify-between gap-2 px-3 py-2">
       <UiText
         variant="caption"
         muted
@@ -113,52 +106,28 @@ onMounted(() => {
         {{ settings ? i18n.t(`ai.providers.${settings.provider}`) : "" }} ·
         {{ profile?.model || i18n.t("ai.notConfigured") }}
       </UiText>
+      <div class="flex shrink-0 gap-1">
+        <UiActionButton
+          :tooltip="i18n.t('ai.newChat')"
+          :disabled="isStreaming"
+          @click="clearConversation"
+        >
+          <SquarePen class="size-4" />
+        </UiActionButton>
+        <UiActionButton
+          v-if="embedded"
+          :tooltip="i18n.t('ai.settings')"
+          @click="router.push({ name: RouterName.preferencesAI })"
+        >
+          <Settings class="size-4" />
+        </UiActionButton>
+      </div>
       <UiText
         v-if="!ready"
         variant="sm"
         class="block"
       >
         {{ i18n.t("ai.setupHint") }}
-      </UiText>
-      <template v-if="context">
-        <Select.Select v-model="contextMode">
-          <Select.SelectTrigger :aria-label="i18n.t('ai.context')">
-            <Select.SelectValue />
-          </Select.SelectTrigger>
-          <Select.SelectContent>
-            <Select.SelectItem
-              value="selection"
-              :disabled="!context.selection"
-            >
-              {{ i18n.t("ai.selection") }}
-            </Select.SelectItem>
-            <Select.SelectItem value="fragment">
-              {{ i18n.t("ai.fragment") }}
-            </Select.SelectItem>
-          </Select.SelectContent>
-        </Select.Select>
-        <details>
-          <summary class="cursor-pointer">
-            <UiText variant="caption">
-              {{ i18n.t("ai.previewContext") }}
-            </UiText>
-          </summary>
-          <UiText
-            as="pre"
-            variant="xs"
-            mono
-            class="scrollbar mt-2 max-h-40 overflow-auto break-words whitespace-pre-wrap"
-          >
-            {{ contextText }}
-          </UiText>
-        </details>
-      </template>
-      <UiText
-        v-else
-        variant="sm"
-        muted
-      >
-        {{ i18n.t("ai.selectFragment") }}
       </UiText>
     </div>
     <div
@@ -170,14 +139,6 @@ onMounted(() => {
         ref="messagesContent"
         class="space-y-4"
       >
-        <UiText
-          v-if="!conversation?.messages.length"
-          as="p"
-          variant="sm"
-          muted
-        >
-          {{ i18n.t("ai.intro") }}
-        </UiText>
         <div
           v-for="(message, index) in conversation?.messages"
           :key="index"
@@ -218,6 +179,44 @@ onMounted(() => {
           >
             {{ message.proposalSummary }}
           </UiText>
+          <details
+            v-for="(activity, activityIndex) in message.activity"
+            :key="activityIndex"
+          >
+            <summary class="cursor-pointer">
+              <UiText
+                variant="caption"
+                muted
+              >
+                {{
+                  i18n.t(
+                    `ai.activity.${["search_vault", "read_vault_item", "attachments"].includes(activity.name) ? activity.name : "other"}`,
+                  )
+                }}
+              </UiText>
+            </summary>
+            <UiText
+              as="pre"
+              variant="xs"
+              class="scrollbar max-h-32 overflow-auto whitespace-pre-wrap"
+            >
+              {{ activitySummary(activity.detail) }}
+            </UiText>
+          </details>
+          <div
+            v-if="message.attachments?.length"
+            class="flex flex-wrap justify-end gap-1"
+          >
+            <UiText
+              v-for="item in message.attachments"
+              :key="`${item.type}:${item.id}`"
+              variant="xs"
+              muted
+              class="bg-muted rounded-md px-2 py-1"
+            >
+              {{ item.name }}
+            </UiText>
+          </div>
           <AiEditReview
             v-if="message.edit"
             :message="message"
@@ -288,64 +287,9 @@ onMounted(() => {
         </UiText>
       </div>
     </div>
-    <div class="space-y-2 border-t p-3">
-      <div
-        v-if="!conversation?.messages.length"
-        class="flex flex-wrap gap-1"
-      >
-        <Button
-          v-for="action in ['explain', 'findProblem', 'improve']"
-          :key="action"
-          variant="outline"
-          size="sm"
-          :disabled="!canSend"
-          @click="submit(i18n.t(`ai.prompts.${action}`))"
-        >
-          {{ i18n.t(`ai.actions.${action}`) }}
-        </Button>
-      </div>
-      <UiInput
-        v-model="draft"
-        type="textarea"
-        :rows="3"
-        :placeholder="i18n.t('ai.placeholder')"
-        :aria-label="i18n.t('ai.placeholder')"
-        :disabled="!context"
-        @keydown="onKeydown"
-      />
-      <div class="flex justify-between gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          :disabled="!conversation?.messages.length || isStreaming"
-          @click="clearConversation"
-        >
-          {{ i18n.t("ai.newChat") }}
-        </Button>
-        <Button
-          v-if="isStreaming"
-          variant="outline"
-          size="sm"
-          @click="cancel"
-        >
-          {{ i18n.t("ai.stop") }}
-        </Button>
-        <Button
-          v-else
-          size="sm"
-          :disabled="!canSend || !String(draft).trim()"
-          @click="submit()"
-        >
-          {{ i18n.t("ai.send") }}
-        </Button>
-      </div>
-      <UiText
-        variant="xs"
-        muted
-        class="block"
-      >
-        {{ i18n.t("ai.sessionHint") }}
-      </UiText>
-    </div>
+    <AiComposer
+      :ready="ready"
+      @submit="followBottom = true"
+    />
   </div>
 </template>

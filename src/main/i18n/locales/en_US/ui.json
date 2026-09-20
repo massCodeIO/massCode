@@ -1429,14 +1429,14 @@
     "previewContext": "Preview context to send",
     "sentContext": "View sent context",
     "selectFragment": "Select a loaded code fragment to chat.",
-    "intro": "Ask about your code. Only the chosen context and this conversation are sent to the configured server.",
+    "intro": "Ask a question. Attach context with + or let the assistant find records in Code, Notes and HTTP.",
     "roles": {
       "user": "You",
       "assistant": "AI"
     },
     "cancelled": "Generation stopped.",
     "generating": "Generating…",
-    "placeholder": "Ask about this code…",
+    "placeholder": "Ask a question or describe a task…",
     "newChat": "New chat",
     "stop": "Stop",
     "send": "Send",
@@ -1468,7 +1468,8 @@
       "outputLimit": "The response exceeded the size limit. Ask for a shorter answer.",
       "timeout": "The server did not finish in time. Check model loading and try again.",
       "invalidEdits": "The proposed edits could not be matched to the original code, even after correction. No changes were applied. Try a smaller selection.",
-      "explanation": "The edit proposal is ready, but its explanation could not be completed. You can still review the changes."
+      "explanation": "The edit proposal is ready, but its explanation could not be completed. You can still review the changes.",
+      "contextUnavailable": "Could not read attached context. The record may have been deleted or is not downloaded yet."
     },
     "keyRequired": "Enter your OpenAI API key",
     "keyUnreadable": "Saved key unavailable — replace or remove it",
@@ -1484,6 +1485,26 @@
       "reject": "Reject changes",
       "rejected": "Changes rejected.",
       "pending": "Proposed changes — not applied"
+    },
+    "addContext": "Add context",
+    "removeContext": "Remove context",
+    "searchContext": "Find a snippet, note or HTTP request",
+    "attachCurrent": "Open fragment",
+    "searching": "Searching…",
+    "noResults": "No results",
+    "savedContext": "Listed records use saved content. The open fragment captures the editor buffer.",
+    "autoContext": "Context: search vault when needed",
+    "contextReadFailed": "Could not read context",
+    "itemTypes": {
+      "snippet": "Code",
+      "note": "Note",
+      "http_request": "HTTP"
+    },
+    "activity": {
+      "search_vault": "Searched vault",
+      "read_vault_item": "Read record",
+      "attachments": "Attached context",
+      "other": "Activity"
     }
   }
 }

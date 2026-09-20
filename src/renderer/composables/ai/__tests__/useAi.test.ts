@@ -19,8 +19,9 @@ async function setup() {
   vi.doMock('@/electron', () => ({
     ipc: {
       invoke,
-      on: vi.fn((_channel, callback) => {
-        listener = callback
+      on: vi.fn((channel, callback) => {
+        if (channel === 'system:ai:event')
+          listener = callback
       }),
       removeListener: vi.fn(),
     },
@@ -70,12 +71,82 @@ async function setup() {
 beforeEach(() => vi.clearAllMocks())
 
 describe('aI chat context and request lifecycle', () => {
+  it('follows the open editor and respects removal', async () => {
+    const { ai, setSnapshot } = await setup()
+    ai.setOpen(true)
+    expect(ai.contextMode.value).toBe('fragment')
+    expect(ai.attachedEditor.value?.snippetId).toBe(1)
+    setSnapshot({
+      snippetId: 3,
+      contentId: 30,
+      text: 'third',
+      selection: '',
+      language: 'text',
+    })
+    expect(ai.attachedEditor.value?.snippetId).toBe(3)
+    ai.removeEditorContext()
+    setSnapshot({
+      snippetId: 2,
+      contentId: 20,
+      text: 'next',
+      selection: '',
+      language: 'text',
+    })
+    ai.setOpen(false)
+    ai.setOpen(true)
+    expect(ai.contextMode.value).toBe('none')
+    ai.clearConversation()
+    expect(ai.attachedEditor.value?.snippetId).toBe(2)
+    setSnapshot({
+      snippetId: 4,
+      contentId: 40,
+      text: 'fourth',
+      selection: '',
+      language: 'text',
+    })
+    expect(ai.attachedEditor.value?.snippetId).toBe(4)
+  })
+
+  it('follows saved items while preserving manually attached records', async () => {
+    const { ai, setSnapshot } = await setup()
+    setSnapshot(undefined)
+    ai.setVaultContext({ type: 'note', id: 7, name: 'Current note' })
+    ai.setOpen(true)
+    expect(ai.attachments.value).toEqual([
+      { type: 'note', id: 7, name: 'Current note' },
+    ])
+    ai.addAttachment({ type: 'note', id: 10, name: 'Pinned note' })
+    ai.setVaultContext({
+      type: 'http_request',
+      id: 8,
+      name: 'Current request',
+    })
+    expect(ai.attachments.value.map(item => item.id)).toEqual([8, 10])
+    ai.removeAttachment(0)
+    ai.setOpen(true)
+    expect(ai.attachments.value.map(item => item.id)).toEqual([10])
+    ai.clearConversation()
+    expect(ai.attachments.value).toEqual([
+      { type: 'http_request', id: 8, name: 'Current request' },
+    ])
+  })
+
+  it('waits for the selected item to load before seeding initial context', async () => {
+    const { ai, setSnapshot } = await setup()
+    setSnapshot(undefined)
+    ai.setOpen(true)
+    expect(ai.attachments.value).toEqual([])
+    ai.setVaultContext({ type: 'note', id: 9, name: 'Loaded note' })
+    expect(ai.attachments.value[0]?.id).toBe(9)
+  })
+
   it('captures unsaved selection at send time without attaching the rest of the fragment', async () => {
     const { ai, updateBuffer, request } = await setup()
     updateBuffer({
       text: 'private surrounding text',
       selection: 'const live = 3;',
     })
+    ai.contextMode.value = 'selection'
     await ai.send('Explain this')
     expect(request().messages[0].content).toContain('const live = 3;')
     expect(request().messages[0].content).not.toContain(
@@ -93,41 +164,34 @@ describe('aI chat context and request lifecycle', () => {
     expect(request().messages[0].content).not.toContain('const selected = 2;')
   })
 
-  it('cancels when changing fragments and ignores late events from the previous request', async () => {
+  it('keeps a streaming conversation when switching records or leaving the editor', async () => {
     const { ai, request, emit, setSnapshot, invoke } = await setup()
     await ai.send('First question')
     const old = request()
     emit({ requestId: old.requestId, type: 'delta', text: 'Partial A' })
-    setSnapshot({
-      snippetId: 1,
-      contentId: 11,
-      language: 'javascript',
-      text: 'second',
-      selection: '',
-    })
-    expect(invoke).toHaveBeenCalledWith('system:ai:cancel', {
-      requestId: old.requestId,
-    })
-    await ai.send('Second question')
-    const current = request()
-    emit({ requestId: old.requestId, type: 'delta', text: 'Late A' })
+    setSnapshot(undefined)
+    expect(invoke).not.toHaveBeenCalledWith(
+      'system:ai:cancel',
+      expect.anything(),
+    )
+    emit({ requestId: old.requestId, type: 'delta', text: ' continued' })
     emit({ requestId: old.requestId, type: 'done' })
-    expect(ai.isStreaming.value).toBe(true)
-    emit({ requestId: current.requestId, type: 'delta', text: 'Answer B' })
-    emit({ requestId: current.requestId, type: 'done' })
-    expect(ai.conversation.value?.messages.at(-1)?.content).toBe('Answer B')
-    expect(ai.isStreaming.value).toBe(false)
-    setSnapshot({
-      snippetId: 1,
-      contentId: 10,
-      language: 'javascript',
-      text: 'first',
-      selection: '',
-    })
-    expect(ai.conversation.value?.messages.at(-1)).toMatchObject({
-      content: 'Partial A',
-      status: 'cancelled',
-    })
+    expect(ai.conversation.value?.messages.at(-1)?.content).toBe(
+      'Partial A continued',
+    )
+    await ai.send('Second question')
+    expect(request().messages[0].content).toBe('First question')
+    expect(request().messages.at(-1)?.content).toBe('Second question')
+    expect(request().vaultAccess).toBe(true)
+    expect(request().editContextId).toBeUndefined()
+  })
+
+  it('pins an explicitly attached editor snapshot across navigation', async () => {
+    const { ai, request, setSnapshot } = await setup()
+    ai.attachEditor('fragment')
+    setSnapshot(undefined)
+    await ai.send('Explain attached code')
+    expect(request().messages[0].content).toContain('const first = 1;')
   })
 
   it('clears conversations when the markdown vault changes even if the legacy root and IDs match', async () => {
@@ -187,6 +251,7 @@ describe('aI chat context and request lifecycle', () => {
 
   it('rejects oversized context without sending or truncating it', async () => {
     const { ai, updateBuffer, invoke } = await setup()
+    ai.contextMode.value = 'selection'
     updateBuffer({ selection: 'я'.repeat(140_000) })
     expect(await ai.send('Question')).toBe(false)
     expect(
@@ -227,6 +292,7 @@ describe('structured edit proposals', () => {
       selectionFrom: 7,
       selectionTo: 10,
     })
+    ai.contextMode.value = 'selection'
     await ai.send('Fix')
     emit({
       requestId: request().requestId,
@@ -305,6 +371,8 @@ describe('structured edit proposals', () => {
     expect(JSON.parse(results[0].content).status).toBe('validation_failed')
     expect(JSON.parse(results[1].content).status).toBe('rejected')
     expect(messages.at(-2)?.content).toBe('Proposal explanation')
+    expect(ai.conversation.value?.error).toBeUndefined()
+    expect(ai.isStreaming.value).toBe(true)
     expect(aiStartSchema.safeParse(request()).success).toBe(true)
   })
   it('never derives edits from Markdown', async () => {
@@ -394,6 +462,7 @@ describe('retry, stopped proposals and history budget', () => {
 
   it('keeps the failed attempt if retry cannot fit its fresh context', async () => {
     const { ai, updateBuffer } = await setup()
+    ai.contextMode.value = 'selection'
     await ai.send('Question')
     ai.cancel()
     const failed = ai.conversation.value!.messages.at(-1)!

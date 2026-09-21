@@ -18,6 +18,7 @@ export type HttpResponse = HttpExecuteResult
 
 const isExecuting = ref(false)
 const lastResponse = shallowRef<HttpResponse | null>(null)
+const lastExecutionRequest = shallowRef<HttpExecuteRequest | null>(null)
 const lastError = ref<string | null>(null)
 
 const { currentDraft, currentRequest, isCurrentRequestLoading }
@@ -105,6 +106,7 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
   const requestId = currentRequest.value?.id
   lastError.value = null
   lastResponse.value = null
+  lastExecutionRequest.value = null
 
   try {
     markPersistedStorageMutation()
@@ -121,6 +123,7 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
       return null
     }
     lastResponse.value = response
+    lastExecutionRequest.value = JSON.parse(JSON.stringify(request))
     sessionNames.value = response.sessionNames ?? sessionNames.value
     if (response.error) {
       lastError.value
@@ -133,6 +136,7 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
                 'HTTP2_NOT_NEGOTIATED',
                 'HTTP_URL_ENCODING_REQUIRED',
                 'HTTP_REDIRECT_PROTOCOL',
+                'HTTP_REDIRECT_LIMIT',
               ].includes(response.error)
                 ? i18n.t(`preferences:http.transport.${response.error}`)
                 : response.error.startsWith('GRAPHQL_')
@@ -162,6 +166,7 @@ function resetHttpExecuteState(resetSession = true) {
   if (isExecuting.value)
     void ipc.invoke('spaces:http:cancel', undefined).catch(console.error)
   lastResponse.value = null
+  lastExecutionRequest.value = null
   lastError.value = null
 }
 
@@ -172,6 +177,7 @@ export function useHttpExecute() {
     isExecuting,
     lastError,
     lastResponse,
+    lastExecutionRequest,
     resetHttpExecuteState,
   }
 }

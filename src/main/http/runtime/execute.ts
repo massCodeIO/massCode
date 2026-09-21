@@ -19,6 +19,7 @@ import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { basename } from 'node:path'
+import { redactAiHttp } from '../../../shared/aiHttp'
 import { applyHttpApiKey } from '../../../shared/httpAuth'
 import {
   applyHttpCollection,
@@ -465,6 +466,42 @@ export interface ResolvedEnvironment {
    * `getaddrinfo ENOTFOUND <хост>`) и может содержать значение секрета.
    */
   secretValues: string[]
+}
+
+function captureExecutionTrace(
+  networkIds: string[],
+  secretValues: string[],
+): HttpExecuteResult['executionTrace'] {
+  // The console may be cleared during execution; never present a partial chain as complete.
+  if (networkIds.some(id => !httpConsole.get(id)))
+    return []
+  const executionTrace = networkIds.flatMap((id) => {
+    const entry = httpConsole.get(id)
+    if (!entry)
+      return []
+    const separator = entry.message.indexOf(' ')
+    const responseHeaders = entry.details?.responseHeaders as
+      | HttpHeaderEntry[]
+      | undefined
+    return [
+      {
+        method: entry.message.slice(0, separator),
+        url: entry.message.slice(separator + 1),
+        requestHeaders:
+          typeof entry.details?.requestHeaders === 'string'
+            ? entry.details.requestHeaders
+            : undefined,
+        status: entry.status,
+        location: responseHeaders?.find(
+          header => header.key.toLowerCase() === 'location',
+        )?.value,
+      },
+    ]
+  })
+  return JSON.parse(
+    JSON.stringify(redactAiHttp(executionTrace), (_key, value) =>
+      typeof value === 'string' ? maskSecretValues(value, secretValues) : value),
+  )
 }
 
 /**
@@ -974,6 +1011,15 @@ export async function executeHttpRequest(
     const text = bodyKind === 'binary' ? '' : buffer.toString('utf-8')
 
     const result: HttpExecuteResult = {
+      executionTrace: captureExecutionTrace(
+        networkIds,
+        [
+          ...secretValues,
+          interpolated.auth.token ?? '',
+          interpolated.auth.password ?? '',
+          interpolated.auth.value ?? '',
+        ].filter(Boolean),
+      ),
       ...(interpolated.bodyType === 'graphql'
         ? { graphql: graphqlResponseState(text, truncated) }
         : {}),
@@ -1117,6 +1163,15 @@ export async function executeHttpRequest(
     )
 
     const result: HttpExecuteResult = {
+      executionTrace: captureExecutionTrace(
+        networkIds,
+        [
+          ...secretValues,
+          interpolated.auth.token ?? '',
+          interpolated.auth.password ?? '',
+          interpolated.auth.value ?? '',
+        ].filter(Boolean),
+      ),
       status: null,
       statusText: '',
       headers: [],

@@ -88,6 +88,14 @@ it.each([307, 308])(
     })
     const result = await executeHttpRequest(payload(`${origin}/start`))
     expect(result.status).toBe(200)
+    expect(result.executionTrace).toMatchObject([
+      { method: 'POST', url: `${origin}/start`, status, location: '/end' },
+      { method: 'POST', url: `${origin}/end`, status: 200 },
+    ])
+    expect(result.executionTrace?.[1].requestHeaders).toMatch(
+      /cookie: \[REDACTED\]/i,
+    )
+    expect(JSON.stringify(result.executionTrace)).not.toContain('sid=hop')
     expect(seen).toEqual([
       { method: 'POST', body: 'replay body', cookie: undefined },
       { method: 'POST', body: 'replay body', cookie: 'sid=hop' },
@@ -118,21 +126,26 @@ it('removes sensitive headers across origins and prunes body on 303', async () =
   expect(received.headers.cookie).toBeUndefined()
   expect(received.headers['content-type']).toBeUndefined()
 })
-it('stops at the configured redirect count and supports disabling redirects', async () => {
-  let calls = 0
-  const origin = await server((_req, res) => {
-    calls++
-    res.writeHead(302, { location: '/loop' })
-    res.end('redirect')
-  })
-  const input = payload(origin)
-  input.transport!.maxRedirects = 2
-  expect((await executeHttpRequest(input)).status).toBe(302)
-  expect(calls).toBe(3)
-  input.transport!.followRedirects = false
-  expect((await executeHttpRequest(input)).status).toBe(302)
-  expect(calls).toBe(4)
-})
+it.each([false, true])(
+  'stops at the configured redirect count and supports disabling redirects (custom=%s)',
+  async (custom) => {
+    let calls = 0
+    const origin = await server((_req, res) => {
+      calls++
+      res.writeHead(302, { location: '/loop' })
+      res.end('redirect')
+    })
+    const input = payload(origin)
+    input.transport!.maxRedirects = 2
+    if (custom)
+      input.transport!.followOriginalHttpMethod = true
+    expect((await executeHttpRequest(input)).error).toBe('HTTP_REDIRECT_LIMIT')
+    expect(calls).toBe(3)
+    input.transport!.followRedirects = false
+    expect((await executeHttpRequest(input)).status).toBe(302)
+    expect(calls).toBe(4)
+  },
+)
 it('enforces timeout and preserves cancellation with timeout disabled', async () => {
   const origin = await server(() => {})
   const input = payload(origin)
@@ -336,4 +349,27 @@ it('negotiates HTTP versions over TLS and rejects HTTP/1 fallback in forced HTTP
     h1.closeAllConnections()
     await new Promise<void>(resolve => h1.close(() => resolve()))
   }
+})
+
+it('redacts custom authentication values from captured URLs and outgoing headers', async () => {
+  const origin = await server((_req, res) => res.end('ok'))
+  const input = payload(origin)
+  input.request.auth = {
+    type: 'apikey',
+    key: 'X-Custom',
+    value: 'qa-custom-value',
+    in: 'header',
+  }
+  const result = await executeHttpRequest(input)
+  expect(result.status).toBe(200)
+  expect(result.executionTrace?.[0].requestHeaders).toMatch(/x-custom: •{6}/i)
+  expect(JSON.stringify(result.executionTrace)).not.toContain(
+    'qa-custom-value',
+  )
+  input.request.auth.in = 'query'
+  const queryResult = await executeHttpRequest(input)
+  expect(queryResult.executionTrace?.[0].url).toContain('X-Custom=')
+  expect(JSON.stringify(queryResult.executionTrace)).not.toContain(
+    'qa-custom-value',
+  )
 })

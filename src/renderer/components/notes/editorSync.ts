@@ -14,7 +14,11 @@ export function isOwnNoteContentEcho(
   noteId: number | undefined,
   value: string,
 ): boolean {
-  return emitted?.noteId === noteId && emitted.value === value
+  return (
+    emitted !== undefined
+    && emitted.noteId === noteId
+    && emitted.value === value
+  )
 }
 
 export function shouldSyncSelectedNoteContent(

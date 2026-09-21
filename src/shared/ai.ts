@@ -1,4 +1,7 @@
+import type { AiHttpProposal } from './aiHttp'
 import { z } from 'zod'
+import { aiHttpContextSchema } from './aiHttp'
+import { aiResponseReplaySchema } from './aiResponses'
 
 export const aiProviderSchema = z.enum(['openai', 'ollama', 'lmstudio'])
 export type AiProvider = z.infer<typeof aiProviderSchema>
@@ -70,9 +73,31 @@ export const aiMessageSchema = z
     content: z.string().max(AI_LIMITS.inputBytes),
     tool_calls: z.array(aiProtocolCallSchema).min(1).max(8).optional(),
     tool_call_id: z.string().min(1).max(256).optional(),
+    openaiResponse: aiResponseReplaySchema.optional(),
   })
   .strict()
   .refine((message) => {
+    if (message.openaiResponse) {
+      if (message.role !== 'assistant')
+        return false
+      const calls = message.openaiResponse.items.filter(
+        item => item.type === 'function_call',
+      )
+      if (
+        JSON.stringify(
+          calls.map(call => [call.call_id, call.name, call.arguments]),
+        )
+        !== JSON.stringify(
+          (message.tool_calls ?? []).map(call => [
+            call.id,
+            call.function.name,
+            call.function.arguments,
+          ]),
+        )
+      ) {
+        return false
+      }
+    }
     if (message.role === 'user') {
       return (
         Boolean(message.content) && !message.tool_calls && !message.tool_call_id
@@ -105,6 +130,7 @@ export interface AiSearchResults {
 export const aiStartSchema = z
   .object({
     requestId: z.uuid(),
+    httpContext: aiHttpContextSchema.optional(),
     attachments: z.array(aiVaultRefSchema).max(8).optional(),
     vaultAccess: z.boolean().optional(),
     editContextId: z.uuid().optional(),
@@ -163,6 +189,7 @@ export type AiErrorCode =
   | 'upstream'
   | 'invalidResponse'
   | 'invalidEdits'
+  | 'proposalUnavailable'
   | 'explanation'
   | 'inputLimit'
   | 'outputLimit'
@@ -171,6 +198,7 @@ export type AiResult<T> =
   | { ok: true, data: T }
   | { ok: false, error: AiErrorCode }
 export type AiEvent =
+  | { requestId: string, type: 'httpProposal', proposal: AiHttpProposal }
   | { requestId: string, type: 'answerReset' }
   | { requestId: string, type: 'searchResults', result: AiSearchResults }
   | { requestId: string, type: 'delta', text: string }
@@ -180,4 +208,9 @@ export type AiEvent =
   | { requestId: string, type: 'notice', error: AiErrorCode }
   | { requestId: string, type: 'historyOmitted' }
   | { requestId: string, type: 'done' | 'cancelled' }
-  | { requestId: string, type: 'error', error: AiErrorCode }
+  | {
+    requestId: string
+    type: 'error'
+    error: AiErrorCode
+    diagnostic?: string
+  }

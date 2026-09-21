@@ -37,9 +37,13 @@ for (const prompt of [
           console.error(await response.clone().text())
         return response
       })
-      const tools = createHttpTools(context, (value) => {
-        proposal = value
-      })
+      const tools = createHttpTools(
+        context,
+        (value) => {
+          proposal = value
+        },
+        [prompt],
+      )
       const connection = {
         baseURL: 'http://127.0.0.1:1234/v1',
         model: 'qwen/qwen3-4b-2507',
@@ -75,6 +79,7 @@ for (const prompt of [
         {
           tools: tools.tools,
           requiredTool: tools.requiredTool,
+          isComplete: tools.hasProposal,
           remaining: 6,
           onToolRound: () => {},
           execute: async (name, args) => {
@@ -84,7 +89,10 @@ for (const prompt of [
             return result
           },
         },
-      )
+      ).catch((error) => {
+        console.error(JSON.stringify({ prompt, exchange, answer }))
+        throw error
+      })
       if (!proposal)
         console.error(JSON.stringify({ prompt, exchange, answer }))
       expect(calls).toContain('read_http_context')

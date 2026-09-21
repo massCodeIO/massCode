@@ -147,10 +147,14 @@ onMounted(() => {
             :key="resultIndex"
             :result="result"
           />
-          <AiHttpChecks
-            v-if="message.httpProposal"
-            :proposal="message.httpProposal"
-          />
+          <template v-if="message.httpProposal">
+            <AiMessage
+              v-if="message.httpProposal.analysis"
+              :content="message.httpProposal.analysis"
+              :items="messageReferences[index]"
+            />
+            <AiHttpChecks :proposal="message.httpProposal" />
+          </template>
           <AiMessage
             v-else-if="message.role === 'assistant'"
             :content="message.content"

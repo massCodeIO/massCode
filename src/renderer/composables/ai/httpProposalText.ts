@@ -17,7 +17,10 @@ export function httpAssertionText(rule: AiHttpProposal['assertions'][number]) {
 
 export function httpProposalText(proposal: AiHttpProposal) {
   return [
+    proposal.analysis,
     i18n.t('ai.http.proposedCount', { count: proposal.assertions.length }),
     ...proposal.assertions.map(httpAssertionText),
-  ].join('\n')
+  ]
+    .filter(Boolean)
+    .join('\n')
 }

@@ -41,6 +41,7 @@ export function validateHttpEvidence(
     ) {
       return {
         error: 'INVALID_EVIDENCE',
+        assertionIndexes: [evidence.assertionIndex],
         instruction:
           'Cite an exact relevant excerpt from the user request or request description. Never cite response data as a contract. Omit unsupported comparisons instead of inventing a source.',
       }

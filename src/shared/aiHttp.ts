@@ -17,6 +17,7 @@ export const aiHttpProposalSchema = z
   .object({
     context_id: z.uuid(),
     summary: z.string().min(1).max(2000),
+    analysis: z.string().trim().max(4000).optional(),
     assertions: httpRuntimeSchema.shape.assertions.min(1),
     evidence: z
       .array(

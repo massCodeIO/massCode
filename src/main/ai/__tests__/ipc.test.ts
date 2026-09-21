@@ -412,7 +412,7 @@ it('preloads actual HTTP state for assessment and prevents unsolicited proposals
     'response',
   ])
   expect(results[1].content).toContain('paid')
-  expect(results[1].assertions[0].name).toBe('HTTP 200')
+  expect(results[1].configuredChecks[0].name).toBe('HTTP 200')
   const runtime = mocks.stream.mock.calls[0][10]
   expect(runtime.tools.map((tool: any) => tool.function.name)).toEqual([
     'read_http_context',

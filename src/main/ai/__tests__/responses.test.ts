@@ -239,6 +239,38 @@ it('never sends native OpenAI state to a local provider', async () => {
   expect(JSON.stringify(fetch.mock.calls)).not.toContain('opaque')
 })
 
+it('preserves strict tool contracts when adapting to the Responses API', async () => {
+  const fetch = vi.fn(
+    async () => new Response(sse([completed([message('ok')])])),
+  )
+  vi.stubGlobal('fetch', fetch)
+  const parameters = {
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  }
+  await generateAiResponse(connection, {
+    instructions: 'test',
+    messages: [{ role: 'user', content: 'test' }],
+    tools: [
+      {
+        type: 'function',
+        function: { name: 'strict_tool', strict: true, parameters },
+      },
+    ],
+    operation: 'chat',
+    signal: new AbortController().signal,
+    onDelta: () => {},
+  })
+  const payload = JSON.parse(
+    (fetch.mock.calls[0] as unknown as [string, RequestInit])[1].body as string,
+  )
+  expect(payload.tools).toEqual([
+    { type: 'function', name: 'strict_tool', strict: true, parameters },
+  ])
+})
+
 it('accepts aggregated terminal events above the delta event limit', async () => {
   const text = 'a'.repeat(270000)
   const result = await readResponsesStream(

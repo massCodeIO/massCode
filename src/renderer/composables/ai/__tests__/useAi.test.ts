@@ -550,6 +550,7 @@ describe('hTTP proposals in chat', () => {
     const proposal = {
       context_id: snapshot.context.contextId,
       summary: 'Also checks customer.name and a made-up deadline',
+      analysis: 'The request returned HTTP 200. No tests have run yet.',
       assertions: [
         {
           name: 'Status',
@@ -563,6 +564,8 @@ describe('hTTP proposals in chat', () => {
     const message = ai.conversation.value!.messages.at(-1)!
     expect(ai.canApplyHttp(message)).toBe(false)
     expect(message.content).toContain('200')
+    expect(message.content).toContain(proposal.analysis)
+    expect(message.httpProposal?.analysis).toBe(proposal.analysis)
     expect(message.content).not.toContain('customer.name')
     expect(message.content).not.toContain('deadline')
     emit({ requestId, type: 'done' })

@@ -1,6 +1,7 @@
 import type { AiHttpContext, AiHttpProposal } from '../../../shared/aiHttp'
 import { describe, expect, it, vi } from 'vitest'
 import { httpContextText } from '../../../shared/aiHttp'
+import { httpContextDocument } from '../httpContextDocument'
 import { createHttpTools } from '../httpTools'
 
 const context: AiHttpContext = {
@@ -93,16 +94,17 @@ describe('hTTP assistant tools', () => {
 
 it('makes the end of a 100 KB response available on the first page and through tail reading', () => {
   const response = httpContextText({ body: `${'x'.repeat(100000)}QA-END` })
+  const document = httpContextDocument(response)
   const t = setup({ ...context, response })
   expect(t.call('read_http_context', { part: 'response' })).toMatchObject({
-    totalLength: response.length,
-    tailPreview: response.slice(-2000),
+    totalLength: document.length,
+    tailPreview: document.slice(-2000),
   })
   expect(
     t.call('read_http_context', { part: 'response', fromEnd: true }),
   ).toMatchObject({
-    content: response.slice(-16000),
-    offset: response.length - 16000,
+    content: document.slice(-16000),
+    offset: document.length - 16000,
     nextOffset: null,
   })
 })

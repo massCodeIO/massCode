@@ -80,9 +80,9 @@ export function useHttpAi() {
           lastResponse.value || lastError.value
             ? httpContextText({
                 ...response,
-                error: lastError.value,
+                ...(lastError.value ? { error: lastError.value } : {}),
                 executionInput: lastExecutionRequest.value,
-                note: `${availability} executionTrace contains captured outgoing request headers and URLs for each hop, with secrets removed. The first entry is the initial attempt; subsequent entries are followed redirects. The last entry is the last attempted URL (the final response URL only on success). Missing requestHeaders means outgoing header capture is unavailable. An empty trace means capture is unavailable, not that no headers were sent. executionInput is the pre-interpolation draft for this run, not the actual wire request. The current draft may differ from this run.`,
+                note: `${availability} Outgoing body bytes are not captured: neither Content-Type nor the configured body proves what body was transmitted. Captured outgoing attempts contain request headers and URLs for each hop, with secrets removed. The first entry is the initial attempt; subsequent entries are followed redirects. The last entry is the last attempted URL (the final response URL only on success). Missing request headers means outgoing header capture is unavailable. An empty list of attempts means capture is unavailable, not that no headers were sent. The draft used for this execution is captured before variable interpolation, not the actual wire request. Compare it with the current draft before claiming the draft has changed.`,
               })
             : null,
         assertions: redactAiHttp(

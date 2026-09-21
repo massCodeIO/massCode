@@ -568,7 +568,7 @@ export async function generateAiResponse(
               tools: tools.map(tool => ({
                 ...tool.function,
                 type: 'function',
-                strict: false,
+                strict: tool.function.strict ?? false,
               })),
               tool_choice: options.toolChoice ?? 'auto',
             }

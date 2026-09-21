@@ -11,6 +11,7 @@ import {
 import { isTrustedApiRequest } from '../api/requestIpc'
 import { listAiModels, streamAiChat } from './client'
 import { AiError, aiErrorCode } from './errors'
+import { httpContextDocument } from './httpContextDocument'
 import { createHttpTools } from './httpTools'
 import { planVaultSearch, planVaultTurn } from './searchPlan'
 import { configureAi, getAiConnection, getAiSettings } from './settings'
@@ -160,7 +161,7 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
         planningRecords.push({
           type: 'http_request',
           name: context.name,
-          preview: `Live HTTP editor snapshot and last response available through read_http_context. ${context.request.slice(0, 1500)}`,
+          preview: `Live HTTP editor snapshot and last response available through read_http_context. ${httpContextDocument(context.request).slice(0, 1500)}`,
         })
       }
       if (request.attachments?.length) {

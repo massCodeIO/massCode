@@ -1,8 +1,11 @@
 import type { AiHttpContext, AiHttpProposal } from '../../shared/aiHttp'
 import { z } from 'zod'
-import { AI_HTTP_BODY_LIMIT, aiHttpProposalSchema } from '../../shared/aiHttp'
+import { AI_HTTP_BODY_LIMIT } from '../../shared/aiHttp'
 import { httpOperatorNeedsExpected } from '../../shared/httpRuntime'
+import { httpContextDocument } from './httpContextDocument'
 import { validateHttpEvidence } from './httpEvidence'
+import { httpObservations } from './httpObservations'
+import { httpProposalToolSchema, parseHttpProposal } from './httpToolSchema'
 
 const readSchema = z
   .object({
@@ -41,7 +44,8 @@ export function createHttpTools(
         function: {
           name: 'propose_http_assertions',
           description: `Add HTTP tests/checks/assertions requested by the user by creating a reviewable proposal. You MUST CALL this function to add checks; writing JSON or tests in prose does not create a proposal. Never apply them directly. context_id must be ${context.contextId}. Use JSON Pointer paths for json (e.g. /data/0/id), header names for header, no path for status/durationMs. Preserve existing assertions; do not duplicate them. Expected values are required for comparison operators, omitted for exists/type checks. Response examples are observations, not proof of the intended contract. Do not assert dynamic IDs/tokens/timestamps from a single response. Explain failures rather than blindly asserting a failing status is correct. Comparisons of business values and timing limits require evidence: assertionIndex (zero-based), source user or description, and an exact relevant quote from that source. Do not cite sample response values as requirements. Without a source, omit the comparison and prefer structural checks. The application renders the exact proposed checks; do not repeat their list in prose.`,
-          parameters: z.toJSONSchema(aiHttpProposalSchema, { io: 'input' }),
+          strict: true,
+          parameters: z.toJSONSchema(httpProposalToolSchema, { io: 'input' }),
         },
       },
     ],
@@ -50,16 +54,18 @@ export function createHttpTools(
         const input = JSON.parse(args)
         if (name === 'read_http_context') {
           const { part, offset, fromEnd } = readSchema.parse(input)
-          const text = part === 'request' ? context.request : context.response
+          const snapshot
+            = part === 'request' ? context.request : context.response
           if (part === 'response')
             responseRead = true
-          if (text === null) {
+          if (snapshot === null) {
             return {
               available: false,
               reason: 'NO_RESPONSE',
               context_id: context.contextId,
             }
           }
+          const text = httpContextDocument(snapshot)
           const start = fromEnd
             ? Math.max(0, text.length - offset - 16000)
             : offset
@@ -69,6 +75,9 @@ export function createHttpTools(
             name: context.name,
             part,
             content: text.slice(start, end),
+            ...(part === 'response'
+              ? { observations: httpObservations(snapshot) }
+              : {}),
             totalLength: text.length,
             offset: start,
             ...(end < text.length && !fromEnd
@@ -79,7 +88,9 @@ export function createHttpTools(
                 }
               : {}),
             nextOffset: end < text.length ? end : null,
-            assertions: context.assertions,
+            configuredChecks: context.assertions.length
+              ? context.assertions
+              : 'No checks are configured.',
           }
         }
         if (name === 'propose_http_assertions') {
@@ -87,7 +98,7 @@ export function createHttpTools(
             return { error: 'READ_RESPONSE_FIRST' }
           if (proposed)
             return { error: 'PROPOSAL_ALREADY_CREATED' }
-          const proposal = aiHttpProposalSchema.parse(input)
+          const proposal = parseHttpProposal(input)
           for (const rule of proposal.assertions) {
             if (!httpOperatorNeedsExpected(rule.operator))
               delete rule.expected
@@ -139,6 +150,7 @@ export function createHttpTools(
             status: 'awaiting_user_review',
             applied: false,
             assertions: proposal.assertions,
+            analysis: proposal.analysis,
             evidence: proposal.evidence ?? [],
             instruction:
               'The application displays these exact checks for review. They are NOT applied or executed.',

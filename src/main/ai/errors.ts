@@ -1,7 +1,10 @@
 import type { AiErrorCode } from '../../shared/ai'
 
 export class AiError extends Error {
-  constructor(readonly code: AiErrorCode) {
+  constructor(
+    readonly code: AiErrorCode,
+    readonly diagnostic?: string,
+  ) {
     super(code)
   }
 }

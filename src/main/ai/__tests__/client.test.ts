@@ -551,3 +551,37 @@ describe('vault tool loop', () => {
     expect(response).toHaveBeenCalled()
   })
 })
+
+it('requires the planned HTTP tool and does not accept prose as completed action', async () => {
+  const fetch = vi.fn(
+    async () =>
+      new Response(
+        stream([`data: ${delta('Here are some tests')}\n\ndata: [DONE]\n\n`]),
+      ),
+  )
+  vi.stubGlobal('fetch', fetch)
+  await expect(
+    streamAiChat(
+      { baseURL: 'http://localhost:1234/v1', model: 'test' },
+      [{ role: 'user', content: 'Add checks' }],
+      new AbortController().signal,
+      () => {},
+      undefined,
+      undefined,
+      1,
+      undefined,
+      undefined,
+      undefined,
+      {
+        tools: [
+          { type: 'function', function: { name: 'propose_http_assertions' } },
+        ],
+        remaining: 2,
+        requiredTool: () => 'propose_http_assertions',
+        execute: vi.fn(),
+      },
+    ),
+  ).rejects.toMatchObject({ code: 'proposalUnavailable' })
+  const options = (fetch.mock.calls[0] as unknown as [string, RequestInit])[1]
+  expect(JSON.parse(options.body as string).tool_choice).toBe('required')
+})

@@ -15,7 +15,7 @@ Open **Preferences → AI assistant** and choose a provider.
 | --- | --- |
 | OpenAI, Anthropic, Google Gemini, DeepSeek, Mistral, xAI | Enter an API key from the selected provider and choose an available chat model. Requests use that provider’s API account and billing. |
 | Ollama | Start Ollama and use its API address, usually `http://localhost:11434/v1`. |
-| LM Studio | Start the API server in LM Studio and use its address, usually `http://localhost:1234/v1`. Enter a token if your server requires authentication. |
+| LM Studio | Start the API server in LM Studio and use its address, usually `http://localhost:1234/v1`. Enter an API key if your server requires authentication. |
 
 Click **Save and check connection** to save your settings and load available models. Choose one from the selector, or enter a model ID manually, then click **Save and check connection** again to save the selection. A notification reports the result.
 
@@ -108,4 +108,4 @@ The configured server receives your messages, the included conversation history,
 - **Model unavailable or unsupported:** check that the selected ID belongs to a chat model available on that server.
 - **First response takes time:** a local server may need to load the model before returning text. You can stop the request while it loads.
 - **Context is too large:** select a smaller section or start a new conversation. massCode reports the limit instead of silently removing code.
-- **Authentication failed:** replace the API key or token in Preferences.
+- **Authentication failed:** replace the API key in Preferences.

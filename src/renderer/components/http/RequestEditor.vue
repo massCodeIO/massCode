@@ -376,7 +376,10 @@ async function onSend() {
           value="description"
           class="h-full"
         >
-          <HttpRequestDescriptionTab v-model="currentDraft" />
+          <HttpRequestDescriptionTab
+            :key="currentRequest.id"
+            v-model="currentDraft"
+          />
         </Tabs.TabsContent>
       </div>
     </Tabs.Tabs>

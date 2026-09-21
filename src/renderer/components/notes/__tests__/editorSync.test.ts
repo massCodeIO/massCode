@@ -5,6 +5,12 @@ import {
 } from '../editorSync'
 
 describe('isOwnNoteContentEcho', () => {
+  it('accepts external updates before an anonymous editor has emitted content', () => {
+    expect(
+      isOwnNoteContentEcho(undefined, undefined, 'next HTTP description'),
+    ).toBe(false)
+  })
+
   it('does not treat equal content emitted by another note as an echo', () => {
     expect(isOwnNoteContentEcho({ noteId: 1, value: 'same' }, 2, 'same')).toBe(
       false,

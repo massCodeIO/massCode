@@ -14,6 +14,7 @@ import { AiError } from './errors'
 interface SavedProfile {
   baseURL: string
   model: string
+  models?: string[]
   encryptedKey?: string
 }
 interface SavedSettings {
@@ -93,10 +94,20 @@ export function getAiSettings(): AiSettings {
       baseURL: AI_DEFAULT_URLS[provider],
       model: '',
     }
+    const key = decrypt(profile)
     publicProfiles[provider] = {
       baseURL: profile.baseURL,
       model: profile.model,
-      hasKey: Boolean(decrypt(profile)),
+      models: profile.models ?? [],
+      hasKey: Boolean(key),
+      ...(key
+        ? {
+            keyPreview:
+              key.length > 12
+                ? `${key.slice(0, 5)}...${key.slice(-4)}`
+                : '••••••••',
+          }
+        : {}),
       hasStoredKey: Boolean(profile.encryptedKey),
     }
   }
@@ -115,8 +126,10 @@ export function configureAi(input: AiConfigure): AiSettings {
     model: '',
   }
   const profile: SavedProfile = { baseURL, model: input.model }
-  if (input.apiKey === undefined && previous.baseURL === baseURL)
+  if (input.apiKey === undefined && previous.baseURL === baseURL) {
     profile.encryptedKey = previous.encryptedKey
+    profile.models = previous.models
+  }
   if (typeof input.apiKey === 'string') {
     if (!encryptionAvailable())
       throw new AiError('encryptionUnavailable')
@@ -140,4 +153,25 @@ export function getAiConnection() {
   if ((profile.encryptedKey || !isLocalAiProvider(provider)) && !apiKey)
     throw new AiError('keyUnavailable')
   return { provider, baseURL, model: profile.model, apiKey }
+}
+
+export function rememberAiModels(
+  connection: { provider: AiProvider, baseURL: string, apiKey?: string },
+  models: string[],
+) {
+  const profiles = settings.get('profiles')
+  const profile = profiles[connection.provider]
+  // A request completing after a credential/endpoint change must not restore
+  // the old account's catalog. Model selection alone does not invalidate it.
+  if (
+    !profile
+    || profile.baseURL !== connection.baseURL
+    || decrypt(profile) !== connection.apiKey
+  ) {
+    return
+  }
+  settings.set('profiles', {
+    ...profiles,
+    [connection.provider]: { ...profile, models },
+  })
 }

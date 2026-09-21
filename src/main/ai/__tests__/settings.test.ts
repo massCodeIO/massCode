@@ -212,3 +212,49 @@ it('pins cloud credentials to official provider endpoints', async () => {
     ).toThrow()
   }
 })
+
+it('returns only a masked key preview and clears it when removed or unreadable', async () => {
+  const { configureAi, getAiSettings } = await import('../settings')
+  const input = {
+    provider: 'openai' as const,
+    baseURL: 'https://api.openai.com/v1',
+    model: 'test',
+  }
+  const key = 'sk-synthetic-private-provider-key-abcd'
+  const saved = configureAi({ ...input, apiKey: key })
+  expect(saved.profiles.openai.keyPreview).toBe('sk-sy...abcd')
+  expect(JSON.stringify(saved)).not.toContain(key)
+  mocks.decryptFails = true
+  expect(getAiSettings().profiles.openai.keyPreview).toBeUndefined()
+  mocks.decryptFails = false
+  expect(
+    configureAi({ ...input, apiKey: 'short' }).profiles.openai.keyPreview,
+  ).toBe('••••••••')
+  expect(
+    configureAi({ ...input, apiKey: null }).profiles.openai.keyPreview,
+  ).toBeUndefined()
+})
+
+it('persists discovered models in the existing profile and invalidates them with connection credentials', async () => {
+  const { configureAi, getAiSettings, getAiConnection, rememberAiModels }
+    = await import('../settings')
+  const input = {
+    provider: 'lmstudio' as const,
+    baseURL: 'http://localhost:1234/v1',
+    model: 'one',
+  }
+  configureAi(input)
+  const initial = getAiConnection()
+  rememberAiModels(initial, ['one', 'two'])
+  expect(mocks.saved.profiles.lmstudio.models).toEqual(['one', 'two'])
+  expect(getAiSettings().profiles.lmstudio.models).toEqual(['one', 'two'])
+  configureAi({ ...input, model: 'two' })
+  expect(getAiSettings().profiles.lmstudio.models).toEqual(['one', 'two'])
+  configureAi({ ...input, apiKey: 'new-key' })
+  expect(getAiSettings().profiles.lmstudio.models).toEqual([])
+  rememberAiModels(initial, ['stale'])
+  expect(getAiSettings().profiles.lmstudio.models).toEqual([])
+  rememberAiModels(getAiConnection(), ['new-account'])
+  configureAi({ ...input, baseURL: 'http://localhost:9999/v1' })
+  expect(getAiSettings().profiles.lmstudio.models).toEqual([])
+})

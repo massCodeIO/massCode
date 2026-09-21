@@ -3,25 +3,36 @@ import type { AiProvider, AiResult, AiSettings } from '~/shared/ai'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import { useAi } from '@/composables/ai/useAi'
+import { useSonner } from '@/composables/useSonner'
 import { i18n, ipc } from '@/electron'
 import { AI_DEFAULT_URLS, AI_PROVIDERS, isLocalAiProvider } from '~/shared/ai'
 
 const { settings, refreshSettings } = useAi()
+const { sonner } = useSonner()
 const provider = ref<AiProvider>('openai')
 const baseURL = ref(AI_DEFAULT_URLS.openai)
 const model = ref('')
 const apiKey = ref('')
 const removeKey = ref(false)
-const models = ref<string[]>([])
+const editingKey = ref(false)
 const busy = ref(false)
-const status = ref('')
-const error = ref('')
 const loaded = ref(false)
 const currentProfile = computed(() => settings.value?.profiles[provider.value])
 const sameEndpoint = computed(
   () =>
     baseURL.value.trim().replace(/\/+$/, '') === currentProfile.value?.baseURL,
 )
+const models = computed(() =>
+  apiKey.value.trim() || removeKey.value || !sameEndpoint.value
+    ? []
+    : (currentProfile.value?.models ?? []),
+)
+const selectedModel = computed({
+  get: () => (models.value.includes(model.value) ? model.value : ''),
+  set: (value: string) => {
+    model.value = value
+  },
+})
 const hasKey = computed(
   () => currentProfile.value?.hasKey && !removeKey.value && sameEndpoint.value,
 )
@@ -55,18 +66,12 @@ function loadProfile() {
   model.value = profile?.model ?? ''
   apiKey.value = ''
   removeKey.value = false
-  models.value = []
-  status.value = ''
-  error.value = ''
+  editingKey.value = false
 }
 watch(provider, loadProfile)
-watch([baseURL, model, apiKey], () => {
-  status.value = ''
-})
-async function save(check = false) {
+async function saveAndCheck() {
   busy.value = true
-  error.value = ''
-  status.value = ''
+  const savedProvider = provider.value
   try {
     const result = (await ipc.invoke('system:ai:configure', {
       provider: provider.value,
@@ -79,29 +84,31 @@ async function save(check = false) {
           : {}),
     })) as AiResult<AiSettings>
     if (!result.ok) {
-      error.value = result.error
+      sonner({ type: 'error', message: i18n.t(`ai.errors.${result.error}`) })
       return
     }
     settings.value = result.data
     baseURL.value = result.data.profiles[provider.value].baseURL
     apiKey.value = ''
     removeKey.value = false
-    status.value = 'saved'
-    if (check) {
-      const result = (await ipc.invoke('system:ai:models', null)) as AiResult<
-        string[]
-      >
-      if (!result.ok) {
-        error.value = result.error
-        status.value = ''
-        return
-      }
-      models.value = result.data
-      status.value = 'connected'
+    editingKey.value = false
+    const modelsResult = (await ipc.invoke(
+      'system:ai:models',
+      null,
+    )) as AiResult<string[]>
+    if (!modelsResult.ok) {
+      sonner({
+        type: 'error',
+        message: i18n.t(`ai.errors.${modelsResult.error}`),
+      })
+      return
     }
+    if (settings.value)
+      settings.value.profiles[savedProvider].models = modelsResult.data
+    sonner({ type: 'success', message: i18n.t('ai.connected') })
   }
   catch {
-    error.value = 'connection'
+    sonner({ type: 'error', message: i18n.t('ai.errors.connection') })
   }
   finally {
     busy.value = false
@@ -111,7 +118,7 @@ onMounted(async () => {
   try {
     const result = await refreshSettings()
     if (!result.ok) {
-      error.value = result.error
+      sonner({ type: 'error', message: i18n.t(`ai.errors.${result.error}`) })
       return
     }
     provider.value = result.data.provider
@@ -119,7 +126,7 @@ onMounted(async () => {
     loaded.value = true
   }
   catch {
-    error.value = 'connection'
+    sonner({ type: 'error', message: i18n.t('ai.errors.connection') })
   }
 })
 onBeforeUnmount(() => {
@@ -129,10 +136,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="space-y-4">
-    <UiMenuFormSection
-      :label="i18n.t('ai.title')"
-      :description="i18n.t('ai.settingsHint')"
-    >
+    <UiMenuFormSection :label="i18n.t('ai.title')">
       <UiMenuFormItem :label="i18n.t('ai.provider')">
         <Select.Select
           v-model="provider"
@@ -167,101 +171,107 @@ onBeforeUnmount(() => {
         </template>
       </UiMenuFormItem>
       <UiMenuFormItem :label="i18n.t('ai.apiKey')">
-        <UiInput
-          v-model="apiKey"
-          type="password"
-          autocomplete="new-password"
-          :disabled="busy || !loaded || !settings?.encryptionAvailable"
-          :placeholder="keyPlaceholder"
-          :aria-label="i18n.t('ai.apiKey')"
-        />
-        <template #description>
-          {{ keyDescription }}
-        </template>
-        <template #actions>
+        <div class="flex flex-wrap items-center gap-2">
+          <UiInput
+            v-if="hasStoredKey && !editingKey"
+            :model-value="currentProfile?.keyPreview ?? keyPlaceholder"
+            readonly
+            size="sm"
+            class="w-72"
+            :aria-label="i18n.t('ai.apiKey')"
+          />
+          <UiInput
+            v-else
+            v-model="apiKey"
+            type="password"
+            autocomplete="new-password"
+            size="sm"
+            class="w-72"
+            :disabled="busy || !loaded || !settings?.encryptionAvailable"
+            :placeholder="keyPlaceholder"
+            :aria-label="i18n.t('ai.apiKey')"
+          />
           <Button
+            v-if="hasStoredKey && !editingKey"
             variant="outline"
-            :disabled="busy || !loaded || (!hasStoredKey && !apiKey)"
+            :disabled="busy || !loaded || !settings?.encryptionAvailable"
+            @click="editingKey = true"
+          >
+            {{ i18n.t("ai.replaceKey") }}
+          </Button>
+          <Button
+            v-if="editingKey"
+            variant="outline"
+            :disabled="busy"
+            @click="
+              editingKey = false;
+              apiKey = '';
+            "
+          >
+            {{ i18n.t("button.cancel") }}
+          </Button>
+          <Button
+            v-if="hasStoredKey || apiKey"
+            variant="destructive"
+            :disabled="busy || !loaded"
             @click="
               removeKey = true;
               apiKey = '';
+              editingKey = false;
             "
           >
             {{ i18n.t("ai.removeKey") }}
           </Button>
+        </div>
+        <template #description>
+          {{ keyDescription }}
         </template>
       </UiMenuFormItem>
       <UiMenuFormItem :label="i18n.t('ai.model')">
-        <UiInput
-          v-model="model"
-          :disabled="busy || !loaded"
-          :placeholder="i18n.t('ai.modelPlaceholder')"
-          :aria-label="i18n.t('ai.model')"
-        />
-        <Select.Select
-          v-if="models.length"
-          v-model="model"
-          :disabled="busy"
-        >
-          <Select.SelectTrigger class="mt-2">
-            <Select.SelectValue :placeholder="i18n.t('ai.chooseModel')" />
-          </Select.SelectTrigger>
-          <Select.SelectContent>
-            <Select.SelectItem
-              v-for="id in models"
-              :key="id"
-              :value="id"
-            >
-              {{ id }}
-            </Select.SelectItem>
-          </Select.SelectContent>
-        </Select.Select>
+        <div class="flex flex-wrap items-center gap-2">
+          <UiInput
+            v-model="model"
+            size="sm"
+            class="w-72 max-w-full"
+            :disabled="busy || !loaded"
+            :placeholder="i18n.t('ai.modelPlaceholder')"
+            :aria-label="i18n.t('ai.model')"
+          />
+          <Select.Select
+            v-model="selectedModel"
+            :disabled="busy || !loaded || !models.length"
+          >
+            <Select.SelectTrigger class="w-64 max-w-full">
+              <Select.SelectValue
+                :placeholder="
+                  i18n.t(
+                    models.length ? 'ai.chooseModel' : 'ai.modelsNotLoaded',
+                  )
+                "
+              />
+            </Select.SelectTrigger>
+            <Select.SelectContent>
+              <Select.SelectItem
+                v-for="id in models"
+                :key="id"
+                :value="id"
+              >
+                {{ id }}
+              </Select.SelectItem>
+            </Select.SelectContent>
+          </Select.Select>
+        </div>
         <template #description>
           {{ i18n.t("ai.modelHint") }}
         </template>
         <template #actions>
-          <div class="space-y-2">
-            <div class="flex gap-2">
-              <Button
-                :disabled="busy || !loaded"
-                @click="save()"
-              >
-                {{ i18n.t("ai.save") }}
-              </Button>
-              <Button
-                variant="outline"
-                :disabled="busy || !loaded"
-                @click="save(true)"
-              >
-                {{ i18n.t("ai.check") }}
-              </Button>
-            </div>
-            <UiText
-              v-if="busy"
-              as="p"
-              variant="sm"
-              role="status"
-            >
-              {{ i18n.t("ai.checking") }}
-            </UiText>
-            <UiText
-              v-if="status"
-              as="p"
-              variant="sm"
-              role="status"
-            >
-              {{ i18n.t(`ai.${status}`) }}
-            </UiText>
-            <UiText
-              v-if="error"
-              as="p"
-              variant="sm"
-              class="text-destructive"
-              role="alert"
-            >
-              {{ i18n.t(`ai.errors.${error}`) }}
-            </UiText>
-          </div>
+          <Button
+            :disabled="busy || !loaded"
+            :aria-busy="busy"
+            @click="saveAndCheck"
+          >
+            {{ i18n.t(busy ? "ai.checking" : "ai.check") }}
+          </Button>
         </template>
       </UiMenuFormItem>
     </UiMenuFormSection>

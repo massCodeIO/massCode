@@ -32,6 +32,7 @@ vi.mock('../searchPlan', () => ({
 }))
 vi.mock('../settings', () => ({
   configureAi: mocks.configure,
+  rememberAiModels: vi.fn(),
   getAiSettings: () => ({ provider: 'ollama' }),
   getAiConnection: () => ({ baseURL: 'http://localhost/v1', model: 'local' }),
 }))

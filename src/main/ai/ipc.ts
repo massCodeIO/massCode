@@ -15,7 +15,12 @@ import { httpContextDocument } from './httpContextDocument'
 import { createHttpTools } from './httpTools'
 import { replayFields } from './replay'
 import { planVaultSearch, planVaultTurn } from './searchPlan'
-import { configureAi, getAiConnection, getAiSettings } from './settings'
+import {
+  configureAi,
+  getAiConnection,
+  getAiSettings,
+  rememberAiModels,
+} from './settings'
 import { createAiTrace } from './trace'
 import {
   executeVaultTool,
@@ -93,10 +98,13 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
     modelControllers.add(controller)
     const timeout = AbortSignal.timeout(30_000)
     try {
-      return await listAiModels(
-        getAiConnection(),
+      const connection = getAiConnection()
+      const models = await listAiModels(
+        connection,
         AbortSignal.any([controller.signal, timeout]),
       )
+      rememberAiModels(connection, models)
+      return models
     }
     catch (error) {
       if (timeout.aborted)

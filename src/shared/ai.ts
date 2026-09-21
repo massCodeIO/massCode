@@ -220,6 +220,8 @@ export interface AiProfile {
   model: string
   hasKey: boolean
   hasStoredKey: boolean
+  models?: string[]
+  keyPreview?: string
 }
 export interface AiSettings {
   provider: AiProvider

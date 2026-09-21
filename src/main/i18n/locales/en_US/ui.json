@@ -1411,8 +1411,9 @@
     "apiKey": "API key or token",
     "model": "Model",
     "modelPlaceholder": "Enter a model ID",
+    "modelsNotLoaded": "Models not loaded",
     "chooseModel": "Choose an available model",
-    "modelHint": "Check the connection to load model IDs, or enter one manually. A successful check does not guarantee that a model supports chat.",
+    "modelHint": "Save and check the connection to load available models. You can also enter a model ID manually. Loading the list does not verify chat support.",
     "settingsHint": "Connect your own account or a running model server. AI is available in Code, Notes and HTTP.",
     "cloudHint": "Requests go directly to the selected provider and use your API account billing.",
     "localHint": "Start the server in Ollama or LM Studio. Code stays on your device only when using a local model on this computer; remote servers and cloud models send it elsewhere. No automatic fallback to the cloud.",
@@ -1425,7 +1426,7 @@
     "check": "Save and check connection",
     "checking": "Connecting…",
     "saved": "Settings saved.",
-    "connected": "Connected. Choose a chat model and save your selection.",
+    "connected": "Connection verified.",
     "notConfigured": "Model not selected",
     "setupHint": "Open AI settings to configure a connection and select a model.",
     "context": "Context to send",
@@ -1477,6 +1478,7 @@
       "contextUnavailable": "Could not read attached context. The record may have been deleted or is not downloaded yet.",
       "proposalUnavailable": "Could not prepare reviewable HTTP checks. Nothing was changed. Retry or choose a model with tool calling support."
     },
+    "replaceKey": "Replace key",
     "keyRequired": "Enter your provider API key",
     "keyUnreadable": "Saved key unavailable — replace or remove it",
     "edit": {

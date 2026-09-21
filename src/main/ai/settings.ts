@@ -18,6 +18,7 @@ interface SavedProfile {
   encryptedKey?: string
 }
 interface SavedSettings {
+  userInstructions: string
   provider: AiProvider
   profiles: Record<AiProvider, SavedProfile>
 }
@@ -26,6 +27,7 @@ const settings = new Store<SavedSettings>({
   cwd: 'v2',
   defaults: {
     provider: 'openai',
+    userInstructions: '',
     profiles: Object.fromEntries(
       AI_PROVIDERS.map(provider => [
         provider,
@@ -113,6 +115,7 @@ export function getAiSettings(): AiSettings {
   }
   return {
     provider: settings.get('provider'),
+    userInstructions: settings.get('userInstructions') ?? '',
     profiles: publicProfiles,
     encryptionAvailable: encryptionAvailable(),
   }
@@ -139,6 +142,8 @@ export function configureAi(input: AiConfigure): AiSettings {
   }
   settings.set('profiles', { ...profiles, [input.provider]: profile })
   settings.set('provider', input.provider)
+  if (input.userInstructions !== undefined)
+    settings.set('userInstructions', input.userInstructions)
   return getAiSettings()
 }
 
@@ -152,7 +157,13 @@ export function getAiConnection() {
   const apiKey = decrypt(profile)
   if ((profile.encryptedKey || !isLocalAiProvider(provider)) && !apiKey)
     throw new AiError('keyUnavailable')
-  return { provider, baseURL, model: profile.model, apiKey }
+  return {
+    provider,
+    baseURL,
+    model: profile.model,
+    apiKey,
+    userInstructions: settings.get('userInstructions') ?? '',
+  }
 }
 
 export function rememberAiModels(

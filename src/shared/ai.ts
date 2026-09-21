@@ -43,6 +43,7 @@ export const aiConfigureSchema = z
     baseURL: z.string().max(2048),
     model: z.string().trim().max(256),
     apiKey: z.string().trim().min(1).max(8192).nullable().optional(),
+    userInstructions: z.string().trim().max(4000).optional(),
   })
   .strict()
 export type AiConfigure = z.infer<typeof aiConfigureSchema>
@@ -224,6 +225,7 @@ export interface AiProfile {
   keyPreview?: string
 }
 export interface AiSettings {
+  userInstructions?: string
   provider: AiProvider
   profiles: Record<AiProvider, AiProfile>
   encryptionAvailable: boolean

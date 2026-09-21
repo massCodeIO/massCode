@@ -2,6 +2,7 @@
 import type { AiProvider, AiResult, AiSettings } from '~/shared/ai'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
+import { Textarea } from '@/components/ui/shadcn/textarea'
 import { useAi } from '@/composables/ai/useAi'
 import { useSonner } from '@/composables/useSonner'
 import { i18n, ipc } from '@/electron'
@@ -12,6 +13,7 @@ const { sonner } = useSonner()
 const provider = ref<AiProvider>('openai')
 const baseURL = ref(AI_DEFAULT_URLS.openai)
 const model = ref('')
+const userInstructions = ref('')
 const apiKey = ref('')
 const removeKey = ref(false)
 const editingKey = ref(false)
@@ -77,6 +79,7 @@ async function saveAndCheck() {
       provider: provider.value,
       baseURL: baseURL.value,
       model: model.value,
+      userInstructions: userInstructions.value,
       ...(apiKey.value.trim()
         ? { apiKey: apiKey.value.trim() }
         : removeKey.value
@@ -121,6 +124,7 @@ onMounted(async () => {
       sonner({ type: 'error', message: i18n.t(`ai.errors.${result.error}`) })
       return
     }
+    userInstructions.value = result.data.userInstructions ?? ''
     provider.value = result.data.provider
     loadProfile()
     loaded.value = true
@@ -263,6 +267,19 @@ onBeforeUnmount(() => {
         </div>
         <template #description>
           {{ i18n.t("ai.modelHint") }}
+        </template>
+      </UiMenuFormItem>
+      <UiMenuFormItem :label="i18n.t('ai.userInstructions')">
+        <Textarea
+          v-model="userInstructions"
+          :disabled="busy || !loaded"
+          :maxlength="4000"
+          :aria-label="i18n.t('ai.userInstructions')"
+          :placeholder="i18n.t('ai.userInstructionsPlaceholder')"
+          class="min-h-28 resize-y"
+        />
+        <template #description>
+          {{ i18n.t("ai.userInstructionsHint") }}
         </template>
         <template #actions>
           <Button

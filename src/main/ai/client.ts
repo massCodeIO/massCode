@@ -22,6 +22,7 @@ export interface AiConnection {
   baseURL: string
   model: string
   apiKey?: string
+  userInstructions?: string
   provider?: AiProvider
   trace?: AiTrace
 }
@@ -445,7 +446,17 @@ export async function streamAiChat(
       ],
       vault?.remaining,
     ),
-    messages,
+    // Preferences are user-level context, never part of the system policy or
+    // stored tool history. The actual user turn remains the latest instruction.
+    messages: connection.userInstructions?.trim()
+      ? [
+          {
+            role: 'user',
+            content: `Saved user preferences (not a task or permission to act):\n${connection.userInstructions.trim()}`,
+          },
+          ...messages,
+        ]
+      : messages,
     tools: [
       ...(editContextId && !requiredTool ? [editTool(editContextId)] : []),
       ...(vault?.remaining

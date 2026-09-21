@@ -258,3 +258,25 @@ it('persists discovered models in the existing profile and invalidates them with
   configureAi({ ...input, baseURL: 'http://localhost:9999/v1' })
   expect(getAiSettings().profiles.lmstudio.models).toEqual([])
 })
+
+it('stores global user preferences across provider changes and supports clearing', async () => {
+  const { configureAi, getAiSettings, getAiConnection } = await import(
+    '../settings'
+  )
+  const input = {
+    provider: 'lmstudio' as const,
+    baseURL: 'http://localhost:1234/v1',
+    model: 'local',
+  }
+  configureAi({ ...input, userInstructions: 'Всегда отвечай на русском' })
+  expect(mocks.saved.userInstructions).toBe('Всегда отвечай на русском')
+  configureAi({
+    provider: 'ollama',
+    baseURL: 'http://localhost:11434/v1',
+    model: 'local',
+  })
+  expect(getAiSettings().userInstructions).toBe('Всегда отвечай на русском')
+  expect(getAiConnection().userInstructions).toBe('Всегда отвечай на русском')
+  configureAi({ ...input, userInstructions: '' })
+  expect(getAiConnection().userInstructions).toBe('')
+})

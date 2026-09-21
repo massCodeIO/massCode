@@ -129,6 +129,10 @@ Customize the editor appearance and behavior in preferences:
 - **Line numbers** - toggle to show or hide line numbers
 - **Wrap table cells** - wrap long cell content so wide tables stay within the editor <AppVersion text=">=5.9" />
 
+## AI Assistant
+
+Use [AI Assistant](/documentation/ai) to summarize notes, compare saved records and find related content across Code, Notes and HTTP. Open the AI assistant tab in the inspector to get started.
+
 <script setup>
 import { withBase } from 'vitepress'
 </script>

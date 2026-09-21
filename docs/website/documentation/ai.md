@@ -1,0 +1,111 @@
+---
+title: AI Assistant
+description: "Chat across Code, Notes and HTTP with explicit context or vault search using cloud providers or local models."
+---
+
+# AI Assistant
+
+Use the shared AI panel in Code, Notes and HTTP to ask questions, attach records, or find information across your vault. Connect your own provider account or a local model server. Responses stream into the panel with Markdown formatting, highlighted code blocks, and a copy action for each block. Suggested changes are applied only after you review and confirm them.
+
+## Connect a Provider
+
+Open **Preferences → AI assistant** and choose a provider.
+
+| Provider | Connection |
+| --- | --- |
+| OpenAI, Anthropic, Google Gemini, DeepSeek, Mistral, xAI | Enter an API key from the selected provider and choose an available chat model. Requests use that provider’s API account and billing. |
+| Ollama | Start Ollama and use its API address, usually `http://localhost:11434/v1`. |
+| LM Studio | Start the API server in LM Studio and use its address, usually `http://localhost:1234/v1`. Enter a token if your server requires authentication. |
+
+Click **Save and check connection** to save your settings and load available models. Choose one from the selector, or enter a model ID manually, then click **Save and check connection** again to save the selection. A notification reports the result.
+
+The loaded model list is kept with the provider’s settings and remains available when you reopen Preferences. Changing the key or server address clears that list until the next successful check. The selector stays visible when no models have been loaded.
+
+A successful connection check confirms access to the model list; it does not verify chat or tool support for every model. Choose a text chat model. Search and edit proposals also require tool calling support.
+
+The local server address includes the `/v1` suffix. massCode connects to an existing server; download and manage models in Ollama or LM Studio.
+
+Saved keys appear as a masked preview. Use **Replace key** or **Remove key**, then **Save and check connection** to save the change.
+
+API keys are stored on this device using operating-system encryption, outside your vault. They are not included in vault sync. Changing a server address removes the key for that connection; enter a new key explicitly when the new server requires one. If secure storage is unavailable, connections that do not require a key can still be used.
+
+## Custom Instructions
+
+In **Preferences → AI assistant → Custom instructions**, describe your preferred language, style or response format. For example:
+
+> Always answer in Russian. Keep explanations concise and include examples when useful.
+
+Click **Save and check connection** to save. These preferences apply across chats and providers and remain after restarting the app. Clear the field and save to remove them. Changes still require review and confirmation.
+
+## Choose Context or Search the Vault
+
+Open **AI assistant** from the space rail, choose **View → AI assistant**, or press <kbd>Cmd+L</kbd> on macOS / <kbd>Ctrl+L</kbd> on Windows and Linux. In Notes and HTTP, the assistant appears as a tab in the inspector panel. The chat stays open when you move between Code, Notes and HTTP. A new chat initially attaches the selected item: the current editor fragment in Code, or the saved record in Notes and HTTP. Remove its chip to chat without it. The automatic context follows the selected item. Removing its chip disables automatic context until you start a new chat. Records added manually through **+** stay pinned.
+
+Use **+** below the message box to search for snippets, notes or saved HTTP requests. Selected records appear as removable chips. Saved records are read when you send the message. In Code, **Open fragment** or **Selection** captures the current editor text, including unsaved edits; that snapshot stays attached when you navigate elsewhere. Remove and reattach it to capture newer edits.
+
+You can send a message without attachments. The assistant can answer directly or search Code, Notes and HTTP, then read records relevant to your question. Click a linked record in an answer or the **Vault matches** card to open it in its space. Large records and long responses may not fit in one request; the assistant can read additional portions when available.
+
+The assistant determines whether your request needs vault retrieval before answering. An attached item helps interpret phrases such as “explain this” or “compare it with other saved requests”; it does not restrict a question about the rest of the vault.
+
+For vault searches, massCode expands the initial query into a small set of multilingual phrases and ranks the matches before displaying them. Exact names come before broader matches. The **Vault matches** card shows linked record names, with the saved method and URL for HTTP requests. No matches means those phrases did not match; it does not prove that the record is absent. Query translation and the assistant’s explanatory text still depend on the selected model.
+
+HTTP records attached from vault search provide the saved request definition. In the HTTP editor, the assistant can also inspect the current draft, latest response and existing checks, as described below. The assistant does not send requests, execute scripts, read upload files, or resolve environment secrets. Authentication settings and standard credential headers are excluded; literal values elsewhere in saved content are still content you share with the configured provider.
+
+Use **Stop** to interrupt a response. Partial text remains available to read and copy. If the assistant has already prepared a valid edit proposal, stopping its explanation keeps the proposal available for review.
+
+Use **Retry** on the latest failed or interrupted response to try again. Text you have started writing in the message box is preserved. If a model cannot use tools, it may still answer in plain text, but that answer does not search records or apply changes.
+
+## Work with Notes
+
+Attach a note to summarize it, explain a section, compare it with another record, or find related information in the vault. For example, ask “Summarize the decisions in this note” or “Find the HTTP requests mentioned here.”
+
+Notes provide saved content as context. The assistant can suggest rewritten text in its answer, but it cannot apply changes to a note directly. Copy the result into the note when you want to keep it.
+
+## Review Code Edits
+
+Attach an open Code fragment or selection, then describe a change and send it normally. Code edits apply to that editor attachment; records found through vault search provide read-only context. The assistant prepares exact text replacements for the selected code or entire fragment. The model then continues with a normal Markdown answer explaining the proposed changes, showing code and useful examples. Markdown examples are never treated as edits, regardless of how many code blocks the answer contains. If the explanation fails, the validated proposal remains available for review.
+
+When the proposal is ready and generation has finished or been stopped, choose **Review changes**, inspect the diff and choose **Apply changes** or **Reject changes**. Multiple edits are validated and applied together. The editor saves accepted changes normally; use editor Undo to revert them. Subsequent chat messages include the tool calls and whether their proposals were applied, rejected, invalid, or still awaiting review.
+
+Each proposal is bound to the original context snapshot. Every replacement must match exactly once, and replacements cannot overlap. Changed source, another vault, incomplete calls, and invalid arguments prevent application. If a structurally valid proposal contains missing, ambiguous, or overlapping replacements, massCode sends the validation failure back to the same model for one correction attempt. No changes are applied during correction; a valid result still requires your review. No code is changed before confirmation. Exact-match checks protect the application of edits; they do not prove that the proposed code is correct. Review related definitions and calls in the diff. Choose the entire fragment when a change affects several parts of it. To apply a proposal after navigating elsewhere, return to the original fragment; it must still match the snapshot.
+
+Your selected model must support tool calling through its provider. A plain text answer does not count as a proposal; use a tool-capable model if no proposal is returned. massCode does not silently interpret Markdown as a fallback.
+
+## Analyze an HTTP Response and Add Checks
+
+Open an HTTP request and send it to capture a response. Then ask naturally, for example:
+
+- “Explain why this request returned 401.”
+- “Look at the latest response and suggest useful checks.”
+- “Add a check that the status is 200 and the response has a numeric id.”
+- “Are the existing tests enough for this response?”
+
+The assistant can inspect the current draft, the latest execution input, response status, headers, body and existing assertions. When available, it can also inspect captured outgoing headers and redirect URLs. It distinguishes the current draft from the request used for the last execution. Binary bodies and missing portions of truncated responses are unavailable.
+
+An assessment question can produce an explanation without changing anything. When you ask to add checks, the assistant can prepare an assertion proposal:
+
+1. Choose **Review changes** to inspect the proposed checks.
+2. Apply or reject the proposal. Accepted checks are appended to the current draft; existing checks are preserved.
+3. Save the request yourself when ready, and run it to evaluate the checks.
+
+Applying an HTTP proposal does **not** save or send the request. If the request, response, environment or checks have changed since the proposal was prepared, ask for a fresh proposal against the current state.
+
+State expected business values or refer to the request’s documented requirements when you need exact checks. A value seen in one response is not necessarily a rule for every response. The assistant cannot execute requests, modify authentication or scripts, or apply general HTTP request edits; its HTTP editing action currently adds assertions. Live HTTP analysis and proposals are not available for WebSocket requests.
+
+## Conversations and Privacy
+
+One conversation is shared across Code, Notes and HTTP during the current app session. Closing the panel or switching records and spaces preserves the conversation and does not stop generation. New chat clears the conversation and attachments, then re-enables automatic context and selects the current item. Reloading or restarting the app clears the conversation; changing vaults also clears it.
+
+When a conversation reaches the request size limit, older complete exchanges are left out of the next request and a notice appears in the panel. They remain visible in the chat. The current request and its attached code are not shortened. If the current request itself is too large, select a smaller section.
+
+The configured server receives your messages, the included conversation history, custom instructions, attached context, and records read through vault tools. HTTP context removes recognized credential fields and does not resolve environment secrets, but arbitrary sensitive text may still be present in request or response content. A local model running on your computer can process these without sending them to a cloud provider. A local server address alone does not guarantee local processing: Ollama can also serve cloud-backed models. massCode does not automatically switch to a cloud provider when a local server is unavailable.
+
+[MCP](/documentation/mcp) is a separate integration for connecting external AI clients to your vault. AI Assistant does not require MCP to be enabled.
+
+## Troubleshooting
+
+- **Server unavailable:** start Ollama or the LM Studio API server and verify the address and port.
+- **Model unavailable or unsupported:** check that the selected ID belongs to a chat model available on that server.
+- **First response takes time:** a local server may need to load the model before returning text. You can stop the request while it loads.
+- **Context is too large:** select a smaller section or start a new conversation. massCode reports the limit instead of silently removing code.
+- **Authentication failed:** replace the API key or token in Preferences.

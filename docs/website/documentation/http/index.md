@@ -74,6 +74,10 @@ Collection and folder icons support built-in icons, native emoji, and uploaded J
 
 Requests live as Markdown files under `http` in your vault. Saved collection configuration and regular environments travel with the vault. [Secret values](./environments#secret-variables), script trust, cookies, and local interface preferences stay on the device. Session variables are temporary. Back up your vault as part of your normal massCode backup workflow.
 
+## AI Assistant
+
+Use [AI Assistant](/documentation/ai#analyze-an-http-response-and-add-checks) to analyze the current request and latest response, assess existing checks and review proposed assertions before adding them to the draft.
+
 <script setup>
 import { withBase } from 'vitepress'
 </script>

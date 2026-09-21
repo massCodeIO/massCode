@@ -366,6 +366,7 @@ export async function streamAiChat(
     remaining: number
     onToolRound?: () => void
     requiredTool?: () => string | undefined
+    isComplete?: () => boolean
   },
 ): Promise<AiToolCall[]> {
   if (!connection.model)
@@ -447,6 +448,10 @@ export async function streamAiChat(
         tool_call_id: call.id,
         content: JSON.stringify(result),
       })
+    }
+    if (vault.isComplete?.()) {
+      onResponse?.([...messages, assistant, ...results], '')
+      return []
     }
     return streamAiChat(
       connection,

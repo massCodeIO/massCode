@@ -147,8 +147,12 @@ onMounted(() => {
             :key="resultIndex"
             :result="result"
           />
+          <AiHttpChecks
+            v-if="message.httpProposal"
+            :proposal="message.httpProposal"
+          />
           <AiMessage
-            v-if="message.role === 'assistant'"
+            v-else-if="message.role === 'assistant'"
             :content="message.content"
             :items="messageReferences[index]"
           />

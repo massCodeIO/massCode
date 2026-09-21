@@ -16,6 +16,7 @@ import { AI_LIMITS, aiProposalSchema } from '~/shared/ai'
 import { budgetAiHistory } from '~/shared/aiHistory'
 import { aiHttpProposalSchema } from '~/shared/aiHttp'
 import { buildReplacement, matchesSnapshot } from './edit'
+import { httpProposalText } from './httpProposalText'
 
 export interface AiContext {
   name?: string
@@ -121,6 +122,7 @@ function onEvent(_event: unknown, event: AiEvent) {
       && parsed.data.context_id === message.httpSnapshot?.context.contextId
     ) {
       message.httpProposal = parsed.data
+      message.content = httpProposalText(parsed.data)
     }
     return
   }
@@ -471,6 +473,7 @@ async function send(
                 return {
                   ...item,
                   content: JSON.stringify({
+                    ...result,
                     status: message.applied
                       ? 'added_to_draft'
                       : message.rejected

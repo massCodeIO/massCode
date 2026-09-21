@@ -73,48 +73,12 @@ function reject() {
       >
         {{ message.httpSnapshot?.context.name }}
       </UiText>
-      <UiText
-        as="p"
-        variant="sm"
-      >
-        {{ message.httpProposal?.summary }}
-      </UiText>
-      <div class="scrollbar max-h-[50vh] space-y-3 overflow-auto">
-        <div
-          v-for="(rule, index) in message.httpProposal?.assertions"
-          :key="index"
-          class="space-y-1 rounded-md border p-3"
-        >
-          <UiText
-            as="p"
-            variant="sm"
-            weight="medium"
-          >
-            {{ rule.name }}
-          </UiText>
-          <UiText
-            as="p"
-            variant="sm"
-            muted
-          >
-            {{ i18n.t(`spaces.http.runtime.sources.${rule.source}`) }}
-            <span
-              v-if="rule.path"
-              class="font-mono"
-            > · {{ rule.path }}</span>
-          </UiText>
-          <UiText
-            as="p"
-            variant="sm"
-          >
-            {{ i18n.t(`spaces.http.runtime.operators.${rule.operator}`) }}
-            <span
-              v-if="rule.expected !== undefined"
-              class="font-mono"
-            >
-              {{ JSON.stringify(rule.expected) }}</span>
-          </UiText>
-        </div>
+      <div class="scrollbar max-h-[50vh] overflow-auto">
+        <AiHttpChecks
+          v-if="message.httpProposal"
+          :proposal="message.httpProposal"
+          show-evidence
+        />
       </div>
       <UiText
         v-if="!available || failed"

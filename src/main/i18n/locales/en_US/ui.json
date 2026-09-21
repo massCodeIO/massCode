@@ -1519,7 +1519,14 @@
       "description": "These checks will be added to the request draft. Existing checks stay unchanged. Run the request to verify these draft checks.",
       "apply": "Add to draft",
       "applied": "Checks added to draft. Run the request to verify these draft checks.",
-      "stale": "The request, response or environment has changed, or the HTTP editor is not available. Return to the request and ask for a new proposal."
+      "stale": "The request, response or environment has changed, or the HTTP editor is not available. Return to the request and ask for a new proposal.",
+      "proposedCount_one": "Proposed check ({{count}})",
+      "proposedCount_other": "Proposed checks ({{count}})",
+      "evidence": {
+        "user": "User requirement",
+        "description": "Request description",
+        "review": "Check that each cited requirement supports its condition. Sample types describe the observed response, not a verified API contract."
+      }
     }
   }
 }

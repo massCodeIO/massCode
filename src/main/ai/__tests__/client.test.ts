@@ -585,3 +585,73 @@ it('requires the planned HTTP tool and does not accept prose as completed action
   const options = (fetch.mock.calls[0] as unknown as [string, RequestInit])[1]
   expect(JSON.parse(options.body as string).tool_choice).toBe('required')
 })
+
+it('finishes a validated proposal without asking the model to invent a second summary', async () => {
+  const payload = JSON.stringify({
+    choices: [
+      {
+        delta: {
+          tool_calls: [
+            {
+              index: 0,
+              id: 'call_http',
+              type: 'function',
+              function: { name: 'propose_http_assertions', arguments: '{}' },
+            },
+          ],
+        },
+        finish_reason: 'tool_calls',
+      },
+    ],
+  })
+  const fetch = vi.fn(
+    async () => new Response(stream([`data: ${payload}\n\ndata: [DONE]\n\n`])),
+  )
+  vi.stubGlobal('fetch', fetch)
+  const response = vi.fn()
+  let complete = false
+  const result = {
+    status: 'awaiting_user_review',
+    applied: false,
+    assertions: [{ source: 'json', path: '/id', operator: 'isNumber' }],
+  }
+  await streamAiChat(
+    { baseURL: 'http://localhost/v1', model: 'test' },
+    [{ role: 'user', content: 'Add checks' }],
+    new AbortController().signal,
+    () => {},
+    undefined,
+    undefined,
+    1,
+    0,
+    undefined,
+    response,
+    {
+      tools: [
+        { type: 'function', function: { name: 'propose_http_assertions' } },
+      ],
+      remaining: 3,
+      isComplete: () => complete,
+      execute: async () => {
+        complete = true
+        return result
+      },
+    },
+  )
+  expect(fetch).toHaveBeenCalledTimes(1)
+  expect(response).toHaveBeenCalledWith(
+    [
+      { role: 'user', content: 'Add checks' },
+      expect.objectContaining({
+        role: 'assistant',
+        tool_calls: expect.any(Array),
+      }),
+      {
+        role: 'tool',
+        tool_call_id: 'call_http',
+        content: JSON.stringify(result),
+      },
+    ],
+    '',
+  )
+})

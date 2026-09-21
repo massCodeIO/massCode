@@ -17,6 +17,7 @@ async function setup() {
     },
   )
   vi.doMock('@/electron', () => ({
+    i18n: { t: (key: string) => key },
     ipc: {
       invoke,
       on: vi.fn((channel, callback) => {
@@ -544,10 +545,11 @@ describe('hTTP proposals in chat', () => {
     ai.setOpen(true)
     await ai.send('Add checks')
     expect(request().httpContext).toEqual(snapshot.context)
+    expect(request().userMessages).toEqual(['Add checks'])
     const requestId = request().requestId
     const proposal = {
       context_id: snapshot.context.contextId,
-      summary: 'Status',
+      summary: 'Also checks customer.name and a made-up deadline',
       assertions: [
         {
           name: 'Status',
@@ -560,6 +562,9 @@ describe('hTTP proposals in chat', () => {
     emit({ requestId, type: 'httpProposal', proposal })
     const message = ai.conversation.value!.messages.at(-1)!
     expect(ai.canApplyHttp(message)).toBe(false)
+    expect(message.content).toContain('200')
+    expect(message.content).not.toContain('customer.name')
+    expect(message.content).not.toContain('deadline')
     emit({ requestId, type: 'done' })
     expect(ai.applyHttp(message)).toBe(true)
     expect(message.applied).toBe(true)

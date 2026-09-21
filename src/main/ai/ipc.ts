@@ -335,6 +335,7 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
               requiredTool: requireHttpAssertions
                 ? http?.requiredTool
                 : undefined,
+              isComplete: http?.hasProposal,
               tools: [
                 ...(request.vaultAccess ? vaultTools : []),
                 ...(http?.tools.filter(
@@ -498,7 +499,10 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
           }
         }
       }
-      if (!calls.length && toolContent) {
+      if (!calls.length && http?.hasProposal()) {
+        publishProtocol(responseMessages)
+      }
+      else if (!calls.length && toolContent) {
         publishProtocol([
           ...responseMessages,
           {

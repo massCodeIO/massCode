@@ -1,4 +1,5 @@
 import type { EditSnapshot } from './edit'
+import type { HttpAiSnapshot } from './useHttpAi'
 import type {
   AiErrorCode,
   AiEvent,
@@ -9,9 +10,11 @@ import type {
   AiToolCall,
   AiVaultItem,
 } from '~/shared/ai'
+import type { AiHttpProposal } from '~/shared/aiHttp'
 import { ipc, store } from '@/electron'
 import { aiProposalSchema } from '~/shared/ai'
 import { budgetAiHistory } from '~/shared/aiHistory'
+import { aiHttpProposalSchema } from '~/shared/aiHttp'
 import { buildReplacement, matchesSnapshot } from './edit'
 
 export interface AiContext {
@@ -26,6 +29,8 @@ export interface AiContext {
 }
 export interface ChatMessage extends AiMessage {
   createdAt?: number
+  httpSnapshot?: HttpAiSnapshot
+  httpProposal?: AiHttpProposal
   role: 'user' | 'assistant'
   rejected?: boolean
   calls?: AiToolCall[]
@@ -51,6 +56,7 @@ interface Conversation {
   draft: string
   historyOmitted?: boolean
   error?: AiErrorCode
+  diagnostic?: string
 }
 const open = ref(store.app.get('code.layout.inspectorOpen') === true)
 const settings = ref<AiSettings>()
@@ -66,6 +72,14 @@ let vault = ''
 let snapshotReader: (() => AiContext | undefined) | undefined
 let editorWriter:
   | ((snapshot: EditSnapshot, replacement: string) => boolean)
+  | undefined
+let httpReader: (() => HttpAiSnapshot | undefined) | undefined
+let httpWriter:
+  | ((
+    snapshot: HttpAiSnapshot,
+    proposal: AiHttpProposal,
+    checkOnly?: boolean,
+  ) => boolean)
   | undefined
 let listening = false
 let autoContextEnabled = true
@@ -100,6 +114,16 @@ function onEvent(_event: unknown, event: AiEvent) {
   syncVault()
   if (event.requestId !== active.value?.requestId)
     return
+  if (event.type === 'httpProposal') {
+    const parsed = aiHttpProposalSchema.safeParse(event.proposal)
+    if (
+      parsed.success
+      && parsed.data.context_id === message.httpSnapshot?.context.contextId
+    ) {
+      message.httpProposal = parsed.data
+    }
+    return
+  }
   if (event.type === 'answerReset') {
     message.content = ''
     return
@@ -149,8 +173,10 @@ function onEvent(_event: unknown, event: AiEvent) {
     return
   }
   message.status = event.type === 'error' ? 'error' : event.type
-  if (event.type === 'error')
+  if (event.type === 'error') {
     conversation.error = event.error
+    conversation.diagnostic = event.diagnostic
+  }
   active.value = undefined
 }
 
@@ -262,6 +288,40 @@ function setContext(value?: AiContext) {
   chooseInitialContext()
 }
 
+function registerHttp(
+  reader: NonNullable<typeof httpReader>,
+  writer: NonNullable<typeof httpWriter>,
+) {
+  httpReader = reader
+  httpWriter = writer
+  return () => {
+    if (httpReader === reader) {
+      httpReader = undefined
+      httpWriter = undefined
+    }
+  }
+}
+function canApplyHttp(message: ChatMessage) {
+  return Boolean(
+    message.status === 'done'
+    && !message.applied
+    && !message.rejected
+    && message.httpSnapshot
+    && message.httpProposal
+    && httpWriter?.(message.httpSnapshot, message.httpProposal, true),
+  )
+}
+function applyHttp(message: ChatMessage) {
+  if (
+    !canApplyHttp(message)
+    || !httpWriter?.(message.httpSnapshot!, message.httpProposal!)
+  ) {
+    return false
+  }
+  message.applied = true
+  return true
+}
+
 async function refreshSettings() {
   syncVault()
   const result = (await ipc.invoke(
@@ -363,6 +423,7 @@ async function send(
       }
     : undefined
   conversation.error = undefined
+  conversation.diagnostic = undefined
   // Each turn records exactly the visible context snapshot, including unsaved edits.
   const instruction = proposeEdit
     ? '\nUse propose_edit to propose the requested change for review.'
@@ -371,6 +432,16 @@ async function send(
   const selectedAttachments = retryMessage
     ? (conversation.messages.at(-2)?.attachments ?? [])
     : attachments.value.map(item => ({ ...item }))
+  const httpCandidate = retryMessage?.httpSnapshot ?? httpReader?.()
+  const httpSnapshot
+    = httpCandidate
+      && selectedAttachments.some(
+        item =>
+          item.type === 'http_request'
+          && item.id === httpCandidate.context.requestId,
+      )
+      ? httpCandidate
+      : undefined
   const history: AiMessage[] = (
     retryMessage ? conversation.messages.slice(0, -2) : conversation.messages
   )
@@ -383,6 +454,36 @@ async function send(
     .flatMap((message): AiMessage[] => {
       if (message.protocol) {
         const protocol = message.protocol.map((item, index) => {
+          if (
+            item.role === 'tool'
+            && message.httpProposal
+            && message.protocol!.some(entry =>
+              entry.tool_calls?.some(
+                call =>
+                  call.id === item.tool_call_id
+                  && call.function.name === 'propose_http_assertions',
+              ),
+            )
+          ) {
+            try {
+              const result = JSON.parse(item.content)
+              if (result.status === 'awaiting_user_review') {
+                return {
+                  ...item,
+                  content: JSON.stringify({
+                    status: message.applied
+                      ? 'added_to_draft'
+                      : message.rejected
+                        ? 'rejected'
+                        : 'awaiting_user_review',
+                    applied: Boolean(message.applied),
+                    note: 'Only draft assertions are changed; the request has not been saved or executed by the assistant.',
+                  }),
+                }
+              }
+            }
+            catch {}
+          }
           if (
             item.role !== 'tool'
             || !message.calls?.some(call => call.id === item.tool_call_id)
@@ -486,6 +587,7 @@ async function send(
   conversation.messages.push({
     role: 'assistant',
     createdAt: Date.now(),
+    httpSnapshot,
     content: '',
     status: 'streaming',
     edit,
@@ -498,6 +600,9 @@ async function send(
     const result = (await ipc.invoke('system:ai:start', {
       requestId,
       vaultAccess: true,
+      httpContext: httpSnapshot?.context
+        ? JSON.parse(JSON.stringify(httpSnapshot.context))
+        : undefined,
       attachments: selectedAttachments.map(({ type, id }) => ({ type, id })),
       editContextId: edit?.contextId,
       editContextText: edit ? text : undefined,
@@ -617,6 +722,9 @@ export function useAi() {
     ),
     setOpen,
     openAndFocus,
+    registerHttp,
+    canApplyHttp,
+    applyHttp,
     setContext,
     setVaultContext,
     registerEditor,

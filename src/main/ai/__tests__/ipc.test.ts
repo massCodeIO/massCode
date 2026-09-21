@@ -382,3 +382,42 @@ it('does not answer or retrieve after cancellation during scope planning', async
     owner.send.mock.calls.some(([, event]) => event.type === 'searchResults'),
   ).toBe(false)
 })
+
+it('preloads actual HTTP state for assessment and prevents unsolicited proposals', async () => {
+  mocks.stream.mockResolvedValue(undefined)
+  mocks.turnPlan.mockResolvedValueOnce({ scope: 'context' })
+  const { invoke } = setup()
+  await invoke('start', {
+    ...request(id1),
+    httpContext: {
+      contextId: id2,
+      requestId: 1,
+      name: 'Order details',
+      request: '{"method":"GET"}',
+      response: '{"status":200,"body":{"status":"paid"}}',
+      assertions: [
+        { name: 'HTTP 200', source: 'status', operator: 'eq', expected: 200 },
+      ],
+    },
+  })
+  await flush()
+  expect(mocks.stream).toHaveBeenCalledOnce()
+  const messages = mocks.stream.mock.calls[0][1]
+  expect(messages[0].content).toBe('hello')
+  const results = messages
+    .filter((message: any) => message.role === 'tool')
+    .map((message: any) => JSON.parse(message.content))
+  expect(results.map((result: any) => result.part)).toEqual([
+    'request',
+    'response',
+  ])
+  expect(results[1].content).toContain('paid')
+  expect(results[1].assertions[0].name).toBe('HTTP 200')
+  const runtime = mocks.stream.mock.calls[0][10]
+  expect(runtime.tools.map((tool: any) => tool.function.name)).toEqual([
+    'read_http_context',
+  ])
+  expect(await runtime.execute('propose_http_assertions', '{}')).toEqual({
+    error: 'ACTION_NOT_REQUESTED',
+  })
+})

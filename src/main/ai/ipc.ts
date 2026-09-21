@@ -1,5 +1,6 @@
 import type { IpcMainInvokeEvent, WebContents } from 'electron'
 import type { AiEvent, AiResult, AiStart } from '../../shared/ai'
+import type { AiResponseReplay } from '../../shared/aiResponses'
 import { randomUUID } from 'node:crypto'
 import {
   AI_LIMITS,
@@ -10,8 +11,10 @@ import {
 import { isTrustedApiRequest } from '../api/requestIpc'
 import { listAiModels, streamAiChat } from './client'
 import { AiError, aiErrorCode } from './errors'
+import { createHttpTools } from './httpTools'
 import { planVaultSearch, planVaultTurn } from './searchPlan'
 import { configureAi, getAiConnection, getAiSettings } from './settings'
+import { createAiTrace } from './trace'
 import {
   executeVaultTool,
   readVaultItem,
@@ -107,6 +110,17 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
     session: NonNullable<typeof active>,
     connection: ReturnType<typeof getAiConnection>,
   ) {
+    const trace = createAiTrace(
+      request.requestId,
+      connection.provider,
+      connection.model,
+      [connection.apiKey ?? ''],
+    )
+    const tracedConnection = { ...connection, trace }
+    trace.event('turn.start', {
+      messages: request.messages.length,
+      attachments: request.attachments?.length ?? 0,
+    })
     const timeout = AbortSignal.timeout(AI_LIMITS.timeoutMs)
     const historyOmitted = () => {
       if (active === session)
@@ -123,21 +137,49 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
         ...message,
       }))
       let initialSearchPlanned = false
+      let requireHttpAssertions = false
       const planningRecords: { type: string, name: string, preview: string }[]
         = []
-      if (request.attachments?.length) {
-        const records = request.attachments.map((ref) => {
-          try {
-            return readVaultItem(ref)
-          }
-          catch (error) {
-            throw new AiError(
-              error instanceof Error && error.message === 'CONTENT_TOO_LARGE'
-                ? 'inputLimit'
-                : 'contextUnavailable',
-            )
-          }
+      const http = request.httpContext
+        ? createHttpTools(request.httpContext, (proposal) => {
+            if (active === session) {
+              send({
+                requestId: request.requestId,
+                type: 'httpProposal',
+                proposal,
+              })
+            }
+          })
+        : undefined
+      if (request.httpContext) {
+        const context = request.httpContext
+        planningRecords.push({
+          type: 'http_request',
+          name: context.name,
+          preview: `Live HTTP editor snapshot and last response available through read_http_context. ${context.request.slice(0, 1500)}`,
         })
+      }
+      if (request.attachments?.length) {
+        const records = request.attachments
+          .filter(
+            ref =>
+              !(
+                ref.type === 'http_request'
+                && ref.id === request.httpContext?.requestId
+              ),
+          )
+          .map((ref) => {
+            try {
+              return readVaultItem(ref)
+            }
+            catch (error) {
+              throw new AiError(
+                error instanceof Error && error.message === 'CONTENT_TOO_LARGE'
+                  ? 'inputLimit'
+                  : 'contextUnavailable',
+              )
+            }
+          })
         planningRecords.push(
           ...records.map(record => ({
             type: record.type,
@@ -162,19 +204,23 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
             : message,
         )
       }
-      if (request.vaultAccess) {
+      if (request.vaultAccess || http) {
         const signal = AbortSignal.any([session.controller.signal, timeout])
         const plan = await planVaultTurn(
-          connection,
+          tracedConnection,
           searchConversation,
           signal,
           {
             records: planningRecords,
             editorText: request.editContextText?.slice(0, 2000),
+            httpAvailable: Boolean(http),
           },
         )
         assertVault()
-        if (plan.scope === 'vault') {
+        requireHttpAssertions = Boolean(
+          http && plan.httpAction === 'assertions',
+        )
+        if (request.vaultAccess && plan.scope === 'vault') {
           const found = {
             ...(await retrieveVaultItems(plan.type, plan.queries)),
             expanded: true,
@@ -222,7 +268,32 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
           }
         }
       }
+      if (http) {
+        for (const part of ['request', 'response']) {
+          const callId = `http_${randomUUID()}`
+          const args = JSON.stringify({ part })
+          request.messages.push(
+            {
+              role: 'assistant',
+              content: '',
+              tool_calls: [
+                {
+                  id: callId,
+                  type: 'function',
+                  function: { name: 'read_http_context', arguments: args },
+                },
+              ],
+            },
+            {
+              role: 'tool',
+              tool_call_id: callId,
+              content: JSON.stringify(http.execute('read_http_context', args)),
+            },
+          )
+        }
+      }
       let toolContent = ''
+      let responseReplay: AiResponseReplay | undefined
       let responseMessages = request.messages
       const publishProtocol = (messages: AiStart['messages']) => {
         const start = messages.findLastIndex(
@@ -237,7 +308,7 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
         }
       }
       const calls = await streamAiChat(
-        connection,
+        tracedConnection,
         request.messages,
         AbortSignal.any([session.controller.signal, timeout]),
         (text) => {
@@ -250,13 +321,24 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
         1,
         undefined,
         historyOmitted,
-        (messages, answer) => {
+        (messages, answer, replay) => {
+          responseReplay = replay
           responseMessages = messages
           toolContent = answer
         },
-        request.vaultAccess
+        request.vaultAccess || http
           ? {
-              tools: vaultTools,
+              requiredTool: requireHttpAssertions
+                ? http?.requiredTool
+                : undefined,
+              tools: [
+                ...(request.vaultAccess ? vaultTools : []),
+                ...(http?.tools.filter(
+                  tool =>
+                    requireHttpAssertions
+                    || tool.function.name !== 'propose_http_assertions',
+                ) ?? []),
+              ],
               remaining: initialSearchPlanned ? 5 : 6,
               onToolRound: () => {
                 toolContent = ''
@@ -266,7 +348,21 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
               execute: async (name, args) => {
                 assertVault()
                 let result: unknown
-                if (name === 'search_vault') {
+                if (
+                  http
+                  && ['read_http_context', 'propose_http_assertions'].includes(
+                    name,
+                  )
+                ) {
+                  result
+                    = name === 'propose_http_assertions' && !requireHttpAssertions
+                      ? { error: 'ACTION_NOT_REQUESTED' }
+                      : http.execute(name, args)
+                }
+                else if (!request.vaultAccess) {
+                  result = { error: 'UNKNOWN_TOOL' }
+                }
+                else if (name === 'search_vault') {
                   const parsed = vaultSearchSchema.safeParse(
                     (() => {
                       try {
@@ -290,7 +386,7 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
                       initialSearchPlanned = true
                       try {
                         queries = await planVaultSearch(
-                          connection,
+                          tracedConnection,
                           searchConversation,
                           search.query,
                           AbortSignal.any([session.controller.signal, timeout]),
@@ -348,6 +444,7 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
               role: 'assistant' as const,
               content: toolContent,
               tool_calls: calls,
+              ...(responseReplay ? { openaiResponse: responseReplay } : {}),
             },
             ...calls.map(call => ({
               role: 'tool' as const,
@@ -362,7 +459,7 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
           ]
           publishProtocol(continuation)
           await streamAiChat(
-            connection,
+            tracedConnection,
             continuation,
             AbortSignal.any([session.controller.signal, timeout]),
             (text) => {
@@ -376,10 +473,14 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
               message => message.role === 'user',
             ),
             historyOmitted,
-            (messages, answer) =>
+            (messages, answer, replay) =>
               publishProtocol([
                 ...messages,
-                { role: 'assistant', content: answer },
+                {
+                  role: 'assistant',
+                  content: answer,
+                  ...(replay ? { openaiResponse: replay } : {}),
+                },
               ]),
           )
         }
@@ -396,18 +497,31 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
       if (!calls.length && toolContent) {
         publishProtocol([
           ...responseMessages,
-          { role: 'assistant', content: toolContent },
+          {
+            role: 'assistant',
+            content: toolContent,
+            ...(responseReplay ? { openaiResponse: responseReplay } : {}),
+          },
         ])
       }
+      trace.event('turn.complete')
       if (active === session)
         send({ requestId: request.requestId, type: 'done' })
     }
     catch (error) {
+      trace.event('turn.error', {
+        code: timeout.aborted ? 'timeout' : aiErrorCode(error),
+        cancelled: session.controller.signal.aborted,
+      })
       if (active === session) {
         send({
           requestId: request.requestId,
           type: 'error',
           error: timeout.aborted ? 'timeout' : aiErrorCode(error),
+          diagnostic:
+            !timeout.aborted && error instanceof AiError
+              ? error.diagnostic
+              : undefined,
         })
       }
     }

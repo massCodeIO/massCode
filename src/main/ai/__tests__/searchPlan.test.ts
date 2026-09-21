@@ -110,3 +110,48 @@ it('bounds an overlong valid query plan before executing retrieval', async () =>
     queries: ['one', 'two', 'three', 'four'],
   })
 })
+
+it.each([
+  [401, 'authentication'],
+  [403, 'authentication'],
+  [404, 'modelUnavailable'],
+  [429, 'rateLimit'],
+  [400, 'upstream'],
+  [500, 'upstream'],
+])(
+  'preserves provider failure classification for planning (HTTP %s)',
+  async (status, code) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('private provider details', { status })),
+    )
+    await expect(
+      planVaultSearch(connection, [], 'orders', new AbortController().signal),
+    ).rejects.toMatchObject({ code, message: code })
+  },
+)
+
+it('redacts credentials in bounded provider diagnostics', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: {
+              code: 'unsupported_parameter',
+              message: 'Unsupported value. sk-secret123 Bearer token123',
+            },
+          }),
+          { status: 400 },
+        ),
+    ),
+  )
+  await expect(
+    planVaultSearch(connection, [], 'orders', new AbortController().signal),
+  ).rejects.toMatchObject({
+    code: 'upstream',
+    diagnostic:
+      'HTTP 400 · unsupported_parameter · Unsupported value. [redacted] Bearer [redacted]',
+  })
+})

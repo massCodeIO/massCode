@@ -522,3 +522,47 @@ it('retains authoritative search cards when intermediate assistant text is reset
     result,
   ])
 })
+
+describe('hTTP proposals in chat', () => {
+  it('sends the attached live snapshot and gates apply until completion', async () => {
+    const { ai, emit, request, setSnapshot } = await setup()
+    setSnapshot(undefined)
+    const snapshot = {
+      baseline: 'draft',
+      context: {
+        contextId: 'a52a8b2b-09be-42c2-9355-05b89bb86817',
+        requestId: 7,
+        name: 'HTTP test',
+        request: '{}',
+        response: null,
+        assertions: [],
+      },
+    }
+    const writer = vi.fn(() => true)
+    ai.registerHttp(() => snapshot, writer)
+    ai.setVaultContext({ type: 'http_request', id: 7, name: 'HTTP test' })
+    ai.setOpen(true)
+    await ai.send('Add checks')
+    expect(request().httpContext).toEqual(snapshot.context)
+    const requestId = request().requestId
+    const proposal = {
+      context_id: snapshot.context.contextId,
+      summary: 'Status',
+      assertions: [
+        {
+          name: 'Status',
+          source: 'status' as const,
+          operator: 'eq' as const,
+          expected: 200,
+        },
+      ],
+    }
+    emit({ requestId, type: 'httpProposal', proposal })
+    const message = ai.conversation.value!.messages.at(-1)!
+    expect(ai.canApplyHttp(message)).toBe(false)
+    emit({ requestId, type: 'done' })
+    expect(ai.applyHttp(message)).toBe(true)
+    expect(message.applied).toBe(true)
+    expect(ai.applyHttp(message)).toBe(false)
+  })
+})

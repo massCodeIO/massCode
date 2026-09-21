@@ -209,7 +209,10 @@ onMounted(() => {
           <div
             v-if="
               message.role === 'assistant'
-                && (message.content || message.edit || canRetry(message))
+                && (message.content
+                  || message.edit
+                  || message.httpProposal
+                  || canRetry(message))
             "
             class="flex flex-wrap items-center gap-2"
           >
@@ -220,6 +223,10 @@ onMounted(() => {
             >
               <Copy class="size-3" />
             </UiActionButton>
+            <AiHttpReview
+              v-if="message.httpProposal"
+              :message="message"
+            />
             <AiEditReview
               v-if="message.edit"
               :message="message"
@@ -269,6 +276,12 @@ onMounted(() => {
           role="alert"
         >
           {{ i18n.t(`ai.errors.${conversation.error}`) }}
+          <span
+            v-if="conversation.diagnostic"
+            class="block font-mono"
+          >{{
+            conversation.diagnostic
+          }}</span>
         </UiText>
       </div>
     </div>

@@ -6,6 +6,7 @@ import {
   useHttpSpaceInit,
 } from '@/composables'
 import { useAi } from '@/composables/ai/useAi'
+import { useHttpAi } from '@/composables/ai/useHttpAi'
 import { useHttpPanels } from '@/composables/spaces/http/useHttpPanels'
 import { useHttpRunner } from '@/composables/spaces/http/useHttpRunner'
 import { useHttpUi } from '@/composables/spaces/http/useHttpUi'
@@ -13,6 +14,8 @@ import { useHttpWebSocket } from '@/composables/spaces/http/useHttpWebSocket'
 import { useResizeHandle } from '@/composables/useResizeHandle'
 import { i18n, store } from '@/electron'
 import { useElementSize } from '@vueuse/core'
+
+useHttpAi()
 
 const { environmentsOpen } = useHttpUi()
 const { open: aiOpen, setOpen: setAiOpen, setVaultContext } = useAi()

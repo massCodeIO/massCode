@@ -21,7 +21,7 @@ export function redactTraceContent(
       return Object.fromEntries(
         Object.entries(item).map(([key, child]) => [
           key,
-          /encrypted_content|reasoning|authorization|cookie|api.?key|password|secret|credential|access.?token|refresh.?token/i.test(
+          /encrypted_content|reasoning|thought.?signature|signature|authorization|cookie|api.?key|password|secret|credential|access.?token|refresh.?token/i.test(
             key,
           )
             ? '[REDACTED]'

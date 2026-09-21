@@ -94,3 +94,16 @@ it('redacts credentials in raw HTTP header lines', () => {
     expect(result).not.toContain(secret)
   expect(result).toContain('Accept: application/json')
 })
+
+it('redacts provider continuation signatures without modifying replay data', () => {
+  const input = {
+    providerOptions: {
+      google: { thoughtSignature: 'opaque-google' },
+      anthropic: { signature: 'opaque-anthropic' },
+    },
+  }
+  const result = JSON.stringify(redactTraceContent(input))
+  expect(result).not.toContain('opaque-google')
+  expect(result).not.toContain('opaque-anthropic')
+  expect(input.providerOptions.google.thoughtSignature).toBe('opaque-google')
+})

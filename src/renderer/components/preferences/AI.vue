@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import { useAi } from '@/composables/ai/useAi'
 import { i18n, ipc } from '@/electron'
-import { AI_DEFAULT_URLS } from '~/shared/ai'
+import { AI_DEFAULT_URLS, AI_PROVIDERS, isLocalAiProvider } from '~/shared/ai'
 
 const { settings, refreshSettings } = useAi()
 const provider = ref<AiProvider>('openai')
@@ -37,7 +37,7 @@ const keyPlaceholder = computed(() => {
   if (hasStoredKey.value)
     return i18n.t('ai.keyUnreadable')
   return i18n.t(
-    provider.value === 'openai' ? 'ai.keyRequired' : 'ai.keyPlaceholder',
+    !isLocalAiProvider(provider.value) ? 'ai.keyRequired' : 'ai.keyPlaceholder',
   )
 })
 const keyDescription = computed(() => {
@@ -143,7 +143,7 @@ onBeforeUnmount(() => {
           </Select.SelectTrigger>
           <Select.SelectContent>
             <Select.SelectItem
-              v-for="value in ['openai', 'ollama', 'lmstudio']"
+              v-for="value in AI_PROVIDERS"
               :key="value"
               :value="value"
             >
@@ -155,11 +155,15 @@ onBeforeUnmount(() => {
       <UiMenuFormItem :label="i18n.t('ai.baseURL')">
         <UiInput
           v-model="baseURL"
-          :disabled="busy || !loaded || provider === 'openai'"
+          :disabled="busy || !loaded || !isLocalAiProvider(provider)"
           :aria-label="i18n.t('ai.baseURL')"
         />
         <template #description>
-          {{ i18n.t(provider === "openai" ? "ai.cloudHint" : "ai.localHint") }}
+          {{
+            i18n.t(
+              !isLocalAiProvider(provider) ? "ai.cloudHint" : "ai.localHint",
+            )
+          }}
         </template>
       </UiMenuFormItem>
       <UiMenuFormItem :label="i18n.t('ai.apiKey')">

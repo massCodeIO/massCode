@@ -4,7 +4,7 @@ import type {
   AiProvider,
   AiToolCall,
 } from '../../shared/ai'
-import type { AiResponseReplay } from '../../shared/aiResponses'
+import type { AiReplay } from './replay'
 import type { AiTrace } from './trace'
 import { Buffer } from 'node:buffer'
 import { z } from 'zod'
@@ -13,7 +13,9 @@ import { resolveAiEdits } from '../../shared/aiEdits'
 import { budgetAiHistory } from '../../shared/aiHistory'
 import { AiError } from './errors'
 import { AI_INSTRUCTIONS } from './instructions'
+import { replayFields } from './replay'
 import { readResponsesStream, responsesInput } from './responses'
+import { generateSdkResponse, isSdkProvider } from './sdk'
 import { editTool, validateToolCalls } from './tools'
 
 export interface AiConnection {
@@ -23,8 +25,21 @@ export interface AiConnection {
   provider?: AiProvider
   trace?: AiTrace
 }
+const geminiModelsSchema = z.object({
+  models: z
+    .array(
+      z.object({
+        name: z.string(),
+        supportedGenerationMethods: z.array(z.string()).optional(),
+      }),
+    )
+    .max(10000),
+  nextPageToken: z.string().optional(),
+})
 const modelsSchema = z.object({
   data: z.array(z.object({ id: z.string().min(1).max(256) })).max(10000),
+  has_more: z.boolean().optional(),
+  last_id: z.string().optional(),
 })
 const chunkSchema = z.object({
   choices: z.array(
@@ -57,6 +72,14 @@ const chunkSchema = z.object({
 })
 
 function headers(connection: AiConnection): Record<string, string> {
+  if (connection.provider === 'anthropic') {
+    return {
+      'x-api-key': connection.apiKey ?? '',
+      'anthropic-version': '2023-06-01',
+    }
+  }
+  if (connection.provider === 'gemini')
+    return { 'x-goog-api-key': connection.apiKey ?? '' }
   return {
     'Content-Type': 'application/json',
     ...(connection.apiKey
@@ -176,8 +199,19 @@ async function rejectsTools(response: Response) {
 export async function listAiModels(
   connection: AiConnection,
   signal: AbortSignal,
+  cursor?: string,
+  page = 0,
 ): Promise<string[]> {
-  const response = await fetch(`${connection.baseURL}/models`, {
+  if (page >= 20)
+    throw new AiError('outputLimit')
+  const url = new URL(`${connection.baseURL}/models`)
+  if (cursor) {
+    url.searchParams.set(
+      connection.provider === 'gemini' ? 'pageToken' : 'after_id',
+      cursor,
+    )
+  }
+  const response = await fetch(url.toString(), {
     headers: headers(connection),
     redirect: 'error',
     signal,
@@ -200,13 +234,35 @@ export async function listAiModels(
       body += decoder.decode(value, { stream: true })
     }
     body += decoder.decode()
-    const parsed = modelsSchema.safeParse(JSON.parse(body))
-    if (!parsed.success)
-      throw new AiError('invalidResponse')
-    return [...new Set(parsed.data.data.map(model => model.id))].sort()
+    let names: string[]
+    let next: string | undefined
+    if (connection.provider === 'gemini') {
+      const parsed = geminiModelsSchema.parse(JSON.parse(body))
+      names = parsed.models
+        .filter(model =>
+          model.supportedGenerationMethods?.includes('generateContent'),
+        )
+        .map(model => model.name.replace(/^models\//, ''))
+      next = parsed.nextPageToken
+    }
+    else {
+      const parsed = modelsSchema.parse(JSON.parse(body))
+      names = parsed.data.map(model => model.id)
+      if (connection.provider === 'anthropic' && parsed.has_more) {
+        if (!parsed.last_id)
+          throw new AiError('invalidResponse')
+        next = parsed.last_id
+      }
+    }
+    if (next) {
+      if (next === cursor)
+        throw new AiError('invalidResponse')
+      names.push(...(await listAiModels(connection, signal, next, page + 1)))
+    }
+    return [...new Set(names)].sort()
   }
   catch (error) {
-    if (error instanceof SyntaxError)
+    if (error instanceof SyntaxError || error instanceof z.ZodError)
       throw new AiError('invalidResponse')
     throw error
   }
@@ -355,7 +411,7 @@ export async function streamAiChat(
   onResponse?: (
     messages: AiMessage[],
     answer: string,
-    replay?: AiResponseReplay,
+    replay?: AiReplay,
   ) => void,
   vault?: {
     tools: {
@@ -402,7 +458,7 @@ export async function streamAiChat(
     role: 'assistant',
     content: answer,
     ...(calls.length ? { tool_calls: calls } : {}),
-    ...(replay ? { openaiResponse: replay } : {}),
+    ...replayFields(replay),
   }
   if (!calls.length) {
     if (requiredTool)
@@ -548,13 +604,15 @@ export async function generateAiResponse(
     operation: string
   },
 ) {
+  if (isSdkProvider(connection.provider))
+    return generateSdkResponse(connection, options)
   const openai = connection.provider === 'openai'
   const endpoint = openai ? '/responses' : '/chat/completions'
   const tools = options.tools ?? []
   const input = openai
     ? responsesInput(options.messages, connection.model)
     : options.messages.map(
-        ({ openaiResponse: _replay, ...message }) => message,
+        ({ openaiResponse: _replay, sdkResponse: _sdk, ...message }) => message,
       )
   const body = openai
     ? {

@@ -3,7 +3,11 @@ import { Buffer } from 'node:buffer'
 import process from 'node:process'
 import { safeStorage } from 'electron'
 import Store from 'electron-store'
-import { AI_DEFAULT_URLS } from '../../shared/ai'
+import {
+  AI_DEFAULT_URLS,
+  AI_PROVIDERS,
+  isLocalAiProvider,
+} from '../../shared/ai'
 import { isSafeStorageUsable } from '../store/module/httpSecretsAvailability'
 import { AiError } from './errors'
 
@@ -21,11 +25,12 @@ const settings = new Store<SavedSettings>({
   cwd: 'v2',
   defaults: {
     provider: 'openai',
-    profiles: {
-      openai: { baseURL: AI_DEFAULT_URLS.openai, model: '' },
-      ollama: { baseURL: AI_DEFAULT_URLS.ollama, model: '' },
-      lmstudio: { baseURL: AI_DEFAULT_URLS.lmstudio, model: '' },
-    },
+    profiles: Object.fromEntries(
+      AI_PROVIDERS.map(provider => [
+        provider,
+        { baseURL: AI_DEFAULT_URLS[provider], model: '' },
+      ]),
+    ) as SavedSettings['profiles'],
   },
 })
 
@@ -42,7 +47,7 @@ export function canonicalAiURL(provider: AiProvider, value: string): string {
       throw new AiError('invalidRequest')
     }
     const canonical = url.toString().replace(/\/+$/, '')
-    if (provider === 'openai' && canonical !== AI_DEFAULT_URLS.openai)
+    if (!isLocalAiProvider(provider) && canonical !== AI_DEFAULT_URLS[provider])
       throw new AiError('invalidRequest')
     return canonical
   }
@@ -83,8 +88,11 @@ function decrypt(profile: SavedProfile): string | undefined {
 export function getAiSettings(): AiSettings {
   const profiles = settings.get('profiles')
   const publicProfiles = {} as AiSettings['profiles']
-  for (const provider of ['openai', 'ollama', 'lmstudio'] as const) {
-    const profile = profiles[provider]
+  for (const provider of AI_PROVIDERS) {
+    const profile = profiles[provider] ?? {
+      baseURL: AI_DEFAULT_URLS[provider],
+      model: '',
+    }
     publicProfiles[provider] = {
       baseURL: profile.baseURL,
       model: profile.model,
@@ -102,7 +110,10 @@ export function getAiSettings(): AiSettings {
 export function configureAi(input: AiConfigure): AiSettings {
   const baseURL = canonicalAiURL(input.provider, input.baseURL)
   const profiles = settings.get('profiles')
-  const previous = profiles[input.provider]
+  const previous = profiles[input.provider] ?? {
+    baseURL: AI_DEFAULT_URLS[input.provider],
+    model: '',
+  }
   const profile: SavedProfile = { baseURL, model: input.model }
   if (input.apiKey === undefined && previous.baseURL === baseURL)
     profile.encryptedKey = previous.encryptedKey
@@ -120,10 +131,13 @@ export function configureAi(input: AiConfigure): AiSettings {
 
 export function getAiConnection() {
   const provider = settings.get('provider')
-  const profile = settings.get('profiles')[provider]
+  const profile = settings.get('profiles')[provider] ?? {
+    baseURL: AI_DEFAULT_URLS[provider],
+    model: '',
+  }
   const baseURL = canonicalAiURL(provider, profile.baseURL)
   const apiKey = decrypt(profile)
-  if ((profile.encryptedKey || provider === 'openai') && !apiKey)
+  if ((profile.encryptedKey || !isLocalAiProvider(provider)) && !apiKey)
     throw new AiError('keyUnavailable')
   return { provider, baseURL, model: profile.model, apiKey }
 }

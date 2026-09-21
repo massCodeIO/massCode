@@ -172,3 +172,43 @@ describe('aI settings secrets', () => {
       expect(() => canonicalAiURL('ollama', url)).toThrow('invalidRequest')
   })
 })
+
+it('upgrades legacy profiles lazily without losing keys or selecting a new provider', async () => {
+  const { getAiSettings, configureAi, getAiConnection } = await import(
+    '../settings'
+  )
+  mocks.saved.profiles = {
+    openai: {
+      baseURL: 'https://api.openai.com/v1',
+      model: 'old-model',
+      encryptedKey: Buffer.from('encrypted:old-secret').toString('base64'),
+    },
+  }
+  const before = getAiSettings()
+  expect(before.provider).toBe('openai')
+  expect(before.profiles.anthropic.model).toBe('')
+  expect(getAiConnection().apiKey).toBe('old-secret')
+  configureAi({
+    provider: 'anthropic',
+    baseURL: 'https://api.anthropic.com/v1',
+    model: 'claude',
+    apiKey: 'new-secret',
+  })
+  expect(getAiConnection().apiKey).toBe('new-secret')
+  expect(mocks.saved.profiles.openai.model).toBe('old-model')
+  expect(JSON.stringify(getAiSettings())).not.toContain('secret')
+})
+it('pins cloud credentials to official provider endpoints', async () => {
+  const { canonicalAiURL } = await import('../settings')
+  for (const provider of [
+    'anthropic',
+    'gemini',
+    'deepseek',
+    'mistral',
+    'xai',
+  ] as const) {
+    expect(() =>
+      canonicalAiURL(provider, 'https://unrelated.invalid/v1'),
+    ).toThrow()
+  }
+})

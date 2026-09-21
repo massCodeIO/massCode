@@ -1,6 +1,6 @@
 import type { IpcMainInvokeEvent, WebContents } from 'electron'
 import type { AiEvent, AiResult, AiStart } from '../../shared/ai'
-import type { AiResponseReplay } from '../../shared/aiResponses'
+import type { AiReplay } from './replay'
 import { randomUUID } from 'node:crypto'
 import {
   AI_LIMITS,
@@ -13,6 +13,7 @@ import { listAiModels, streamAiChat } from './client'
 import { AiError, aiErrorCode } from './errors'
 import { httpContextDocument } from './httpContextDocument'
 import { createHttpTools } from './httpTools'
+import { replayFields } from './replay'
 import { planVaultSearch, planVaultTurn } from './searchPlan'
 import { configureAi, getAiConnection, getAiSettings } from './settings'
 import { createAiTrace } from './trace'
@@ -298,7 +299,7 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
         }
       }
       let toolContent = ''
-      let responseReplay: AiResponseReplay | undefined
+      let responseReplay: AiReplay | undefined
       let responseMessages = request.messages
       const publishProtocol = (messages: AiStart['messages']) => {
         const start = messages.findLastIndex(
@@ -450,7 +451,7 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
               role: 'assistant' as const,
               content: toolContent,
               tool_calls: calls,
-              ...(responseReplay ? { openaiResponse: responseReplay } : {}),
+              ...replayFields(responseReplay),
             },
             ...calls.map(call => ({
               role: 'tool' as const,
@@ -485,7 +486,7 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
                 {
                   role: 'assistant',
                   content: answer,
-                  ...(replay ? { openaiResponse: replay } : {}),
+                  ...replayFields(replay),
                 },
               ]),
           )
@@ -509,7 +510,7 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
           {
             role: 'assistant',
             content: toolContent,
-            ...(responseReplay ? { openaiResponse: responseReplay } : {}),
+            ...replayFields(responseReplay),
           },
         ])
       }

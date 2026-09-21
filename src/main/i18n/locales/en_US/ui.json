@@ -1400,7 +1400,12 @@
     "providers": {
       "openai": "OpenAI",
       "ollama": "Ollama",
-      "lmstudio": "LM Studio"
+      "lmstudio": "LM Studio",
+      "anthropic": "Anthropic",
+      "gemini": "Google Gemini",
+      "deepseek": "DeepSeek",
+      "mistral": "Mistral",
+      "xai": "xAI"
     },
     "baseURL": "Server URL",
     "apiKey": "API key or token",
@@ -1408,8 +1413,8 @@
     "modelPlaceholder": "Enter a model ID",
     "chooseModel": "Choose an available model",
     "modelHint": "Check the connection to load model IDs, or enter one manually. A successful check does not guarantee that a model supports chat.",
-    "settingsHint": "Connect your own account or a running model server. AI is available in the Code space.",
-    "cloudHint": "Requests go directly to OpenAI and use your API account billing.",
+    "settingsHint": "Connect your own account or a running model server. AI is available in Code, Notes and HTTP.",
+    "cloudHint": "Requests go directly to the selected provider and use your API account billing.",
     "localHint": "Start the server in Ollama or LM Studio. Code stays on your device only when using a local model on this computer; remote servers and cloud models send it elsewhere. No automatic fallback to the cloud.",
     "keyHint": "Stored with system encryption outside your vault. Leave blank to keep the saved key for this server. Changing the server clears its saved key.",
     "keySaved": "Key saved — enter to replace",
@@ -1472,7 +1477,7 @@
       "contextUnavailable": "Could not read attached context. The record may have been deleted or is not downloaded yet.",
       "proposalUnavailable": "Could not prepare reviewable HTTP checks. Nothing was changed. Retry or choose a model with tool calling support."
     },
-    "keyRequired": "Enter your OpenAI API key",
+    "keyRequired": "Enter your provider API key",
     "keyUnreadable": "Saved key unavailable — replace or remove it",
     "edit": {
       "propose": "Propose edit",

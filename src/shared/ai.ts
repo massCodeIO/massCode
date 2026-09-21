@@ -2,13 +2,32 @@ import type { AiHttpProposal } from './aiHttp'
 import { z } from 'zod'
 import { aiHttpContextSchema } from './aiHttp'
 import { aiResponseReplaySchema } from './aiResponses'
+import { aiSdkReplaySchema } from './aiSdkReplay'
 
-export const aiProviderSchema = z.enum(['openai', 'ollama', 'lmstudio'])
+export const aiProviderSchema = z.enum([
+  'openai',
+  'anthropic',
+  'gemini',
+  'deepseek',
+  'mistral',
+  'xai',
+  'ollama',
+  'lmstudio',
+])
 export type AiProvider = z.infer<typeof aiProviderSchema>
 export const AI_DEFAULT_URLS: Record<AiProvider, string> = {
   openai: 'https://api.openai.com/v1',
+  anthropic: 'https://api.anthropic.com/v1',
+  gemini: 'https://generativelanguage.googleapis.com/v1beta',
+  deepseek: 'https://api.deepseek.com/v1',
+  mistral: 'https://api.mistral.ai/v1',
+  xai: 'https://api.x.ai/v1',
   ollama: 'http://localhost:11434/v1',
   lmstudio: 'http://localhost:1234/v1',
+}
+export const AI_PROVIDERS = aiProviderSchema.options
+export function isLocalAiProvider(provider: AiProvider) {
+  return provider === 'ollama' || provider === 'lmstudio'
 }
 export const AI_LIMITS = {
   messages: 40,
@@ -74,9 +93,38 @@ export const aiMessageSchema = z
     tool_calls: z.array(aiProtocolCallSchema).min(1).max(8).optional(),
     tool_call_id: z.string().min(1).max(256).optional(),
     openaiResponse: aiResponseReplaySchema.optional(),
+    sdkResponse: aiSdkReplaySchema.optional(),
   })
   .strict()
   .refine((message) => {
+    if (message.sdkResponse) {
+      if (message.role !== 'assistant' || message.openaiResponse)
+        return false
+      const calls = message.sdkResponse.content.filter(
+        part => part.type === 'tool-call',
+      )
+      if (
+        JSON.stringify(
+          calls.map(call => [call.toolCallId, call.toolName, call.input]),
+        )
+        !== JSON.stringify(
+          (message.tool_calls ?? []).map((call) => {
+            try {
+              return [
+                call.id,
+                call.function.name,
+                JSON.parse(call.function.arguments),
+              ]
+            }
+            catch {
+              return null
+            }
+          }),
+        )
+      ) {
+        return false
+      }
+    }
     if (message.openaiResponse) {
       if (message.role !== 'assistant')
         return false

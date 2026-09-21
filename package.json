@@ -58,6 +58,11 @@
     "bench:report": "node scripts/benchmark/cli.cjs report"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.118",
+    "@ai-sdk/deepseek": "^2.0.64",
+    "@ai-sdk/google": "^3.0.124",
+    "@ai-sdk/mistral": "^3.0.64",
+    "@ai-sdk/xai": "^3.0.133",
     "@codemirror/autocomplete": "^6.20.1",
     "@codemirror/commands": "^6.10.3",
     "@codemirror/lang-json": "^6.0.2",
@@ -88,6 +93,7 @@
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
     "acorn": "8.15.0",
+    "ai": "^6.0.286",
     "better-sqlite3": "^12.4.1",
     "change-case": "^5.4.4",
     "chokidar": "^4.0.3",

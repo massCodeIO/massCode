@@ -10,6 +10,10 @@ import { AI_DEFAULT_URLS, AI_PROVIDERS, isLocalAiProvider } from '~/shared/ai'
 
 const { settings, refreshSettings } = useAi()
 const { sonner } = useSonner()
+const cloudProviders = AI_PROVIDERS.filter(
+  value => !isLocalAiProvider(value),
+)
+const localProviders = AI_PROVIDERS.filter(isLocalAiProvider)
 const provider = ref<AiProvider>('openai')
 const baseURL = ref(AI_DEFAULT_URLS.openai)
 const model = ref('')
@@ -150,13 +154,31 @@ onBeforeUnmount(() => {
             <Select.SelectValue />
           </Select.SelectTrigger>
           <Select.SelectContent>
-            <Select.SelectItem
-              v-for="value in AI_PROVIDERS"
-              :key="value"
-              :value="value"
-            >
-              {{ i18n.t(`ai.providers.${value}`) }}
-            </Select.SelectItem>
+            <Select.SelectGroup>
+              <Select.SelectLabel>
+                {{ i18n.t("ai.cloudProviders") }}
+              </Select.SelectLabel>
+              <Select.SelectItem
+                v-for="value in cloudProviders"
+                :key="value"
+                :value="value"
+              >
+                {{ i18n.t(`ai.providers.${value}`) }}
+              </Select.SelectItem>
+            </Select.SelectGroup>
+            <Select.SelectSeparator />
+            <Select.SelectGroup>
+              <Select.SelectLabel>
+                {{ i18n.t("ai.localProviders") }}
+              </Select.SelectLabel>
+              <Select.SelectItem
+                v-for="value in localProviders"
+                :key="value"
+                :value="value"
+              >
+                {{ i18n.t(`ai.providers.${value}`) }}
+              </Select.SelectItem>
+            </Select.SelectGroup>
           </Select.SelectContent>
         </Select.Select>
       </UiMenuFormItem>

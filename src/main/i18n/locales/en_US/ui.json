@@ -1397,6 +1397,8 @@
     "settings": "AI settings",
     "ask": "Ask AI",
     "provider": "Connection",
+    "cloudProviders": "Cloud",
+    "localProviders": "Local",
     "providers": {
       "openai": "OpenAI",
       "ollama": "Ollama",
@@ -1408,7 +1410,7 @@
       "xai": "xAI"
     },
     "baseURL": "Server URL",
-    "apiKey": "API key or token",
+    "apiKey": "API key",
     "model": "Model",
     "modelPlaceholder": "Enter a model ID",
     "userInstructions": "Custom instructions",
@@ -1468,7 +1470,7 @@
       "notConfigured": "Choose a model in AI settings.",
       "busy": "A request is already running. Stop it before starting another.",
       "connection": "Cannot reach the server. Check that it is running and the address is correct.",
-      "authentication": "Authentication failed. Check your API key or token.",
+      "authentication": "Authentication failed. Check your API key.",
       "rateLimit": "The provider limit was reached. Check your quota and try again later.",
       "modelUnavailable": "Model or endpoint not found. Check the server URL and model ID.",
       "upstream": "The provider rejected the request. Check model compatibility and server settings.",

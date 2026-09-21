@@ -18,6 +18,18 @@ export const aiHttpProposalSchema = z
     context_id: z.uuid(),
     summary: z.string().min(1).max(2000),
     assertions: httpRuntimeSchema.shape.assertions.min(1),
+    evidence: z
+      .array(
+        z
+          .object({
+            assertionIndex: z.number().int().min(0).max(99),
+            source: z.enum(['user', 'description']),
+            quote: z.string().trim().min(1).max(2000),
+          })
+          .strict(),
+      )
+      .max(100)
+      .optional(),
   })
   .strict()
 export type AiHttpProposal = z.infer<typeof aiHttpProposalSchema>

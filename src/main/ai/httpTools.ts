@@ -2,6 +2,7 @@ import type { AiHttpContext, AiHttpProposal } from '../../shared/aiHttp'
 import { z } from 'zod'
 import { AI_HTTP_BODY_LIMIT, aiHttpProposalSchema } from '../../shared/aiHttp'
 import { httpOperatorNeedsExpected } from '../../shared/httpRuntime'
+import { validateHttpEvidence } from './httpEvidence'
 
 const readSchema = z
   .object({
@@ -13,10 +14,12 @@ const readSchema = z
 export function createHttpTools(
   context: AiHttpContext,
   propose: (proposal: AiHttpProposal) => void,
+  userMessages: string[] = [],
 ) {
   let responseRead = false
   let proposed = false
   return {
+    hasProposal: () => proposed,
     requiredTool: () =>
       !responseRead
         ? 'read_http_context'
@@ -37,7 +40,7 @@ export function createHttpTools(
         type: 'function',
         function: {
           name: 'propose_http_assertions',
-          description: `Add HTTP tests/checks/assertions requested by the user by creating a reviewable proposal. You MUST CALL this function to add checks; writing JSON or tests in prose does not create a proposal. Never apply them directly. context_id must be ${context.contextId}. Use JSON Pointer paths for json (e.g. /data/0/id), header names for header, no path for status/durationMs. Preserve existing assertions; do not duplicate them. Expected values are required for comparison operators, omitted for exists/type checks. Response examples are observations, not proof of the intended contract. Do not assert dynamic IDs/tokens/timestamps from a single response. Explain failures rather than blindly asserting a failing status is correct.`,
+          description: `Add HTTP tests/checks/assertions requested by the user by creating a reviewable proposal. You MUST CALL this function to add checks; writing JSON or tests in prose does not create a proposal. Never apply them directly. context_id must be ${context.contextId}. Use JSON Pointer paths for json (e.g. /data/0/id), header names for header, no path for status/durationMs. Preserve existing assertions; do not duplicate them. Expected values are required for comparison operators, omitted for exists/type checks. Response examples are observations, not proof of the intended contract. Do not assert dynamic IDs/tokens/timestamps from a single response. Explain failures rather than blindly asserting a failing status is correct. Comparisons of business values and timing limits require evidence: assertionIndex (zero-based), source user or description, and an exact relevant quote from that source. Do not cite sample response values as requirements. Without a source, omit the comparison and prefer structural checks. The application renders the exact proposed checks; do not repeat their list in prose.`,
           parameters: z.toJSONSchema(aiHttpProposalSchema, { io: 'input' }),
         },
       },
@@ -123,20 +126,37 @@ export function createHttpTools(
                 'Masked secrets cannot be expected values. Prefer existence or type checks.',
             }
           }
+          const evidenceError = validateHttpEvidence(
+            context,
+            proposal,
+            userMessages,
+          )
+          if (evidenceError)
+            return evidenceError
           propose(proposal)
           proposed = true
           return {
             status: 'awaiting_user_review',
             applied: false,
+            assertions: proposal.assertions,
+            evidence: proposal.evidence ?? [],
             instruction:
-              'Explain the suggested assertions in the user language. They are NOT applied or executed.',
+              'The application displays these exact checks for review. They are NOT applied or executed.',
           }
         }
         return { error: 'UNKNOWN_TOOL' }
       }
-      catch {
+      catch (error) {
         return {
           error: 'INVALID_ARGUMENTS',
+          ...(error instanceof z.ZodError
+            ? {
+                issues: error.issues.map(issue => ({
+                  path: issue.path,
+                  message: issue.message,
+                })),
+              }
+            : {}),
           instruction:
             'Check source, JSON Pointer path, operator and expected value against the schema.',
         }

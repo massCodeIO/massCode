@@ -12,7 +12,7 @@ import type {
 } from '~/shared/ai'
 import type { AiHttpProposal } from '~/shared/aiHttp'
 import { ipc, store } from '@/electron'
-import { aiProposalSchema } from '~/shared/ai'
+import { AI_LIMITS, aiProposalSchema } from '~/shared/ai'
 import { budgetAiHistory } from '~/shared/aiHistory'
 import { aiHttpProposalSchema } from '~/shared/aiHttp'
 import { buildReplacement, matchesSnapshot } from './edit'
@@ -600,6 +600,10 @@ async function send(
     const result = (await ipc.invoke('system:ai:start', {
       requestId,
       vaultAccess: true,
+      userMessages: conversation.messages
+        .filter(message => message.role === 'user')
+        .slice(-AI_LIMITS.messages)
+        .map(message => message.content),
       httpContext: httpSnapshot?.context
         ? JSON.parse(JSON.stringify(httpSnapshot.context))
         : undefined,

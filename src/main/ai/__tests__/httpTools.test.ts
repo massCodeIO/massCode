@@ -80,7 +80,10 @@ describe('hTTP assistant tools', () => {
         ...proposal,
         assertions: [{ ...proposal.assertions[0], path: '$.id' }],
       }),
-    ).toMatchObject({ error: 'INVALID_ARGUMENTS' })
+    ).toMatchObject({
+      error: 'INVALID_ARGUMENTS',
+      issues: [expect.objectContaining({ path: ['assertions', 0, 'path'] })],
+    })
     expect(t.call('propose_http_assertions', proposal)).toMatchObject({
       error: 'DUPLICATE_ASSERTION',
     })
@@ -102,4 +105,26 @@ it('makes the end of a 100 KB response available on the first page and through t
     offset: response.length - 16000,
     nextOffset: null,
   })
+})
+
+it('keeps an unsupported proposal out of review and accepts a corrected structural proposal', () => {
+  const t = setup()
+  t.call('read_http_context', { part: 'response' })
+  expect(
+    t.call('propose_http_assertions', {
+      ...proposal,
+      assertions: [
+        { name: 'Fast', source: 'durationMs', operator: 'lt', expected: 1000 },
+      ],
+    }),
+  ).toMatchObject({ error: 'UNSUPPORTED_EXPECTATION', assertionIndexes: [0] })
+  expect(t.callback).not.toHaveBeenCalled()
+  expect(t.hasProposal()).toBe(false)
+  expect(t.requiredTool()).toBe('propose_http_assertions')
+  expect(t.call('propose_http_assertions', proposal)).toMatchObject({
+    status: 'awaiting_user_review',
+    assertions: proposal.assertions,
+  })
+  expect(t.hasProposal()).toBe(true)
+  expect(t.callback).toHaveBeenCalledTimes(1)
 })

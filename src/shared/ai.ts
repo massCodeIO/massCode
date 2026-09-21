@@ -131,6 +131,10 @@ export const aiStartSchema = z
   .object({
     requestId: z.uuid(),
     httpContext: aiHttpContextSchema.optional(),
+    userMessages: z
+      .array(z.string().max(AI_LIMITS.inputBytes))
+      .max(AI_LIMITS.messages)
+      .optional(),
     attachments: z.array(aiVaultRefSchema).max(8).optional(),
     vaultAccess: z.boolean().optional(),
     editContextId: z.uuid().optional(),

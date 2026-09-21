@@ -141,15 +141,19 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
       const planningRecords: { type: string, name: string, preview: string }[]
         = []
       const http = request.httpContext
-        ? createHttpTools(request.httpContext, (proposal) => {
-            if (active === session) {
-              send({
-                requestId: request.requestId,
-                type: 'httpProposal',
-                proposal,
-              })
-            }
-          })
+        ? createHttpTools(
+            request.httpContext,
+            (proposal) => {
+              if (active === session) {
+                send({
+                  requestId: request.requestId,
+                  type: 'httpProposal',
+                  proposal,
+                })
+              }
+            },
+            request.userMessages,
+          )
         : undefined
       if (request.httpContext) {
         const context = request.httpContext

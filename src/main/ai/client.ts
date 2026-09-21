@@ -12,7 +12,7 @@ import { AI_LIMITS, aiProtocolCallSchema } from '../../shared/ai'
 import { resolveAiEdits } from '../../shared/aiEdits'
 import { budgetAiHistory } from '../../shared/aiHistory'
 import { AiError } from './errors'
-import { AI_INSTRUCTIONS } from './instructions'
+import { buildAiInstructions } from './instructions'
 import { replayFields } from './replay'
 import { readResponsesStream, responsesInput } from './responses'
 import { generateSdkResponse, isSdkProvider } from './sdk'
@@ -438,7 +438,13 @@ export async function streamAiChat(
   if (requiredTool && !vault?.remaining)
     throw new AiError('proposalUnavailable')
   const result = await generateAiResponse(connection, {
-    instructions: AI_INSTRUCTIONS,
+    instructions: buildAiInstructions(
+      [
+        ...(editContextId ? ['propose_edit'] : []),
+        ...(vault?.tools.map(tool => tool.function.name) ?? []),
+      ],
+      vault?.remaining,
+    ),
     messages,
     tools: [
       ...(editContextId && !requiredTool ? [editTool(editContextId)] : []),

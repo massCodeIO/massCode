@@ -1,20 +1,21 @@
 import type { IpcMainInvokeEvent, WebContents } from 'electron'
 import type { AiEvent, AiResult, AiStart } from '../../shared/ai'
 import type { AiReplay } from './replay'
-import { randomUUID } from 'node:crypto'
+import { z } from 'zod'
 import {
   AI_LIMITS,
   aiCancelSchema,
   aiConfigureSchema,
   aiStartSchema,
 } from '../../shared/ai'
+import { workspaceCreationHistory } from '../../shared/aiWorkspace'
 import { isTrustedApiRequest } from '../api/requestIpc'
 import { listAiModels, streamAiChat } from './client'
 import { AiError, aiErrorCode } from './errors'
 import { httpContextDocument } from './httpContextDocument'
 import { createHttpTools } from './httpTools'
 import { replayFields } from './replay'
-import { planVaultSearch, planVaultTurn } from './searchPlan'
+import { isInvalidPlan, planVaultSearch, planVaultTurn } from './searchPlan'
 import {
   configureAi,
   getAiConnection,
@@ -31,8 +32,19 @@ import {
   vaultSearchSchema,
   vaultTools,
 } from './vault'
+import { createWorkspaceManager } from './workspace'
+import { creationPlan } from './workspaceCreation'
+import { workspaceReviewSchema } from './workspaceReview'
+import {
+  workspaceInventory,
+  workspaceRead,
+  workspaceStructure,
+  workspaceToolError,
+  workspaceTools,
+} from './workspaceTools'
 
 export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
+  const workspace = createWorkspaceManager()
   let active: { requestId: string, controller: AbortController } | undefined
   const modelControllers = new Set<AbortController>()
   function send(event: AiEvent) {
@@ -49,6 +61,7 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
   }
   function cleanup() {
     cancelActive()
+    workspace.clear()
     for (const controller of modelControllers) controller.abort()
     modelControllers.clear()
   }
@@ -74,11 +87,41 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
           return { ok: true, data: await action(payload) }
         }
         catch (error) {
+          if (channel.startsWith('system:ai:workspace-')) {
+            console.warn(
+              '[masscode:ai:workspace]',
+              channel,
+              error instanceof Error && /^[A-Z_]+$/.test(error.message)
+                ? error.message
+                : aiErrorCode(error),
+            )
+          }
           return { ok: false, error: aiErrorCode(error) }
         }
       },
     )
   }
+  handle('system:ai:workspace-undo', (payload) => {
+    const input = z
+      .object({ id: z.string().uuid(), index: z.number().int().min(0).max(29) })
+      .strict()
+      .parse(payload)
+    const result = workspace.undo(input.id, input.index)
+    owner.send('system:storage-synced')
+    return result
+  })
+  handle('system:ai:workspace-apply', (payload) => {
+    const input = z
+      .object({
+        id: z.string().uuid(),
+        indexes: z.array(z.number().int().min(0).max(29)),
+      })
+      .strict()
+      .parse(payload)
+    const result = workspace.apply(input.id, input.indexes)
+    owner.send('system:storage-synced')
+    return result
+  })
   handle('system:ai:settings', getAiSettings)
   handle('system:ai:context-search', (payload) => {
     const parsed = vaultSearchSchema.safeParse(payload)
@@ -146,8 +189,12 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
       const searchConversation = request.messages.map(message => ({
         ...message,
       }))
+      let workspaceProposed = false
+      let createdOperationCount = 0
+      const creations = new Map<string, ReturnType<typeof workspace.create>>()
       let initialSearchPlanned = false
       let requireHttpAssertions = false
+      let planningUnavailable = false
       const planningRecords: { type: string, name: string, preview: string }[]
         = []
       const http = request.httpContext
@@ -218,93 +265,36 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
             : message,
         )
       }
-      if (request.vaultAccess || http) {
+      if (http) {
         const signal = AbortSignal.any([session.controller.signal, timeout])
-        const plan = await planVaultTurn(
-          tracedConnection,
-          searchConversation,
-          signal,
-          {
-            records: planningRecords,
-            editorText: request.editContextText?.slice(0, 2000),
-            httpAvailable: Boolean(http),
-          },
-        )
+        let plan: Awaited<ReturnType<typeof planVaultTurn>> | undefined
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            plan = await planVaultTurn(
+              tracedConnection,
+              searchConversation,
+              signal,
+              {
+                records: planningRecords,
+                editorText: request.editContextText?.slice(0, 2000),
+                httpAvailable: Boolean(http),
+              },
+              attempt > 0,
+            )
+            break
+          }
+          catch (error) {
+            assertVault()
+            signal.throwIfAborted()
+            if (!isInvalidPlan(error))
+              throw error
+          }
+        }
+        planningUnavailable = Boolean(http && !plan)
         assertVault()
         requireHttpAssertions = Boolean(
-          http && plan.httpAction === 'assertions',
+          http && plan?.httpAction === 'assertions',
         )
-        if (request.vaultAccess && plan.scope === 'vault') {
-          const found = {
-            ...(await retrieveVaultItems(plan.type, plan.queries)),
-            expanded: true,
-          }
-          assertVault()
-          initialSearchPlanned = true
-          const callId = `vault_${randomUUID()}`
-          request.messages = [
-            ...request.messages,
-            {
-              role: 'assistant',
-              content: '',
-              tool_calls: [
-                {
-                  id: callId,
-                  type: 'function',
-                  function: {
-                    name: 'search_vault',
-                    arguments: JSON.stringify({
-                      query: plan.queries[0],
-                      type: plan.type,
-                    }),
-                  },
-                },
-              ],
-            },
-            {
-              role: 'tool',
-              tool_call_id: callId,
-              content: JSON.stringify(found),
-            },
-          ]
-          if (active === session) {
-            send({
-              requestId: request.requestId,
-              type: 'searchResults',
-              result: found,
-            })
-            send({
-              requestId: request.requestId,
-              type: 'activity',
-              name: 'search_vault',
-              detail: JSON.stringify(found),
-            })
-          }
-        }
-      }
-      if (http) {
-        for (const part of ['request', 'response']) {
-          const callId = `http_${randomUUID()}`
-          const args = JSON.stringify({ part })
-          request.messages.push(
-            {
-              role: 'assistant',
-              content: '',
-              tool_calls: [
-                {
-                  id: callId,
-                  type: 'function',
-                  function: { name: 'read_http_context', arguments: args },
-                },
-              ],
-            },
-            {
-              role: 'tool',
-              tool_call_id: callId,
-              content: JSON.stringify(http.execute('read_http_context', args)),
-            },
-          )
-        }
       }
       let toolContent = ''
       let responseReplay: AiReplay | undefined
@@ -342,19 +332,29 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
         },
         request.vaultAccess || http
           ? {
+              instructions: planningUnavailable
+                ? 'Application capability restriction for this turn: HTTP assertion preparation is unavailable on this attempt. You may inspect and explain HTTP data, and other workspace tools remain available for independent tasks. If the task requests HTTP assertions, state clearly that they could not be prepared on this attempt; do not claim completion or tell the user to fix server settings. Do not expose internal planner details.'
+                : undefined,
               requiredTool: requireHttpAssertions
                 ? http?.requiredTool
                 : undefined,
-              isComplete: http?.hasProposal,
+              isComplete: () =>
+                workspaceProposed || Boolean(http?.hasProposal()),
               tools: [
-                ...(request.vaultAccess ? vaultTools : []),
+                ...(request.vaultAccess
+                  ? [...vaultTools, ...workspaceTools]
+                  : []),
                 ...(http?.tools.filter(
                   tool =>
                     requireHttpAssertions
                     || tool.function.name !== 'propose_http_assertions',
                 ) ?? []),
               ],
-              remaining: initialSearchPlanned ? 5 : 6,
+              remaining: 6,
+              onToolExchange: (messages) => {
+                responseMessages = messages
+                publishProtocol(messages)
+              },
               onToolRound: () => {
                 toolContent = ''
                 if (active === session)
@@ -376,6 +376,100 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
                 }
                 else if (!request.vaultAccess) {
                   result = { error: 'UNKNOWN_TOOL' }
+                }
+                else if (
+                  name === 'read_workspace_item'
+                  || name === 'list_workspace_items'
+                  || name === 'list_workspace_structure'
+                  || name === 'propose_workspace_changes'
+                  || name === 'create_workspace_items'
+                ) {
+                  try {
+                    const input = JSON.parse(args)
+                    if (name === 'read_workspace_item') {
+                      result = workspaceRead(input)
+                    }
+                    else if (name === 'list_workspace_items') {
+                      result = workspaceInventory(input)
+                    }
+                    else if (name === 'list_workspace_structure') {
+                      result = workspaceStructure(input)
+                    }
+                    else {
+                      if (workspaceProposed) {
+                        return {
+                          error: 'PROPOSAL_ALREADY_PENDING',
+                          note: 'Wait for the user to review this turn before proposing more changes.',
+                        }
+                      }
+                      if (name === 'create_workspace_items') {
+                        const plan = creationPlan(input)
+                        const key = JSON.stringify(
+                          plan.operations,
+                          (_key, value) =>
+                            value
+                            && typeof value === 'object'
+                            && !Array.isArray(value)
+                              ? Object.fromEntries(
+                                  Object.keys(value)
+                                    .sort()
+                                    .map(key => [key, value[key]]),
+                                )
+                              : value,
+                        )
+                        let created = creations.get(key)
+                        if (!created) {
+                          if (
+                            createdOperationCount + plan.operations.length
+                            > 30
+                          ) {
+                            return {
+                              error: 'TURN_OPERATION_LIMIT',
+                              hint: 'At most 30 creation operations per turn. Report completed items accurately.',
+                            }
+                          }
+                          createdOperationCount += plan.operations.length
+                          created = workspace.create(plan)
+                          creations.set(key, created)
+                          send({
+                            requestId: request.requestId,
+                            type: 'workspaceProposal',
+                            proposal: created.proposal,
+                            applied: created.applied,
+                            items: created.items,
+                            containers: created.containers,
+                            failedOperationIndex: created.failed,
+                          })
+                          owner.send('system:storage-synced')
+                        }
+                        return {
+                          ...workspaceCreationHistory({
+                            ...created,
+                            undone: [],
+                            failedOperationIndex: created.failed,
+                          }),
+                          proposalId: created.proposal.id,
+                        }
+                      }
+                      const plan = workspaceReviewSchema.parse(input)
+                      if (createdOperationCount + plan.operations.length > 30)
+                        return { error: 'TURN_OPERATION_LIMIT' }
+                      const proposal = workspace.propose(plan)
+                      workspaceProposed = true
+                      send({
+                        requestId: request.requestId,
+                        type: 'workspaceProposal',
+                        proposal,
+                      })
+                      result = {
+                        status: 'awaiting_user_review',
+                        proposalId: proposal.id,
+                      }
+                    }
+                  }
+                  catch (error) {
+                    result = workspaceToolError(error)
+                  }
                 }
                 else if (name === 'search_vault') {
                   const parsed = vaultSearchSchema.safeParse(
@@ -407,8 +501,10 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
                           AbortSignal.any([session.controller.signal, timeout]),
                         )
                       }
-                      catch {
+                      catch (error) {
                         assertVault()
+                        if (!isInvalidPlan(error))
+                          throw error
                         if (timeout.aborted)
                           throw new AiError('timeout')
                         queries = [search.query]
@@ -509,7 +605,7 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
           }
         }
       }
-      if (!calls.length && http?.hasProposal()) {
+      if (!calls.length && (workspaceProposed || http?.hasProposal())) {
         publishProtocol(responseMessages)
       }
       else if (!calls.length && toolContent) {

@@ -1,15 +1,38 @@
 import type { WebContents } from 'electron'
 import { EventEmitter } from 'node:events'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { AiError } from '../errors'
 import { registerAiHandlers } from '../ipc'
+
+vi.mock('../workspaceTools', () => ({
+  workspaceTools: ['create_workspace_items', 'propose_workspace_changes'].map(
+    name => ({ type: 'function', function: { name } }),
+  ),
+  workspaceStructure: vi.fn(),
+  workspaceRead: vi.fn(),
+  workspaceInventory: vi.fn(),
+}))
 
 const mocks = vi.hoisted(() => ({
   stream: vi.fn(),
+  create: vi.fn(),
+  propose: vi.fn(),
   models: vi.fn(),
   configure: vi.fn(),
   plan: vi.fn(),
   turnPlan: vi.fn(async () => ({ scope: 'context' })),
   retrieve: vi.fn(),
+}))
+vi.mock('../workspace', () => ({
+  createWorkspaceManager: () => ({
+    clear: vi.fn(),
+    apply: vi.fn(),
+    undo: vi.fn(),
+    create: mocks.create,
+    propose: mocks.propose,
+  }),
+  workspaceTools: [],
+  workspaceStructure: vi.fn(),
 }))
 vi.mock('../client', () => ({
   streamAiChat: mocks.stream,
@@ -26,7 +49,8 @@ vi.mock('../vault', () => ({
   readVaultItem: vi.fn(ref => ({ ...ref, name: 'QA', content: 'fixture' })),
   executeVaultTool: vi.fn(async () => ({ items: [] })),
 }))
-vi.mock('../searchPlan', () => ({
+vi.mock('../searchPlan', async importOriginal => ({
+  ...(await importOriginal<typeof import('../searchPlan')>()),
   planVaultSearch: mocks.plan,
   planVaultTurn: mocks.turnPlan,
 }))
@@ -64,6 +88,14 @@ function request(id: string) {
 }
 const id1 = '11111111-1111-4111-8111-111111111111'
 const id2 = '22222222-2222-4222-8222-222222222222'
+const httpSnapshot = {
+  contextId: id2,
+  requestId: 1,
+  name: 'Users',
+  request: '{"method":"GET"}',
+  response: '{"status":200}',
+  assertions: [],
+}
 const flush = () => new Promise(resolve => setImmediate(resolve))
 beforeEach(() => vi.clearAllMocks())
 
@@ -283,7 +315,7 @@ it('plans only the first search and publishes storage results before the answer'
 })
 
 it('falls back to literal search when the plan is invalid without claiming expansion succeeded', async () => {
-  mocks.plan.mockRejectedValue(new Error('invalid plan'))
+  mocks.plan.mockRejectedValue(new SyntaxError('invalid plan'))
   mocks.retrieve.mockResolvedValue({ items: [], total: 0, queries: ['order'] })
   mocks.stream.mockReset().mockImplementation(async (...args) => {
     await args[10].execute(
@@ -327,27 +359,8 @@ it('does not search or publish cards after cancellation during rewriting', async
   ).toBe(false)
 })
 
-it('searches the vault before answering even with an unrelated attachment', async () => {
-  mocks.turnPlan.mockResolvedValueOnce({
-    scope: 'vault',
-    type: 'http_request',
-    queries: ['последние заказы', 'recent orders'],
-  } as any)
-  const found = {
-    items: [{ type: 'http_request', id: 471, name: 'Recent orders' }],
-    queries: ['recent orders'],
-    total: 1,
-  }
-  mocks.retrieve.mockResolvedValue(found)
-  mocks.stream.mockReset().mockImplementation(async (_connection, messages) => {
-    expect(messages[0].content).toContain('Attached saved records')
-    expect(messages.at(-1)).toMatchObject({ role: 'tool' })
-    expect(JSON.parse(messages.at(-1).content).items[0].name).toBe(
-      'Recent orders',
-    )
-    expect(messages.at(-2).tool_calls[0].id).toBe(messages.at(-1).tool_call_id)
-    return []
-  })
+it('starts with only the explicit attachment and searches on demand', async () => {
+  mocks.stream.mockReset().mockResolvedValue([])
   const { invoke, owner } = setup()
   await invoke('start', {
     ...request(id1),
@@ -355,14 +368,15 @@ it('searches the vault before answering even with an unrelated attachment', asyn
     attachments: [{ type: 'http_request', id: 465 }],
   })
   await flush()
-  expect(mocks.retrieve).toHaveBeenCalledWith('http_request', [
-    'последние заказы',
-    'recent orders',
-  ])
-  expect(mocks.plan).not.toHaveBeenCalled()
+  const messages = mocks.stream.mock.calls[0][1]
+  expect(messages).toHaveLength(1)
+  expect(messages[0].content).toContain('Attached saved records')
+  expect(mocks.stream.mock.calls[0][10].remaining).toBe(6)
+  expect(mocks.turnPlan).not.toHaveBeenCalled()
+  expect(mocks.retrieve).not.toHaveBeenCalled()
   expect(
     owner.send.mock.calls.some(([, event]) => event.type === 'searchResults'),
-  ).toBe(true)
+  ).toBe(false)
 })
 
 it('does not answer or retrieve after cancellation during scope planning', async () => {
@@ -372,7 +386,11 @@ it('does not answer or retrieve after cancellation during scope planning', async
   )
   mocks.stream.mockReset()
   const { invoke, owner } = setup()
-  await invoke('start', { ...request(id1), vaultAccess: true })
+  await invoke('start', {
+    ...request(id1),
+    vaultAccess: true,
+    httpContext: httpSnapshot,
+  })
   await flush()
   await invoke('cancel', { requestId: id1 })
   finish({ scope: 'vault', type: 'http_request', queries: ['recent orders'] })
@@ -384,7 +402,7 @@ it('does not answer or retrieve after cancellation during scope planning', async
   ).toBe(false)
 })
 
-it('preloads actual HTTP state for assessment and prevents unsolicited proposals', async () => {
+it('reads actual HTTP state only on demand and prevents unsolicited proposals', async () => {
   mocks.stream.mockResolvedValue(undefined)
   mocks.turnPlan.mockResolvedValueOnce({ scope: 'context' })
   const { invoke } = setup()
@@ -405,20 +423,249 @@ it('preloads actual HTTP state for assessment and prevents unsolicited proposals
   expect(mocks.stream).toHaveBeenCalledOnce()
   const messages = mocks.stream.mock.calls[0][1]
   expect(messages[0].content).toBe('hello')
-  const results = messages
-    .filter((message: any) => message.role === 'tool')
-    .map((message: any) => JSON.parse(message.content))
-  expect(results.map((result: any) => result.part)).toEqual([
-    'request',
-    'response',
-  ])
-  expect(results[1].content).toContain('paid')
-  expect(results[1].configuredChecks[0].name).toBe('HTTP 200')
+  expect(messages).toHaveLength(1)
   const runtime = mocks.stream.mock.calls[0][10]
+  const response = await runtime.execute(
+    'read_http_context',
+    '{"part":"response"}',
+  )
+  expect(response.content).toContain('paid')
+  expect(response.configuredChecks[0].name).toBe('HTTP 200')
   expect(runtime.tools.map((tool: any) => tool.function.name)).toEqual([
     'read_http_context',
   ])
   expect(await runtime.execute('propose_http_assertions', '{}')).toEqual({
     error: 'ACTION_NOT_REQUESTED',
   })
+})
+
+it('continues the normal tool loop after malformed non-HTTP planning', async () => {
+  mocks.stream.mockReset().mockResolvedValue([])
+  const { invoke } = setup()
+  await invoke('start', { ...request(id1), vaultAccess: true })
+  await flush()
+  expect(mocks.stream).toHaveBeenCalledOnce()
+  expect(mocks.retrieve).not.toHaveBeenCalled()
+})
+
+it('retries malformed HTTP planning once, then restricts HTTP checks without blocking independent workspace tasks', async () => {
+  mocks.stream.mockReset().mockResolvedValue([])
+  mocks.turnPlan
+    .mockRejectedValueOnce(new SyntaxError('bad JSON'))
+    .mockRejectedValueOnce(new AiError('invalidResponse'))
+  const { invoke } = setup()
+  await invoke('start', {
+    ...request(id1),
+    vaultAccess: true,
+    httpContext: httpSnapshot,
+  })
+  await flush()
+  expect(mocks.turnPlan).toHaveBeenCalledTimes(2)
+  const runtime = mocks.stream.mock.calls[0][10]
+  expect(runtime.tools.map((tool: any) => tool.function.name)).not.toContain(
+    'propose_http_assertions',
+  )
+  expect(runtime.instructions).toContain(
+    'HTTP assertion preparation is unavailable',
+  )
+  expect(runtime.tools.map((tool: any) => tool.function.name)).toContain(
+    'create_workspace_items',
+  )
+  expect((mocks.turnPlan.mock.calls as unknown[][])[1]?.[4]).toBe(true)
+  expect(await runtime.execute('propose_http_assertions', '{}')).toEqual({
+    error: 'ACTION_NOT_REQUESTED',
+  })
+})
+it('uses a valid format retry to permit the requested HTTP checks', async () => {
+  mocks.stream.mockReset().mockResolvedValue([])
+  mocks.turnPlan
+    .mockRejectedValueOnce(new SyntaxError('bad JSON'))
+    .mockResolvedValueOnce({
+      scope: 'context',
+      httpAction: 'assertions',
+    } as any)
+  const { invoke } = setup()
+  await invoke('start', { ...request(id1), httpContext: httpSnapshot })
+  await flush()
+  const runtime = mocks.stream.mock.calls[0][10]
+  expect(runtime.tools.map((tool: any) => tool.function.name)).toContain(
+    'propose_http_assertions',
+  )
+  expect(runtime.instructions).toBeUndefined()
+})
+it.each([
+  'authentication',
+  'connection',
+  'timeout',
+  'rateLimit',
+  'upstream',
+] as const)('does not recover a %s planning failure', async (code) => {
+  mocks.stream.mockReset().mockResolvedValue([])
+  mocks.turnPlan.mockRejectedValueOnce(new AiError(code))
+  const { invoke, owner } = setup()
+  await invoke('start', { ...request(id1), httpContext: httpSnapshot })
+  await flush()
+  expect(mocks.turnPlan).toHaveBeenCalledOnce()
+  expect(mocks.stream).not.toHaveBeenCalled()
+  expect(
+    owner.send.mock.calls.some(
+      ([, event]) => event.type === 'error' && event.error === code,
+    ),
+  ).toBe(true)
+})
+
+it('continues collection creation with a returned folder ID, deduplicates repeats and still stops for review', async () => {
+  mocks.create.mockImplementation((plan) => {
+    const folder = plan.operations[0].kind === 'folder'
+    return {
+      proposal: {
+        id: folder ? 'collection' : 'request',
+        summary: plan.summary,
+        changes: [],
+      },
+      applied: [0],
+      items: folder
+        ? []
+        : [{ id: 99, name: 'Users', type: 'http_request', operationIndex: 0 }],
+      containers: folder
+        ? [
+            {
+              id: 75,
+              name: 'API',
+              kind: 'collection',
+              space: 'http',
+              operationIndex: 0,
+            },
+          ]
+        : [],
+    }
+  })
+  mocks.propose.mockReturnValue({
+    id: 'review',
+    summary: 'Rename',
+    changes: [],
+  })
+  mocks.stream.mockReset().mockImplementation(async (...args) => {
+    const runtime = args[10]
+    const first = await runtime.execute(
+      'create_workspace_items',
+      JSON.stringify({
+        summary: 'Collection',
+        items: [{ type: 'http_collection', name: 'API' }],
+      }),
+    )
+    expect(runtime.isComplete()).toBe(false)
+    expect(first.containers[0].id).toBe(75)
+    const second = await runtime.execute(
+      'create_workspace_items',
+      JSON.stringify({
+        summary: 'Request',
+        items: [
+          {
+            type: 'http_request',
+            name: 'Users',
+            method: 'GET',
+            url: 'https://example.test/users',
+            folderId: first.containers[0].id,
+          },
+        ],
+      }),
+    )
+    const duplicate = await runtime.execute(
+      'create_workspace_items',
+      JSON.stringify({
+        items: [
+          {
+            folderId: 75,
+            url: 'https://example.test/users',
+            method: 'GET',
+            name: 'Users',
+            type: 'http_request',
+          },
+        ],
+        summary: 'Different narration',
+      }),
+    )
+    expect(duplicate).toEqual(second)
+    expect(runtime.isComplete()).toBe(false)
+    await runtime.execute(
+      'propose_workspace_changes',
+      JSON.stringify({
+        summary: 'Rename',
+        operations: [
+          {
+            space: 'http',
+            kind: 'item',
+            action: 'update',
+            id: 99,
+            fields: { name: 'Users renamed' },
+          },
+        ],
+      }),
+    )
+    expect(runtime.isComplete()).toBe(true)
+    expect(await runtime.execute('create_workspace_items', '{}')).toMatchObject(
+      { error: 'PROPOSAL_ALREADY_PENDING' },
+    )
+    return []
+  })
+  const { invoke, owner } = setup()
+  await invoke('start', { ...request(id1), vaultAccess: true })
+  await flush()
+  expect(mocks.create).toHaveBeenCalledTimes(2)
+  expect(mocks.create.mock.calls[1][0].operations[0].fields.folderId).toBe(75)
+  expect(
+    owner.send.mock.calls.filter(
+      ([, event]) => event?.type === 'workspaceProposal',
+    ),
+  ).toHaveLength(3)
+})
+
+it('limits planned creation operations across calls, including a partial batch', async () => {
+  mocks.create.mockImplementation(plan => ({
+    proposal: {
+      id: 'partial',
+      summary: plan.summary,
+      changes: plan.operations.map((operation: any) => ({
+        name: operation.fields.name,
+        operation,
+        before: '{}',
+        after: '{}',
+      })),
+    },
+    applied: [0],
+    items: [],
+    containers: [],
+    failed: 1,
+  }))
+  mocks.stream.mockReset().mockImplementation(async (...args) => {
+    const runtime = args[10]
+    const first = await runtime.execute(
+      'create_workspace_items',
+      JSON.stringify({
+        summary: 'Batch',
+        items: Array.from({ length: 30 }, (_, i) => ({
+          type: 'note',
+          name: `Note ${i}`,
+          content: '',
+        })),
+      }),
+    )
+    expect(first.status).toBe('partially_created')
+    expect(
+      await runtime.execute(
+        'create_workspace_items',
+        JSON.stringify({
+          summary: 'Extra',
+          items: [{ type: 'note', name: 'Extra', content: '' }],
+        }),
+      ),
+    ).toMatchObject({ error: 'TURN_OPERATION_LIMIT' })
+    return []
+  })
+  const { invoke } = setup()
+  await invoke('start', { ...request(id1), vaultAccess: true })
+  await flush()
+  expect(mocks.create).toHaveBeenCalledOnce()
+  await expect(mocks.stream.mock.results[0].value).resolves.toEqual([])
 })

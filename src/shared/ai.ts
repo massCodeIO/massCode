@@ -1,4 +1,9 @@
 import type { AiHttpProposal } from './aiHttp'
+import type {
+  WorkspaceContainer,
+  WorkspaceItem,
+  WorkspaceProposal,
+} from './aiWorkspace'
 import { z } from 'zod'
 import { aiHttpContextSchema } from './aiHttp'
 import { aiResponseReplaySchema } from './aiResponses'
@@ -254,6 +259,15 @@ export type AiResult<T> =
   | { ok: true, data: T }
   | { ok: false, error: AiErrorCode }
 export type AiEvent =
+  | {
+    requestId: string
+    type: 'workspaceProposal'
+    proposal: WorkspaceProposal
+    applied?: number[]
+    items?: WorkspaceItem[]
+    containers?: WorkspaceContainer[]
+    failedOperationIndex?: number
+  }
   | { requestId: string, type: 'httpProposal', proposal: AiHttpProposal }
   | { requestId: string, type: 'answerReset' }
   | { requestId: string, type: 'searchResults', result: AiSearchResults }

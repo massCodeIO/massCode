@@ -6,7 +6,10 @@ defineProps<{ result: AiSearchResults }>()
 </script>
 
 <template>
-  <details class="bg-muted/40 space-y-2 rounded-lg border p-3">
+  <details
+    v-if="result.items.length"
+    class="bg-muted/40 space-y-2 rounded-lg border p-3"
+  >
     <summary class="cursor-pointer">
       <UiText
         variant="xs"

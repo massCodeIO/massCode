@@ -23,11 +23,61 @@ const {
 } = useAi()
 const messageReferences = computed(() => {
   const items: AiVaultItem[] = []
+  const undoneKeys = new Set(
+    (conversation.value?.messages ?? []).flatMap(message =>
+      (message.workspaceCreations ?? []).flatMap(creation =>
+        creation.items
+          .filter(item => creation.undone.includes(item.operationIndex))
+          .map(item => `${item.type}:${item.id}`),
+      ),
+    ),
+  )
   return (conversation.value?.messages ?? []).map((message) => {
     items.push(...(message.attachments ?? []))
+    const created = (message.workspaceCreations ?? []).flatMap(creation =>
+      creation.items.filter(
+        item => !creation.undone.includes(item.operationIndex),
+      ),
+    )
+    const creationKeys = new Set(
+      created.map(item => `${item.type}:${item.id}`),
+    )
     for (const result of message.searchResults ?? [])
       items.push(...result.items)
-    return [...items]
+    // This turn already presents creation links in its receipts. Later replies
+    // still need these references, including after the user navigates elsewhere.
+    const references = items.filter(
+      item =>
+        !creationKeys.has(`${item.type}:${item.id}`)
+        && !undoneKeys.has(`${item.type}:${item.id}`),
+    )
+    items.push(...created)
+    return references
+  })
+})
+const messageUnlinkedNames = computed(() => {
+  const undoneNames = new Set<string>()
+  return (conversation.value?.messages ?? []).map((message) => {
+    const receiptNames = new Set<string>()
+    for (const creation of message.workspaceCreations ?? []) {
+      for (const [index, change] of creation.proposal.changes.entries()) {
+        if (!change.name)
+          continue
+        // Current receipts own these labels, even if another record has the
+        // same name. A later successful recreation releases the tombstone.
+        receiptNames.add(change.name)
+        if (
+          creation.applied.includes(index)
+          && !creation.undone.includes(index)
+        ) {
+          undoneNames.delete(change.name)
+        }
+        else if (creation.undone.includes(index)) {
+          undoneNames.add(change.name)
+        }
+      }
+    }
+    return [...new Set([...undoneNames, ...receiptNames])]
   })
 })
 const { formatDateTime } = useDateFormat()
@@ -147,11 +197,18 @@ onMounted(() => {
             :key="resultIndex"
             :result="result"
           />
+          <AiCreationResult
+            v-for="creation in message.workspaceCreations"
+            :key="creation.proposal.id"
+            :message="message"
+            :creation="creation"
+          />
           <template v-if="message.httpProposal">
             <AiMessage
               v-if="message.httpProposal.analysis"
               :content="message.httpProposal.analysis"
               :items="messageReferences[index]"
+              :unlinked-names="messageUnlinkedNames[index]"
             />
             <AiHttpChecks :proposal="message.httpProposal" />
           </template>
@@ -159,6 +216,7 @@ onMounted(() => {
             v-else-if="message.role === 'assistant'"
             :content="message.content"
             :items="messageReferences[index]"
+            :unlinked-names="messageUnlinkedNames[index]"
           />
           <UiText
             v-else
@@ -220,6 +278,8 @@ onMounted(() => {
                 && (message.content
                   || message.edit
                   || message.httpProposal
+                  || message.workspaceProposal
+                  || message.workspaceCreations?.length
                   || canRetry(message))
             "
             class="flex flex-wrap items-center gap-2"
@@ -231,12 +291,20 @@ onMounted(() => {
             >
               <Copy class="size-3" />
             </UiActionButton>
+            <AiWorkspaceReview
+              v-if="message.workspaceProposal"
+              :message="message"
+            />
             <AiHttpReview
               v-if="message.httpProposal"
               :message="message"
             />
             <AiEditReview
-              v-if="message.edit"
+              v-if="
+                message.edit
+                  && !message.workspaceProposal
+                  && !message.httpProposal
+              "
               :message="message"
             />
             <Button

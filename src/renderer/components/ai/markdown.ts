@@ -14,6 +14,7 @@ export function renderMarkdown(content: string) {
 export function renderMarkdownBlocks(
   content: string,
   items: AiVaultItem[] = [],
+  unlinkedNames: string[] = [],
 ) {
   const references: AiVaultItem[] = []
   const names = new Map<string, AiVaultItem | null>()
@@ -30,8 +31,10 @@ export function renderMarkdownBlocks(
       names.set(item.name, null)
     }
   }
+  const unlinked = new Set(unlinkedNames)
+  for (const name of unlinked) names.set(name, null)
   const candidates = [...names.entries()]
-    .filter(([name, item]) => name && item)
+    .filter(([name, item]) => name && (item || unlinked.has(name)))
     .sort(([a], [b]) => b.length - a.length)
   const pattern = candidates.length
     ? new RegExp(
@@ -92,7 +95,9 @@ export function renderMarkdownBlocks(
       }
       html
         += markdown.utils.escapeHtml(text.slice(offset, start))
-          + reference(names.get(match[0])!)
+          + (names.get(match[0])
+            ? reference(names.get(match[0])!)
+            : markdown.utils.escapeHtml(match[0]))
       offset = end
     }
     return html + markdown.utils.escapeHtml(text.slice(offset))

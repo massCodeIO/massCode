@@ -87,3 +87,32 @@ describe('verified vault references', () => {
     expect(result.html).toContain('&lt;script&gt;')
   })
 })
+
+it('does not link another item by a shorter name inside an undone creation title', () => {
+  const item = { type: 'http_request' as const, id: 7, name: 'Create user' }
+  const result = renderMarkdownBlocks(
+    'Создание Project Create user было отменено. Другой запрос: Create user.',
+    [item],
+    ['Project Create user'],
+  )
+  expect(result.references).toEqual([item])
+  expect(result.html).toContain('Создание Project Create user было отменено.')
+  expect(result.html).toContain(
+    'Другой запрос: <span data-ai-reference="0"></span>',
+  )
+})
+
+it('keeps undone full titles unlinked across formatting without disabling other references', () => {
+  const items = [
+    { type: 'note' as const, id: 1, name: 'Plan' },
+    { type: 'note' as const, id: 2, name: 'Other' },
+  ]
+  const result = renderMarkdownBlocks(
+    '**Release Plan** и `Release Plan`, Other',
+    items,
+    ['Release Plan'],
+  )
+  expect(result.references).toEqual([items[1]])
+  expect(result.html).toContain('<strong>Release Plan</strong>')
+  expect(result.html).toContain('<code>Release Plan</code>')
+})

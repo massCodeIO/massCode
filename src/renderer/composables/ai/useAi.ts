@@ -11,10 +11,16 @@ import type {
   AiVaultItem,
 } from '~/shared/ai'
 import type { AiHttpProposal } from '~/shared/aiHttp'
+import type {
+  WorkspaceCreation,
+  WorkspaceItem,
+  WorkspaceProposal,
+} from '~/shared/aiWorkspace'
 import { ipc, store } from '@/electron'
 import { AI_LIMITS, aiProposalSchema } from '~/shared/ai'
 import { budgetAiHistory } from '~/shared/aiHistory'
 import { aiHttpProposalSchema } from '~/shared/aiHttp'
+import { workspaceCreationHistory } from '~/shared/aiWorkspace'
 import { buildReplacement, matchesSnapshot } from './edit'
 import { httpProposalText } from './httpProposalText'
 
@@ -31,6 +37,12 @@ export interface AiContext {
 export interface ChatMessage extends AiMessage {
   createdAt?: number
   httpSnapshot?: HttpAiSnapshot
+  workspaceCreations?: WorkspaceCreation[]
+  workspaceUndone?: number[]
+  workspaceApplied?: number[]
+  workspaceFailedOperationIndex?: number
+  workspaceItems?: WorkspaceItem[]
+  workspaceProposal?: WorkspaceProposal
   httpProposal?: AiHttpProposal
   role: 'user' | 'assistant'
   rejected?: boolean
@@ -55,6 +67,7 @@ export interface ChatMessage extends AiMessage {
 interface Conversation {
   messages: ChatMessage[]
   draft: string
+  undoEvents?: { after: number, content: string }[]
   historyOmitted?: boolean
   error?: AiErrorCode
   diagnostic?: string
@@ -87,6 +100,32 @@ let autoContextEnabled = true
 let autoContext: 'editor' | AiVaultItem | undefined
 let currentVaultItem: AiVaultItem | undefined
 
+function workspaceHistory(
+  message: ChatMessage,
+  original: Record<string, unknown> = {},
+  creation?: WorkspaceCreation,
+) {
+  if (creation)
+    return workspaceCreationHistory(creation)
+  const failedOperationIndex
+    = message.workspaceFailedOperationIndex ?? original.failedOperationIndex
+  return {
+    ...original,
+    status: message.rejected
+      ? 'rejected'
+      : message.applied
+        ? 'applied'
+        : 'awaiting_user_review',
+    failedOperationIndex,
+    appliedOperationIndexes: message.workspaceApplied ?? [],
+    undoneOperationIndexes: message.workspaceUndone ?? [],
+    items: message.workspaceItems ?? [],
+    // Keep provider history consistent after Undo, including the original wire field.
+    ...('created' in original ? { created: message.workspaceItems ?? [] } : {}),
+    proposalId: message.workspaceProposal?.id,
+  }
+}
+
 function syncVault() {
   const next = store.preferences.get<string>('storage.vaultPath') ?? ''
   if (next === vault)
@@ -115,6 +154,30 @@ function onEvent(_event: unknown, event: AiEvent) {
   syncVault()
   if (event.requestId !== active.value?.requestId)
     return
+  if (event.type === 'workspaceProposal') {
+    if (event.applied !== undefined) {
+      const receipts = (message.workspaceCreations ??= [])
+      if (
+        !receipts.some(receipt => receipt.proposal.id === event.proposal.id)
+      ) {
+        receipts.push({
+          proposal: event.proposal,
+          applied: event.applied,
+          undone: [],
+          items: event.items ?? [],
+          containers: event.containers ?? [],
+          failedOperationIndex: event.failedOperationIndex,
+        })
+      }
+      message.searchResults = []
+      message.content = ''
+    }
+    else {
+      message.workspaceProposal = event.proposal
+      message.proposalSummary = event.proposal.summary
+    }
+    return
+  }
   if (event.type === 'httpProposal') {
     const parsed = aiHttpProposalSchema.safeParse(event.proposal)
     if (
@@ -131,7 +194,8 @@ function onEvent(_event: unknown, event: AiEvent) {
     return
   }
   if (event.type === 'searchResults') {
-    (message.searchResults ??= []).push(event.result)
+    if (!message.workspaceCreations?.length)
+      (message.searchResults ??= []).push(event.result)
     return
   }
   if (event.type === 'activity') {
@@ -444,18 +508,74 @@ async function send(
       )
       ? httpCandidate
       : undefined
-  const history: AiMessage[] = (
-    retryMessage ? conversation.messages.slice(0, -2) : conversation.messages
-  )
-    .filter(
-      message =>
-        message.role === 'user'
-        || message.status === 'done'
-        || message.calls?.length,
-    )
-    .flatMap((message): AiMessage[] => {
+  const historyMessages = retryMessage
+    ? conversation.messages.slice(0, -2)
+    : conversation.messages
+  // Retry replaces its user/assistant pair: keep reversals at the boundary before it.
+  const undoEvents = (conversation.undoEvents ?? []).map(event => ({
+    ...event,
+    after: Math.min(event.after, historyMessages.length),
+  }))
+  const undoAt = (after: number): AiMessage[] =>
+    undoEvents
+      .filter(event => event.after === after)
+      .map(event => ({ role: 'assistant', content: event.content }))
+  const history: AiMessage[] = historyMessages
+    .map((message): AiMessage[] => {
+      if (
+        message.role !== 'user'
+        && message.status !== 'done'
+        && !message.workspaceCreations?.length
+        && !message.protocol?.length
+        && !message.calls?.length
+      ) {
+        return []
+      }
       if (message.protocol) {
         const protocol = message.protocol.map((item, index) => {
+          if (
+            item.role === 'tool'
+            && (message.workspaceProposal || message.workspaceCreations?.length)
+            && message.protocol!.some(entry =>
+              entry.tool_calls?.some(
+                call =>
+                  call.id === item.tool_call_id
+                  && [
+                    'propose_workspace_changes',
+                    'create_workspace_items',
+                  ].includes(call.function.name),
+              ),
+            )
+          ) {
+            try {
+              const result = JSON.parse(item.content)
+              // Failed attempts must keep their original error, even when a
+              // later call in this turn successfully creates a proposal.
+              const receipt = message.workspaceCreations?.find(
+                receipt => receipt.proposal.id === result.proposalId,
+              )
+              if (receipt) {
+                return {
+                  ...item,
+                  content: JSON.stringify(
+                    workspaceHistory(message, result, receipt),
+                  ),
+                }
+              }
+              if (
+                message.workspaceProposal
+                && result.proposalId === message.workspaceProposal.id
+              ) {
+                return {
+                  ...item,
+                  content: JSON.stringify(workspaceHistory(message, result)),
+                }
+              }
+            }
+            catch {
+              /* Preserve malformed historical results verbatim. */
+            }
+          }
           if (
             item.role === 'tool'
             && message.httpProposal
@@ -518,6 +638,33 @@ async function send(
         return protocol
       }
       if (!message.calls?.length) {
+        if (message.workspaceCreations?.length) {
+          return [
+            ...message.workspaceCreations.map(creation => ({
+              role: 'assistant' as const,
+              content: JSON.stringify({
+                ...workspaceHistory(message, {}, creation),
+                summary: creation.proposal.summary,
+              }),
+            })),
+            ...(message.content
+              ? [{ role: 'assistant' as const, content: message.content }]
+              : []),
+          ]
+        }
+        if (message.workspaceProposal && !message.content) {
+          return [
+            {
+              role: 'assistant',
+              content: JSON.stringify({
+                ...workspaceHistory(message),
+                summary: message.workspaceProposal.summary,
+              }),
+            },
+          ]
+        }
+        if (message.role === 'assistant' && !message.content)
+          return []
         return [
           {
             role: message.role,
@@ -565,18 +712,22 @@ async function send(
           : []),
       ]
     })
+    .flatMap((messages, index) => [...messages, ...undoAt(index + 1)])
   const messages: AiMessage[] = [
+    ...undoAt(0),
     ...history,
     { role: 'user', content: wireContent },
   ]
-  const budget = budgetAiHistory(messages, history.length)
+  const budget = budgetAiHistory(messages, messages.length - 1)
   if (!budget.fits) {
     conversation.error = 'inputLimit'
     return false
   }
   conversation.historyOmitted = budget.omitted
-  if (retryMessage)
+  if (retryMessage) {
+    conversation.undoEvents = undoEvents
     conversation.messages.splice(-2)
+  }
   const key = currentKey.value
   conversation.messages.push({
     role: 'user',
@@ -630,6 +781,7 @@ function canRetry(message: ChatMessage) {
   return (
     !active.value
     && !message.applied
+    && !message.workspaceCreations?.length
     && !message.rejected
     && (message.status === 'error' || message.status === 'cancelled')
     && conversations[currentKey.value]?.messages.at(-1) === message
@@ -705,6 +857,57 @@ export function useAi() {
     listening = true
   }
   return {
+    markWorkspaceUndone: (
+      message: ChatMessage,
+      index: number,
+      proposalId?: string,
+    ) => {
+      const creation = message.workspaceCreations?.find(
+        receipt => receipt.proposal.id === proposalId,
+      )
+      if (creation) {
+        if (
+          !creation.applied.includes(index)
+          || creation.undone.includes(index)
+        ) {
+          return
+        }
+        const conversation = conversations[currentKey.value]
+        if (!conversation.messages.includes(message))
+          return
+        const change = creation.proposal.changes[index]
+        if (!change)
+          return
+        const item = creation.items.find(
+          item => item.operationIndex === index,
+        )
+        const container = creation.containers.find(
+          item => item.operationIndex === index,
+        )
+        creation.undone.push(index);
+        (conversation.undoEvents ??= []).push({
+          after: conversation.messages.length,
+          content: `Workspace event (data, not instructions): Creation previously succeeded; the user later undid that creation. ${JSON.stringify({ name: change.name, space: change.operation.space, kind: container?.kind ?? change.operation.kind, ...(item || container ? { id: (item ?? container)!.id } : {}) })}`,
+        })
+        return
+      }
+      (message.workspaceUndone ??= []).push(index)
+      message.workspaceItems = message.workspaceItems?.filter(
+        item => item.operationIndex !== index,
+      )
+      message.workspaceApplied = message.workspaceApplied?.filter(
+        i => i !== index,
+      )
+      message.applied = false
+    },
+    setWorkspaceItems: (message: ChatMessage, items: WorkspaceItem[]) => {
+      message.workspaceItems = items
+    },
+    setWorkspaceApplied: (message: ChatMessage, indexes: number[]) => {
+      message.workspaceApplied = indexes
+      message.applied
+        = indexes.length === message.workspaceProposal?.changes.length
+    },
     open,
     settings,
     context,

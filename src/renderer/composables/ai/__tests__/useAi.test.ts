@@ -574,3 +574,385 @@ describe('hTTP proposals in chat', () => {
     expect(ai.applyHttp(message)).toBe(false)
   })
 })
+
+it('presents creation as a receipt, discards incidental search, and updates undo state', async () => {
+  const { ai, emit, request } = await setup()
+  await ai.send('Create a note')
+  const requestId = request().requestId
+  emit({
+    requestId,
+    type: 'workspaceProposal',
+    proposal: {
+      id: 'receipt',
+      summary: 'Create note',
+      changes: [
+        {
+          name: 'Note',
+          before: '{}',
+          after: '{}',
+          operation: {
+            action: 'create',
+            kind: 'item',
+            space: 'notes',
+            fields: { name: 'Note' },
+          },
+        },
+      ],
+    },
+    applied: [0],
+    items: [{ operationIndex: 0, id: 42, type: 'note', name: 'Note' }],
+  })
+  emit({ requestId, type: 'done' })
+  const message = ai.conversation.value.messages.at(-1)!
+  expect(message.workspaceCreations).toHaveLength(1)
+  expect(message.searchResults).toEqual([])
+  expect(message.proposalSummary).toBeUndefined()
+  expect(message.workspaceCreations?.[0]?.items[0]?.id).toBe(42)
+  ai.markWorkspaceUndone(message, 0, 'receipt')
+  expect(message.workspaceCreations?.[0]?.items[0]?.id).toBe(42)
+  expect(message.workspaceCreations?.[0]?.applied).toEqual([0])
+  expect(message.workspaceCreations?.[0]?.undone).toEqual([0])
+  await ai.send('Create a snippet')
+  expect(aiStartSchema.safeParse(request()).success).toBe(true)
+  expect(
+    request().messages.some(
+      item => item.role === 'assistant' && !item.content && !item.tool_calls,
+    ),
+  ).toBe(false)
+  expect(
+    request().messages.filter(item =>
+      item.content.includes('user later undid'),
+    ),
+  ).toHaveLength(1)
+  expect(
+    request().messages.find(item => item.role === 'assistant')?.content,
+  ).toContain('created')
+})
+
+it('keeps failed workspace attempts unchanged when replaying a later successful creation', async () => {
+  const { ai, emit, request } = await setup()
+  await ai.send('Create note')
+  const requestId = request().requestId
+  emit({
+    requestId,
+    type: 'protocol',
+    messages: [
+      {
+        role: 'assistant',
+        content: '',
+        tool_calls: [
+          {
+            id: 'bad',
+            type: 'function',
+            function: { name: 'create_workspace_items', arguments: '{}' },
+          },
+        ],
+      },
+      {
+        role: 'tool',
+        tool_call_id: 'bad',
+        content: '{"error":"INVALID_ARGUMENTS"}',
+      },
+      {
+        role: 'assistant',
+        content: '',
+        tool_calls: [
+          {
+            id: 'good',
+            type: 'function',
+            function: { name: 'create_workspace_items', arguments: '{}' },
+          },
+        ],
+      },
+      {
+        role: 'tool',
+        tool_call_id: 'good',
+        content: '{"status":"created","proposalId":"receipt"}',
+      },
+    ],
+  })
+  emit({
+    requestId,
+    type: 'workspaceProposal',
+    proposal: {
+      id: 'receipt',
+      summary: 'Created',
+      changes: [
+        {
+          name: 'Note',
+          before: '{}',
+          after: '{}',
+          operation: {
+            action: 'create',
+            kind: 'item',
+            space: 'notes',
+            fields: { name: 'Note' },
+          },
+        },
+      ],
+    },
+    applied: [0],
+    items: [{ operationIndex: 0, id: 42, type: 'note', name: 'Note' }],
+  })
+  emit({ requestId, type: 'done' })
+  ai.markWorkspaceUndone(ai.conversation.value!.messages.at(-1)!, 0, 'receipt')
+  await ai.send('What happened?')
+  const results = request().messages.filter(item => item.role === 'tool')
+  expect(JSON.parse(results[0]!.content)).toEqual({
+    error: 'INVALID_ARGUMENTS',
+  })
+  expect(JSON.parse(results[1]!.content)).toMatchObject({
+    status: 'created',
+    created: [{ id: 42, name: 'Note' }],
+  })
+})
+
+it.each([true, false])(
+  'preserves partial creation failure and unattempted operations after undo (protocol: %s)',
+  async (protocol) => {
+    const { ai, emit, request } = await setup()
+    await ai.send('Create three notes')
+    const requestId = request().requestId
+    if (protocol) {
+      emit({
+        requestId,
+        type: 'protocol',
+        messages: [
+          {
+            role: 'assistant',
+            content: '',
+            tool_calls: [
+              {
+                id: 'batch',
+                type: 'function',
+                function: { name: 'create_workspace_items', arguments: '{}' },
+              },
+            ],
+          },
+          {
+            role: 'tool',
+            tool_call_id: 'batch',
+            content:
+              '{"status":"partially_created","proposalId":"partial","failedOperationIndex":1}',
+          },
+        ],
+      })
+    }
+    emit({
+      requestId,
+      type: 'workspaceProposal',
+      proposal: {
+        id: 'partial',
+        summary: 'Create three',
+        changes: ['One', 'Two', 'Three'].map(name => ({
+          name,
+          before: '{}',
+          after: '{}',
+          operation: {
+            action: 'create',
+            kind: 'item',
+            space: 'notes',
+            fields: { name },
+          },
+        })),
+      },
+      applied: [0],
+      failedOperationIndex: 1,
+      items: [{ operationIndex: 0, id: 42, type: 'note', name: 'One' }],
+    })
+    emit({ requestId, type: 'done' })
+    ai.markWorkspaceUndone(
+      ai.conversation.value!.messages.at(-1)!,
+      0,
+      'partial',
+    )
+    await ai.send('What happened?')
+    const result = request().messages.find(item =>
+      item.content.includes('partially_created'),
+    )!
+    expect(JSON.parse(result.content)).toMatchObject({
+      status: 'partially_created',
+      failed: { name: 'Two' },
+      notAttempted: [{ name: 'Three' }],
+      created: [{ id: 42, name: 'One' }],
+    })
+  },
+)
+
+it.each(['error', 'cancelled'] as const)(
+  'keeps independent receipts, partial failure and Undo in history after %s and forbids destructive Retry',
+  async (status) => {
+    const { ai, emit, request } = await setup()
+    await ai.send('Create notes in a collection')
+    const requestId = request().requestId
+    const change = {
+      name: 'Note',
+      before: '{}',
+      after: '{}',
+      operation: {
+        action: 'create' as const,
+        kind: 'item' as const,
+        space: 'notes' as const,
+        fields: { name: 'Note' },
+      },
+    }
+    emit({
+      requestId,
+      type: 'workspaceProposal',
+      proposal: { id: 'first', summary: 'First', changes: [change] },
+      applied: [0],
+      items: [{ operationIndex: 0, id: 11, type: 'note', name: 'First' }],
+    })
+    emit({
+      requestId,
+      type: 'workspaceProposal',
+      proposal: { id: 'second', summary: 'Second', changes: [change, change] },
+      applied: [0],
+      failedOperationIndex: 1,
+      items: [{ operationIndex: 0, id: 12, type: 'note', name: 'Second' }],
+    })
+    emit({
+      requestId,
+      type: 'protocol',
+      messages: ['first', 'second'].flatMap(id => [
+        {
+          role: 'assistant' as const,
+          content: '',
+          tool_calls: [
+            {
+              id,
+              type: 'function' as const,
+              function: { name: 'create_workspace_items', arguments: '{}' },
+            },
+          ],
+        },
+        {
+          role: 'tool' as const,
+          tool_call_id: id,
+          content: JSON.stringify({ proposalId: id, status: 'created' }),
+        },
+      ]),
+    })
+    if (status === 'error')
+      emit({ requestId, type: 'error', error: 'connection' })
+    else ai.cancel()
+    const message = ai.conversation.value!.messages.at(-1)!
+    expect(message.workspaceCreations).toHaveLength(2)
+    expect(message.workspaceProposal).toBeUndefined()
+    expect(ai.canRetry(message)).toBe(false)
+    ai.markWorkspaceUndone(message, 0, 'first')
+    expect(message.workspaceCreations![1].items[0].id).toBe(12)
+    await ai.send('What happened?')
+    const results = request()
+      .messages
+      .filter(item => item.role === 'tool')
+      .map(item => JSON.parse(item.content))
+    expect(results[0]).toMatchObject({
+      status: 'created',
+      created: [{ id: 11 }],
+    })
+    expect(results[1]).toMatchObject({
+      status: 'partially_created',
+      failed: { name: 'Note' },
+      created: [{ id: 12 }],
+    })
+  },
+)
+
+it.each([false, true])(
+  'anchors named Undo after intervening protocol and preserves it through Retry (%s)',
+  async (retry) => {
+    const { ai, emit, request } = await setup()
+    await ai.send('Create note')
+    emit({
+      requestId: request().requestId,
+      type: 'workspaceProposal',
+      proposal: {
+        id: 'receipt',
+        summary: 'Created',
+        changes: [
+          {
+            name: 'Note "quoted"',
+            before: '{}',
+            after: '{}',
+            operation: {
+              action: 'create',
+              kind: 'item',
+              space: 'notes',
+              fields: { name: 'Note "quoted"' },
+            },
+          },
+        ],
+      },
+      applied: [0],
+      items: [
+        { operationIndex: 0, id: 42, type: 'note', name: 'Note "quoted"' },
+      ],
+    })
+    emit({ requestId: request().requestId, type: 'done' })
+    const creation = ai.conversation.value.messages.at(-1)!
+    await ai.send('Explain it')
+    emit({
+      requestId: request().requestId,
+      type: 'protocol',
+      messages: [
+        {
+          role: 'assistant',
+          content: '',
+          tool_calls: [
+            {
+              id: 'read',
+              type: 'function',
+              function: { name: 'read_workspace_item', arguments: '{"id":42}' },
+            },
+          ],
+        },
+        { role: 'tool', tool_call_id: 'read', content: '{"name":"Note"}' },
+      ],
+    })
+    emit({
+      requestId: request().requestId,
+      type: 'delta',
+      text: 'Later explanation',
+    })
+    if (retry) {
+      emit({
+        requestId: request().requestId,
+        type: 'error',
+        error: 'connection',
+      })
+    }
+    else {
+      emit({ requestId: request().requestId, type: 'done' })
+    }
+    ai.markWorkspaceUndone(creation, 0, 'receipt')
+    ai.markWorkspaceUndone(creation, 0, 'receipt')
+    if (retry) {
+      await ai.retry(ai.conversation.value.messages.at(-1)!)
+      const retryHistory = request().messages
+      expect(retryHistory.at(-2)!.content).toContain('user later undid')
+      expect(retryHistory.at(-1)!.content).toBe('Explain it')
+      emit({ requestId: request().requestId, type: 'done' })
+    }
+    await ai.send('What happened?')
+    const history = request().messages
+    const events = history.filter(item =>
+      item.content.includes('user later undid'),
+    )
+    expect(events).toHaveLength(1)
+    expect(events[0]!.content).toContain('"name":"Note \\"quoted\\""')
+    const eventIndex = history.indexOf(events[0]!)
+    const receiptIndex = history.findIndex(item =>
+      item.content.includes('"status":"created"'),
+    )
+    expect(eventIndex).toBeGreaterThan(receiptIndex)
+    if (!retry) {
+      expect(eventIndex).toBeGreaterThan(
+        history.findIndex(item => item.tool_call_id === 'read'),
+      )
+      expect(history[eventIndex - 1]!.content).toBe('Later explanation')
+    }
+    expect(creation.workspaceCreations![0].applied).toEqual([0])
+    expect(creation.workspaceCreations![0].items[0]!.id).toBe(42)
+  },
+)

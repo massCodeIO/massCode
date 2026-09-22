@@ -4,11 +4,15 @@ import { ipc } from '@/electron'
 import { refThrottled } from '@vueuse/core'
 import { renderMarkdownBlocks } from './markdown'
 
-const props = defineProps<{ content: string, items?: AiVaultItem[] }>()
+const props = defineProps<{
+  content: string
+  items?: AiVaultItem[]
+  unlinkedNames?: string[]
+}>()
 const content = computed(() => props.content)
 const throttled = refThrottled(content, 150)
 const rendered = computed(() =>
-  renderMarkdownBlocks(throttled.value, props.items),
+  renderMarkdownBlocks(throttled.value, props.items, props.unlinkedNames),
 )
 const container = ref<HTMLElement>()
 const targets = shallowRef<HTMLElement[]>([])

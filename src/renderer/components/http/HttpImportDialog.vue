@@ -6,6 +6,8 @@ import type {
 import { Button } from '@/components/ui/shadcn/button'
 import * as Dialog from '@/components/ui/shadcn/dialog'
 import { markPersistedStorageMutation, useSonner } from '@/composables'
+import { importCounts } from '@/composables/importResult'
+import { useHttpImportDialog } from '@/composables/useHttpImportDialog'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
 
@@ -19,6 +21,17 @@ const emit = defineEmits<{
   imported: []
 }>()
 const open = defineModel<boolean>('open', { required: true })
+const {
+  captureImportResult,
+  beginImportApply,
+  importDialogOpening,
+  canContinueImport,
+  closeImportResult,
+} = useHttpImportDialog()
+watch(open, (value) => {
+  if (!value)
+    closeImportResult()
+})
 
 const fileInputRef = ref<HTMLInputElement>()
 const files = ref<ImportDialogFile[]>([])
@@ -49,10 +62,9 @@ const totalRequests = computed(
     ) ?? 0,
 )
 
-watch(open, (isOpen) => {
-  if (isOpen)
-    return
-
+function resetDialog() {
+  isApplying.value = false
+  isPreviewing.value = false
   files.value = []
   preview.value = null
   lastSummary.value = null
@@ -60,7 +72,12 @@ watch(open, (isOpen) => {
   if (fileInputRef.value) {
     fileInputRef.value.value = ''
   }
+}
+watch(open, (isOpen) => {
+  if (!isOpen)
+    resetDialog()
 })
+watch(importDialogOpening, resetDialog)
 
 function openFilePicker() {
   fileInputRef.value?.click()
@@ -107,6 +124,7 @@ async function readFile(file: File): Promise<ImportDialogFile> {
 }
 
 async function previewFiles(selectedFiles: File[]) {
+  const report = captureImportResult()
   if (!selectedFiles.length)
     return
 
@@ -121,21 +139,34 @@ async function previewFiles(selectedFiles: File[]) {
     ) {
       throw new Error(i18n.t('spaces.http.import.runtimeWarnings.fileLimit'))
     }
-    files.value = await Promise.all(selectedFiles.map(readFile))
+    const selected = await Promise.all(selectedFiles.map(readFile))
+    if (!report.isCurrent())
+      return
+    files.value = selected
     const { data } = await api.httpImport.postHttpImportPreview({
       files: files.value,
     })
+    if (!report.isCurrent())
+      return
     preview.value = data
+    report('previewed', {
+      collections: data.collections.length,
+      environments: data.environments.length,
+    })
   }
   catch (error) {
+    if (!report.isCurrent())
+      return
     preview.value = null
+    report('failed')
     errorMessage.value
       = error instanceof Error
         ? i18n.t(error.message, { defaultValue: error.message })
         : i18n.t('spaces.http.import.error')
   }
   finally {
-    isPreviewing.value = false
+    if (report.isCurrent())
+      isPreviewing.value = false
   }
 }
 
@@ -150,9 +181,14 @@ async function onDrop(event: DragEvent) {
 }
 
 async function applyImport() {
+  if (!canContinueImport())
+    return
   if (!files.value.length || !preview.value)
     return
 
+  const application = beginImportApply()
+  if (!application)
+    return
   errorMessage.value = ''
   isApplying.value = true
   try {
@@ -160,6 +196,9 @@ async function applyImport() {
     const { data } = await api.httpImport.postHttpImportApply({
       files: files.value,
     })
+    application.report('applied', importCounts(data))
+    if (!application.isCurrent())
+      return
     lastSummary.value = data
     sonner({
       message: i18n.t('spaces.http.import.imported', {
@@ -172,13 +211,17 @@ async function applyImport() {
     open.value = false
   }
   catch (error) {
+    application.report('failed')
+    if (!application.isCurrent())
+      return
     errorMessage.value
       = error instanceof Error
         ? i18n.t(error.message, { defaultValue: error.message })
         : i18n.t('spaces.http.import.error')
   }
   finally {
-    isApplying.value = false
+    if (application.isCurrent())
+      isApplying.value = false
   }
 }
 </script>

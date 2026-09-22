@@ -158,8 +158,8 @@ export async function openSnippetDeepLink(
       history,
     )
 
+    await getFolders(false)
     if (snippet.folder?.id) {
-      await getFolders(false)
       await selectFolder(snippet.folder.id)
       await getSnippets({ folderId: snippet.folder.id })
     }
@@ -225,8 +225,8 @@ export async function openNoteDeepLink(
 
       clearNoteSearch()
 
+      await getNoteFolders()
       if (note.folder?.id) {
-        await getNoteFolders()
         await selectNoteFolder(note.folder.id)
         await getNotes({ folderId: note.folder.id })
       }

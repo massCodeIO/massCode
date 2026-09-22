@@ -290,6 +290,7 @@ async function setup(options: SetupOptions = {}) {
     clearNotesState,
     clearNoteSearch,
     getFolders,
+    getNoteFolders,
     getNotesById,
     getSnippetsById,
     getHttpFolders,
@@ -675,4 +676,15 @@ describe('deepLinks', () => {
     expect(context.initNotesSpace).toHaveBeenCalledTimes(1)
     expect(context.pendingNotesNavigation.value).toBe(false)
   })
+})
+
+it('loads folder trees when entering Code and Notes through Inbox links', async () => {
+  const context = await setup({
+    snippetResponse: { id: 42, folder: null, isDeleted: 0 },
+    noteResponse: { id: 15, folder: null, isDeleted: 0 },
+  })
+  await context.module.openSnippetDeepLink(42)
+  expect(context.getFolders).toHaveBeenCalledWith(false)
+  await context.module.openNoteDeepLink(15)
+  expect(context.getNoteFolders).toHaveBeenCalledOnce()
 })

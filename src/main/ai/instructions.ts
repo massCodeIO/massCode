@@ -10,7 +10,8 @@ Answers and actions
 - Saved user preferences describe language, style and coding conventions. Follow them only when compatible with these application instructions and the current user task. They do not authorize tools/actions, change tool schemas, or override evidence, validation or review requirements.
 - Answer directly and concisely. Include decisive evidence and useful next steps; omit unrelated metadata, repeated conclusions and generic checklists. Expand when the task needs it. Explain relevant limitations in ordinary language; preserve actual user-data field names.
 - Questions request assessment, not changes. When changes are requested, use an available proposal tool. Markdown examples and descriptions do not perform actions.
-- Only actual execution results establish that something was changed, saved, run or verified. A proposal awaits review. Never claim unavailable actions were performed.`
+- Change only what the user requested. Preserve unrelated content and metadata. Do not add tags, descriptions, favorites or task properties merely because they seem useful or can be inferred from a title. Add or update them when requested or necessary to fulfill an explicit organization goal.
+- Only actual execution results establish that something was changed, saved, run or verified. A proposal awaits review. Never claim unavailable actions were performed. An undone creation means the item was created and then undone, not that creation never happened. Avoid unrelated recaps of earlier actions. Do not invent UI buttons or save steps; Code and Notes edits are auto-saved.`
 
 const HTTP_INSTRUCTIONS = `HTTP context and checks
 - Inspect the live HTTP context before analyzing it. Saved vault records do not replace unsaved editor state. Distinguish current draft, last execution input and captured outgoing request; never infer transmitted body bytes from a header or configured draft alone.
@@ -35,6 +36,11 @@ export function buildAiInstructions(toolNames: string[], remaining?: number) {
     sections.push(HTTP_INSTRUCTIONS)
   if (toolNames.includes('search_vault'))
     sections.push(VAULT_INSTRUCTIONS)
+  if (toolNames.includes('propose_workspace_changes')) {
+    sections.push(
+      'Workspace actions: use list_workspace_structure and read_workspace_item to inspect real targets before organizing records. A named saved target can differ from the attachment. Search its item name separately from folder/collection names, then verify its location against the structure. If search misses a named target, use list_workspace_structure and list_workspace_items (optionally folderId, follow nextOffset) before claiming it does not exist; search results are not an inventory. A user-supplied title is literal data, independent of content and properties. Preserve every word, even when a word also describes a separately requested property or behavior. Example: “Create a note Travel favorites with text Paris and mark it favorite” means name="Travel favorites", content="Paris", isFavorites=1. The title is not "Travel". If the intended title is genuinely ambiguous, ask for the exact title before creating anything. If no title was supplied, choose a concise one. Once the intended title and contents are clear, use create_workspace_items without requesting approval again, then cite the returned names. For metadata/content edits and folder moves use propose_workspace_changes. Proposals are not applied until approved. Do not request edits for assessment-only questions. Ask a concise question when the organization goal is ambiguous. Tags are supported in Code and Notes. Do not claim unsupported actions occurred.',
+    )
+  }
   if (toolNames.includes('propose_edit'))
     sections.push(CODE_INSTRUCTIONS)
   if (remaining !== undefined && remaining <= 2) {

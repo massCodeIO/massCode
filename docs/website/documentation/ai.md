@@ -5,7 +5,7 @@ description: "Chat across Code, Notes and HTTP with explicit context or vault se
 
 # AI Assistant
 
-Use the shared AI panel in Code, Notes and HTTP to ask questions, attach records, or find information across your vault. Connect your own provider account or a local model server. Responses stream into the panel with Markdown formatting, highlighted code blocks, and a copy action for each block. Suggested changes are applied only after you review and confirm them.
+Use the shared AI panel in Code, Notes and HTTP to ask questions, attach records, or find information across your vault. Connect your own provider account or a local model server. Responses stream into the panel with Markdown formatting, highlighted code blocks, and a copy action for each block. Changes to existing records require review and confirmation. Explicitly requested new records are created immediately, with clickable links in the answer.
 
 ## Connect a Provider
 
@@ -35,7 +35,7 @@ In **Preferences → AI assistant → Custom instructions**, describe your prefe
 
 > Always answer in Russian. Keep explanations concise and include examples when useful.
 
-Click **Save and check connection** to save. These preferences apply across chats and providers and remain after restarting the app. Clear the field and save to remove them. Changes still require review and confirmation.
+Click **Save and check connection** to save. These preferences apply across chats and providers and remain after restarting the app. Clear the field and save to remove them. Changes to existing records still require review and confirmation.
 
 ## Choose Context or Search the Vault
 
@@ -59,7 +59,7 @@ Use **Retry** on the latest failed or interrupted response to try again. Text yo
 
 Attach a note to summarize it, explain a section, compare it with another record, or find related information in the vault. For example, ask “Summarize the decisions in this note” or “Find the HTTP requests mentioned here.”
 
-Notes provide saved content as context. The assistant can suggest rewritten text in its answer, but it cannot apply changes to a note directly. Copy the result into the note when you want to keep it.
+Notes provide saved content as context. Ask the assistant to propose a new note, rewrite an existing one, update its description or tags, or move it to a folder. Review the proposed changes before applying them.
 
 ## Review Code Edits
 
@@ -70,6 +70,29 @@ When the proposal is ready and generation has finished or been stopped, choose *
 Each proposal is bound to the original context snapshot. Every replacement must match exactly once, and replacements cannot overlap. Changed source, another vault, incomplete calls, and invalid arguments prevent application. If a structurally valid proposal contains missing, ambiguous, or overlapping replacements, massCode sends the validation failure back to the same model for one correction attempt. No changes are applied during correction; a valid result still requires your review. No code is changed before confirmation. Exact-match checks protect the application of edits; they do not prove that the proposed code is correct. Review related definitions and calls in the diff. Choose the entire fragment when a change affects several parts of it. To apply a proposal after navigating elsewhere, return to the original fragment; it must still match the snapshot.
 
 Your selected model must support tool calling through its provider. A plain text answer does not count as a proposal; use a tool-capable model if no proposal is returned. massCode does not silently interpret Markdown as a fallback.
+
+## Create and Organize Vault Records
+
+Ask the assistant to create snippets, notes, HTTP requests, folders or HTTP collections. It can also propose changes to names, descriptions, content, tags, destinations and favorites, or move records to Trash. Tags are available in Code and Notes.
+
+For example:
+
+- “Create a note summarizing these decisions and tag it architecture.”
+- “Create a collection with GET and POST requests for this API.”
+- “Group these snippets into folders by language.”
+- “Add descriptions to the requests in this collection.”
+
+The assistant can inspect the space’s folders and records before preparing a plan. One proposal contains up to 30 operations, including a new folder and the records that belong in it.
+
+New records are created immediately when you ask for them. The answer includes a clickable link for each successfully created snippet, note or HTTP request.
+
+For changes to existing records, choose **Review vault changes**, inspect the before/after values and select the operations to apply. If a record depends on a new folder, include that folder’s creation too. Applying these operations saves the selected changes to the vault. This differs from **HTTP assertion review**, which only updates the editor draft.
+
+Use **Undo** beside a created record to undo its creation. For reviewed changes, reopen the review to undo an applied operation. Undo is available during the current session, provided the affected record has not changed since application. Undoing creation moves the new record to Trash. A new folder must be empty before it can be undone; undo its child operations first.
+
+Changed records or a different vault invalidate the proposal. If part of a plan fails, already applied operations remain marked in the review. Inspect the current records and request a fresh proposal for the remaining work. Save or discard an unsaved HTTP draft before applying changes to saved HTTP records.
+
+For saved HTTP requests, the assistant can propose method, URL, headers, query parameters, body, authentication and script changes. It does not execute requests or scripts. Prefer variable placeholders over literal credentials.
 
 ## Analyze an HTTP Response and Add Checks
 
@@ -90,7 +113,7 @@ An assessment question can produce an explanation without changing anything. Whe
 
 Applying an HTTP proposal does **not** save or send the request. If the request, response, environment or checks have changed since the proposal was prepared, ask for a fresh proposal against the current state.
 
-State expected business values or refer to the request’s documented requirements when you need exact checks. A value seen in one response is not necessarily a rule for every response. The assistant cannot execute requests, modify authentication or scripts, or apply general HTTP request edits; its HTTP editing action currently adds assertions. Live HTTP analysis and proposals are not available for WebSocket requests.
+State expected business values or refer to the request’s documented requirements when you need exact checks. A value seen in one response is not necessarily a rule for every response. The assistant cannot execute requests. Assertion proposals use the draft workflow above; changes to saved request fields use the separate vault review workflow. Live HTTP analysis and proposals are not available for WebSocket requests.
 
 ## Conversations and Privacy
 

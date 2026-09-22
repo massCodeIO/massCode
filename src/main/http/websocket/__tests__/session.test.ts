@@ -20,6 +20,7 @@ import {
   disconnectWebSocket,
   disposeWebSocket,
   readWebSocket,
+  readWebSocketForAi,
   sendWebSocket,
 } from '../session'
 
@@ -390,4 +391,30 @@ describe('webSocket sessions', () => {
     expect(view.error).toBe('tooLarge')
     expect(view.messages).toHaveLength(0)
   })
+})
+
+it('redacts echoed auth/environment/session secrets for AI without changing the raw UI log', async () => {
+  const request = {
+    ...input(),
+    auth: { type: 'bearer' as const, token: 'literal-auth' },
+  }
+  const session = getHttpSession(mocks.vault, mocks.envId)
+  commitHttpSession(
+    session.generation,
+    new Map([['session', 'session-value']]),
+  )
+  connectWebSocket(1, request)
+  await waitFor(request.connectionId, view => view.state === 'open')
+  const message = 'literal-auth env-value session-value'
+  for (const socket of server.clients)
+    socket.send(JSON.stringify({ ordinary: message }))
+  await waitFor(request.connectionId, view => view.messages.length > 0)
+  expect(JSON.stringify(readWebSocket(1, request.connectionId, 0))).toContain(
+    message,
+  )
+  const safe = JSON.stringify(readWebSocketForAi(1, request.connectionId, 0))
+  expect(safe).not.toContain('literal-auth')
+  expect(safe).not.toContain('env-value')
+  expect(safe).not.toContain('session-value')
+  expect(safe).toContain('[REDACTED]')
 })

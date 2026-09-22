@@ -19,7 +19,7 @@ import {
   isHttpSessionCurrent,
 } from './session'
 
-interface Run {
+export interface PreparedHttpRun {
   owner: number
   view: HttpRunView
   requests: Map<number, HttpExecutePayload>
@@ -31,18 +31,18 @@ interface Run {
   controller: AbortController
   disposed?: boolean
 }
-let run: Run | null = null
+let run: PreparedHttpRun | null = null
 
-function owned(owner: number, runId: string): Run {
+function owned(owner: number, runId: string): PreparedHttpRun {
   if (!run || run.owner !== owner || run.view.runId !== runId)
     throw new Error('HTTP_RUN_NOT_FOUND')
   return run
 }
 
-export function prepareHttpRun(owner: number, folderId: number): HttpRunView {
-  if (run?.view.state === 'running')
-    throw new Error('HTTP_REQUEST_RUNNING')
-  run = null
+export function prepareHttpRunSnapshot(
+  owner: number,
+  folderId: number,
+): PreparedHttpRun {
   const storage = useHttpStorage()
   const folders = storage.folders.getFolders()
   const root = folders.find(folder => folder.id === folderId)
@@ -131,7 +131,7 @@ export function prepareHttpRun(owner: number, folderId: number): HttpRunView {
   if (!steps.length)
     throw new Error('HTTP_RUN_EMPTY')
   const environment = resolveEnvironment(environmentId)
-  run = {
+  return {
     owner,
     requests,
     collections,
@@ -152,7 +152,27 @@ export function prepareHttpRun(owner: number, folderId: number): HttpRunView {
       steps,
     },
   }
+}
+
+export function registerHttpRun(
+  owner: number,
+  prepared: PreparedHttpRun,
+): HttpRunView {
+  if (
+    prepared.owner !== owner
+    || prepared.view.state !== 'ready'
+    || prepared.controller.signal.aborted
+  ) {
+    throw new Error('HTTP_RUN_NOT_READY')
+  }
+  if (run?.view.state === 'running')
+    throw new Error('HTTP_REQUEST_RUNNING')
+  run = prepared
   return structuredClone(run.view)
+}
+
+export function prepareHttpRun(owner: number, folderId: number): HttpRunView {
+  return registerHttpRun(owner, prepareHttpRunSnapshot(owner, folderId))
 }
 
 export function getHttpRun(owner: number, runId: string): HttpRunView {

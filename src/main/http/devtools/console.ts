@@ -11,6 +11,11 @@ import {
 const MAX_TEXT = 128 * 1024
 const MAX_BYTES = 32 * 1024 * 1024
 export class HttpConsoleJournal {
+  private aiContent = new Map<
+    string,
+    Pick<HttpConsoleEntry, 'message' | 'details'>
+  >()
+
   private entries = new Map<string, HttpConsoleEntry>()
   private sizes = new Map<string, number>()
   private bytes = 0
@@ -44,6 +49,7 @@ export class HttpConsoleJournal {
       this.bytes -= this.sizes.get(id) ?? 0
       this.sizes.delete(id)
       this.entries.delete(id)
+      this.aiContent.delete(id)
     }
   }
 
@@ -56,8 +62,24 @@ export class HttpConsoleJournal {
     return { revision: this.revision, entries: [...this.entries.values()] }
   }
 
+  readForAi() {
+    const snapshot = this.read()
+    return {
+      ...snapshot,
+      entries: snapshot.entries.map(
+        ({ message: _message, details: _details, ...entry }) => ({
+          ...entry,
+          ...(this.aiContent.get(entry.id) ?? {
+            message: '[CONTENT_UNAVAILABLE_FOR_AI]',
+          }),
+        }),
+      ),
+    }
+  }
+
   clear() {
     this.entries.clear()
+    this.aiContent.clear()
     this.sizes.clear()
     this.bytes = 0
     this.emit({ type: 'clear', revision: ++this.revision })
@@ -66,15 +88,20 @@ export class HttpConsoleJournal {
   append(
     entry: Omit<HttpConsoleEntry, 'id' | 'timestamp'> &
       Partial<Pick<HttpConsoleEntry, 'id' | 'timestamp'>>,
+    aiContent?: Pick<HttpConsoleEntry, 'message' | 'details'>,
   ) {
+    const id = entry.id ?? randomUUID()
+    if (aiContent)
+      this.aiContent.set(id, structuredClone(aiContent))
     return this.upsert({
       ...entry,
-      id: entry.id ?? randomUUID(),
+      id,
       timestamp: entry.timestamp ?? Date.now(),
     })
   }
 
   update(id: string, patch: Partial<HttpConsoleEntry>) {
+    this.aiContent.delete(id)
     const existing = this.entries.get(id)
     // Clear must not resurrect requests that were already visible.
     if (existing)

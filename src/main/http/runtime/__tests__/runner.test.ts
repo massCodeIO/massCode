@@ -6,6 +6,8 @@ import {
   disposeHttpRun,
   getHttpRun,
   prepareHttpRun,
+  prepareHttpRunSnapshot,
+  registerHttpRun,
   startHttpRun,
 } from '../runner'
 import {
@@ -436,4 +438,15 @@ it('fails cumulative Runner extraction without committing any writes from the fa
   )
   expect(result.state).toBe('failed')
   expect(getHttpSession('/vault', 1).variables).toEqual({})
+})
+
+it('keeps manual ready runs intact while independent AI previews are prepared or abandoned', async () => {
+  const manual = prepareHttpRun(7, 1)
+  const first = prepareHttpRunSnapshot(7, 1)
+  const second = prepareHttpRunSnapshot(7, 2)
+  expect(first.view.runId).not.toBe(second.view.runId)
+  expect(getHttpRun(7, manual.runId)).toEqual(manual)
+  expect((await start(manual)).state).toBe('passed')
+  registerHttpRun(7, first)
+  expect(getHttpRun(7, first.view.runId).state).toBe('ready')
 })

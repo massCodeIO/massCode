@@ -49,3 +49,23 @@ describe('hTTP console journal', () => {
     expect(events).toHaveLength(2)
   })
 })
+
+it('uses explicitly safe AI content and never falls back to raw diagnostics', () => {
+  const journal = new HttpConsoleJournal()
+  journal.append({
+    executionId: '1',
+    kind: 'script',
+    level: 'log',
+    message: 'ordinary-secret',
+  })
+  journal.append(
+    { executionId: '2', kind: 'script', level: 'log', message: 'other-secret' },
+    { message: '[REDACTED]' },
+  )
+  expect(JSON.stringify(journal.read())).toContain('ordinary-secret')
+  expect(JSON.stringify(journal.readForAi())).not.toContain('ordinary-secret')
+  expect(JSON.stringify(journal.readForAi())).not.toContain('other-secret')
+  expect(JSON.stringify(journal.readForAi())).toContain(
+    'CONTENT_UNAVAILABLE_FOR_AI',
+  )
+})

@@ -511,7 +511,9 @@ function captureExecutionTrace(
  */
 function maskSecretValues(text: string, secretValues: string[]): string {
   let result = text
-  for (const value of [...secretValues].sort((a, b) => b.length - a.length)) {
+  for (const value of [...secretValues]
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length)) {
     result = result.split(value).join(HTTP_SECRET_MASK)
     const encoded = encodeURIComponent(value)
     // `URLSearchParams` кодирует пробел как `+`, а не `%20`, поэтому в query
@@ -571,6 +573,7 @@ export async function executeHttpRequest(
   payload: HttpExecutePayload,
   run?: HttpRunContext,
   signal?: AbortSignal,
+  onSnapshot?: (snapshot: HttpHistorySnapshot) => void,
 ): Promise<HttpExecuteResult> {
   const executionId = randomUUID()
   const networkIds: string[] = []
@@ -793,17 +796,38 @@ export async function executeHttpRequest(
           httpConsole.clear()
           return
         }
-        httpConsole.append({
-          kind: 'script',
-          level: message.level,
-          executionId,
-          message: message.args
-            .map(value =>
-              typeof value === 'string' ? value : JSON.stringify(value),
-            )
-            .join(' '),
-          details: { phase: name, source: subject.source, args: message.args },
-        })
+        const safeArgs = JSON.parse(
+          JSON.stringify(redactAiHttp(message.args), (_key, value) =>
+            typeof value === 'string'
+              ? maskSecretValues(value, [
+                  ...secretValues,
+                  interpolated.auth.token ?? '',
+                  interpolated.auth.password ?? '',
+                  interpolated.auth.value ?? '',
+                ])
+              : value),
+        )
+        httpConsole.append(
+          {
+            kind: 'script',
+            level: message.level,
+            executionId,
+            message: message.args
+              .map(value =>
+                typeof value === 'string' ? value : JSON.stringify(value),
+              )
+              .join(' '),
+            details: {
+              phase: name,
+              source: subject.source,
+              args: message.args,
+            },
+          },
+          {
+            message: JSON.stringify(safeArgs).slice(0, 16000),
+            details: { phase: name, source: subject.source },
+          },
+        )
       },
     )
     if (execution.error) {
@@ -843,12 +867,17 @@ export async function executeHttpRequest(
     if (!sentRequest)
       return undefined
     try {
-      return createHistorySnapshot(sentRequest, result, [
+      const snapshot = createHistorySnapshot(sentRequest, result, [
         ...secretValues,
         interpolated.auth.token ?? '',
         interpolated.auth.password ?? '',
         interpolated.auth.value ?? '',
       ])
+      try {
+        onSnapshot?.(structuredClone(snapshot))
+      }
+      catch {}
+      return snapshot
     }
     catch {
       // A history failure must not change the outcome of the request.

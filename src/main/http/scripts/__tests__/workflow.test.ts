@@ -2,6 +2,7 @@ import type { HttpExecutePayload } from '../../../types/http'
 import { Readable } from 'node:stream'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { emptyHttpCollection } from '../../../../shared/httpCollection'
+import { httpConsole } from '../../devtools/console'
 import { executeHttpRequest } from '../../runtime/execute'
 import {
   commitHttpSession,
@@ -455,5 +456,28 @@ it.each(['pre', 'post', 'extraction'] as const)(
     if (phase === 'pre')
       expect(mocks.request).not.toHaveBeenCalled()
     else expect(result.status).toBe(200)
+  },
+)
+
+it.each(['', 'secret"with\\slashes'])(
+  'preserves raw console and safely masks literal auth %j',
+  async (secret) => {
+    httpConsole.clear()
+    const p = payload(`console.log(${JSON.stringify(secret || 'plain log')});`)
+    if (secret)
+      p.request.auth = { type: 'bearer', token: secret }
+    allow(p)
+    await executeHttpRequest(p)
+    const raw = httpConsole
+      .read()
+      .entries
+      .filter(entry => entry.kind === 'script')
+    expect(
+      raw.some(entry => entry.message.includes(secret || 'plain log')),
+    ).toBe(true)
+    const safe = JSON.stringify(httpConsole.readForAi())
+    if (secret)
+      expect(safe).not.toContain(JSON.stringify(secret).slice(1, -1))
+    else expect(safe).toContain('plain log')
   },
 )

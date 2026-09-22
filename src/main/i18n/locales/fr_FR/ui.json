@@ -128,7 +128,7 @@
       "trash": "Vider la corbeille"
     },
     "migrate": {
-      "fromSnippetsLab": "Depuis le laboratoire d'extrait",
+      "fromSnippetsLab": "Depuis SnippetsLab",
       "fromV3": "Depuis massCode v3"
     },
     "export": {

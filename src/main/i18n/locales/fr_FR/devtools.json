@@ -182,7 +182,7 @@
       "description": "Encoder ou décoder une URL",
       "modes": {
         "urlEncode": "URL Encode",
-        "urlDecode": "URL Décode"
+        "urlDecode": "URL Decode"
       }
     },
     "slugify": {

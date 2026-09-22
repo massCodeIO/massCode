@@ -30,7 +30,7 @@
   },
   "description": {
     "storageVault": "Choisissez le répertoire du coffre-fort. Pour synchroniser entre les appareils, sélectionnez un dossier dans  iCloud Drive, Google Drive ou Dropbox.",
-    "language": "Pour applicquer les changements de langue, Vous devez relancer l'application.",
+    "language": "Pour appliquer les changements de langue, Vous devez relancer l'application.",
     "migrateSqliteUtility": "Si vous avez un fichier massCode.db d'une version précédente, utilisez cet utilitaire pour importer vos données dans le coffre-fort Markdown courant."
   },
   "special": {

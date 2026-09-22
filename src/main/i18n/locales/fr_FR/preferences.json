@@ -77,7 +77,7 @@
       "label": "Hauteur de ligne",
       "description": "Espace entre les lignes. Relax est plus facile à lire, compact contient plus de contenu.",
       "compact": "Compact (1.4)",
-      "default": "Défault (1.54)",
+      "default": "Défaut (1.54)",
       "relaxed": "Relax (1.7)"
     },
     "indentSize": {

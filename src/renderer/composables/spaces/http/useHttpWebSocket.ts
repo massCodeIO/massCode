@@ -1,3 +1,4 @@
+import type { AiHttpWebSocketReceipt } from '~/shared/aiHttpActions'
 import type { WsConnect, WsError, WsView } from '~/shared/httpWebSocket'
 import { ipc } from '@/electron'
 import { WS_LOG_LIMIT } from '~/shared/httpWebSocket'
@@ -174,6 +175,44 @@ async function connect() {
   }
 }
 
+async function adopt(receipt: AiHttpWebSocketReceipt, capturedToken = token) {
+  const id = receipt.connectionId
+  if (connectionId === id)
+    return true
+  if (
+    capturedToken !== token
+    || (httpState.activePanel !== undefined
+      && httpState.activePanel !== 'request')
+    || httpState.requestId !== receipt.requestId
+    || currentRequest.value?.id !== receipt.requestId
+    || !isWebSocket.value
+    || activeEnvironmentId.value !== receipt.environmentId
+    || isCurrentRequestLoading.value
+    || currentRequest.value.pendingCloudDownload
+  ) {
+    await ipc.invoke('spaces:http:ws-dispose', { connectionId: id })
+    return false
+  }
+  dispose()
+  const ownToken = token
+  connectionId = id
+  view.value = {
+    connectionId: id,
+    state: 'connecting',
+    messages: [],
+    lastId: 0,
+    dropped: 0,
+  }
+  timer = setInterval(() => void poll(ownToken, id), 200)
+  await poll(ownToken, id)
+  return ownToken === token && !error.value
+}
+
+function captureAdoption() {
+  const capturedToken = token
+  return (receipt: AiHttpWebSocketReceipt) => adopt(receipt, capturedToken)
+}
+
 async function disconnect() {
   const id = connectionId
   if (!id || !active.value)
@@ -244,6 +283,8 @@ export function useHttpWebSocket() {
     isWebSocket,
     active,
     connect,
+    adopt,
+    captureAdoption,
     disconnect,
     send,
     clear,

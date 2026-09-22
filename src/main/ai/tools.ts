@@ -22,7 +22,7 @@ export function editTool(contextId: string) {
     function: {
       name: 'propose_edit',
       description:
-        'Propose edits to the current code context for user review. This does NOT modify the snippet. Use when the user asks to change or fix code. Each old_text must match exactly once in the original supplied context, including whitespace. Edits must not overlap. Include enough surrounding text to make each match unique. All edits refer to the original, not to earlier edits. Preserve unrelated code.',
+        'Propose edits to the current editor text context (Code or Notes Markdown) for user review. This does NOT modify the editor. Use when the user asks to change or fix the attached text. Each old_text must match exactly once in the original supplied context, including whitespace. Edits must not overlap. Include enough surrounding text to make each match unique. All edits refer to the original, not to earlier edits. Preserve unrelated text.',
       strict: true,
       parameters: {
         type: 'object',

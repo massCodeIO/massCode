@@ -5,6 +5,7 @@ import { buildReplacement, matchesSnapshot } from '../edit'
 const contextId = '11111111-1111-4111-8111-111111111111'
 const snapshot = {
   contextId,
+  space: 'code' as const,
   snippetId: 1,
   contentId: 2,
   text: 'alpha beta gamma\n',

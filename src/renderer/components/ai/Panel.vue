@@ -278,6 +278,8 @@ onMounted(() => {
                 && (message.content
                   || message.edit
                   || message.httpProposal
+                  || message.httpActions?.length
+                  || message.dataActions?.length
                   || message.workspaceProposal
                   || message.workspaceCreations?.length
                   || canRetry(message))
@@ -294,6 +296,21 @@ onMounted(() => {
             <AiWorkspaceReview
               v-if="message.workspaceProposal"
               :message="message"
+            />
+            <UiText
+              v-for="action in message.dataActions"
+              :key="action.id"
+              variant="caption"
+              class="text-muted-foreground"
+            >
+              {{ i18n.t(`ai.dataActions.${action.kind}`) }}:
+              {{ i18n.t(`ai.dataActions.${action.status}`) }}
+            </UiText>
+            <AiHttpActionReview
+              v-for="action in message.httpActions"
+              :key="action.id"
+              :message="message"
+              :action="action"
             />
             <AiHttpReview
               v-if="message.httpProposal"

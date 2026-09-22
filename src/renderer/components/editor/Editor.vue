@@ -140,6 +140,13 @@ const isSelectedSnippetContentReady = computed(
     && selectedSnippet.value?.id === state.snippetId
     && selectedSnippetContent.value?.value !== undefined,
 )
+const unregisterAiWorkspace = useAi().registerWorkspace(() => ({
+  space: 'code',
+  selectedIds: [...selectedSnippetIds.value],
+  folderId: state.folderId ?? null,
+  library: state.libraryFilter,
+}))
+onBeforeUnmount(unregisterAiWorkspace)
 function readAiContext() {
   const content = selectedSnippetContent.value
   const snippet = selectedSnippet.value
@@ -154,6 +161,7 @@ function readAiContext() {
     return undefined
   }
   return {
+    space: 'code' as const,
     snippetId: snippet.id,
     name: snippet.name,
     contentId: content.id,

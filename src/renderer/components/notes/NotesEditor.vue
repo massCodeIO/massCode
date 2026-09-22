@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { EditSnapshot } from '@/composables/ai/edit'
 import type { NotesEditorMode } from '@/composables/spaces/notes/useNotesApp'
 import type { NoteAnnotation } from './inspector/annotations'
 import type { ExternalLinkMatch } from './inspector/externalLinks'
@@ -16,6 +17,10 @@ import {
   useNotesEditor,
   useTheme,
 } from '@/composables'
+import {
+  applyNotesEditor,
+  readNotesEditor,
+} from '@/composables/ai/notesEditor'
 import { i18n, ipc } from '@/electron'
 import { isWindows } from '@/utils'
 import { getContentSearchMatches } from '@/utils/contentSearch'
@@ -741,7 +746,26 @@ function revealAnnotation(annotation: NoteAnnotation) {
   view.focus()
 }
 
+function readAiContext() {
+  return readNotesEditor(view, props.noteId, props.disabled)
+}
+function applyAiEdit(
+  snapshot: EditSnapshot,
+  replacement: string,
+  vault: string,
+) {
+  return applyNotesEditor(
+    view,
+    props.noteId,
+    props.disabled,
+    snapshot,
+    replacement,
+    vault,
+  )
+}
 defineExpose({
+  readAiContext,
+  applyAiEdit,
   revealAnnotation,
   revealHeading,
   moveSection,

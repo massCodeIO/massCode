@@ -240,7 +240,7 @@ async function undo(index: number) {
             {{ i18n.t("ai.workspace.undone") }}
           </UiText>
           <Button
-            v-if="applied.includes(index)"
+            v-if="applied.includes(index) && !change.irreversible"
             variant="outline"
             size="sm"
             :disabled="busy || requestDirty"
@@ -248,6 +248,17 @@ async function undo(index: number) {
           >
             {{ i18n.t("ai.workspace.undo") }}
           </Button>
+          <UiText
+            v-if="change.irreversible"
+            variant="sm"
+            class="text-destructive"
+          >
+            {{
+              i18n.t(
+                `ai.workspace.consequences.${change.operation.kind === "item" ? "permanentDelete" : change.operation.kind}`,
+              )
+            }}
+          </UiText>
           <Button
             variant="ghost"
             size="sm"

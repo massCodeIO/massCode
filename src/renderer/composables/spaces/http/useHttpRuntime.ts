@@ -296,6 +296,20 @@ function finishLeave(allowed: boolean) {
   leavePromise = null
 }
 
+function discardRequestChanges() {
+  if (busy.value)
+    return false
+  draft.value = JSON.parse(saved.value || JSON.stringify(emptyHttpRuntime()))
+  discardCurrentRequestChanges()
+  expectedInputs.value = {}
+  expectedErrors.value = {}
+  touched.value.clear()
+  saveError.value = false
+  conflict.value = false
+  requestSaveError.value = false
+  return true
+}
+
 async function resolveNavigation(choice: 'save' | 'discard' | 'cancel') {
   if (busy.value)
     return
@@ -304,16 +318,9 @@ async function resolveNavigation(choice: 'save' | 'discard' | 'cancel') {
     finishLeave(success && !requestDirty.value)
     return
   }
-  if (choice === 'discard') {
-    draft.value = JSON.parse(saved.value || JSON.stringify(emptyHttpRuntime()))
-    discardCurrentRequestChanges()
-    expectedInputs.value = {}
-    expectedErrors.value = {}
-    touched.value.clear()
-    saveError.value = false
-    conflict.value = false
-    requestSaveError.value = false
-  }
+  if (choice === 'discard')
+    discardRequestChanges()
+
   finishLeave(choice === 'discard')
 }
 
@@ -351,6 +358,7 @@ export function useHttpRuntime() {
     busy,
     requestSaveError,
     saveRequest,
+    discardRequestChanges,
     validateRuntime,
     draft,
     dirty,

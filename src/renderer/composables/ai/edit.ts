@@ -1,10 +1,12 @@
 import type { AiToolCall } from '~/shared/ai'
 import { resolveAiEdits } from '~/shared/aiEdits'
 
-export interface EditSnapshot {
+export type EditorTarget =
+  | { space: 'code', snippetId: number, contentId: number }
+  | { space: 'notes', noteId: number }
+
+export type EditSnapshot = EditorTarget & {
   contextId: string
-  snippetId: number
-  contentId: number
   text: string
   from: number
   to: number
@@ -25,14 +27,18 @@ export function buildReplacement(
 
 export function matchesSnapshot(
   snapshot: EditSnapshot,
-  current: { snippetId: number, contentId: number, text: string } | undefined,
+  current: (EditorTarget & { text: string }) | undefined,
   vault: string,
 ) {
   return Boolean(
     current
     && snapshot.vault === vault
-    && snapshot.snippetId === current.snippetId
-    && snapshot.contentId === current.contentId
-    && snapshot.text === current.text,
+    && snapshot.space === current.space
+    && (snapshot.space === 'notes'
+      ? current.space === 'notes' && snapshot.noteId === current.noteId
+      : current.space === 'code'
+        && snapshot.snippetId === current.snippetId
+        && snapshot.contentId === current.contentId)
+      && snapshot.text === current.text,
   )
 }

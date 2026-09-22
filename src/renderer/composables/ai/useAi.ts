@@ -1,5 +1,6 @@
-import type { EditSnapshot } from './edit'
+import type { EditorTarget, EditSnapshot } from './edit'
 import type { HttpAiSnapshot } from './useHttpAi'
+import type { HttpExecuteResult } from '~/main/types/http'
 import type {
   AiErrorCode,
   AiEvent,
@@ -9,8 +10,17 @@ import type {
   AiSettings,
   AiToolCall,
   AiVaultItem,
+  AiWorkspaceContext,
 } from '~/shared/ai'
+import type { AiDataAction } from '~/shared/aiDataActions'
 import type { AiHttpProposal } from '~/shared/aiHttp'
+import type {
+  AiHttpAction,
+  AiHttpActionApplyResult,
+  AiHttpActionView,
+  AiHttpResultConsumer,
+  AiHttpWebSocketReceipt,
+} from '~/shared/aiHttpActions'
 import type {
   WorkspaceCreation,
   WorkspaceItem,
@@ -23,11 +33,10 @@ import { aiHttpProposalSchema } from '~/shared/aiHttp'
 import { workspaceCreationHistory } from '~/shared/aiWorkspace'
 import { buildReplacement, matchesSnapshot } from './edit'
 import { httpProposalText } from './httpProposalText'
+import { unavailableWorkspaceItems } from './workspaceLinks'
 
-export interface AiContext {
+export type AiContext = EditorTarget & {
   name?: string
-  snippetId: number
-  contentId: number
   text: string
   selection: string
   selectionFrom?: number
@@ -43,6 +52,8 @@ export interface ChatMessage extends AiMessage {
   workspaceFailedOperationIndex?: number
   workspaceItems?: WorkspaceItem[]
   workspaceProposal?: WorkspaceProposal
+  dataActions?: AiDataAction[]
+  httpActions?: AiHttpActionView[]
   httpProposal?: AiHttpProposal
   role: 'user' | 'assistant'
   rejected?: boolean
@@ -58,6 +69,7 @@ export interface ChatMessage extends AiMessage {
   wireContent?: string
   contextMode?: 'none' | 'selection' | 'fragment'
   attachments?: AiVaultItem[]
+  workspaceContext?: AiWorkspaceContext
   editorSnapshot?: AiContext
   activity?: { name: string, detail: string }[]
   searchResults?: AiSearchResults[]
@@ -74,6 +86,24 @@ interface Conversation {
 }
 const open = ref(store.app.get('code.layout.inspectorOpen') === true)
 const settings = ref<AiSettings>()
+const workspaceReader = shallowRef<() => AiWorkspaceContext | undefined>()
+const workspaceAttached = ref(true)
+const workspaceContext = computed(() =>
+  workspaceAttached.value ? workspaceReader.value?.() : undefined,
+)
+function registerWorkspace(reader: () => AiWorkspaceContext | undefined) {
+  workspaceReader.value = reader
+  return () => {
+    if (workspaceReader.value === reader)
+      workspaceReader.value = undefined
+  }
+}
+function removeWorkspaceContext() {
+  workspaceAttached.value = false
+}
+function attachWorkspaceContext() {
+  workspaceAttached.value = true
+}
 const context = ref<AiContext>()
 const contextMode = ref<'none' | 'selection' | 'fragment'>('none')
 const attachedEditor = ref<AiContext>()
@@ -94,6 +124,17 @@ let httpWriter:
     proposal: AiHttpProposal,
     checkOnly?: boolean,
   ) => boolean)
+  | undefined
+let httpActionWriter:
+  | ((
+    snapshot: HttpAiSnapshot,
+    action: AiHttpAction,
+    execute: () => Promise<HttpExecuteResult | undefined>,
+  ) => Promise<boolean>)
+  | undefined
+let httpResultConsumer: (() => AiHttpResultConsumer) | undefined
+let httpWebSocketConsumer:
+  | (() => (receipt: AiHttpWebSocketReceipt) => Promise<boolean>)
   | undefined
 let listening = false
 let autoContextEnabled = true
@@ -154,6 +195,54 @@ function onEvent(_event: unknown, event: AiEvent) {
   syncVault()
   if (event.requestId !== active.value?.requestId)
     return
+  if (event.type === 'dataAction') {
+    const actions = (message.dataActions ??= [])
+    if (actions.some(action => action.id === event.action.id))
+      return
+    actions.push(event.action)
+    const action = actions[actions.length - 1]!
+    const actionVault = vault
+    const isCurrent = () =>
+      actionVault
+      === (store.preferences.get<string>('storage.vaultPath') ?? '')
+      && conversation.messages.includes(message)
+    const report = (
+      status: AiDataAction['status'],
+      summary?: Record<string, number>,
+    ) => {
+      if (!isCurrent())
+        return
+      action.status = status
+      action.summary = summary;
+      (conversation.undoEvents ??= []).push({
+        after: conversation.messages.length,
+        content: JSON.stringify({
+          event: 'data_action_result',
+          actionId: action.id,
+          kind: action.kind,
+          input: action.input,
+          status,
+          summary,
+        }),
+      })
+    }
+    void import('./dataActions')
+      .then(({ executeDataAction }) =>
+        executeDataAction(
+          action,
+          message.editorSnapshot,
+          () => snapshotReader?.(),
+          report,
+          isCurrent,
+        ),
+      )
+      .catch(() => report('failed'))
+    return
+  }
+  if (event.type === 'httpAction') {
+    (message.httpActions ??= []).push(event.action)
+    return
+  }
   if (event.type === 'workspaceProposal') {
     if (event.applied !== undefined) {
       const receipts = (message.workspaceCreations ??= [])
@@ -357,13 +446,22 @@ function setContext(value?: AiContext) {
 function registerHttp(
   reader: NonNullable<typeof httpReader>,
   writer: NonNullable<typeof httpWriter>,
+  actionWriter?: typeof httpActionWriter,
+  resultConsumer?: typeof httpResultConsumer,
+  webSocketConsumer?: typeof httpWebSocketConsumer,
 ) {
   httpReader = reader
   httpWriter = writer
+  httpActionWriter = actionWriter
+  httpResultConsumer = resultConsumer
+  httpWebSocketConsumer = webSocketConsumer
   return () => {
     if (httpReader === reader) {
       httpReader = undefined
       httpWriter = undefined
+      httpActionWriter = undefined
+      httpResultConsumer = undefined
+      httpWebSocketConsumer = undefined
     }
   }
 }
@@ -386,6 +484,137 @@ function applyHttp(message: ChatMessage) {
   }
   message.applied = true
   return true
+}
+
+async function applyHttpAction(message: ChatMessage, action: AiHttpActionView) {
+  if (action.state !== 'pending')
+    return false
+  const conversation = Object.values(conversations).find(value =>
+    value.messages.includes(message),
+  )
+  if (!conversation)
+    return false
+  const snapshot = message.httpSnapshot
+  const fresh = action.source === 'draft' ? httpReader?.() : undefined
+  if (
+    action.source === 'draft'
+    && (!snapshot
+      || !fresh
+      || fresh.baseline !== snapshot.baseline
+      || !httpActionWriter)
+  ) {
+    return false
+  }
+  const draft = fresh?.privateDraft
+    ? { ...fresh.privateDraft, contextId: snapshot!.privateDraft!.contextId }
+    : undefined
+  type Applied = AiHttpActionApplyResult
+  const webSocketConsumer = httpWebSocketConsumer
+  const consumeWebSocket = webSocketConsumer?.()
+  let webSocketAdopted = true
+  const consumeSaved
+    = action.source === 'saved'
+      || action.action === 'patchAndSend'
+      || action.action === 'saveAndSend'
+      ? httpResultConsumer?.()
+      : undefined
+  let response: AiResult<Applied> | undefined
+  const start = async () => {
+    action.state = 'running'
+    response = (await ipc.invoke(
+      'system:ai:http-apply',
+      JSON.parse(JSON.stringify({ id: action.id, draft })),
+    )) as AiResult<Applied>
+    if (!response.ok) {
+      action.state = 'pending'
+      return undefined
+    }
+    Object.assign(action, response.data.view)
+    if (response.data.webSocket) {
+      webSocketAdopted = false
+      try {
+        if (consumeWebSocket && webSocketConsumer === httpWebSocketConsumer)
+          webSocketAdopted = await consumeWebSocket(response.data.webSocket)
+      }
+      catch {}
+      if (!webSocketAdopted) {
+        let disposed = false
+        try {
+          await ipc.invoke('spaces:http:ws-dispose', {
+            connectionId: response.data.webSocket.connectionId,
+          })
+          disposed = true
+        }
+        catch {}
+        action.state = disposed ? 'cancelled' : 'failed'
+        action.result = {
+          error: 'WEBSOCKET_ADOPTION_FAILED',
+          connectionAdopted: false,
+          cleanup: disposed ? 'disposed' : 'failed',
+        }
+      }
+    }
+    return response.data.response
+  }
+  try {
+    if (action.action === 'send' && action.source === 'draft') {
+      await httpActionWriter!(
+        snapshot!,
+        {
+          action: 'send',
+          source: 'draft',
+          requestId: snapshot!.context.requestId,
+          summary: action.summary,
+        },
+        start,
+      )
+    }
+    else {
+      await start()
+      if (response?.ok && response.data.execution && response.data.response)
+        consumeSaved?.(response.data.execution, response.data.response)
+      if (response?.ok && response.data.draftAction) {
+        let success = false
+        try {
+          success = await httpActionWriter!(
+            snapshot!,
+            response.data.draftAction,
+            async () => undefined,
+          )
+        }
+        catch {}
+        const completed = (await ipc.invoke('system:ai:http-complete', {
+          id: action.id,
+          success,
+          draft:
+            JSON.parse(JSON.stringify(httpReader?.()?.privateDraft ?? null))
+            ?? undefined,
+        })) as AiResult<Applied>
+        if (completed.ok) {
+          Object.assign(action, completed.data.view)
+          if (completed.data.execution && completed.data.response)
+            consumeSaved?.(completed.data.execution, completed.data.response)
+        }
+      }
+    }
+    if (!response?.ok)
+      return false;
+    (conversation.undoEvents ??= []).push({
+      after: conversation.messages.length,
+      content: `HTTP action result (application data): ${JSON.stringify(action)}`,
+    })
+    return (action as AiHttpActionView).state === 'done' && webSocketAdopted
+  }
+  catch {
+    return false
+  }
+}
+async function cancelHttpAction(action: AiHttpActionView) {
+  const result = (await ipc.invoke('system:ai:http-cancel', {
+    id: action.id,
+  })) as AiResult<AiHttpActionView>
+  if (result.ok)
+    Object.assign(action, result.data)
 }
 
 async function refreshSettings() {
@@ -464,13 +693,12 @@ async function send(
       : mode === 'fragment'
         ? (latest?.text ?? '')
         : ''
-  if (mode !== 'none' && !text.trim())
-    return false
+  const hasEditorContext = mode !== 'none' && latest !== undefined
   const from = mode === 'selection' ? latest?.selectionFrom : 0
   const to = mode === 'selection' ? latest?.selectionTo : latest?.text.length
   const hasRange
-    = mode !== 'none'
-      && latest !== undefined
+    = hasEditorContext
+      && Boolean(text.trim())
       && from !== undefined
       && to !== undefined
       && latest.text.slice(from, to) === text
@@ -480,8 +708,13 @@ async function send(
   const edit: EditSnapshot | undefined = hasRange
     ? {
         contextId: requestId,
-        snippetId: latest!.snippetId,
-        contentId: latest!.contentId,
+        ...(latest!.space === 'notes'
+          ? { space: 'notes' as const, noteId: latest!.noteId }
+          : {
+              space: 'code' as const,
+              snippetId: latest!.snippetId,
+              contentId: latest!.contentId,
+            }),
         text: latest!.text,
         from: from!,
         to: to!,
@@ -494,18 +727,31 @@ async function send(
   const instruction = proposeEdit
     ? '\nUse propose_edit to propose the requested change for review.'
     : ''
-  const wireContent = `${prompt.trim()}${instruction}${text ? `\n\n<code-context id=${JSON.stringify(requestId)} language=${JSON.stringify(latest?.language)}>\n${text}\n</code-context>` : ''}`
+  const wireContent = `${prompt.trim()}${instruction}${hasEditorContext ? `\n\n<code-context id=${JSON.stringify(requestId)} ${latest?.space === 'notes' ? `note-id=${JSON.stringify(latest.noteId)} space="notes"` : `snippet-id=${JSON.stringify(latest?.snippetId)} content-id=${JSON.stringify(latest?.contentId)} space="code"`} language=${JSON.stringify(latest?.language)}>\n${text}\n</code-context>` : ''}`
+  const selectedWorkspace = retryMessage
+    ? conversation.messages.at(-2)?.workspaceContext
+    : workspaceContext.value
+  const capturedWorkspace = selectedWorkspace
+    ? (JSON.parse(JSON.stringify(selectedWorkspace)) as AiWorkspaceContext)
+    : undefined
   const selectedAttachments = retryMessage
     ? (conversation.messages.at(-2)?.attachments ?? [])
     : attachments.value.map(item => ({ ...item }))
-  const httpCandidate = retryMessage?.httpSnapshot ?? httpReader?.()
-  const httpSnapshot
-    = httpCandidate
-      && selectedAttachments.some(
+  const httpCandidate = retryMessage
+    ? retryMessage.httpSnapshot
+    : httpReader?.()
+  const httpSnapshot = retryMessage
+    ? httpCandidate
+    : httpCandidate
+      && (selectedAttachments.some(
         item =>
           item.type === 'http_request'
           && item.id === httpCandidate.context.requestId,
       )
+      || (capturedWorkspace?.space === 'http'
+        && capturedWorkspace.selectedIds.includes(
+          httpCandidate.context.requestId,
+        )))
       ? httpCandidate
       : undefined
   const historyMessages = retryMessage
@@ -525,6 +771,7 @@ async function send(
       if (
         message.role !== 'user'
         && message.status !== 'done'
+        && !message.dataActions?.length
         && !message.workspaceCreations?.length
         && !message.protocol?.length
         && !message.calls?.length
@@ -736,12 +983,14 @@ async function send(
     context: text,
     contextMode: mode,
     attachments: selectedAttachments,
-    editorSnapshot: attachedEditor.value ? { ...latest! } : undefined,
+    editorSnapshot: hasEditorContext ? { ...latest! } : undefined,
+    workspaceContext: capturedWorkspace,
   })
   conversation.messages.push({
     role: 'assistant',
     createdAt: Date.now(),
     httpSnapshot,
+    editorSnapshot: latest ? { ...latest } : undefined,
     content: '',
     status: 'streaming',
     edit,
@@ -754,10 +1003,14 @@ async function send(
     const result = (await ipc.invoke('system:ai:start', {
       requestId,
       vaultAccess: true,
+      workspaceContext: capturedWorkspace,
       userMessages: conversation.messages
         .filter(message => message.role === 'user')
         .slice(-AI_LIMITS.messages)
         .map(message => message.content),
+      httpDraft: httpSnapshot?.privateDraft
+        ? JSON.parse(JSON.stringify(httpSnapshot.privateDraft))
+        : undefined,
       httpContext: httpSnapshot?.context
         ? JSON.parse(JSON.stringify(httpSnapshot.context))
         : undefined,
@@ -779,7 +1032,8 @@ async function send(
 
 function canRetry(message: ChatMessage) {
   return (
-    !active.value
+    !message.dataActions?.length
+    && !active.value
     && !message.applied
     && !message.workspaceCreations?.length
     && !message.rejected
@@ -857,6 +1111,11 @@ export function useAi() {
     listening = true
   }
   return {
+    unavailableWorkspaceItems: computed(() =>
+      unavailableWorkspaceItems(
+        conversations[currentKey.value]?.messages ?? [],
+      ),
+    ),
     markWorkspaceUndone: (
       message: ChatMessage,
       index: number,
@@ -934,10 +1193,16 @@ export function useAi() {
     openAndFocus,
     registerHttp,
     canApplyHttp,
+    applyHttpAction,
+    cancelHttpAction,
     applyHttp,
     setContext,
     setVaultContext,
     registerEditor,
+    registerWorkspace,
+    workspaceContext,
+    removeWorkspaceContext,
+    attachWorkspaceContext,
     refreshSettings,
     send,
     cancel,

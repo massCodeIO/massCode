@@ -66,6 +66,7 @@ async function setup() {
   }))
   vi.doMock('@/electron', () => ({
     ipc: { invoke },
+    store: { preferences: { get: () => '/vault' } },
     i18n: { t: (key: string) => key },
   }))
   vi.doMock('@/services/api', () => ({
@@ -80,6 +81,7 @@ async function setup() {
     saveCurrentRequest,
     putRuntime,
     currentRequest,
+    currentDraft,
     httpState,
   }
 }
@@ -198,4 +200,51 @@ describe('hTTP draft execution', () => {
     expect(saveCurrentRequest).not.toHaveBeenCalled()
     expect(putRuntime).not.toHaveBeenCalled()
   })
+})
+
+it('consumes a saved response with its exact input without replacing the dirty draft', async () => {
+  const { execute, currentDraft } = await setup()
+  currentDraft.value.url = 'https://example.test/dirty'
+  const consume = execute.captureSavedExecutionResult()
+  const request = {
+    ...structuredClone(JSON.parse(JSON.stringify(currentDraft.value))),
+    url: 'https://example.test/saved',
+  }
+  const receipt = {
+    vault: '/vault',
+    requestCreatedAt: 1,
+    payload: { requestId: 1, environmentId: null, request },
+  }
+  expect(
+    consume(
+      receipt as any,
+      { status: 200, body: 'fresh saved response' } as any,
+    ),
+  ).toBe(true)
+  expect(execute.lastResponse.value?.body).toBe('fresh saved response')
+  expect(execute.lastExecutionRequest.value?.url).toBe(
+    'https://example.test/saved',
+  )
+  expect(currentDraft.value.url).toBe('https://example.test/dirty')
+})
+it('does not attach a late saved response to another or reselected request', async () => {
+  const { execute, currentRequest, currentDraft, httpState } = await setup()
+  const consume = execute.captureSavedExecutionResult()
+  const receipt = {
+    vault: '/vault',
+    requestCreatedAt: 1,
+    payload: {
+      requestId: 1,
+      environmentId: null,
+      request: JSON.parse(JSON.stringify(currentDraft.value)),
+    },
+  }
+  currentRequest.value = { ...currentRequest.value, id: 2 }
+  httpState.requestId = 2
+  execute.lastResponse.value = { body: 'other response' } as any
+  expect(consume(receipt, { body: 'late' } as any)).toBe(false)
+  expect(execute.lastResponse.value?.body).toBe('other response')
+  currentRequest.value = { ...currentRequest.value, id: 1 }
+  httpState.requestId = 1
+  expect(consume(receipt, { body: 'late' } as any)).toBe(false)
 })

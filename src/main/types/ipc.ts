@@ -46,7 +46,7 @@ type MainMenuAction =
 type DBAction = 'migrate-to-markdown'
 
 type SystemAction =
-  | `ai:${'settings' | 'configure' | 'models' | 'context-search' | 'start' | 'cancel' | 'event' | 'workspace-apply' | 'workspace-undo'}`
+  | `ai:${'settings' | 'configure' | 'models' | 'context-search' | 'start' | 'cancel' | 'event' | 'workspace-apply' | 'workspace-undo' | 'http-apply' | 'http-complete' | 'http-cancel'}`
   | 'activate-license'
   | 'api-request'
   | 'api-token-generate'

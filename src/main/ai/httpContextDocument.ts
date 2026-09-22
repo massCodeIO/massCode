@@ -5,7 +5,7 @@ const labels: Record<string, string> = {
   sizeBytes: 'Size in bytes',
   executionTrace: 'Captured outgoing attempts',
   executionInput:
-    'Draft used for this execution (before variable interpolation)',
+    'Request definition used for this execution (before variable interpolation)',
   runtimeResults: 'Executed checks and extractions',
   sessionNames: 'Session variable names',
   environmentId: 'Selected environment ID',

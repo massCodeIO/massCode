@@ -1,4 +1,6 @@
+import type { AiDataAction } from './aiDataActions'
 import type { AiHttpProposal } from './aiHttp'
+import type { AiHttpActionView } from './aiHttpActions'
 import type {
   WorkspaceContainer,
   WorkspaceItem,
@@ -6,6 +8,7 @@ import type {
 } from './aiWorkspace'
 import { z } from 'zod'
 import { aiHttpContextSchema } from './aiHttp'
+import { aiHttpDraftSchema } from './aiHttpActions'
 import { aiResponseReplaySchema } from './aiResponses'
 import { aiSdkReplaySchema } from './aiSdkReplay'
 
@@ -181,10 +184,21 @@ export interface AiSearchResults {
   total: number
   expanded: boolean
 }
+export const aiWorkspaceContextSchema = z
+  .object({
+    space: z.enum(['code', 'notes', 'http']),
+    selectedIds: z.array(z.number().int().positive()).max(500),
+    folderId: z.number().int().positive().nullable().optional(),
+    library: z.string().max(80).optional(),
+  })
+  .strict()
+export type AiWorkspaceContext = z.infer<typeof aiWorkspaceContextSchema>
 export const aiStartSchema = z
   .object({
     requestId: z.uuid(),
+    workspaceContext: aiWorkspaceContextSchema.optional(),
     httpContext: aiHttpContextSchema.optional(),
+    httpDraft: aiHttpDraftSchema.optional(),
     userMessages: z
       .array(z.string().max(AI_LIMITS.inputBytes))
       .max(AI_LIMITS.messages)
@@ -199,6 +213,12 @@ export const aiStartSchema = z
   .refine(
     value =>
       Boolean(value.editContextId) === (value.editContextText !== undefined),
+  )
+  .refine(
+    value =>
+      !value.httpDraft
+      || (value.httpDraft.requestId === value.httpContext?.requestId
+        && value.httpDraft.contextId === value.httpContext?.contextId),
   )
   .refine(value => value.messages.at(-1)?.role === 'user')
   .refine((value) => {
@@ -268,6 +288,8 @@ export type AiEvent =
     containers?: WorkspaceContainer[]
     failedOperationIndex?: number
   }
+  | { requestId: string, type: 'dataAction', action: AiDataAction }
+  | { requestId: string, type: 'httpAction', action: AiHttpActionView }
   | { requestId: string, type: 'httpProposal', proposal: AiHttpProposal }
   | { requestId: string, type: 'answerReset' }
   | { requestId: string, type: 'searchResults', result: AiSearchResults }

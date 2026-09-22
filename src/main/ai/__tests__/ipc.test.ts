@@ -4,13 +4,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AiError } from '../errors'
 import { registerAiHandlers } from '../ipc'
 
+vi.mock('../../http/runtime/ownedExecution', () => ({
+  executeOwnedHttpRequest: vi.fn(),
+}))
 vi.mock('../workspaceTools', () => ({
   workspaceTools: ['create_workspace_items', 'propose_workspace_changes'].map(
     name => ({ type: 'function', function: { name } }),
   ),
+  workspaceToolError: (error: Error) => ({ error: error.message }),
   workspaceStructure: vi.fn(),
   workspaceRead: vi.fn(),
   workspaceInventory: vi.fn(),
+  readCurrentWorkspace: vi.fn(value => ({ captured: value })),
 }))
 
 const mocks = vi.hoisted(() => ({
@@ -37,6 +42,32 @@ vi.mock('../workspace', () => ({
 vi.mock('../client', () => ({
   streamAiChat: mocks.stream,
   listAiModels: mocks.models,
+}))
+vi.mock('../../store', () => ({
+  store: { preferences: { get: () => '/vault' } },
+}))
+vi.mock('../../storage', () => ({
+  useHttpStorage: () => ({
+    requests: {
+      getRequestById: () => ({
+        id: 465,
+        name: 'Saved form',
+        isDeleted: 0,
+        protocol: 'http',
+        method: 'POST',
+        url: 'https://example.test',
+        headers: [],
+        query: [],
+        bodyType: 'multipart',
+        body: null,
+        formData: [
+          { key: 'password', type: 'text', value: 'saved-secret' },
+          { key: 'token', type: 'text', value: 'saved-secret' },
+          { key: 'ordinary', type: 'text', value: 'kept' },
+        ],
+      }),
+    },
+  }),
 }))
 vi.mock('../vault', () => ({
   vaultIdentity: () => '/vault',
@@ -67,6 +98,7 @@ function setup() {
     (event: any, payload: unknown) => Promise<any>
   >()
   const owner = Object.assign(new EventEmitter(), {
+    id: 1,
     ipc: {
       handle: (channel: string, handler: any) => handlers.set(channel, handler),
     },
@@ -379,6 +411,54 @@ it('starts with only the explicit attachment and searches on demand', async () =
   ).toBe(false)
 })
 
+it('offers workspace metadata review alongside an editable code fragment without creating records', async () => {
+  const plan = {
+    summary: 'Add description and tags',
+    operations: [
+      {
+        space: 'code',
+        kind: 'item',
+        action: 'update',
+        id: 112,
+        fields: {
+          description: 'Adds two numbers.',
+          tags: ['javascript', 'math'],
+        },
+      },
+    ],
+  }
+  const proposal = { id: id2, summary: plan.summary, changes: [] }
+  mocks.propose.mockReturnValueOnce(proposal)
+  mocks.stream.mockReset().mockImplementationOnce(async (...args) => {
+    expect(args[4]).toBe(id1)
+    expect(args[5]).toBe('return a + b;')
+    const runtime = args[10]
+    expect(runtime.tools.map((tool: any) => tool.function.name)).toContain(
+      'propose_workspace_changes',
+    )
+    expect(
+      await runtime.execute('propose_workspace_changes', JSON.stringify(plan)),
+    ).toEqual({ status: 'awaiting_user_review', proposalId: id2 })
+    return []
+  })
+  const { invoke, owner } = setup()
+  await invoke('start', {
+    ...request(id1),
+    vaultAccess: true,
+    editContextId: id1,
+    editContextText: 'return a + b;',
+  })
+  await flush()
+  await expect(mocks.stream.mock.results[0].value).resolves.toEqual([])
+  expect(mocks.propose).toHaveBeenCalledWith(plan, [])
+  expect(mocks.create).not.toHaveBeenCalled()
+  expect(owner.send).toHaveBeenCalledWith('system:ai:event', {
+    requestId: id1,
+    type: 'workspaceProposal',
+    proposal,
+  })
+})
+
 it('does not answer or retrieve after cancellation during scope planning', async () => {
   let finish!: (value: any) => void
   mocks.turnPlan.mockImplementationOnce(
@@ -432,6 +512,8 @@ it('reads actual HTTP state only on demand and prevents unsolicited proposals', 
   expect(response.content).toContain('paid')
   expect(response.configuredChecks[0].name).toBe('HTTP 200')
   expect(runtime.tools.map((tool: any) => tool.function.name)).toEqual([
+    'propose_http_action',
+    'control_http_activity',
     'read_http_context',
   ])
   expect(await runtime.execute('propose_http_assertions', '{}')).toEqual({
@@ -668,4 +750,104 @@ it('limits planned creation operations across calls, including a partial batch',
   await flush()
   expect(mocks.create).toHaveBeenCalledOnce()
   await expect(mocks.stream.mock.results[0].value).resolves.toEqual([])
+})
+
+it('redacts saved multipart credentials before sending an attachment to the provider', async () => {
+  const actual = await vi.importActual<typeof import('../vault')>('../vault')
+  const mocked = await import('../vault')
+  vi.mocked(mocked.readVaultItem).mockImplementationOnce(actual.readVaultItem)
+  mocks.stream.mockReset().mockResolvedValue([])
+  const { invoke } = setup()
+  await invoke('start', {
+    ...request(id1),
+    attachments: [{ type: 'http_request', id: 465 }],
+  })
+  await flush()
+  const payload = JSON.stringify(mocks.stream.mock.calls[0][1])
+  expect(payload).not.toContain('saved-secret')
+  expect(payload).toContain('[REDACTED]')
+  expect(payload).toContain('ordinary')
+  expect(payload).toContain('kept')
+})
+
+it('does not allow saved network proposals through an attachment without vault access or spoof a draft', async () => {
+  mocks.stream.mockReset().mockResolvedValue([])
+  mocks.turnPlan.mockResolvedValue({ scope: 'context' })
+  const { invoke } = setup()
+  await invoke('start', {
+    ...request(id1),
+    httpContext: httpSnapshot,
+    vaultAccess: false,
+  })
+  await flush()
+  const runtime = mocks.stream.mock.calls[0][10]
+  const saved = await runtime.execute(
+    'propose_http_action',
+    JSON.stringify({
+      action: 'send',
+      source: 'saved',
+      requestId: 465,
+      summary: 'Send',
+    }),
+  )
+  expect(saved).toMatchObject({ error: expect.any(String) })
+  const draft = await runtime.execute(
+    'propose_http_action',
+    JSON.stringify({
+      action: 'send',
+      source: 'draft',
+      requestId: 465,
+      summary: 'Send',
+    }),
+  )
+  expect(draft).toMatchObject({ error: expect.any(String) })
+  const { executeOwnedHttpRequest } = await import(
+    '../../http/runtime/ownedExecution'
+  )
+  expect(executeOwnedHttpRequest).not.toHaveBeenCalled()
+})
+
+it('returns captured workspace metadata and prepares native IO without claiming a mutation', async () => {
+  const captured = { space: 'notes', selectedIds: [7, 8], folderId: 3 }
+  mocks.stream.mockReset().mockImplementationOnce(async (...args) => {
+    const runtime = args[10]
+    expect(await runtime.execute('read_current_workspace', '{}')).toEqual({
+      captured,
+    })
+    const result = await runtime.execute(
+      'request_import',
+      JSON.stringify({ space: 'notes', source: 'obsidian' }),
+    )
+    expect(result.status).toBe('awaiting_user_dialog')
+    expect(runtime.isComplete()).toBe(true)
+    expect(
+      await runtime.execute(
+        'request_export',
+        JSON.stringify({
+          kind: 'note',
+          id: 7,
+          source: 'saved',
+          format: 'html',
+        }),
+      ),
+    ).toEqual({ error: 'PROPOSAL_ALREADY_PENDING' })
+    return []
+  })
+  const { invoke, owner } = setup()
+  await invoke('start', {
+    ...request(id1),
+    vaultAccess: true,
+    workspaceContext: captured,
+  })
+  await vi.waitFor(() =>
+    expect(
+      owner.send.mock.calls.some(call => call[1].type === 'dataAction'),
+    ).toBe(true),
+  )
+  expect(
+    owner.send.mock.calls.find(call => call[1].type === 'dataAction')?.[1]
+      .action
+      .status,
+  ).toBe('pending')
+  expect(mocks.create).not.toHaveBeenCalled()
 })

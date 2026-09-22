@@ -1,10 +1,10 @@
 import type { AiContext } from '../useAi'
 import type { AiEvent, AiStart } from '~/shared/ai'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, shallowRef } from 'vue'
 import { aiStartSchema } from '~/shared/ai'
 
-Object.assign(globalThis, { computed, reactive, ref })
+Object.assign(globalThis, { computed, reactive, ref, shallowRef })
 
 async function setup() {
   vi.resetModules()
@@ -37,6 +37,7 @@ async function setup() {
   const { useAi } = await import('../useAi')
   const ai = useAi()
   let snapshot: AiContext | undefined = {
+    space: 'code' as const,
     snippetId: 1,
     contentId: 10,
     text: 'const first = 1;\nconst selected = 2;',
@@ -184,6 +185,82 @@ describe('aI chat context and request lifecycle', () => {
     expect(request().messages[0].content).toContain('const unsavedWhole = 42;')
     expect(request().messages[0].content).not.toContain('const selected = 2;')
   })
+
+  it.each(['fragment', 'selection'] as const)(
+    'identifies the saved snippet for metadata changes with %s context and on retry',
+    async (mode) => {
+      const { ai, request, emit, setSnapshot } = await setup()
+      setSnapshot({
+        snippetId: 112,
+        contentId: 118,
+        text: 'return a + b;',
+        selection: 'a + b',
+        selectionFrom: 7,
+        selectionTo: 12,
+        language: 'javascript',
+      })
+      ai.attachEditor(mode)
+      await ai.send('добавь описание и теги в сниппет')
+      const first = request()
+      expect(first.vaultAccess).toBe(true)
+      expect(first.messages.at(-1)?.content).toContain(
+        'snippet-id=112 content-id=118',
+      )
+      expect(first.editContextText).toBe(
+        mode === 'selection' ? 'a + b' : 'return a + b;',
+      )
+      emit({ requestId: first.requestId, type: 'error', error: 'connection' })
+      const failed = ai.conversation.value.messages.at(-1)!
+      setSnapshot({
+        snippetId: 999,
+        contentId: 998,
+        text: 'other code',
+        selection: '',
+        language: 'text',
+      })
+      await ai.retry(failed)
+      expect(request().messages.at(-1)?.content).toContain(
+        'snippet-id=112 content-id=118',
+      )
+      expect(request().messages.at(-1)?.content).not.toContain(
+        'snippet-id=999',
+      )
+    },
+  )
+
+  it('does not send saved snippet identity after removing editor context', async () => {
+    const { ai, request } = await setup()
+    ai.setOpen(true)
+    ai.removeEditorContext()
+    await ai.send('Explain tags')
+    expect(request().messages.at(-1)?.content).toBe('Explain tags')
+    expect(request().editContextId).toBeUndefined()
+  })
+
+  it.each(['fragment', 'selection'] as const)(
+    'allows metadata and global requests with an empty %s',
+    async (mode) => {
+      const { ai, request, setSnapshot } = await setup()
+      setSnapshot({
+        snippetId: 12,
+        contentId: 18,
+        text: '',
+        selection: '',
+        selectionFrom: 0,
+        selectionTo: 0,
+        language: 'javascript',
+      })
+      ai.attachEditor(mode)
+      expect(await ai.send('Add a description and tags')).toBe(true)
+      expect(request().messages.at(-1)?.content).toContain(
+        'snippet-id=12 content-id=18',
+      )
+      expect(request().vaultAccess).toBe(true)
+      expect(request().editContextId).toBeUndefined()
+      expect(request().editContextText).toBeUndefined()
+      expect(aiStartSchema.safeParse(request()).success).toBe(true)
+    },
+  )
 
   it('keeps a streaming conversation when switching records or leaving the editor', async () => {
     const { ai, request, emit, setSnapshot, invoke } = await setup()
@@ -460,7 +537,7 @@ describe('retry, stopped proposals and history budget', () => {
     expect(aiStartSchema.safeParse(request()).success).toBe(true)
   })
 
-  it('retries the last failed attempt with fresh context and preserves a newer draft', async () => {
+  it('retries the last failed attempt with its original context and preserves a newer draft', async () => {
     const { ai, request, emit, updateBuffer } = await setup()
     ai.contextMode.value = 'fragment'
     await ai.send('Fix', true)
@@ -473,7 +550,8 @@ describe('retry, stopped proposals and history budget', () => {
     expect(await ai.retry(failed)).toBe(true)
     expect(request().requestId).not.toBe(first.requestId)
     expect(request().messages).toHaveLength(1)
-    expect(request().messages[0].content).toContain('new current fragment')
+    expect(request().messages[0].content).toContain('const first = 1;')
+    expect(request().messages[0].content).not.toContain('new current fragment')
     expect(request().messages[0].content).toContain('Use propose_edit')
     expect(ai.conversation.value!.messages).toHaveLength(2)
     expect(ai.conversation.value!.draft).toBe('Next question')
@@ -481,15 +559,15 @@ describe('retry, stopped proposals and history budget', () => {
     expect(ai.conversation.value!.messages.at(-1)!.content).toBe('')
   })
 
-  it('keeps the failed attempt if retry cannot fit its fresh context', async () => {
+  it('does not replace the original retry context with a newly oversized selection', async () => {
     const { ai, updateBuffer } = await setup()
     ai.contextMode.value = 'selection'
     await ai.send('Question')
     ai.cancel()
     const failed = ai.conversation.value!.messages.at(-1)!
     updateBuffer({ selection: 'я'.repeat(140_000) })
-    expect(await ai.retry(failed)).toBe(false)
-    expect(ai.conversation.value!.messages.at(-1)).toBe(failed)
+    expect(await ai.retry(failed)).toBe(true)
+    expect(ai.conversation.value!.messages.at(-1)).not.toBe(failed)
     expect(ai.canApply(failed)).toBe(false)
   })
 
@@ -954,5 +1032,244 @@ it.each([false, true])(
     }
     expect(creation.workspaceCreations![0].applied).toEqual([0])
     expect(creation.workspaceCreations![0].items[0]!.id).toBe(42)
+  },
+)
+
+it('consumes a saved execution receipt and gives the next turn its actual response context', async () => {
+  const { ai, emit, request, invoke } = await setup()
+  const consume = vi.fn(() => true)
+  ai.registerHttp(
+    () => undefined,
+    vi.fn(() => false),
+    undefined,
+    () => consume,
+  )
+  await ai.send('Send saved request')
+  const requestId = request().requestId
+  const action = {
+    id: '11111111-1111-4111-8111-111111111111',
+    action: 'send' as const,
+    source: 'saved' as const,
+    state: 'pending' as const,
+    summary: 'Send',
+    preview: {},
+  }
+  emit({ requestId, type: 'httpAction', action })
+  emit({ requestId, type: 'delta', text: 'Review the send.' })
+  emit({ requestId, type: 'done' })
+  const execution = {
+    payload: { request: { auth: { token: 'private-receipt-token' } } },
+  }
+  const response = { status: 200, body: 'fresh saved response' }
+  invoke.mockImplementation(async channel =>
+    channel === 'system:ai:http-apply'
+      ? {
+          ok: true,
+          data: {
+            view: {
+              ...action,
+              state: 'done',
+              result: {
+                responseContext: { requestId: 7, source: 'saved', response },
+              },
+            },
+            execution,
+            response,
+          },
+        }
+      : { ok: true, data: null },
+  )
+  const message = ai.conversation.value.messages.at(-1)!
+  expect(await ai.applyHttpAction(message, message.httpActions![0])).toBe(true)
+  expect(consume).toHaveBeenCalledWith(execution, response)
+  await ai.send('What did the saved request return?')
+  const history = JSON.stringify(request().messages)
+  expect(history).toContain('fresh saved response')
+  expect(history).not.toContain('private-receipt-token')
+})
+
+it('captures workspace selection per turn, preserves Retry, and never reattaches a removed selection', async () => {
+  const { ai, request, emit } = await setup()
+  const selection = ref({
+    space: 'notes' as const,
+    selectedIds: [1, 2],
+    folderId: 3,
+    library: 'all',
+  })
+  ai.registerWorkspace(() => selection.value)
+  await ai.send('Describe selected tasks')
+  expect(request().workspaceContext?.selectedIds).toEqual([1, 2])
+  emit({ requestId: request().requestId, type: 'error', error: 'connection' })
+  selection.value = { ...selection.value, selectedIds: [4] }
+  await ai.retry(ai.conversation.value!.messages.at(-1)!)
+  expect(request().workspaceContext?.selectedIds).toEqual([1, 2])
+  ai.cancel()
+  await ai.send('New selection')
+  expect(request().workspaceContext?.selectedIds).toEqual([4])
+  ai.cancel()
+  ai.removeWorkspaceContext()
+  selection.value = { ...selection.value, selectedIds: [5] }
+  await ai.send('No selection')
+  expect(request().workspaceContext).toBeUndefined()
+})
+it('uses Notes identity and exact Markdown selection for a reviewed editor change', async () => {
+  const { ai, request, emit } = await setup()
+  const snapshot = {
+    space: 'notes' as const,
+    noteId: 7,
+    name: 'Note',
+    text: '# Title\nText',
+    language: 'markdown',
+    selection: 'Text',
+    selectionFrom: 8,
+    selectionTo: 12,
+  }
+  const write = vi.fn(() => true)
+  ai.registerEditor(() => snapshot, write)
+  ai.attachEditor('selection')
+  await ai.send('Revise text', true)
+  expect(request().messages.at(-1)?.content).toContain(
+    'note-id=7 space="notes"',
+  )
+  emit(propose(request(), 'Text', 'Revised'))
+  emit({ requestId: request().requestId, type: 'done' })
+  const message = ai.conversation.value!.messages.at(-1)!
+  expect(ai.applyEdit(message)).toBe(true)
+  expect(write).toHaveBeenCalledWith(
+    expect.objectContaining({ space: 'notes', noteId: 7, from: 8, to: 12 }),
+    'Revised',
+  )
+})
+
+it.each([true, false])(
+  'keeps the selected HTTP snapshot with pinned Notes and preserves snapshot presence=%s on Retry',
+  async (attached) => {
+    const { ai, emit, request, setSnapshot } = await setup()
+    setSnapshot(undefined)
+    ai.addAttachment({ type: 'note', id: 9, name: 'Pinned note' })
+    const snapshot = {
+      baseline: 'original',
+      context: {
+        contextId: 'a52a8b2b-09be-42c2-9355-05b89bb86817',
+        requestId: 7,
+        name: 'Request',
+        request: '{}',
+        response: null,
+        assertions: [],
+      },
+    }
+    let live = snapshot
+    const reader = vi.fn(() => live)
+    ai.registerHttp(reader, () => false)
+    ai.registerWorkspace(() => ({
+      space: 'http',
+      selectedIds: [7],
+      folderId: null,
+      library: 'all',
+    }))
+    if (!attached)
+      ai.removeWorkspaceContext()
+    await ai.send('Inspect current draft')
+    expect(request().httpContext).toEqual(
+      attached ? snapshot.context : undefined,
+    )
+    emit({ requestId: request().requestId, type: 'done' })
+    const message = ai.conversation.value.messages.at(-1)!
+    live = {
+      ...snapshot,
+      context: { ...snapshot.context, request: 'changed' },
+    }
+    ai.attachWorkspaceContext()
+    reader.mockClear()
+    await ai.retry(message)
+    expect(reader).not.toHaveBeenCalled()
+    expect(request().httpContext).toEqual(
+      attached ? snapshot.context : undefined,
+    )
+  },
+)
+
+it.each(['same', 'unmounted', 'replaced', 'rejected', 'throws'])(
+  'routes a private WebSocket receipt to the %s HTTP consumer',
+  async (lifecycle) => {
+    const { ai, emit, request, invoke } = await setup()
+    const consume = vi.fn(async () => {
+      if (lifecycle === 'throws')
+        throw new Error('consumer failed')
+      return lifecycle !== 'rejected'
+    })
+    const unregister = ai.registerHttp(
+      () => undefined,
+      () => false,
+      undefined,
+      undefined,
+      () => consume,
+    )
+    await ai.send('Connect saved WebSocket')
+    const action = {
+      id: '11111111-1111-4111-8111-111111111111',
+      action: 'connectWebSocket' as const,
+      source: 'saved' as const,
+      state: 'pending' as const,
+      summary: 'Connect',
+      preview: {},
+    }
+    emit({ requestId: request().requestId, type: 'httpAction', action })
+    emit({ requestId: request().requestId, type: 'done' })
+    const webSocket = {
+      connectionId: 'approved',
+      requestId: 7,
+      environmentId: null,
+    }
+    let resolve!: (value: unknown) => void
+    const applied = new Promise((done) => {
+      resolve = done
+    })
+    invoke.mockImplementation(async channel =>
+      channel === 'system:ai:http-apply' ? applied : null,
+    )
+    const message = ai.conversation.value.messages.at(-1)!
+    const applying = ai.applyHttpAction(message, message.httpActions![0])
+    if (lifecycle === 'unmounted' || lifecycle === 'replaced')
+      unregister()
+    const replacement = vi.fn(async () => true)
+    if (lifecycle === 'replaced') {
+      ai.registerHttp(
+        () => undefined,
+        () => false,
+        undefined,
+        undefined,
+        () => replacement,
+      )
+    }
+    resolve({
+      ok: true,
+      data: { view: { ...action, state: 'done' }, webSocket },
+    })
+    expect(await applying).toBe(lifecycle === 'same')
+    if (lifecycle === 'same') {
+      expect(consume).toHaveBeenCalledWith(webSocket)
+    }
+    else {
+      expect(invoke).toHaveBeenCalledWith('spaces:http:ws-dispose', {
+        connectionId: 'approved',
+      })
+    }
+    expect(replacement).not.toHaveBeenCalled()
+    expect(JSON.stringify(message)).not.toContain('approved')
+    expect(message.httpActions![0].state).toBe(
+      lifecycle === 'same' ? 'done' : 'cancelled',
+    )
+    if (lifecycle !== 'same') {
+      expect(message.httpActions![0].result).toMatchObject({
+        connectionAdopted: false,
+        cleanup: 'disposed',
+      })
+      await ai.send('Connection status?')
+      expect(JSON.stringify(request().messages)).toContain(
+        'WEBSOCKET_ADOPTION_FAILED',
+      )
+      expect(JSON.stringify(request().messages)).not.toContain('approved')
+    }
   },
 )

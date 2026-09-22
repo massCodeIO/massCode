@@ -1,6 +1,7 @@
 import type { IpcMainInvokeEvent, WebContents } from 'electron'
 import type { AiEvent, AiResult, AiStart } from '../../shared/ai'
 import type { AiReplay } from './replay'
+import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import {
   AI_LIMITS,
@@ -8,10 +9,16 @@ import {
   aiConfigureSchema,
   aiStartSchema,
 } from '../../shared/ai'
+import {
+  aiExportActionSchema,
+  aiImportActionSchema,
+} from '../../shared/aiDataActions'
+import { aiHttpDraftSchema } from '../../shared/aiHttpActions'
 import { workspaceCreationHistory } from '../../shared/aiWorkspace'
 import { isTrustedApiRequest } from '../api/requestIpc'
 import { listAiModels, streamAiChat } from './client'
 import { AiError, aiErrorCode } from './errors'
+import { createHttpActionManager, httpActionTools } from './httpActions'
 import { httpContextDocument } from './httpContextDocument'
 import { createHttpTools } from './httpTools'
 import { replayFields } from './replay'
@@ -36,6 +43,8 @@ import { createWorkspaceManager } from './workspace'
 import { creationPlan } from './workspaceCreation'
 import { workspaceReviewSchema } from './workspaceReview'
 import {
+  readCurrentWorkspace,
+  readHttpState,
   workspaceInventory,
   workspaceRead,
   workspaceStructure,
@@ -45,6 +54,7 @@ import {
 
 export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
   const workspace = createWorkspaceManager()
+  const httpActions = createHttpActionManager(owner)
   let active: { requestId: string, controller: AbortController } | undefined
   const modelControllers = new Set<AbortController>()
   function send(event: AiEvent) {
@@ -62,6 +72,7 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
   function cleanup() {
     cancelActive()
     workspace.clear()
+    httpActions.clear()
     for (const controller of modelControllers) controller.abort()
     modelControllers.clear()
   }
@@ -101,6 +112,28 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
       },
     )
   }
+  handle('system:ai:http-apply', (payload) => {
+    const input = z
+      .object({ id: z.uuid(), draft: aiHttpDraftSchema.optional() })
+      .strict()
+      .parse(payload)
+    return httpActions.apply(input.id, input.draft)
+  })
+  handle('system:ai:http-complete', (payload) => {
+    const input = z
+      .object({
+        id: z.uuid(),
+        success: z.boolean(),
+        draft: aiHttpDraftSchema.optional(),
+      })
+      .strict()
+      .parse(payload)
+    return httpActions.complete(input.id, input.success, input.draft)
+  })
+  handle('system:ai:http-cancel', (payload) => {
+    const input = z.object({ id: z.uuid() }).strict().parse(payload)
+    return httpActions.control(input.id, 'cancel')
+  })
   handle('system:ai:workspace-undo', (payload) => {
     const input = z
       .object({ id: z.string().uuid(), index: z.number().int().min(0).max(29) })
@@ -190,6 +223,7 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
         ...message,
       }))
       let workspaceProposed = false
+      let httpActionProposed = false
       let createdOperationCount = 0
       const creations = new Map<string, ReturnType<typeof workspace.create>>()
       let initialSearchPlanned = false
@@ -339,8 +373,37 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
                 ? http?.requiredTool
                 : undefined,
               isComplete: () =>
-                workspaceProposed || Boolean(http?.hasProposal()),
+                workspaceProposed
+                || httpActionProposed
+                || Boolean(http?.hasProposal()),
               tools: [
+                ...httpActionTools,
+                ...(request.vaultAccess
+                  ? [
+                      {
+                        type: 'function' as const,
+                        function: {
+                          name: 'request_import',
+                          description:
+                            'Request the existing import dialog for explicitly requested import. User chooses files/source and reviews the actual preview before import. No filesystem access. Dialog opening is not imported data.',
+                          parameters: z.toJSONSchema(aiImportActionSchema, {
+                            io: 'input',
+                          }),
+                        },
+                      },
+                      {
+                        type: 'function' as const,
+                        function: {
+                          name: 'request_export',
+                          description:
+                            'Request native Notes HTML/PDF export or a Notes folder website export. User chooses the destination. source current uses the captured current note editor, saved uses storage. Opening a dialog is not export success.',
+                          parameters: z.toJSONSchema(aiExportActionSchema, {
+                            io: 'input',
+                          }),
+                        },
+                      },
+                    ]
+                  : []),
                 ...(request.vaultAccess
                   ? [...vaultTools, ...workspaceTools]
                   : []),
@@ -363,7 +426,58 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
               execute: async (name, args) => {
                 assertVault()
                 let result: unknown
-                if (
+                if (name === 'propose_http_action') {
+                  try {
+                    const input = JSON.parse(args)
+                    if (
+                      !request.vaultAccess
+                      && !(
+                        [
+                          'patchDraft',
+                          'saveDraft',
+                          'discardDraft',
+                          'patchAndSend',
+                          'saveAndSend',
+                        ].includes(input.action)
+                        || (['send', 'connectWebSocket'].includes(input.action)
+                          && input.source === 'draft')
+                      )
+                    ) {
+                      throw new Error('ACTION_NOT_AVAILABLE')
+                    }
+                    const action = httpActions.propose(
+                      input,
+                      request.httpDraft,
+                      request.userMessages,
+                    )
+                    httpActionProposed = true
+                    send({
+                      requestId: request.requestId,
+                      type: 'httpAction',
+                      action,
+                    })
+                    result = action
+                  }
+                  catch (error) {
+                    result = workspaceToolError(error)
+                  }
+                }
+                else if (name === 'control_http_activity') {
+                  try {
+                    const input = z
+                      .object({
+                        id: z.uuid(),
+                        action: z.enum(['status', 'cancel', 'disconnect']),
+                      })
+                      .strict()
+                      .parse(JSON.parse(args))
+                    result = httpActions.control(input.id, input.action)
+                  }
+                  catch (error) {
+                    result = workspaceToolError(error)
+                  }
+                }
+                else if (
                   http
                   && ['read_http_context', 'propose_http_assertions'].includes(
                     name,
@@ -378,7 +492,11 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
                   result = { error: 'UNKNOWN_TOOL' }
                 }
                 else if (
-                  name === 'read_workspace_item'
+                  name === 'request_import'
+                  || name === 'request_export'
+                  || name === 'read_current_workspace'
+                  || name === 'read_http_state'
+                  || name === 'read_workspace_item'
                   || name === 'list_workspace_items'
                   || name === 'list_workspace_structure'
                   || name === 'propose_workspace_changes'
@@ -386,7 +504,45 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
                 ) {
                   try {
                     const input = JSON.parse(args)
-                    if (name === 'read_workspace_item') {
+                    if (
+                      name === 'request_import'
+                      || name === 'request_export'
+                    ) {
+                      if (workspaceProposed)
+                        return { error: 'PROPOSAL_ALREADY_PENDING' }
+                      const action
+                        = name === 'request_import'
+                          ? {
+                              id: randomUUID(),
+                              kind: 'import' as const,
+                              status: 'pending' as const,
+                              input: aiImportActionSchema.parse(input),
+                            }
+                          : {
+                              id: randomUUID(),
+                              kind: 'export' as const,
+                              status: 'pending' as const,
+                              input: aiExportActionSchema.parse(input),
+                            }
+                      workspaceProposed = true
+                      send({
+                        requestId: request.requestId,
+                        type: 'dataAction',
+                        action,
+                      })
+                      result = {
+                        id: action.id,
+                        status: 'awaiting_user_dialog',
+                        note: 'No data imported or exported yet. Wait for actual user dialog result.',
+                      }
+                    }
+                    else if (name === 'read_current_workspace') {
+                      result = readCurrentWorkspace(request.workspaceContext)
+                    }
+                    else if (name === 'read_http_state') {
+                      result = readHttpState(input, owner.id)
+                    }
+                    else if (name === 'read_workspace_item') {
                       result = workspaceRead(input)
                     }
                     else if (name === 'list_workspace_items') {
@@ -429,7 +585,10 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
                             }
                           }
                           createdOperationCount += plan.operations.length
-                          created = workspace.create(plan)
+                          created = workspace.create(
+                            plan,
+                            request.userMessages ?? [],
+                          )
                           creations.set(key, created)
                           send({
                             requestId: request.requestId,
@@ -454,7 +613,10 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
                       const plan = workspaceReviewSchema.parse(input)
                       if (createdOperationCount + plan.operations.length > 30)
                         return { error: 'TURN_OPERATION_LIMIT' }
-                      const proposal = workspace.propose(plan)
+                      const proposal = workspace.propose(
+                        plan,
+                        request.userMessages ?? [],
+                      )
                       workspaceProposed = true
                       send({
                         requestId: request.requestId,

@@ -9,6 +9,9 @@ import { Plus, X } from 'lucide-vue-next'
 
 const {
   context,
+  workspaceContext,
+  removeWorkspaceContext,
+  attachWorkspaceContext,
   contextMode,
   attachments,
   attachEditor,
@@ -68,6 +71,19 @@ function add(item: AiVaultItem) {
 
 <template>
   <div class="flex flex-wrap items-center gap-1">
+    <Button
+      v-if="workspaceContext"
+      variant="outline"
+      size="sm"
+      @click="removeWorkspaceContext"
+    >
+      {{
+        i18n.t("ai.workspaceContext", {
+          space: i18n.t(`spaces.${workspaceContext.space}.label`),
+          count: workspaceContext.selectedIds.length,
+        })
+      }}<X class="size-3" />
+    </Button>
     <Popover.Popover v-model:open="open">
       <Popover.PopoverTrigger as-child>
         <UiActionButton :tooltip="i18n.t('ai.addContext')">
@@ -79,6 +95,13 @@ function add(item: AiVaultItem) {
         align="start"
         side="top"
       >
+        <Button
+          variant="outline"
+          size="sm"
+          @click="attachWorkspaceContext"
+        >
+          {{ i18n.t("ai.attachWorkspace") }}
+        </Button>
         <UiInput
           v-model="query"
           :placeholder="i18n.t('ai.searchContext')"
@@ -96,7 +119,13 @@ function add(item: AiVaultItem) {
               open = false;
             "
           >
-            {{ i18n.t("ai.attachCurrent") }}
+            {{
+              i18n.t(
+                context.space === "notes"
+                  ? "ai.attachCurrentNote"
+                  : "ai.attachCurrent",
+              )
+            }}
           </Button>
           <Button
             v-if="context.selection"
@@ -169,7 +198,9 @@ function add(item: AiVaultItem) {
         variant="caption"
         class="truncate"
       >
-        {{ attachedEditor?.name || i18n.t("ai.fragment")
+        {{
+          attachedEditor?.name
+            || i18n.t(attachedEditor?.space === "notes" ? "ai.note" : "ai.fragment")
         }}{{
           contextMode === "selection" ? ` · ${i18n.t("ai.selection")}` : ""
         }}

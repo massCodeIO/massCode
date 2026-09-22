@@ -1417,7 +1417,23 @@
         "isDeleted": "Move to trash",
         "properties": "Properties",
         "scripts": "Scripts",
-        "auth": "Authentication"
+        "auth": "Authentication",
+        "record": "Record",
+        "affectedItems": "Affected records",
+        "folders": "Affected folders",
+        "tag": "Tag",
+        "action": "Action",
+        "label": "Fragment label",
+        "protocol": "Protocol",
+        "runtime": "Runtime settings",
+        "formData": "Form data",
+        "collectionConfig": "Collection configuration",
+        "variables": "Variable patch",
+        "unset": "Remove variables",
+        "environment": "Environment",
+        "environmentId": "Active environment",
+        "activeEnvironmentId": "Active environment",
+        "activate": "Activate after creation"
       },
       "undo": "Undo this change",
       "review": "Review vault changes",
@@ -1446,7 +1462,20 @@
       "root": "Root / Inbox",
       "dependency": "Select the destination folder creation too, or deselect the items that depend on it.",
       "undone": "Change undone",
-      "remainingRejected": "Remaining changes rejected."
+      "remainingRejected": "Remaining changes rejected.",
+      "duplicate": "Duplicate",
+      "trash": "Move to Trash",
+      "restore": "Restore",
+      "permanentDelete": "Delete permanently",
+      "delete": "Delete",
+      "consequences": {
+        "permanentDelete": "Permanently deletes this record and its contents. Cannot be undone.",
+        "fragment": "Permanently deletes this fragment. Other fragments remain unchanged. Cannot be undone.",
+        "folder": "Deletes this folder and all descendant folders. Contained records move to Trash without a folder. Folder deletion cannot be undone.",
+        "tag": "Deletes this tag from the vocabulary and removes it from all records. Cannot be undone.",
+        "environment": "Deletes this environment and its protected credentials. Cannot be undone."
+      },
+      "activate": "Activate"
     },
     "cloudProviders": "Cloud",
     "localProviders": "Local",
@@ -1614,6 +1643,62 @@
         "cr": "CR",
         "mixed": "Mixed line endings"
       }
-    }
+    },
+    "httpActions": {
+      "review": "Review HTTP action",
+      "description": "Apply performs this action once. Sending contacts the server and cannot be undone.",
+      "sources": {
+        "saved": "Saved request",
+        "draft": "Current draft",
+        "workspace": "HTTP workspace"
+      },
+      "actions": {
+        "send": "Send",
+        "patchDraft": "Change draft",
+        "saveDraft": "Save draft",
+        "discardDraft": "Discard draft",
+        "runCollection": "Run collection",
+        "connectWebSocket": "Connect WebSocket",
+        "sendWebSocket": "Send WebSocket message",
+        "clearWebSocket": "Clear WebSocket log",
+        "clearHistory": "Clear HTTP history",
+        "clearConsole": "Clear HTTP console",
+        "clearSession": "Clear session variables",
+        "clearCookies": "Clear cookies",
+        "cookieCreate": "Create cookie",
+        "cookieMetadata": "Change cookie settings",
+        "cookieDelete": "Delete cookie",
+        "cookieDomainAdd": "Add cookie domain",
+        "cookieDomainDelete": "Delete cookie domain",
+        "cookiesEnabled": "Change cookie usage",
+        "scriptTrust": "Change script trust",
+        "protectVariable": "Protect variable",
+        "unprotectVariable": "Unprotect variable",
+        "patchAndSend": "Change draft and send",
+        "saveAndSend": "Save and send"
+      },
+      "states": {
+        "pending": "Awaiting review",
+        "running": "Running",
+        "done": "Completed",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
+      "failed": "The action could not finish. Check the recorded result; completed steps remain applied."
+    },
+    "workspaceContext": "{{space}}: {{count}} selected",
+    "attachWorkspace": "Attach workspace selection",
+    "dataActions": {
+      "import": "Import",
+      "export": "Export",
+      "pending": "Requested",
+      "opened": "Dialog opened",
+      "previewed": "Preview ready",
+      "applied": "Completed",
+      "cancelled": "Cancelled",
+      "failed": "Failed"
+    },
+    "attachCurrentNote": "Open note",
+    "note": "Note"
   }
 }

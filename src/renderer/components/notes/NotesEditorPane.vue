@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { EditSnapshot } from '@/composables/ai/edit'
 import * as Select from '@/components/ui/shadcn/select'
 import {
   useDonations,
@@ -41,6 +42,7 @@ const {
   notes,
   displayedNoteRecord,
   selectedNote,
+  selectedNoteIds,
   selectedNoteRecordStatus,
   retrySelectedNote,
   updateNoteContent,
@@ -90,6 +92,13 @@ watch(
   { immediate: true },
 )
 onBeforeUnmount(() => setVaultContext(undefined))
+const unregisterAiWorkspace = useAi().registerWorkspace(() => ({
+  space: 'notes',
+  selectedIds: [...selectedNoteIds.value],
+  folderId: notesState.folderId ?? null,
+  library: notesState.libraryFilter,
+}))
+onBeforeUnmount(unregisterAiWorkspace)
 function closeInspector() {
   setAiOpen(false)
   isNotesInspectorOpen.value = false
@@ -150,7 +159,7 @@ const isSelectedNoteContentReady = computed(
   () =>
     selectedNoteRecordStatus.value === 'ready'
     && selectedNote.value?.id === notesState.noteId
-    && selectedNote.value.content !== undefined,
+    && selectedNote.value?.content !== undefined,
 )
 
 function onSidebarToggle() {
@@ -199,6 +208,7 @@ const {
 
     if (
       !isSelectedNoteContentReady.value
+      || selectedNoteIds.value.length !== 1
       || !selectedNote.value
       || selectedNote.value.id !== displayedNote.value?.id
     ) {
@@ -402,7 +412,7 @@ watch(
     editorNoteId.value = nextNote?.id
     statsContent.value = nextContent
 
-    if (nextNote?.id === pendingContentSearchNoteId) {
+    if (nextNote && nextNote.id === pendingContentSearchNoteId) {
       const revision = ++searchShortcutRevision
       pendingContentSearchNoteId = undefined
       nextTick(() => {
@@ -430,12 +440,51 @@ const content = computed({
     // с текстом старой.
     if (
       isSelectedNoteContentReady.value
-      && selectedNote.value?.id === editorNoteId.value
+      && selectedNote.value
+      && selectedNote.value.id === editorNoteId.value
     ) {
       updateNoteContent(selectedNote.value.id, value)
     }
   },
 })
+
+function readAiEditor() {
+  if (
+    !isSelectedNoteContentReady.value
+    || selectedNoteIds.value.length !== 1
+    || selectedNote.value?.id !== editorNoteId.value
+  ) {
+    return undefined
+  }
+  const snapshot = notesEditorRef.value?.readAiContext()
+  return snapshot ? { ...snapshot, name: selectedNote.value?.name } : undefined
+}
+let unregisterAiEditor: (() => void) | undefined
+onMounted(() => {
+  unregisterAiEditor = useAi().registerEditor(
+    readAiEditor,
+    (snapshot: EditSnapshot, replacement: string) =>
+      Boolean(
+        readAiEditor()
+        && notesEditorRef.value?.applyAiEdit(
+          snapshot,
+          replacement,
+          store.preferences.get<string>('storage.vaultPath') ?? '',
+        ),
+      ),
+  )
+})
+onBeforeUnmount(() => unregisterAiEditor?.())
+watch(
+  () => [
+    editorCursor.value,
+    editorContent.value,
+    selectedNoteRecordStatus.value,
+    notesEditorRef.value,
+  ],
+  () => useAi().setContext(readAiEditor()),
+  { flush: 'post' },
+)
 
 // При переключении заметки статистика обновляется сразу вместе с контентом,
 // а во время набора остаётся debounced для больших документов.
@@ -626,7 +675,10 @@ onBeforeUnmount(() => {
                   :disabled="!isSelectedNoteContentReady"
                   :mode="notesEditorMode"
                   :note-id="editorNoteId"
-                  @cursor="editorCursor = $event"
+                  @cursor="
+                    editorCursor = $event;
+                    useAi().setContext(readAiEditor());
+                  "
                 />
               </div>
               <div

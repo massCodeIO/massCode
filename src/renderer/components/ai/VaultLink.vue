@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import type { AiVaultItem } from '~/shared/ai'
 import { Button } from '@/components/ui/shadcn/button'
+import { useAi } from '@/composables/ai/useAi'
 import { i18n } from '@/electron'
 import { openInternalTarget } from '@/ipc/listeners/deepLinks'
 import { Code2, FileText, Send } from 'lucide-vue-next'
 
 const props = defineProps<{ item: AiVaultItem }>()
+const { unavailableWorkspaceItems } = useAi()
+const unavailable = computed(() =>
+  unavailableWorkspaceItems.value.has(`${props.item.type}:${props.item.id}`),
+)
 const icon = computed(() =>
   props.item.type === 'snippet'
     ? Code2
@@ -15,7 +20,7 @@ const icon = computed(() =>
 )
 const opening = ref(false)
 async function open() {
-  if (opening.value)
+  if (opening.value || unavailable.value)
     return
   opening.value = true
   try {
@@ -32,7 +37,15 @@ async function open() {
 </script>
 
 <template>
+  <UiText
+    v-if="unavailable"
+    variant="sm"
+    muted
+  >
+    {{ item.name }}
+  </UiText>
   <Button
+    v-else
     variant="ghost"
     class="ai-vault-link"
     :disabled="opening"

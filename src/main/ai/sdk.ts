@@ -7,10 +7,20 @@ import { createDeepSeek } from '@ai-sdk/deepseek'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createMistral } from '@ai-sdk/mistral'
 import { createXai } from '@ai-sdk/xai'
-import { APICallError, jsonSchema, streamText } from 'ai'
+import {
+  APICallError,
+  EmptyResponseBodyError,
+  InvalidResponseDataError,
+  JSONParseError,
+  jsonSchema,
+  NoContentGeneratedError,
+  streamText,
+  TypeValidationError,
+} from 'ai'
 import { AI_LIMITS, aiProtocolCallSchema } from '../../shared/ai'
 import { aiSdkReplaySchema } from '../../shared/aiSdkReplay'
 import { AiError } from './errors'
+import { replayToolArguments } from './tools'
 
 export function isSdkProvider(provider?: AiProvider) {
   return (
@@ -67,7 +77,7 @@ export function sdkMessages(
           type: 'tool-call' as const,
           toolCallId: call.id,
           toolName: call.function.name,
-          input: JSON.parse(call.function.arguments),
+          input: JSON.parse(replayToolArguments(call.function.arguments)),
         })),
       ],
     }
@@ -245,6 +255,8 @@ export async function generateSdkResponse(
       throw error
     if (APICallError.isInstance(error)) {
       const status = error.statusCode
+      if (status === undefined)
+        throw new AiError('connection')
       throw new AiError(
         status === 401 || status === 403
           ? 'authentication'
@@ -256,7 +268,20 @@ export async function generateSdkResponse(
         status ? `HTTP ${status}` : undefined,
       )
     }
-    throw new AiError('invalidResponse')
+    if (options.signal.aborted)
+      options.signal.throwIfAborted()
+    if (error instanceof TypeError)
+      throw new AiError('connection')
+    if (
+      InvalidResponseDataError.isInstance(error)
+      || JSONParseError.isInstance(error)
+      || TypeValidationError.isInstance(error)
+      || EmptyResponseBodyError.isInstance(error)
+      || NoContentGeneratedError.isInstance(error)
+    ) {
+      throw new AiError('invalidResponse')
+    }
+    throw new AiError('upstream')
   }
   finally {
     controller.abort()

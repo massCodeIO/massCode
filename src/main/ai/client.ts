@@ -16,7 +16,7 @@ import { buildAiInstructions } from './instructions'
 import { replayFields } from './replay'
 import { readResponsesStream, responsesInput } from './responses'
 import { generateSdkResponse, isSdkProvider } from './sdk'
-import { editTool, validateToolCalls } from './tools'
+import { editTool, replayToolArguments, validateToolCalls } from './tools'
 
 export interface AiConnection {
   baseURL: string
@@ -422,8 +422,10 @@ export async function streamAiChat(
     execute: (name: string, args: string) => Promise<unknown>
     remaining: number
     onToolRound?: () => void
+    onToolExchange?: (messages: AiMessage[]) => void
     requiredTool?: () => string | undefined
     isComplete?: () => boolean
+    instructions?: string
   },
 ): Promise<AiToolCall[]> {
   if (!connection.model)
@@ -439,13 +441,18 @@ export async function streamAiChat(
   if (requiredTool && !vault?.remaining)
     throw new AiError('proposalUnavailable')
   const result = await generateAiResponse(connection, {
-    instructions: buildAiInstructions(
-      [
-        ...(editContextId ? ['propose_edit'] : []),
-        ...(vault?.tools.map(tool => tool.function.name) ?? []),
-      ],
-      vault?.remaining,
-    ),
+    instructions: [
+      buildAiInstructions(
+        [
+          ...(editContextId ? ['propose_edit'] : []),
+          ...(vault?.tools.map(tool => tool.function.name) ?? []),
+        ],
+        vault?.remaining,
+      ),
+      vault?.instructions,
+    ]
+      .filter(Boolean)
+      .join('\n\n'),
     // Preferences are user-level context, never part of the system policy or
     // stored tool history. The actual user turn remains the latest instruction.
     messages: connection.userInstructions?.trim()
@@ -521,6 +528,19 @@ export async function streamAiChat(
         tool_call_id: call.id,
         content: JSON.stringify(result),
       })
+      // Publish each completed exchange before another tool/model can fail or be stopped.
+      // A partial batch must not replay unexecuted calls or a provider signature for them.
+      vault.onToolExchange?.([
+        ...messages,
+        results.length === calls.length
+          ? assistant
+          : {
+              role: 'assistant',
+              content: answer,
+              tool_calls: calls.slice(0, results.length),
+            },
+        ...results,
+      ])
     }
     if (vault.isComplete?.()) {
       onResponse?.([...messages, assistant, ...results], '')
@@ -621,6 +641,47 @@ export async function generateAiResponse(
     operation: string
   },
 ) {
+  // Keep receipt correlation in local protocol, but never expose bookkeeping to
+  // providers. This boundary covers original tool results and all provider replay.
+  const workspaceCalls = new Set(
+    options.messages.flatMap(
+      message =>
+        message.tool_calls
+          ?.filter(call => call.function.name === 'create_workspace_items')
+          .map(call => call.id) ?? [],
+    ),
+  )
+  options = {
+    ...options,
+    messages: options.messages.map((message) => {
+      if (message.role !== 'tool' || !workspaceCalls.has(message.tool_call_id!))
+        return message
+      try {
+        const original = JSON.parse(message.content)
+        if (original.error)
+          return message
+        const {
+          proposalId: _proposal,
+          appliedOperationIndexes: _applied,
+          undoneOperationIndexes: _undone,
+          failedOperationIndex: _failed,
+          ...result
+        } = original
+        for (const key of ['created', 'items', 'containers']) {
+          if (Array.isArray(result[key])) {
+            result[key] = result[key].map(
+              ({ operationIndex: _index, ...item }: Record<string, unknown>) =>
+                item,
+            )
+          }
+        }
+        return { ...message, content: JSON.stringify(result) }
+      }
+      catch {
+        return message
+      }
+    }),
+  }
   if (isSdkProvider(connection.provider))
     return generateSdkResponse(connection, options)
   const openai = connection.provider === 'openai'
@@ -629,7 +690,20 @@ export async function generateAiResponse(
   const input = openai
     ? responsesInput(options.messages, connection.model)
     : options.messages.map(
-        ({ openaiResponse: _replay, sdkResponse: _sdk, ...message }) => message,
+        ({ openaiResponse: _replay, sdkResponse: _sdk, ...message }) => ({
+          ...message,
+          ...(message.tool_calls
+            ? {
+                tool_calls: message.tool_calls.map(call => ({
+                  ...call,
+                  function: {
+                    ...call.function,
+                    arguments: replayToolArguments(call.function.arguments),
+                  },
+                })),
+              }
+            : {}),
+        }),
       )
   const body = openai
     ? {

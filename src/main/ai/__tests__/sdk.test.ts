@@ -352,3 +352,72 @@ it.each(providers)(
     ).rejects.toMatchObject({ code: 'invalidResponse' })
   },
 )
+
+it('replays malformed arguments with their failure result instead of crashing JSON parsing', () => {
+  const message = aiMessageSchema.parse({
+    role: 'assistant',
+    content: '',
+    tool_calls: [
+      {
+        id: 'bad',
+        type: 'function',
+        function: { name: 'read_http_context', arguments: '{' },
+      },
+    ],
+  })
+  const messages = sdkMessages(
+    [
+      message,
+      {
+        role: 'tool',
+        content: '{"error":"INVALID_JSON"}',
+        tool_call_id: 'bad',
+      },
+    ],
+    { provider: 'anthropic', model: 'test', baseURL: '' },
+  )
+  expect(messages[0]).toMatchObject({
+    content: [{ type: 'tool-call', toolCallId: 'bad', input: {} }],
+  })
+  expect(messages[1]).toMatchObject({
+    content: [
+      {
+        type: 'tool-result',
+        toolCallId: 'bad',
+        output: { value: '{"error":"INVALID_JSON"}' },
+      },
+    ],
+  })
+  expect(message.tool_calls![0].function.arguments).toBe('{')
+})
+
+it.each(providers)(
+  '%s keeps fetch/DNS failures distinct from malformed model output',
+  async (provider) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new TypeError('fetch failed', {
+          cause: Object.assign(new Error('DNS failed'), { code: 'ENOTFOUND' }),
+        })
+      }),
+    )
+    await expect(
+      generateAiResponse(
+        {
+          provider,
+          baseURL: AI_DEFAULT_URLS[provider],
+          model: 'test',
+          apiKey: 'synthetic',
+        },
+        {
+          instructions: 'test',
+          messages: [{ role: 'user', content: 'hello' }],
+          signal: new AbortController().signal,
+          onDelta: () => {},
+          operation: 'planner',
+        },
+      ),
+    ).rejects.toMatchObject({ code: 'connection' })
+  },
+)

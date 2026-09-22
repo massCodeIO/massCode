@@ -349,6 +349,11 @@ describe('edit validation feedback', () => {
     const retry = JSON.parse(fetch.mock.calls[1][1].body)
     expect(retry.tool_choice).toBe('auto')
     expect(retry.messages.at(-1).role).toBe('tool')
+    const replayCall = retry.messages.find(
+      (message: { tool_calls?: unknown }) => message.tool_calls,
+    ).tool_calls[0]
+    expect(replayCall.function.arguments).toBe('{}')
+    expect(retry.messages.at(-1).tool_call_id).toBe(replayCall.id)
   })
   it('does not issue a correction after cancellation', async () => {
     const controller = new AbortController()
@@ -654,4 +659,160 @@ it('finishes a validated proposal without asking the model to invent a second su
     ],
     '',
   )
+})
+
+it.each(['stop', 'failure'])(
+  'publishes a completed creation exchange before subsequent %s',
+  async (ending) => {
+    const controller = new AbortController()
+    const calls = ['one', 'two'].map(id => ({
+      index: id === 'one' ? 0 : 1,
+      id,
+      type: 'function',
+      function: { name: 'create_workspace_items', arguments: '{}' },
+    }))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            stream([
+              `data: ${JSON.stringify({ choices: [{ delta: { tool_calls: calls }, finish_reason: 'tool_calls' }] })}\n\ndata: [DONE]\n\n`,
+            ]),
+          ),
+      ),
+    )
+    const exchanges: any[] = []
+    let count = 0
+    await expect(
+      streamAiChat(
+        { baseURL: 'http://localhost/v1', model: 'test' },
+        [{ role: 'user', content: 'Create two notes' }],
+        controller.signal,
+        () => {},
+        undefined,
+        undefined,
+        1,
+        0,
+        undefined,
+        undefined,
+        {
+          tools: [
+            { type: 'function', function: { name: 'create_workspace_items' } },
+          ],
+          remaining: 3,
+          onToolExchange: (messages) => {
+            exchanges.push(messages)
+            if (ending === 'stop')
+              controller.abort()
+          },
+          execute: async () => {
+            if (++count === 2)
+              throw new Error('next tool failed')
+            return { status: 'created', proposalId: 'saved' }
+          },
+        },
+      ),
+    ).rejects.toBeDefined()
+    expect(exchanges).toHaveLength(1)
+    expect(exchanges[0][1].tool_calls.map((call: any) => call.id)).toEqual([
+      'one',
+    ])
+    expect(JSON.parse(exchanges[0][2].content)).toEqual({
+      status: 'created',
+      proposalId: 'saved',
+    })
+  },
+)
+
+it('projects creation receipts while preserving review partial apply and Undo at the provider boundary', async () => {
+  const fetch = vi.fn(
+    async () =>
+      new Response(stream([`data: ${delta('Done')}\n\ndata: [DONE]\n\n`])),
+  )
+  vi.stubGlobal('fetch', fetch)
+  const receipt = {
+    status: 'created',
+    proposalId: 'private-receipt',
+    appliedOperationIndexes: [0, 1],
+    created: [
+      { operationIndex: 1, id: 42, name: 'Complete title', type: 'note' },
+    ],
+    containers: [
+      {
+        operationIndex: 0,
+        id: 10,
+        name: 'Folder',
+        space: 'notes',
+        kind: 'folder',
+      },
+    ],
+  }
+  const review = {
+    status: 'awaiting_user_review',
+    proposalId: 'review-receipt',
+    appliedOperationIndexes: [1],
+    undoneOperationIndexes: [0],
+    failedOperationIndex: 2,
+    items: [{ operationIndex: 1, id: 43, name: 'Updated note', type: 'note' }],
+  }
+  const messages = [
+    { role: 'user' as const, content: 'Create' },
+    {
+      role: 'assistant' as const,
+      content: '',
+      tool_calls: [
+        {
+          id: 'create',
+          type: 'function' as const,
+          function: { name: 'create_workspace_items', arguments: '{}' },
+        },
+      ],
+    },
+    {
+      role: 'tool' as const,
+      tool_call_id: 'create',
+      content: JSON.stringify(receipt),
+    },
+    {
+      role: 'assistant' as const,
+      content: '',
+      tool_calls: [
+        {
+          id: 'review',
+          type: 'function' as const,
+          function: { name: 'propose_workspace_changes', arguments: '{}' },
+        },
+      ],
+    },
+    {
+      role: 'tool' as const,
+      tool_call_id: 'review',
+      content: JSON.stringify(review),
+    },
+  ]
+  await streamAiChat(
+    { baseURL: 'http://localhost/v1', model: 'local' },
+    messages,
+    new AbortController().signal,
+    () => {},
+  )
+  const body = JSON.parse(
+    (fetch.mock.calls[0] as unknown as [string, RequestInit])[1].body as string,
+  )
+  const result = JSON.parse(
+    body.messages.find((message: any) => message.role === 'tool').content,
+  )
+  expect(result).toEqual({
+    status: 'created',
+    created: [{ id: 42, name: 'Complete title', type: 'note' }],
+    containers: [{ id: 10, name: 'Folder', space: 'notes', kind: 'folder' }],
+  })
+  expect(JSON.parse(messages[2]!.content)).toEqual(receipt)
+  expect(
+    JSON.parse(
+      body.messages.find((message: any) => message.tool_call_id === 'review')
+        .content,
+    ),
+  ).toEqual(review)
 })

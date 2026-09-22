@@ -2,6 +2,20 @@ import type { AiToolCall } from '../../shared/ai'
 import { aiProposalSchema, aiToolCallSchema } from '../../shared/ai'
 import { AiError } from './errors'
 
+// Some chat templates parse historical arguments as JSON before generation.
+// Invalid calls still fail validation; only their protocol replay is normalized.
+export function replayToolArguments(argumentsText: string): string {
+  try {
+    const input = JSON.parse(argumentsText)
+    if (input && typeof input === 'object' && !Array.isArray(input))
+      return argumentsText
+  }
+  catch {
+    /* The correlated tool result explains the validation failure. */
+  }
+  return '{}'
+}
+
 export function editTool(contextId: string) {
   return {
     type: 'function',

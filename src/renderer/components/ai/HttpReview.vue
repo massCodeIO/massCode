@@ -57,23 +57,24 @@ function reject() {
   </template>
   <Dialog.Dialog v-model:open="open">
     <Dialog.DialogContent
-      class="max-w-2xl"
+      class="flex max-h-[90vh] w-[calc(100%-2rem)] flex-col overflow-hidden sm:max-w-5xl"
       @open-auto-focus="(event) => event.preventDefault()"
       @close-auto-focus="(event) => event.preventDefault()"
     >
-      <Dialog.DialogHeader>
+      <Dialog.DialogHeader class="shrink-0">
         <Dialog.DialogTitle>{{ i18n.t("ai.http.review") }}</Dialog.DialogTitle>
         <Dialog.DialogDescription>
           {{ i18n.t("ai.http.description") }}
         </Dialog.DialogDescription>
       </Dialog.DialogHeader>
-      <UiText
-        as="p"
-        variant="sm"
-      >
-        {{ message.httpSnapshot?.context.name }}
-      </UiText>
-      <div class="scrollbar max-h-[50vh] overflow-auto">
+      <div class="scrollbar min-h-0 space-y-4 overflow-auto">
+        <UiText
+          as="p"
+          variant="sm"
+          class="break-words"
+        >
+          {{ message.httpSnapshot?.context.name }}
+        </UiText>
         <AiHttpChecks
           v-if="message.httpProposal"
           :proposal="message.httpProposal"
@@ -88,7 +89,7 @@ function reject() {
       >
         {{ i18n.t("ai.http.stale") }}
       </UiText>
-      <Dialog.DialogFooter>
+      <Dialog.DialogFooter class="shrink-0">
         <Button
           variant="ghost"
           @click="reject"

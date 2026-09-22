@@ -70,6 +70,7 @@
     "@codemirror/language": "^6.12.2",
     "@codemirror/language-data": "^6.5.2",
     "@codemirror/legacy-modes": "^6.5.2",
+    "@codemirror/merge": "^6.12.2",
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.40.0",
     "@dagrejs/dagre": "^1.1.5",

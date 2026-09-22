@@ -2,7 +2,6 @@
 import type { ChatMessage } from '@/composables/ai/useAi'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Dialog from '@/components/ui/shadcn/dialog'
-import { editLines } from '@/composables/ai/edit'
 import { useAi } from '@/composables/ai/useAi'
 import { i18n } from '@/electron'
 
@@ -18,9 +17,6 @@ const original = computed(
     ) ?? '',
 )
 const replacement = computed(() => props.message.replacement)
-const lines = computed(() =>
-  editLines(original.value, replacement.value ?? ''),
-)
 const available = computed(() => {
   // Subscribe to editor changes while the review dialog is open.
   void context.value
@@ -85,46 +81,31 @@ function apply() {
   </template>
   <Dialog.Dialog v-model:open="open">
     <Dialog.DialogContent
-      class="max-w-3xl"
+      :zoom="false"
+      class="flex max-h-[90vh] w-[calc(100%-2rem)] flex-col overflow-hidden sm:max-w-5xl"
       @open-auto-focus="(event) => event.preventDefault()"
       @close-auto-focus="(event) => event.preventDefault()"
     >
-      <Dialog.DialogHeader>
+      <Dialog.DialogHeader class="shrink-0">
         <Dialog.DialogTitle>{{ i18n.t("ai.edit.review") }}</Dialog.DialogTitle>
         <Dialog.DialogDescription>
           {{ i18n.t("ai.edit.description") }}
         </Dialog.DialogDescription>
       </Dialog.DialogHeader>
-      <UiText
-        v-if="message.proposalSummary"
-        as="p"
-        variant="sm"
-      >
-        {{ message.proposalSummary }}
-      </UiText>
-      <UiText
-        as="pre"
-        variant="sm"
-        mono
-        class="scrollbar max-h-[60vh] overflow-auto rounded-md border p-3"
-      >
-        <div
-          v-for="(line, index) in lines"
-          :key="index"
-          :class="{
-            'bg-destructive/10 text-destructive': line.type === 'removed',
-            'bg-primary/10 text-primary': line.type === 'added',
-          }"
+      <div class="scrollbar min-h-0 space-y-3 overflow-auto">
+        <UiText
+          v-if="message.proposalSummary"
+          as="p"
+          variant="sm"
         >
-          {{
-            line.type === "removed"
-              ? "− "
-              : line.type === "added"
-                ? "+ "
-                : "  "
-          }}{{ line.text }}
-        </div>
-      </UiText>
+          {{ message.proposalSummary }}
+        </UiText>
+        <AiDiffViewer
+          v-if="open"
+          :before="original"
+          :after="replacement ?? ''"
+        />
+      </div>
       <UiText
         v-if="(!available && !message.applied) || failed"
         variant="sm"
@@ -133,7 +114,7 @@ function apply() {
       >
         {{ i18n.t("ai.edit.stale") }}
       </UiText>
-      <Dialog.DialogFooter>
+      <Dialog.DialogFooter class="shrink-0">
         <Button
           variant="ghost"
           @click="reject"

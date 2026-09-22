@@ -1,6 +1,6 @@
 import type { AiToolCall } from '~/shared/ai'
 import { describe, expect, it } from 'vitest'
-import { buildReplacement, editLines, matchesSnapshot } from '../edit'
+import { buildReplacement, matchesSnapshot } from '../edit'
 
 const contextId = '11111111-1111-4111-8111-111111111111'
 const snapshot = {
@@ -72,13 +72,5 @@ describe('structured edit validation', () => {
       matchesSnapshot(snapshot, { ...snapshot, text: 'modified' }, 'a'),
     ).toBe(false)
     expect(matchesSnapshot(snapshot, snapshot, 'b')).toBe(false)
-  })
-  it('preserves unchanged boundaries in the diff', () => {
-    expect(editLines('a\nb\nc', 'a\nx\nc')).toEqual([
-      { type: 'same', text: 'a' },
-      { type: 'removed', text: 'b' },
-      { type: 'added', text: 'x' },
-      { type: 'same', text: 'c' },
-    ])
   })
 })

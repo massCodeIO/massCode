@@ -1,16 +1,14 @@
 <script setup lang="ts">
 import type { ChatMessage } from '@/composables/ai/useAi'
 import type { AiResult } from '~/shared/ai'
-import type {
-  WorkspaceApplyResult,
-  WorkspaceChange,
-} from '~/shared/aiWorkspace'
+import type { WorkspaceApplyResult } from '~/shared/aiWorkspace'
 import { Button } from '@/components/ui/shadcn/button'
 import { Checkbox } from '@/components/ui/shadcn/checkbox'
 import * as Dialog from '@/components/ui/shadcn/dialog'
 import { useAi } from '@/composables/ai/useAi'
 import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
 import { i18n, ipc } from '@/electron'
+import { workspaceReviewFields } from './workspaceReview'
 
 const props = defineProps<{ message: ChatMessage }>()
 const { requestDirty } = useHttpRuntime()
@@ -34,6 +32,7 @@ const pending = computed(
     ),
 )
 const selected = ref<number[]>([])
+const expanded = ref<number[]>([])
 const blocked = computed(
   () =>
     requestDirty.value
@@ -52,36 +51,10 @@ const missingDependency = computed(() =>
     )
   }),
 )
-function details(change: WorkspaceChange) {
-  const before = JSON.parse(change.before) as Record<string, unknown>
-  const after = JSON.parse(change.after) as Record<string, unknown>
-  const format = (value: unknown) =>
-    value === undefined || value === null
-      ? '—'
-      : typeof value === 'string'
-        ? value
-        : Array.isArray(value)
-          && value.every(item => typeof item === 'string')
-          ? value.join(', ')
-          : JSON.stringify(value, null, 2)
-  return [...new Set([...Object.keys(before), ...Object.keys(after)])]
-    .filter(
-      key =>
-        key !== 'contentId'
-        && !(key === 'folderId' && before[key] == null && after[key] == null)
-        && JSON.stringify(before[key]) !== JSON.stringify(after[key]),
-    )
-    .map(key => ({
-      key,
-      before:
-        key === 'folderId' && before[key] == null
-          ? i18n.t('ai.workspace.root')
-          : format(before[key]),
-      after:
-        key === 'folderId' && after[key] == null
-          ? i18n.t('ai.workspace.root')
-          : format(after[key]),
-    }))
+function toggleExpanded(index: number) {
+  expanded.value = expanded.value.includes(index)
+    ? expanded.value.filter(value => value !== index)
+    : [...expanded.value, index]
 }
 function review() {
   selected.value = props.message.rejected
@@ -89,6 +62,7 @@ function review() {
     : proposal.value.changes
         .map((_, i) => i)
         .filter(i => !applied.value.includes(i) && !undone.value.includes(i))
+  expanded.value = [selected.value[0] ?? 0]
   failed.value = false
   open.value = true
 }
@@ -205,11 +179,12 @@ async function undo(index: number) {
   </UiText>
   <Dialog.Dialog v-model:open="open">
     <Dialog.DialogContent
-      class="max-w-3xl"
+      :zoom="false"
+      class="flex max-h-[90vh] w-[calc(100%-2rem)] flex-col overflow-hidden sm:max-w-5xl"
       @open-auto-focus="(event) => event.preventDefault()"
       @close-auto-focus="(event) => event.preventDefault()"
     >
-      <Dialog.DialogHeader>
+      <Dialog.DialogHeader class="shrink-0">
         <Dialog.DialogTitle>
           {{ i18n.t("ai.workspace.review") }}
         </Dialog.DialogTitle>
@@ -217,13 +192,14 @@ async function undo(index: number) {
           {{ i18n.t("ai.workspace.description") }}
         </Dialog.DialogDescription>
       </Dialog.DialogHeader>
-      <UiText
-        as="p"
-        variant="sm"
-      >
-        {{ proposal.summary }}
-      </UiText>
-      <div class="scrollbar max-h-[55vh] space-y-3 overflow-auto">
+      <div class="scrollbar min-h-0 space-y-3 overflow-auto">
+        <UiText
+          as="p"
+          variant="sm"
+          class="break-words"
+        >
+          {{ proposal.summary }}
+        </UiText>
         <div
           v-for="(change, index) in proposal.changes"
           :key="index"
@@ -272,32 +248,86 @@ async function undo(index: number) {
           >
             {{ i18n.t("ai.workspace.undo") }}
           </Button>
-          <div
-            v-for="field in details(change)"
-            :key="field.key"
-            class="space-y-1"
+          <Button
+            variant="ghost"
+            size="sm"
+            :aria-expanded="expanded.includes(index)"
+            @click="toggleExpanded(index)"
           >
-            <UiText
-              variant="caption"
-              muted
+            {{
+              i18n.t(
+                expanded.includes(index)
+                  ? "ai.diff.hideDetails"
+                  : "ai.diff.showDetails",
+              )
+            }}
+          </Button>
+          <div
+            v-if="open && expanded.includes(index)"
+            class="space-y-3"
+          >
+            <div
+              v-for="field in workspaceReviewFields(
+                change,
+                i18n.t('ai.workspace.root'),
+              )"
+              :key="field.key"
+              class="space-y-2"
             >
-              {{ i18n.t(`ai.workspace.fields.${field.key}`) }}
-            </UiText>
-            <div class="grid gap-2 sm:grid-cols-2">
               <UiText
-                as="div"
-                variant="sm"
-                class="bg-muted min-w-0 rounded-md p-2 break-words whitespace-pre-wrap"
+                variant="caption"
+                muted
               >
-                {{ field.before }}
+                {{ i18n.t(`ai.workspace.fields.${field.key}`) }}
               </UiText>
-              <UiText
-                as="div"
-                variant="sm"
-                class="border-primary/20 min-w-0 rounded-md border p-2 break-words whitespace-pre-wrap"
+              <AiTagsDiff
+                v-if="field.key === 'tags'"
+                :before="field.beforeTags"
+                :after="field.afterTags"
+              />
+              <AiDiffViewer
+                v-else-if="field.diff"
+                :before="field.before"
+                :after="field.after"
+                :language="field.language"
+              />
+              <div
+                v-else
+                class="grid gap-2 sm:grid-cols-2"
               >
-                {{ field.after }}
-              </UiText>
+                <div
+                  class="bg-diff-removed-bg min-w-0 space-y-1 rounded-md p-3"
+                >
+                  <UiText
+                    variant="caption"
+                    muted
+                  >
+                    {{ i18n.t("ai.workspace.before") }}
+                  </UiText>
+                  <UiText
+                    as="div"
+                    variant="sm"
+                    class="break-words whitespace-pre-wrap"
+                  >
+                    {{ field.before }}
+                  </UiText>
+                </div>
+                <div class="bg-diff-added-bg min-w-0 space-y-1 rounded-md p-3">
+                  <UiText
+                    variant="caption"
+                    muted
+                  >
+                    {{ i18n.t("ai.workspace.after") }}
+                  </UiText>
+                  <UiText
+                    as="div"
+                    variant="sm"
+                    class="break-words whitespace-pre-wrap"
+                  >
+                    {{ field.after }}
+                  </UiText>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -318,7 +348,7 @@ async function undo(index: number) {
           )
         }}
       </UiText>
-      <Dialog.DialogFooter>
+      <Dialog.DialogFooter class="shrink-0">
         <Button
           v-if="pending"
           variant="ghost"

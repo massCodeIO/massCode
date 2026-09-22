@@ -1589,6 +1589,30 @@
         "user": "User requirement",
         "description": "Request description",
         "review": "Check that each cited requirement supports its condition. Sample types describe the observed response, not a verified API contract."
+      },
+      "table": {
+        "target": "Target",
+        "condition": "Condition",
+        "expected": "Expected value",
+        "root": "(document root)",
+        "noExpected": "No expected value required"
+      }
+    },
+    "diff": {
+      "expand": "Expand unchanged lines",
+      "unchangedLines": "$ unchanged lines",
+      "noTags": "No tags",
+      "showDetails": "Show changes",
+      "hideDetails": "Hide changes",
+      "addedTag": "Added tag: {{tag}}",
+      "removedTag": "Removed tag: {{tag}}",
+      "lineEndings": {
+        "changed": "Line endings differ. The preview displays normalized line breaks.",
+        "none": "No line breaks",
+        "lf": "LF",
+        "crlf": "CRLF",
+        "cr": "CR",
+        "mixed": "Mixed line endings"
       }
     }
   }

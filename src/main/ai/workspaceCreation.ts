@@ -60,6 +60,9 @@ const http = z
     description: fields.description.describe(
       'Only include when the user asked for a description; otherwise omit.',
     ),
+    protocol: fields.protocol,
+    formData: fields.formData,
+    runtime: fields.runtime,
     method: fields.method.unwrap(),
     url: fields.url.unwrap(),
     headers: fields.headers,
@@ -88,6 +91,16 @@ const collection = z
   })
   .strict()
 
+const duplicate = z
+  .object({
+    type: z.literal('duplicate'),
+    space: workspaceSpaceSchema,
+    sourceId: z.number().int().positive(),
+    name: fields.name,
+    folderId: fields.folderId,
+  })
+  .strict()
+
 // One batch preserves folder dependencies and mixed-space creation. Each branch
 // advertises only fields the corresponding storage actually supports.
 export const workspaceCreationSchema = z
@@ -95,7 +108,14 @@ export const workspaceCreationSchema = z
     summary: z.string().trim().min(1).max(2000),
     items: z
       .array(
-        z.discriminatedUnion('type', [note, snippet, http, folder, collection]),
+        z.discriminatedUnion('type', [
+          note,
+          snippet,
+          http,
+          folder,
+          collection,
+          duplicate,
+        ]),
       )
       .min(1)
       .max(30),
@@ -107,6 +127,18 @@ export function creationPlan(input: unknown) {
   return {
     summary: parsed.summary,
     operations: parsed.items.map((item) => {
+      if (item.type === 'duplicate') {
+        return {
+          space: item.space,
+          kind: 'item' as const,
+          action: 'duplicate' as const,
+          id: item.sourceId,
+          fields: {
+            ...(item.name === undefined ? {} : { name: item.name }),
+            ...(item.folderId === undefined ? {} : { folderId: item.folderId }),
+          },
+        }
+      }
       const { type, ...values } = item
       if (type === 'folder' && 'space' in values) {
         const { space, ...fields } = values

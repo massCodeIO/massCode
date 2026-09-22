@@ -13,11 +13,19 @@ import { useHttpStorage, useNotesStorage, useStorage } from '../storage'
 import { PartialCreateError } from '../storage/partialCreateError'
 import { vaultIdentity } from './vault'
 import {
+  applyLifecycle,
+  isLifecycle,
+  lifecyclePreview,
+  lifecycleSnapshot,
+  validateLifecycle,
+} from './workspaceLifecycle'
+import {
   folders,
   read,
   removeCreated,
   snapshotFields,
   validate,
+  validateFileReferences,
   verifyWrite,
   write,
 } from './workspaceStorage'
@@ -47,19 +55,28 @@ export function createWorkspaceManager() {
       before: ReturnType<typeof read>[]
       applied: Set<number>
       failed: Set<number>
-      undo: Map<number, { id: number, baseline: string }>
+      undo: Map<
+        number,
+        {
+          id: number
+          baseline: string
+          restore?: () => void
+          read?: () => unknown
+        }
+      >
     }
   >()
   return {
     clear() {
       proposals.clear()
     },
-    propose(input: unknown): WorkspaceProposal {
+    propose(input: unknown, userMessages: string[] = []): WorkspaceProposal {
       const plan = workspacePlanSchema.parse(input)
       if (JSON.stringify(plan).length > 500000)
         throw new Error('PLAN_TOO_LARGE')
       const targets = new Set<string>()
       const before = plan.operations.map((op, index) => {
+        validateFileReferences(op, userMessages)
         if (op.fields.folderOperation !== undefined) {
           const dependency = plan.operations[op.fields.folderOperation]
           if (
@@ -71,10 +88,14 @@ export function createWorkspaceManager() {
             throw new Error('INVALID_DEPENDENCY')
           }
         }
-        const target = `${op.space}:${op.kind}:${op.id}`
-        if (op.action === 'update' && targets.has(target))
+        const target = `${op.space}:${op.kind}:${op.id}:${op.fields.contentId ?? ''}`
+        if (op.action !== 'create' && targets.has(target))
           throw new Error('DUPLICATE_TARGET')
         targets.add(target)
+        if (isLifecycle(op)) {
+          validateLifecycle(op)
+          return structuredClone(read(op))
+        }
         return structuredClone(validate(op))
       })
       const preview = (
@@ -100,19 +121,35 @@ export function createWorkspaceManager() {
       const value: WorkspaceProposal = {
         id: randomUUID(),
         summary: plan.summary,
-        changes: plan.operations.map((operation, i) => ({
-          operation,
-          name: operation.fields.name ?? before[i]?.name ?? '',
-          before: JSON.stringify(
-            preview(
+        changes: plan.operations.map((operation, i) => {
+          if (isLifecycle(operation)) {
+            const preview = lifecyclePreview(operation)
+            return {
               operation,
-              before[i] ? snapshotFields(operation, before[i]) : {},
+              name: String(preview.before.name),
+              irreversible: preview.irreversible,
+              before: JSON.stringify(preview.before, null, 2),
+              after: JSON.stringify(preview.after, null, 2),
+            }
+          }
+          return {
+            operation,
+            name: operation.fields.name ?? before[i]?.name ?? '',
+            before: JSON.stringify(
+              preview(
+                operation,
+                before[i] ? snapshotFields(operation, before[i]) : {},
+              ),
+              null,
+              2,
             ),
-            null,
-            2,
-          ),
-          after: JSON.stringify(preview(operation, operation.fields), null, 2),
-        })),
+            after: JSON.stringify(
+              preview(operation, operation.fields),
+              null,
+              2,
+            ),
+          }
+        }),
       }
       if (proposals.size >= 30)
         proposals.delete(proposals.keys().next().value!)
@@ -120,7 +157,9 @@ export function createWorkspaceManager() {
         vault: vaultIdentity(),
         value,
         before,
-        baselines: before.map(fingerprint),
+        baselines: plan.operations.map((op, index) =>
+          fingerprint(isLifecycle(op) ? lifecycleSnapshot(op) : before[index]),
+        ),
         applied: new Set(),
         failed: new Set(),
         undo: new Map(),
@@ -136,27 +175,34 @@ export function createWorkspaceManager() {
         || !op
         || !applied
         || plan.vault !== vaultIdentity()
-        || fingerprint(read({ ...op, id: applied.id })) !== applied.baseline
+        || fingerprint(
+          applied.read ? applied.read() : read({ ...op, id: applied.id }),
+        ) !== applied.baseline
       ) {
         throw new Error('STALE_PROPOSAL')
       }
-      if (op.action === 'create') {
+      if (applied.restore) {
+        applied.restore()
+      }
+      else if (op.action === 'create') {
         removeCreated(op, applied.id)
       }
       else {
-        write(
-          { ...op, fields: snapshotFields(op, plan.before[index]!) },
-          applied.id,
-        )
+        const restored = {
+          ...op,
+          fields: snapshotFields(op, plan.before[index]!, true),
+        }
+        write(restored, applied.id, true)
+        verifyWrite(restored, applied.id)
       }
       plan.undo.delete(index)
       plan.applied.delete(index)
       plan.failed.add(index)
       return true
     },
-    create(input: unknown) {
+    create(input: unknown, userMessages: string[] = []) {
       const plan = workspaceCreateSchema.parse(input)
-      const proposal = this.propose(plan)
+      const proposal = this.propose(plan, userMessages)
       const result = this.apply(
         proposal.id,
         plan.operations.map((_, i) => i),
@@ -180,7 +226,11 @@ export function createWorkspaceManager() {
           !change
           || plan.applied.has(i)
           || plan.failed.has(i)
-          || fingerprint(validate(change.operation)) !== plan.baselines[i]
+          || fingerprint(
+            isLifecycle(change.operation)
+              ? validateLifecycle(change.operation)
+              : validate(change.operation),
+          ) !== plan.baselines[i]
         ) {
           throw new Error('STALE_PROPOSAL')
         }
@@ -209,6 +259,40 @@ export function createWorkspaceManager() {
         }
         let target = op.id
         try {
+          if (isLifecycle(op)) {
+            const result = applyLifecycle(op)
+            if (op.action === 'duplicate')
+              plan.value.changes[i]!.name = result.name
+            if (result.restore) {
+              plan.undo.set(i, {
+                id: result.id,
+                baseline: fingerprint(result.read()),
+                restore: result.restore,
+                read: result.read,
+              })
+            }
+            plan.applied.add(i)
+            applied.push(i)
+            if (
+              (op.kind === 'item'
+                && ['duplicate', 'restore'].includes(op.action))
+              || (op.kind === 'fragment' && op.action !== 'delete')
+            ) {
+              items.push({
+                operationIndex: i,
+                id: result.id,
+                name: result.name,
+                type:
+                  op.space === 'code'
+                    ? 'snippet'
+                    : op.space === 'notes'
+                      ? 'note'
+                      : 'http_request',
+              })
+            }
+            continue
+          }
+
           if (op.action === 'create') {
             const input = {
               name: op.fields.name!,
@@ -261,15 +345,16 @@ export function createWorkspaceManager() {
           if (error instanceof PartialCreateError)
             target = error.itemId
           plan.failed.add(i)
-          if (target) {
+          if (target && !isLifecycle(op)) {
             try {
               if (op.action === 'create') {
                 removeCreated(op, target)
               }
               else {
                 write(
-                  { ...op, fields: snapshotFields(op, plan.before[i]!) },
+                  { ...op, fields: snapshotFields(op, plan.before[i]!, true) },
                   target,
+                  true,
                 )
               }
             }

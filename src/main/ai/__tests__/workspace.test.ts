@@ -22,7 +22,12 @@ const state = vi.hoisted(() => ({
   folders: {} as Record<string, any[]>,
   tags: {} as Record<string, any[]>,
 }))
+vi.mock('../../http/secrets', () => ({
+  getUsableSecretKeys: () => [],
+  deleteEnvironmentSecrets: () => {},
+}))
 vi.mock('../vault', () => ({ vaultIdentity: () => state.vault }))
+vi.mock('../httpAuxActions', () => ({ readHttpAuxState: vi.fn() }))
 vi.mock('../../storage', () => {
   function provider(space: string) {
     const get = (id: number) =>

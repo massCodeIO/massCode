@@ -26,7 +26,13 @@ const data = vi.hoisted(() => ({
       { key: 'Accept', value: 'application/json' },
     ],
     query: [],
-    bodyType: 'none',
+    protocol: 'http',
+    formData: [
+      { key: 'password', type: 'text', value: 'saved-secret' },
+      { key: 'token', type: 'text', value: 'saved-secret' },
+      { key: 'ordinary', type: 'text', value: 'kept' },
+    ],
+    bodyType: 'multipart',
     body: null,
     description: 'Endpoint',
     auth: { token: 'secret' },
@@ -258,4 +264,21 @@ it('distinguishes C++ and C# names', async () => {
   finally {
     data.extraHttp = []
   }
+})
+
+it('redacts saved multipart credentials in the actual read tool result', async () => {
+  const result = await executeVaultTool(
+    'read_vault_item',
+    JSON.stringify({ type: 'http_request', id: 3 }),
+  )
+  expect(JSON.stringify(result)).not.toContain('saved-secret')
+  expect(result).toMatchObject({
+    content: {
+      formData: [
+        { key: 'password', value: '[REDACTED]' },
+        { key: 'token', value: '[REDACTED]' },
+        { key: 'ordinary', value: 'kept' },
+      ],
+    },
+  })
 })

@@ -32,6 +32,112 @@ export const workspaceReviewSchema = z
         z.union([
           z
             .object({
+              space: z.literal('http'),
+              kind: z.literal('environment'),
+              action: z.literal('create'),
+              fields: workspaceFieldsSchema
+                .pick({ name: true, variables: true, activate: true })
+                .extend({ name: workspaceFieldsSchema.shape.name.unwrap() }),
+            })
+            .strict(),
+          z
+            .object({
+              space: z.literal('http'),
+              kind: z.literal('environment'),
+              ...updateTarget,
+              fields: workspaceFieldsSchema.pick({
+                name: true,
+                variables: true,
+                unset: true,
+              }),
+            })
+            .strict(),
+          z
+            .object({
+              space: z.literal('http'),
+              kind: z.literal('environment'),
+              action: z.literal('delete'),
+              id: z.number().int().positive(),
+              fields: z.object({}).strict(),
+            })
+            .strict(),
+          z
+            .object({
+              space: z.literal('http'),
+              kind: z.literal('environment'),
+              action: z.literal('activate'),
+              fields: z
+                .object({
+                  environmentId: z.number().int().positive().nullable(),
+                })
+                .strict(),
+            })
+            .strict(),
+          z
+            .object({
+              space: z.literal('code'),
+              kind: z.literal('fragment'),
+              action: z.literal('create'),
+              id: z.number().int().positive().describe('Parent snippet ID'),
+              fields: workspaceFieldsSchema
+                .pick({ label: true, content: true, language: true })
+                .extend({
+                  label: workspaceFieldsSchema.shape.label.unwrap(),
+                  content: workspaceFieldsSchema.shape.content.unwrap(),
+                  language: workspaceFieldsSchema.shape.language.unwrap(),
+                }),
+            })
+            .strict(),
+          z
+            .object({
+              space: z.literal('code'),
+              kind: z.literal('fragment'),
+              ...updateTarget,
+              fields: workspaceFieldsSchema
+                .pick({
+                  label: true,
+                  content: true,
+                  language: true,
+                  contentId: true,
+                })
+                .extend({
+                  contentId: workspaceFieldsSchema.shape.contentId.unwrap(),
+                }),
+            })
+            .strict(),
+          z
+            .object({
+              space: z.literal('code'),
+              kind: z.literal('fragment'),
+              action: z.literal('delete'),
+              id: z.number().int().positive().describe('Parent snippet ID'),
+              fields: z
+                .object({
+                  contentId: workspaceFieldsSchema.shape.contentId.unwrap(),
+                })
+                .strict(),
+            })
+            .strict(),
+          z
+            .object({
+              space: workspaceSpaceSchema,
+              kind: z.literal('item'),
+              action: z.enum(['trash', 'restore', 'permanentDelete']),
+              id: z.number().int().positive(),
+              fields: z.object({}).strict(),
+            })
+            .strict(),
+          z
+            .object({
+              space: workspaceSpaceSchema,
+              kind: z.enum(['folder', 'tag']),
+              action: z.literal('delete'),
+              id: z.number().int().positive(),
+              fields: z.object({}).strict(),
+            })
+            .strict(),
+          z
+            .object({
               space: z.literal('code'),
               kind: z.literal('item'),
               ...updateTarget,
@@ -66,6 +172,9 @@ export const workspaceReviewSchema = z
               ...updateTarget,
               fields: commonFields.extend(
                 workspaceFieldsSchema.pick({
+                  protocol: true,
+                  formData: true,
+                  runtime: true,
                   method: true,
                   url: true,
                   headers: true,
@@ -101,7 +210,9 @@ export const workspaceReviewSchema = z
             .object({
               space: workspaceSpaceSchema,
               ...folderUpdate,
-              fields: folderFields,
+              fields: folderFields.extend({
+                collectionConfig: workspaceFieldsSchema.shape.collectionConfig,
+              }),
             })
             .strict(),
         ]),

@@ -1,6 +1,9 @@
 import type { AiVaultItem } from './ai'
 import { z } from 'zod'
+import { httpCollectionSchema } from './httpCollection'
+import { httpRuntimeSchema } from './httpRuntime'
 import { httpScriptsSchema } from './httpScripts'
+import { httpTransportSchema } from './httpTransport'
 
 export const workspaceSpaceSchema = z.enum(['code', 'notes', 'http'])
 const name = z.string().trim().min(1).max(256)
@@ -12,6 +15,28 @@ const entry = z
     description: z.string().optional(),
   })
   .strict()
+export const workspaceRuntimePatchSchema = z
+  .object({
+    version: httpRuntimeSchema.shape.version.optional(),
+    unsetTransport: z.array(httpTransportSchema.keyof()).optional(),
+    assertions: httpRuntimeSchema.shape.assertions.optional(),
+    extractions: httpRuntimeSchema.shape.extractions.optional(),
+    scripts: httpRuntimeSchema.shape.scripts,
+    transport: httpRuntimeSchema.shape.transport,
+  })
+  .strict()
+export const workspaceCollectionPatchSchema = httpCollectionSchema
+  .partial()
+  .extend({
+    runtime: workspaceRuntimePatchSchema.optional(),
+    postResponseOrder: httpCollectionSchema.shape.postResponseOrder
+      .unwrap()
+      .nullable()
+      .optional(),
+  })
+const variableKey = z
+  .string()
+  .regex(/^(?!__proto__$|constructor$|prototype$)[\w.-]{1,128}$/u)
 export const workspaceFieldsSchema = z
   .object({
     name: name.optional(),
@@ -27,6 +52,7 @@ export const workspaceFieldsSchema = z
       .describe(
         'Code items only: programming language of the snippet, not the language of the conversation. Omit for Notes and HTTP.',
       ),
+    label: name.optional(),
     contentId: z.number().int().positive().optional(),
     folderOperation: z.number().int().min(0).max(29).optional(),
     folderId: z
@@ -45,6 +71,27 @@ export const workspaceFieldsSchema = z
       .describe(
         'Code and Notes only. Set tags when requested, not automatically based on content or title.',
       ),
+    protocol: z.enum(['http', 'websocket']).optional(),
+    formData: z
+      .array(
+        z
+          .object({
+            key: z.string(),
+            value: z.string(),
+            type: z.enum(['text', 'file']),
+            enabled: z.boolean().optional(),
+            description: z.string().optional(),
+          })
+          .strict(),
+      )
+      .max(1000)
+      .optional(),
+    runtime: workspaceRuntimePatchSchema.optional(),
+    collectionConfig: workspaceCollectionPatchSchema.nullable().optional(),
+    variables: z.record(variableKey, z.string().max(32768)).optional(),
+    unset: z.array(variableKey).max(1000).optional(),
+    activate: z.boolean().optional(),
+    environmentId: z.number().int().positive().nullable().optional(),
     method: z
       .enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'])
       .optional(),
@@ -52,10 +99,26 @@ export const workspaceFieldsSchema = z
     headers: z.array(entry).max(100).optional(),
     query: z.array(entry).max(100).optional(),
     bodyType: z
-      .enum(['none', 'json', 'text', 'graphql', 'form-urlencoded'])
+      .enum([
+        'none',
+        'json',
+        'text',
+        'graphql',
+        'form-urlencoded',
+        'multipart',
+        'binary',
+      ])
       .optional(),
-    body: z.string().max(200000).optional(),
+    body: z
+      .string()
+      .max(200000)
+      .nullable()
+      .optional()
+      .describe(
+        'GraphQL is a serialized editor draft: {"query":"query text","variables":"{}","operationName":""}; variables must be a STRING, not an object. For structured form-urlencoded formData use body:null; non-null body is a legacy raw form. Binary body is an explicit user-supplied file path or an existing saved file reference.',
+      ),
     collection: z.boolean().optional(),
+    defaultLanguage: z.string().max(100).optional(),
     isFavorites: z.union([z.literal(0), z.literal(1)]).optional(),
     isDeleted: z.union([z.literal(0), z.literal(1)]).optional(),
     properties: z.record(z.string(), z.unknown()).optional(),
@@ -77,8 +140,17 @@ export const workspaceFieldsSchema = z
 export const workspaceOperationSchema = z
   .object({
     space: workspaceSpaceSchema,
-    kind: z.enum(['item', 'folder']),
-    action: z.enum(['create', 'update']),
+    kind: z.enum(['item', 'folder', 'fragment', 'tag', 'environment']),
+    action: z.enum([
+      'create',
+      'update',
+      'duplicate',
+      'trash',
+      'restore',
+      'permanentDelete',
+      'delete',
+      'activate',
+    ]),
     id: z.number().int().positive().optional(),
     fields: workspaceFieldsSchema,
   })
@@ -92,9 +164,18 @@ export const workspacePlanSchema = z
 export const workspaceCreateSchema = workspacePlanSchema.extend({
   operations: z
     .array(
-      workspaceOperationSchema
-        .omit({ id: true })
-        .extend({ action: z.literal('create') }),
+      z.union([
+        workspaceOperationSchema.omit({ id: true }).extend({
+          action: z.literal('create'),
+          kind: z.enum(['item', 'folder']),
+        }),
+        workspaceOperationSchema.extend({
+          action: z.literal('duplicate'),
+          kind: z.literal('item'),
+          space: workspaceSpaceSchema,
+          id: z.number().int().positive(),
+        }),
+      ]),
     )
     .min(1)
     .max(30),
@@ -103,6 +184,7 @@ export type WorkspaceOperation = z.infer<typeof workspaceOperationSchema>
 export interface WorkspaceChange {
   operation: WorkspaceOperation
   name: string
+  irreversible?: boolean
   before: string
   after: string
 }

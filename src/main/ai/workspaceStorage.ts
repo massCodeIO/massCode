@@ -1,6 +1,10 @@
 import type { WorkspaceOperation } from '../../shared/aiWorkspace'
 import { getEntryNameValidationIssue } from '../../shared/entryNameValidation'
-import { emptyHttpCollection } from '../../shared/httpCollection'
+import {
+  emptyHttpCollection,
+  httpCollectionSchema,
+} from '../../shared/httpCollection'
+import { readGraphqlDraft } from '../../shared/httpGraphql'
 import { httpRuntimeSchema } from '../../shared/httpRuntime'
 import { useHttpStorage, useNotesStorage, useStorage } from '../storage'
 
@@ -19,6 +23,8 @@ export function folders(space: WorkspaceOperation['space']) {
 }
 export function read(op: WorkspaceOperation) {
   if (!op.id)
+    return null
+  if (op.kind === 'tag' || op.kind === 'environment')
     return null
   if (op.kind === 'folder') {
     return (
@@ -53,7 +59,8 @@ export function validate(op: WorkspaceOperation) {
           'name',
           'folderId',
           'folderOperation',
-          ...(op.space === 'http' ? ['collection'] : []),
+          ...(op.space === 'code' ? ['defaultLanguage'] : []),
+          ...(op.space === 'http' ? ['collection', 'collectionConfig'] : []),
         ]
       : [
           'name',
@@ -64,6 +71,9 @@ export function validate(op: WorkspaceOperation) {
           'folderOperation',
           ...(op.space === 'http'
             ? [
+                'protocol',
+                'formData',
+                'runtime',
                 'method',
                 'url',
                 'headers',
@@ -94,6 +104,49 @@ export function validate(op: WorkspaceOperation) {
   if (JSON.stringify(f).includes('[REDACTED]'))
     throw new Error('REDACTED_VALUE')
   const before = read(op)
+  if (op.space === 'http' && op.kind === 'item') {
+    const bodyType
+      = f.bodyType
+        ?? (before && 'bodyType' in before ? before.bodyType : undefined)
+    const body
+      = f.body === undefined
+        ? before && 'body' in before
+          ? before.body
+          : null
+        : f.body
+    if (
+      bodyType === 'graphql'
+      && (f.body !== undefined || f.bodyType !== undefined)
+    ) {
+      readGraphqlDraft(body)
+    }
+    if (
+      bodyType === 'form-urlencoded'
+      && f.formData !== undefined
+      && body !== null
+    ) {
+      throw new Error('STRUCTURED_FORM_REQUIRES_NULL_BODY')
+    }
+  }
+  if (f.scripts && f.runtime)
+    throw new Error('CONFLICTING_RUNTIME')
+  if (
+    op.space === 'http'
+    && op.kind === 'folder'
+    && f.collection
+    && f.collectionConfig !== undefined
+  ) {
+    throw new Error('INVALID_OPERATION')
+  }
+  if (
+    op.space === 'http'
+    && (f.runtime || f.scripts)
+    && before
+    && 'runtimeState' in before
+    && before.runtimeState !== 'ready'
+  ) {
+    throw new Error('RUNTIME_UNAVAILABLE')
+  }
   if (
     op.action === 'update'
     && (!before
@@ -171,15 +224,50 @@ function tagNames(space: 'code' | 'notes', id: number, names: string[]) {
     else check(useNotesStorage().notes.addTagToNote(id, tag.id))
   }
 }
-export function write(op: WorkspaceOperation, id: number) {
+export function write(op: WorkspaceOperation, id: number, restoring = false) {
   const f = op.fields
   if (op.kind === 'folder') {
-    check(
-      folders(op.space).updateFolder(id, {
-        ...(f.name !== undefined ? { name: f.name } : {}),
-        ...(f.folderId !== undefined ? { parentId: f.folderId } : {}),
-      }),
-    )
+    const metadata = {
+      ...(f.name !== undefined ? { name: f.name } : {}),
+      ...(f.defaultLanguage !== undefined
+        ? { defaultLanguage: f.defaultLanguage }
+        : {}),
+      ...(f.folderId !== undefined ? { parentId: f.folderId } : {}),
+    }
+    if (Object.keys(metadata).length)
+      check(folders(op.space).updateFolder(id, metadata))
+    if (f.collectionConfig !== undefined) {
+      const current = useHttpStorage()
+        .folders
+        .getFolders()
+        .find(folder => folder.id === id)
+      const base = current?.collectionConfig
+        ? httpCollectionSchema.parse(current.collectionConfig)
+        : { ...emptyHttpCollection(), auth: { type: 'inherit' as const } }
+      const config
+        = f.collectionConfig === null
+          ? null
+          : restoring
+            ? httpCollectionSchema.parse(f.collectionConfig)
+            : httpCollectionSchema.parse({
+                ...base,
+                ...f.collectionConfig,
+                ...(f.collectionConfig.postResponseOrder === null
+                  ? { postResponseOrder: undefined }
+                  : {}),
+                ...(f.collectionConfig.runtime
+                  ? {
+                      runtime: mergeRuntime(
+                        base.runtime,
+                        f.collectionConfig.runtime,
+                      ),
+                    }
+                  : {}),
+              })
+      check(
+        useHttpStorage().folders.updateFolder(id, { collectionConfig: config }),
+      )
+    }
     if (f.collection) {
       check(
         useHttpStorage().folders.updateFolder(id, {
@@ -247,19 +335,25 @@ export function write(op: WorkspaceOperation, id: number) {
       folderOperation: _folderOperation,
       properties: _properties,
       scripts,
+      runtime: runtimePatch,
+      collectionConfig: _collectionConfig,
+      variables: _variables,
+      unset: _unset,
+      environmentId: _environmentId,
+      activate: _activate,
+      label: _label,
       ...fields
     } = f
     if (Object.keys(fields).length)
       check(useHttpStorage().requests.updateRequest(id, fields))
-    if (scripts) {
+    if (scripts || runtimePatch) {
       const current = useHttpStorage().requests.getRequestById(id)
       if (!current?.runtimeRevision || current.runtimeState !== 'ready')
         throw new Error('RUNTIME_UNAVAILABLE')
-      const runtime = httpRuntimeSchema.parse({
-        ...current.runtime,
-        version: 2,
-        scripts,
-      })
+      const runtime
+        = restoring && runtimePatch
+          ? httpRuntimeSchema.parse(runtimePatch)
+          : mergeRuntime(current.runtime!, runtimePatch ?? { scripts })
       check(
         useHttpStorage().requests.updateRuntime(
           id,
@@ -272,13 +366,74 @@ export function write(op: WorkspaceOperation, id: number) {
   if (f.tags && op.space !== 'http')
     tagNames(op.space, id, f.tags)
 }
+function projectPatch(value: unknown, patch: unknown): unknown {
+  if (!patch || typeof patch !== 'object' || Array.isArray(patch))
+    return value
+  const record
+    = value && typeof value === 'object'
+      ? (value as Record<string, unknown>)
+      : {}
+  return Object.fromEntries(
+    Object.entries(patch).map(([key, child]) => [
+      key,
+      key === 'unsetTransport' && Array.isArray(child)
+        ? child.filter(
+            name =>
+              (record.transport as Record<string, unknown> | undefined)?.[
+                name
+              ] === undefined,
+          )
+        : key === 'postResponseOrder' && child === null
+          ? (record[key] ?? null)
+          : projectPatch(record[key], child),
+    ]),
+  )
+}
+function mergeRuntime(
+  current: import('../../shared/httpRuntime').HttpRuntime,
+  patch: NonNullable<WorkspaceOperation['fields']['runtime']>,
+) {
+  const { unsetTransport, ...fields } = patch
+  if (unsetTransport?.some(key => patch.transport?.[key] !== undefined))
+    throw new Error('CONFLICTING_RUNTIME')
+  const transport = { ...current.transport, ...patch.transport }
+  for (const key of unsetTransport ?? []) delete transport[key]
+  return httpRuntimeSchema.parse({
+    ...current,
+    ...fields,
+    version: patch.version ?? (patch.scripts ? 2 : current.version),
+    ...(patch.transport || unsetTransport ? { transport } : {}),
+  })
+}
 export function snapshotFields(
   op: WorkspaceOperation,
   record: NonNullable<ReturnType<typeof read>>,
+  restoring = false,
 ): WorkspaceOperation['fields'] {
   const result: Record<string, unknown> = {}
   for (const key of Object.keys(op.fields)) {
+    if (key === 'runtime' || key === 'collectionConfig') {
+      const value
+        = key === 'runtime'
+          ? 'runtime' in record
+            ? record.runtime
+            : undefined
+          : 'collectionConfig' in record
+            ? record.collectionConfig
+            : undefined
+      result[key]
+        = value == null
+          ? null
+          : restoring
+            ? structuredClone(value)
+            : projectPatch(value, op.fields[key])
+      continue
+    }
     if (key === 'scripts') {
+      if (restoring && 'runtime' in record && record.runtime) {
+        result.runtime = structuredClone(record.runtime)
+        continue
+      }
       result[key] = ('runtime' in record
         ? record.runtime?.scripts
         : undefined) ?? {
@@ -311,6 +466,9 @@ export function snapshotFields(
             : 'folderId' in record
               ? record.folderId
               : null
+    }
+    else if (key === 'body' && op.space === 'http') {
+      result[key] = 'body' in record ? record.body : null
     }
     else if (key === 'tags') {
       result[key] = ('tags' in record ? record.tags : []).map(
@@ -425,4 +583,44 @@ export function verifyWrite(op: WorkspaceOperation, id: number) {
     }
   }
   return record
+}
+
+export function validateFileReferences(
+  op: WorkspaceOperation,
+  messages: string[],
+  existingReferences: ReadonlySet<string> = new Set(),
+) {
+  if (
+    op.space !== 'http'
+    || op.kind !== 'item'
+    || !['create', 'update'].includes(op.action)
+  ) {
+    return
+  }
+  const before = op.id ? useHttpStorage().requests.getRequestById(op.id) : null
+  const existing = new Set([
+    ...existingReferences,
+    ...(before?.formData ?? [])
+      .filter(entry => entry.type === 'file')
+      .map(entry => entry.value),
+    ...(before?.bodyType === 'binary' && before.body ? [before.body] : []),
+  ])
+  const paths = [
+    ...(op.fields.formData ?? [])
+      .filter(entry => entry.type === 'file')
+      .map(entry => entry.value),
+    ...((op.fields.bodyType ?? before?.bodyType) === 'binary'
+      && (op.fields.body ?? before?.body)
+      ? [op.fields.body === undefined ? before!.body! : op.fields.body!]
+      : []),
+  ]
+  for (const path of paths) {
+    if (
+      path
+      && !existing.has(path)
+      && !messages.some(message => message.includes(path))
+    ) {
+      throw new Error('FILE_REFERENCE_NOT_REQUESTED')
+    }
+  }
 }

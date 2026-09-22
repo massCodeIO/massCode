@@ -2,6 +2,7 @@ import type { AiVaultItem, AiVaultRef } from '../../shared/ai'
 import { Buffer } from 'node:buffer'
 import { z } from 'zod'
 import { aiVaultRefSchema } from '../../shared/ai'
+import { redactAiHttp } from '../../shared/aiHttp'
 import { useHttpStorage, useNotesStorage, useStorage } from '../storage'
 import { store } from '../store'
 
@@ -57,12 +58,14 @@ async function collectVaultItems(input: z.infer<typeof vaultSearchSchema>) {
       ...useHttpStorage()
         .requests
         .getRequests(filter)
-        .filter(item => !item.isDeleted && item.protocol !== 'websocket')
+        .filter(item => !item.isDeleted)
         .map(item => ({
           type: 'http_request' as const,
           id: item.id,
           name: item.name,
           updatedAt: item.updatedAt,
+          protocol: item.protocol,
+          formData: item.formData,
           method: item.method,
           url: item.url,
           searchPath: (item.url ?? '')
@@ -249,10 +252,10 @@ export function readVaultItem(ref: AiVaultRef) {
     content = item.content
   }
   else {
-    if (item.protocol === 'websocket')
-      throw new Error('UNSUPPORTED')
     // Saved definition only: never resolve secrets/environments, access files or execute HTTP.
-    content = {
+    content = redactAiHttp({
+      protocol: item.protocol,
+      formData: item.formData,
       method: item.method,
       url: item.url,
       headers: item.headers.filter(
@@ -265,7 +268,7 @@ export function readVaultItem(ref: AiVaultRef) {
       bodyType: item.bodyType,
       body: item.body,
       description: item.description,
-    }
+    })
   }
   const result = { ...ref, name: item.name, content }
   if (Buffer.byteLength(JSON.stringify(result)) > 48 * 1024)

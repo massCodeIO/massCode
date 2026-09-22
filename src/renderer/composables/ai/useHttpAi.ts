@@ -56,7 +56,7 @@ export function useHttpAi() {
     }
     const { truncated, ...response } = lastResponse.value ?? {}
     const availability
-      = response.bodyKind === 'binary'
+      = lastResponse.value?.bodyKind === 'binary'
         ? 'The response body is binary; its text is not available.'
         : truncated === true
           ? 'The captured response body is incomplete. Missing bytes cannot be retrieved by paging this snapshot.'

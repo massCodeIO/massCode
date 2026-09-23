@@ -17,14 +17,9 @@ import { Trash2 } from 'lucide-vue-next'
 
 const { httpState } = useHttpApp()
 const { getHttpFolders } = useHttpFolders()
-const {
-  getHttpRequests,
-  getAllHttpRequests,
-  emptyTrash,
-  currentRequest,
-  trashRequests,
-} = useHttpRequests()
-const { getHttpEnvironments, environments } = useHttpEnvironments()
+const { getHttpRequests, getAllHttpRequests, emptyTrash, currentRequest }
+  = useHttpRequests()
+const { getHttpEnvironments } = useHttpEnvironments()
 const { searchQuery, resetHttpSearchState } = useHttpSearch()
 const { isHttpImportDialogOpen } = useHttpImportDialog()
 const layout = store.app.get('http.layout') as AppStore['http']['layout']
@@ -174,25 +169,6 @@ watch([searchQuery, favorites], () => {
   const finishBenchmark = benchmarkStart('http', 'sidebar-filter')
   if (searchQuery.value || favorites.value)
     collectionsOpen.value = true
-  const query = searchQuery.value.trim().toLocaleLowerCase()
-  if (
-    query
-    && environments.value.some(env =>
-      env.name.toLocaleLowerCase().includes(query),
-    )
-  ) {
-    environmentsOpen.value = true
-  }
-  if (
-    query
-    && trashRequests.value.some(request =>
-      `${request.name} ${request.method} ${request.url}`
-        .toLocaleLowerCase()
-        .includes(query),
-    )
-  ) {
-    trashOpen.value = true
-  }
   finishBenchmark()
 })
 resetHttpSearchState()
@@ -247,10 +223,7 @@ async function onImported() {
           height: environmentsOpen ? `${environmentSize + 36}px` : '36px',
         }"
       >
-        <HttpEnvironmentsPanel
-          v-model:open="environmentsOpen"
-          :query="searchQuery"
-        />
+        <HttpEnvironmentsPanel v-model:open="environmentsOpen" />
       </section>
       <div
         v-if="trashOpen && (collectionsOpen || environmentsOpen)"
@@ -285,7 +258,6 @@ async function onImported() {
         <HttpTreeLive
           v-show="trashOpen"
           trash
-          :query="searchQuery"
         />
       </section>
     </div>

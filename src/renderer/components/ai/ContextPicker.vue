@@ -71,19 +71,6 @@ function add(item: AiVaultItem) {
 
 <template>
   <div class="flex flex-wrap items-center gap-1">
-    <Button
-      v-if="workspaceContext"
-      variant="outline"
-      size="sm"
-      @click="removeWorkspaceContext"
-    >
-      {{
-        i18n.t("ai.workspaceContext", {
-          space: i18n.t(`spaces.${workspaceContext.space}.label`),
-          count: workspaceContext.selectedIds.length,
-        })
-      }}<X class="size-3" />
-    </Button>
     <Popover.Popover v-model:open="open">
       <Popover.PopoverTrigger as-child>
         <UiActionButton :tooltip="i18n.t('ai.addContext')">
@@ -96,6 +83,20 @@ function add(item: AiVaultItem) {
         side="top"
       >
         <Button
+          v-if="workspaceContext"
+          variant="outline"
+          size="sm"
+          @click="removeWorkspaceContext"
+        >
+          {{
+            i18n.t("ai.workspaceContext", {
+              space: i18n.t(`spaces.${workspaceContext.space}.label`),
+              count: workspaceContext.selectedIds.length,
+            })
+          }}<X class="size-3" />
+        </Button>
+        <Button
+          v-else
           variant="outline"
           size="sm"
           @click="attachWorkspaceContext"

@@ -769,7 +769,6 @@ onBeforeUnmount(() => {
         class="h-full min-h-0 shrink-0 overflow-hidden"
       >
         <AiInspectorTabs
-          :label="i18n.t('notes.inspector.title')"
           @close="closeInspector"
           @inspector="isNotesInspectorOpen = true"
         >

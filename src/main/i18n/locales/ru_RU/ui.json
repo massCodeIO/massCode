@@ -1,5 +1,6 @@
 {
   "common": {
+    "inspector": "Инспектор",
     "total": "Всего",
     "inbox": "Входящие",
     "favorites": "Избранное",

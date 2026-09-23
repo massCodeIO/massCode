@@ -1,5 +1,6 @@
 {
   "common": {
+    "inspector": "Inspector",
     "total": "Total",
     "inbox": "Inbox",
     "favorites": "Favorites",

@@ -12,7 +12,7 @@ import { useHttpRunner } from '@/composables/spaces/http/useHttpRunner'
 import { useHttpUi } from '@/composables/spaces/http/useHttpUi'
 import { useHttpWebSocket } from '@/composables/spaces/http/useHttpWebSocket'
 import { useResizeHandle } from '@/composables/useResizeHandle'
-import { i18n, store } from '@/electron'
+import { store } from '@/electron'
 import { useElementSize } from '@vueuse/core'
 
 useHttpAi()
@@ -158,7 +158,6 @@ onMounted(() => {
             class="h-full min-h-0 shrink-0 overflow-hidden"
           >
             <AiInspectorTabs
-              :label="i18n.t('spaces.http.runtime.variablesInspector')"
               @close="closeInspector"
               @inspector="inspectorOpen = true"
             >

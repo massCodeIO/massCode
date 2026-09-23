@@ -11,6 +11,30 @@ const { applyHttpAction, cancelHttpAction } = useAi()
 const open = ref(false)
 const busy = ref(false)
 const failed = ref(false)
+const previewText = computed(() => formatHttpData(props.action.preview))
+const resultText = computed(() => formatHttpData(props.action.result))
+
+function formatHttpData(value: unknown) {
+  if (
+    value
+    && typeof value === 'object'
+    && 'content' in value
+    && typeof value.content === 'string'
+    && 'nextOffset' in value
+    && value.nextOffset === null
+    && 'totalLength' in value
+    && value.totalLength === value.content.length
+  ) {
+    try {
+      return JSON.stringify(JSON.parse(value.content), null, 2)
+    }
+    catch {
+      // Keep the original envelope when the content is not valid JSON.
+    }
+  }
+  return JSON.stringify(value, null, 2)
+}
+
 async function apply() {
   busy.value = true
   try {
@@ -50,11 +74,13 @@ async function apply() {
       v-if="action.result"
       class="text-xs break-all whitespace-pre-wrap"
     >{{
-      JSON.stringify(action.result, null, 2)
+      resultText
     }}</pre>
     <Dialog.Dialog v-model:open="open">
       <Dialog.DialogContent
         class="flex max-h-[90vh] flex-col overflow-hidden sm:max-w-3xl"
+        @open-auto-focus="(event) => event.preventDefault()"
+        @close-auto-focus="(event) => event.preventDefault()"
       >
         <Dialog.DialogHeader>
           <Dialog.DialogTitle>
@@ -70,7 +96,7 @@ async function apply() {
         </UiText>
         <pre
           class="scrollbar min-h-0 overflow-auto text-xs break-all whitespace-pre-wrap"
-        >{{ JSON.stringify(action.preview, null, 2) }}</pre>
+        >{{ previewText }}</pre>
         <UiText
           v-if="failed"
           variant="sm"

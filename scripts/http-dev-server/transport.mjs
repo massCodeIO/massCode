@@ -3,6 +3,7 @@ import { createServer } from 'node:http'
 
 export function createTransportServer({ crossOrigin = () => '', reset = () => {} } = {}) {
   const timers = new Set()
+  const qaRuns = new Map()
   const server = createServer(async (req, res) => {
     const send = (status, body) => res.writeHead(status, { 'Content-Type': 'application/json' }).end(JSON.stringify(body))
     const integer = (value, max, min = 0) => {
@@ -26,6 +27,63 @@ export function createTransportServer({ crossOrigin = () => '', reset = () => {}
     }
     try {
       const url = new URL(req.url, 'http://127.0.0.1')
+      if (url.pathname.startsWith('/qa/')) {
+        const match = /^\/qa\/([\w-]{1,64})\/(state|reset|echo)$/.exec(url.pathname)
+        if (!match)
+          throw new Error('Invalid QA run path')
+        const [, runId, action] = match
+        if (action === 'state' && req.method === 'GET') {
+          send(200, { runId, requests: qaRuns.get(runId) ?? [] })
+          return
+        }
+        if (action === 'reset' && req.method === 'POST') {
+          qaRuns.delete(runId)
+          send(200, { runId, reset: true })
+          return
+        }
+        if (action !== 'echo') {
+          send(405, { error: 'method_not_allowed' })
+          return
+        }
+        const delay = integer(url.searchParams.get('delay') ?? '0', 10000)
+        if (!qaRuns.has(runId) && qaRuns.size >= 20) {
+          send(429, { error: 'qa_run_limit' })
+          return
+        }
+        const requests = qaRuns.get(runId) ?? []
+        qaRuns.set(runId, requests)
+        if (requests.length >= 100) {
+          send(429, { error: 'qa_request_limit' })
+          return
+        }
+        const entry = { sequence: requests.length + 1, method: req.method, path: req.url, body: '', state: 'receiving' }
+        requests.push(entry)
+        const chunks = []
+        let length = 0
+        try {
+          for await (const chunk of req) {
+            length += chunk.length
+            if (length > 16384) {
+              entry.state = 'rejected'
+              send(413, { error: 'qa_body_too_large' })
+              return
+            }
+            chunks.push(chunk)
+          }
+          entry.body = Buffer.concat(chunks).toString('utf8')
+          entry.state = 'received'
+          const reply = () => send(200, { runId, ...entry })
+          if (delay)
+            later(reply, delay)
+          else
+            reply()
+        }
+        catch (error) {
+          entry.state = 'aborted'
+          throw error
+        }
+        return
+      }
       if (url.pathname === '/reset' && req.method === 'POST') {
         reset()
         send(200, { reset: true })

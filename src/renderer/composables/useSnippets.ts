@@ -586,6 +586,39 @@ async function updateSnippetContent(
   }
 }
 
+async function updateSnippetsLanguage(snippetIds: number[], language: string) {
+  const targets = (displayedSnippets.value || []).filter(snippet =>
+    snippetIds.includes(snippet.id),
+  )
+  const updates = targets.flatMap(snippet =>
+    snippet.contents
+      .filter(content => content.language !== language)
+      .map(content => ({ snippetId: snippet.id, contentId: content.id })),
+  )
+
+  if (!updates.length) {
+    return
+  }
+
+  markPersistedStorageMutation()
+  const results = await Promise.allSettled(
+    updates.map(({ snippetId, contentId }) =>
+      api.snippets.patchSnippetsByIdContentsByContentId(
+        String(snippetId),
+        String(contentId),
+        { language },
+      ),
+    ),
+  )
+  results.forEach((result) => {
+    if (result.status === 'rejected') {
+      console.error(result.reason)
+    }
+  })
+  await getSnippets(queryByLibraryOrFolderOrSearch.value)
+  await refreshSelectedSnippet()
+}
+
 async function deleteSnippet(snippetId: number) {
   markPersistedStorageMutation()
   await api.snippets.deleteSnippetsById(String(snippetId))
@@ -904,6 +937,7 @@ export function useSnippets() {
     selectSnippet,
     updateSnippet,
     updateSnippetContent,
+    updateSnippetsLanguage,
     updateSnippets,
     isAvailableToCodePreview,
   }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SnippetsResponse } from '@/services/api/generated'
+import { languages } from '@/components/editor/grammars/languages'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import {
   useApp,
@@ -34,9 +35,11 @@ const {
   selectSnippet,
   selectFirstSnippet,
   duplicateSnippet,
+  displayedSnippets,
   selectedSnippetIds,
   updateSnippet,
   updateSnippets,
+  updateSnippetsLanguage,
   deleteSelectedSnippets,
 } = useSnippets()
 const { clearHistory } = useNavigationHistory()
@@ -59,6 +62,38 @@ const isFocused = computed(() => focusedSnippetId.value === props.snippet.id)
 const isDuplicateDisabled = computed(
   () => highlightedSnippetIds.value.size > 1,
 )
+
+const contextSnippetIds = computed(() =>
+  selectedSnippetIds.value.length > 1
+  && selectedSnippetIds.value.includes(props.snippet.id)
+    ? selectedSnippetIds.value
+    : [props.snippet.id],
+)
+
+const contextSnippets = computed(() => {
+  const ids = new Set(contextSnippetIds.value)
+  return (displayedSnippets.value || [props.snippet]).filter(snippet =>
+    ids.has(snippet.id),
+  )
+})
+
+const isLanguageChangeDisabled = computed(
+  () =>
+    contextSnippets.value.every(snippet => snippet.contents.length === 0)
+    || contextSnippets.value.some(snippet => snippet.pendingCloudDownload),
+)
+
+function isLanguageSelected(language: string) {
+  const contents = contextSnippets.value.flatMap(snippet => snippet.contents)
+  return (
+    contents.length > 0
+    && contents.every(content => content.language === language)
+  )
+}
+
+async function onSelectLanguage(language: string) {
+  await updateSnippetsLanguage(contextSnippetIds.value, language)
+}
 
 const isFavoritesLibrarySelected = computed(
   () => state.libraryFilter === LibraryFilter.Favorites,
@@ -105,13 +140,7 @@ function onSnippetClick(id: number, event: MouseEvent) {
 function onClickContextMenu() {
   highlightedFolderIds.value.clear()
   highlightedSnippetIds.value.clear()
-  highlightedSnippetIds.value.add(props.snippet.id)
-
-  if (selectedSnippetIds.value.length > 1) {
-    selectedSnippetIds.value.forEach(id =>
-      highlightedSnippetIds.value.add(id),
-    )
-  }
+  contextSnippetIds.value.forEach(id => highlightedSnippetIds.value.add(id))
 }
 
 async function onAddFavorites() {
@@ -306,6 +335,26 @@ function onDragStart(event: DragEvent) {
           <ContextMenu.ContextMenuItem @click="onCopySnippetLink">
             {{ i18n.t("action.copy.snippetLink") }}
           </ContextMenu.ContextMenuItem>
+          <ContextMenu.ContextMenuSeparator />
+          <ContextMenu.ContextMenuSub>
+            <ContextMenu.ContextMenuSubTrigger
+              :disabled="isLanguageChangeDisabled"
+            >
+              {{ i18n.t("action.defaultLanguage") }}
+            </ContextMenu.ContextMenuSubTrigger>
+            <ContextMenu.ContextMenuSubContent>
+              <div class="scrollbar max-h-[250px] min-h-0 overflow-y-auto">
+                <ContextMenu.ContextMenuCheckboxItem
+                  v-for="language in languages"
+                  :key="language.value"
+                  :checked="isLanguageSelected(language.value)"
+                  @click="onSelectLanguage(language.value)"
+                >
+                  {{ language.name }}
+                </ContextMenu.ContextMenuCheckboxItem>
+              </div>
+            </ContextMenu.ContextMenuSubContent>
+          </ContextMenu.ContextMenuSub>
           <ContextMenu.ContextMenuSeparator />
           <ContextMenu.ContextMenuItem
             :disabled="isDuplicateDisabled || isCloudPending"

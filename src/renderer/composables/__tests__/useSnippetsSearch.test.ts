@@ -51,6 +51,7 @@ async function setup(options: SetupOptions = {}) {
     },
   }))
   const postSnippetsByIdContents = vi.fn()
+  const patchSnippetsByIdContentsByContentId = vi.fn()
 
   // useContentSort читает store.app при импорте модуля: мокается целиком,
   // чтобы не тянуть electron store в тест.
@@ -93,7 +94,7 @@ async function setup(options: SetupOptions = {}) {
         // отсутствие метода давало «зелёные» тесты с TypeError в stderr.
         getSnippetsById,
         patchSnippetsById: vi.fn(),
-        patchSnippetsByIdContentsByContentId: vi.fn(),
+        patchSnippetsByIdContentsByContentId,
         postSnippets: vi.fn(),
         postSnippetsByIdContents,
         postSnippetsByIdTagsByTagId: vi.fn(),
@@ -129,10 +130,42 @@ async function setup(options: SetupOptions = {}) {
     getSnippets,
     getSnippetsById,
     postSnippetsByIdContents,
+    patchSnippetsByIdContentsByContentId,
     snippets,
     state,
   }
 }
+
+describe('snippet language update', () => {
+  it('changes fragments of selected snippets and leaves other snippets alone', async () => {
+    const context = await setup()
+    context.getSnippets.mockResolvedValueOnce({
+      data: [
+        {
+          id: 1,
+          contents: [
+            { id: 11, language: 'javascript' },
+            { id: 12, language: 'typescript' },
+          ],
+        },
+        { id: 2, contents: [{ id: 21, language: 'typescript' }] },
+        { id: 3, contents: [{ id: 31, language: 'python' }] },
+      ],
+    })
+    await context.snippets.getSnippets()
+
+    await context.snippets.updateSnippetsLanguage([1, 2], 'typescript')
+
+    expect(context.patchSnippetsByIdContentsByContentId).toHaveBeenCalledTimes(
+      1,
+    )
+    expect(context.patchSnippetsByIdContentsByContentId).toHaveBeenCalledWith(
+      '1',
+      '11',
+      { language: 'typescript' },
+    )
+  })
+})
 
 beforeEach(() => {
   vi.clearAllMocks()

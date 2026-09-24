@@ -5,7 +5,7 @@ description: "Edit and organize snippets and notes, manage HTTP workflows, and s
 
 # AI Assistant
 
-Use the shared AI panel in Code, Notes and HTTP to ask questions, edit and organize records, manage HTTP workflows, or find information across your vault. Connect your own provider account or a local model server. Responses stream into the panel with Markdown formatting, highlighted code blocks, and a copy action for each block. Changes to existing records require review and confirmation. Explicitly requested new records are created immediately, with clickable links in the answer.
+Use the shared AI panel in Code, Notes and HTTP to ask questions, edit and organize records, manage HTTP workflows, or find information across your vault. Connect your own provider account or a local model server. Responses stream into the panel with Markdown formatting, highlighted code blocks, and a copy action for each block. Ask for a result, including several related steps. Ordinary requested edits are applied and saved through the app; say “show me the changes first” when you want a preview before writing. Network actions and operations with additional consequences have their own confirmation. The assistant waits for the actual result before continuing dependent steps.
 
 ## Connect a Provider
 
@@ -35,7 +35,7 @@ In **Preferences → AI assistant → Custom instructions**, describe your prefe
 
 > Always answer in Russian. Keep explanations concise and include examples when useful.
 
-Click **Save and check connection** to save. These preferences apply across chats and providers and remain after restarting the app. Clear the field and save to remove them. Changes to existing records still require review and confirmation.
+Click **Save and check connection** to save. These preferences apply across chats and providers and remain after restarting the app. Clear the field and save to remove them. Custom instructions do not replace an action’s confirmation or the scope of your current request.
 
 ## Choose Context or Search the Vault
 
@@ -51,33 +51,43 @@ The assistant determines whether your request needs vault retrieval before answe
 
 For vault searches, massCode expands the initial query into a small set of multilingual phrases and ranks the matches before displaying them. Exact names come before broader matches. The **Vault matches** card shows linked record names, with the saved method and URL for HTTP requests. No matches means those phrases did not match; it does not prove that the record is absent. Query translation and the assistant’s explanatory text still depend on the selected model.
 
-HTTP records attached from vault search provide the saved request definition. In the HTTP editor, the assistant can also inspect the current draft, latest response and existing checks, as described below. Sending requests, starting collections and WebSocket actions use a separate HTTP review described below. Recognized credentials are masked before HTTP data is shared with the provider. Upload file references must already be selected in the request or explicitly supplied by you; the assistant cannot browse local files. Arbitrary sensitive text elsewhere in saved content is still content you share with the configured provider.
+HTTP records attached from vault search provide the saved request definition. In the HTTP editor, the assistant can also inspect the current draft, latest response and existing checks, as described below. Sending requests, starting collections and WebSocket actions use a separate HTTP review described below. Recognized credentials are masked before HTTP data is shared with the provider. The assistant can open the native picker for a binary body or multipart file row. You select the file; its path and bytes are not included in the model’s result. Protected environment values are entered in the local environment editor and remain outside the conversation. Arbitrary sensitive text elsewhere in saved content is still content you share with the configured provider.
 
-Use **Stop** to interrupt a response. Partial text remains available to read and copy. If the assistant has already prepared a valid edit proposal, stopping its explanation keeps the proposal available for review.
+Use **Stop** to stop assistant work. Partial text and completed changes remain available. Stopping the assistant does not undo saved changes or retract a request already received by a server; use the native operation’s Stop control and task Undo separately.
 
-Use **Retry** on the latest failed or interrupted response to try again. Text you have started writing in the message box is preserved. If a model cannot use tools, it may still answer in plain text, but that answer does not search records or apply changes.
+When available, use **Retry** on the latest failed or interrupted response. Retry is unavailable after task corrections, clarification replies or completed application actions; send a new request to continue from the actual result. Text you have started writing in the message box is preserved. If a model cannot use tools, it may still answer in plain text, but that answer does not search records or apply changes.
 
 ## Work with Notes
 
 Attach a note to summarize it, explain a section, compare it with another record, or find related information in the vault. For example, ask “Summarize the decisions in this note” or “Find the HTTP requests mentioned here.”
 
-Ask the assistant to create a note, rewrite selected text or the open note, update its description, tags or custom properties, or move it to a folder. Editor attachments include unsaved text. Accepted text edits use the normal editor save and Undo workflow. Changes to saved metadata use vault review.
+Ask the assistant to create a note, rewrite selected text or the open note, update its description, tags or custom properties, or move it to a folder. Editor attachments include unsaved text. Requested text edits use normal editor saving, while saved metadata changes use the vault’s existing operations. Task Undo tracks the reversible changes together.
 
 You can also create and update tasks, including status, due date and priority, find tasks by their properties, and organize multiple selected notes. For example, ask “Mark these tasks done” or “Find overdue tasks and move them to Follow-up.” Notes tags can be created, renamed or removed.
 
-## Review Code and Note Edits
+## Apply, Preview and Undo Changes
 
-Attach an open Code fragment, note or selection, then describe a change and send it normally. Editor edits apply to that attachment. To change saved records found through vault search, use the separate vault review. The assistant prepares exact text replacements for the selected text or entire attached document. The model then continues with a normal Markdown answer explaining the proposed changes, showing code and useful examples. Markdown examples are never treated as edits, regardless of how many code blocks the answer contains. If the explanation fails, the validated proposal remains available for review.
+Attach an open Code fragment, note or selection and describe the change. For example, “Add a five-second timeout, update the usage fragment and format both.” Ordinary edit requests apply directly. Ask “Show me the diff first” to receive a proposal without changing data; inspect it and choose **Apply changes** or **Reject changes**.
 
-When the proposal is ready and generation has finished or been stopped, choose **Review changes**, inspect the diff and choose **Apply changes** or **Reject changes**. Multiple edits are validated and applied together. The editor saves accepted changes normally; use editor Undo to revert them. Subsequent chat messages include the tool calls and whether their proposals were applied, rejected, invalid, or still awaiting review.
+Markdown examples in an answer are not edits. The assistant must use an application action to change a record, and saving can still fail. Check the action result when a task reports partial completion.
 
-Each proposal is bound to the original context snapshot. Every replacement must match exactly once, and replacements cannot overlap. Changed source, another vault, incomplete calls, and invalid arguments prevent application. If a structurally valid proposal contains missing, ambiguous, or overlapping replacements, massCode sends the validation failure back to the same model for one correction attempt. No changes are applied during correction; a valid result still requires your review. No editor text is changed before confirmation. Exact-match checks protect the application of edits; they do not prove that the proposed code is correct. Review related definitions and calls in the diff. Choose the entire fragment or note when a change affects several parts of it. To apply a proposal after navigating elsewhere, return to the original editor; it must still match the snapshot.
+Each edit is tied to its captured context. Missing or ambiguous text, a changed source or a different vault can prevent application. Return to the original editor if an action needs that editor to be open. When changing several parts of a document, attach the entire fragment or note.
 
-Your selected model must support tool calling through its provider. A plain text answer does not count as a proposal; use a tool-capable model if no proposal is returned. massCode does not silently interpret Markdown as a fallback.
+Use **Undo task changes** to reverse the task’s reversible changes during the current session. Independent manual edits are preserved. If an affected field has been changed again, Undo can restore the remaining fields and report a conflict for that field. Undo does not reverse network requests, exported files or permanent deletion.
+
+Your model must support tool calling. A plain text answer cannot search records or apply a change, and massCode does not interpret Markdown as an editing fallback.
+
+## Guide an Active Task
+
+The chat shows whether the assistant is working, waiting for a choice or waiting for an operation to finish. Expand **Task context** to check the records and selection used by that task.
+
+When the assistant asks a question, choose an option or enter your own answer. The original task continues after your reply, import/export completion or action confirmation; you do not need to send “continue.” For example, “Run this collection, explain the failed checks and save a report in Notes” can finish from the actual run result.
+
+While work is active, **Update current task** changes its direction. Completed effects remain completed; the correction applies to subsequent work. Use **Next task** for a separate queued request. Each queued task captures its own context. The queue pauses after a stopped or failed task; review the result before choosing **Start queue**. New chat clears the queue.
 
 ## Create and Organize Vault Records
 
-Ask the assistant to create snippets, notes, HTTP requests, folders or HTTP collections. It can also duplicate records, propose changes to names, descriptions, content, tags, destinations and favorites, move records to Trash, restore them or permanently delete trashed records. Tags are available in Code and Notes. Code snippets support adding, changing and deleting fragments; at least one fragment must remain. Code folders also support a default language.
+Ask the assistant to create snippets, notes, HTTP requests, folders or HTTP collections. It can also duplicate records, change names, descriptions, content, tags, destinations and favorites, move records to Trash, restore them or permanently delete trashed records. Tags are available in Code and Notes. Code snippets support adding, changing and deleting fragments; at least one fragment must remain. Code folders also support a default language and changing their order within a parent folder.
 
 For example:
 
@@ -88,21 +98,21 @@ For example:
 
 The assistant can inspect the space’s folders and records before preparing a plan. One proposal contains up to 30 operations, including a new folder and the records that belong in it.
 
-New records are created immediately when you ask for them. The answer includes a clickable link for each successfully created snippet, note or HTTP request.
+New records are created immediately when you ask for them, unless you requested a preview first. The answer includes a clickable link for each successfully created snippet, note or HTTP request.
 
-For changes to existing records, choose **Review vault changes**, inspect the before/after values and select the operations to apply. If a record depends on a new folder, include that folder’s creation too. Applying these operations saves the selected changes to the vault. This differs from **HTTP assertion review**, which only updates the editor draft.
+Ordinary changes to existing records are applied directly. When you requested a preview, choose **Review vault changes**, inspect before/after values and select the operations to apply. Include a new folder’s creation when another operation depends on it. Saved-record changes persist to the vault; changes to the open HTTP draft still follow the HTTP Save workflow.
 
-Use **Undo** beside a created record to undo its creation. For reviewed changes, reopen the review to undo an applied operation. Undo is available during the current session, provided the affected record has not changed since application. Undoing creation moves the new record to Trash. A new folder must be empty before it can be undone; undo its child operations first.
+Task Undo reverses recorded changes in reverse order. Individual creation and reviewed-change cards also provide their available Undo actions. Undoing creation moves the record to Trash; a newly created folder must be empty before it can be removed. Conflicting later changes are reported rather than overwritten.
 
 Permanent deletion and deletion of folders, tags or fragments do not offer Undo. Deleting a folder removes its descendant folders and moves their records to Trash. Deleting a tag removes its assignments. Review the affected records before applying these operations.
 
 Changed records or a different vault invalidate the proposal. If part of a plan fails, already applied operations remain marked in the review. Inspect the current records and request a fresh proposal for the remaining work. Save or discard an unsaved HTTP draft before applying changes to saved HTTP records.
 
-For saved HTTP requests, the assistant can propose changes to protocol, method, URL, headers, query parameters, body, authentication, assertions, extractions, scripts and transport settings. This includes GraphQL, form data, multipart and existing binary file references. It can duplicate requests, organize collections, change inherited collection settings, and create, update, activate or delete environments. Prefer variable placeholders over literal credentials.
+For saved HTTP requests, the assistant can change protocol, method, URL, headers, query parameters, body, authentication, assertions, extractions, scripts and transport settings. This includes GraphQL, form data, multipart and existing binary file references. It can duplicate requests, organize collections, change inherited collection settings, and create, update, activate or delete environments. Prefer variable placeholders over literal credentials.
 
 ## Run HTTP Workflows
 
-Describe the intended action, then choose **Review HTTP action** and inspect the source and proposed changes before applying it. Saved requests and the current unsaved draft are distinct sources. You can ask the assistant to:
+Describe the intended action and inspect its inline confirmation card. A Send card identifies the request, resolved destination, environment, body summary and script state; a Run card shows the requests and order. Confirm the specific action when ready. Saved requests and the current unsaved draft are distinct sources. You can ask the assistant to:
 
 - Change, save or discard the current draft.
 - Send a saved request or the current draft.
@@ -116,7 +126,7 @@ The review is tied to the captured request and environment. Changed data require
 
 Results record what actually finished. If saving fails, a combined save-and-send action does not send. Earlier completed steps can remain applied when a later step fails. Network actions and data-clearing operations have no Undo. Use Stop or ask to cancel a running action; cancellation cannot retract a request already received by the server.
 
-Ask for the action's status or result in a later message. HTTP responses are available to the assistant as bounded, credential-masked context, including when persistent request history is disabled. WebSocket messages and console output also have known secrets masked before being shared; older console entries without this protection provide metadata only. Cookie values and protected environment values are not returned to the model.
+The assistant receives the completed action’s result and can continue the same task. You can also ask about that result later in the conversation. HTTP responses are available to the assistant as bounded, credential-masked context, including when persistent request history is disabled. WebSocket messages and console output also have known secrets masked before being shared; older console entries without this protection provide metadata only. Cookie values and protected environment values are not returned to the model.
 
 ## Analyze an HTTP Response and Add Checks
 
@@ -129,21 +139,25 @@ Open an HTTP request and send it to capture a response. Then ask naturally, for 
 
 The assistant can inspect the current draft, the latest execution input, response status, headers, body and existing assertions. When available, it can also inspect captured outgoing headers and redirect URLs. It distinguishes the current draft from the request used for the last execution. Binary bodies and missing portions of truncated responses are unavailable.
 
-An assessment question can produce an explanation without changing anything. When you ask to add checks, the assistant can prepare an assertion proposal:
+An assessment question explains the response without writing or sending anything. Asking to add checks appends them to the current draft while preserving existing checks. To inspect them before they are added, ask for a preview and then apply or reject it. Save and run when ready, either directly or by asking the assistant to save and prepare a confirmed Send or Run.
 
-1. Choose **Review changes** to inspect the proposed checks.
-2. Apply or reject the proposal. Accepted checks are appended to the current draft; existing checks are preserved.
-3. Save and run the request when ready, either directly or through a separate reviewed HTTP action, to evaluate the checks.
+Adding assertions to the draft does **not** itself save or send the request. If the request, response, environment or checks have changed since the proposal was prepared, ask for a fresh proposal against the current state.
 
-Applying an assertion proposal does **not** save or send the request. If the request, response, environment or checks have changed since the proposal was prepared, ask for a fresh proposal against the current state.
-
-State expected business values or refer to the request’s documented requirements when you need exact checks. A value seen in one response is not necessarily a rule for every response. Assertion proposals use the draft workflow above; changes to saved request fields use the separate vault review workflow. HTTP response assertions do not apply to WebSocket messages; use the WebSocket actions to inspect their connection and messages.
+State expected business values or refer to the request’s documented requirements when you need exact checks. A value seen in one response is not necessarily a rule for every response. Draft assertions follow the workflow above; explicitly requested changes to saved request fields use vault operations. HTTP response assertions do not apply to WebSocket messages; use the WebSocket actions to inspect their connection and messages.
 
 ## Import and Export
 
-Ask to import snippets, notes or HTTP data from a supported source. The assistant opens the existing import dialog, where you select files or a source URL, inspect the preview and apply the import. Opening the dialog or generating a preview does not count as completing the import. The chat records the actual outcome; closing a dialog after Apply has started does not cancel the underlying import.
+Ask to import snippets, notes or HTTP data from a supported source. The assistant opens the existing import dialog, where you select files or a source URL, inspect the preview and apply the import. Opening the dialog or generating a preview does not count as completing the import. The chat waits for the actual outcome and continues with the imported records when requested. Closing a dialog after Apply has started does not cancel the underlying import.
 
-Ask to export a note as HTML or PDF, or a Notes folder as a static site. For an open note, the assistant can use the current editor text, including unsaved changes. The normal save dialog lets you choose the destination. The chat distinguishes completion, cancellation and failure. The assistant does not choose arbitrary filesystem paths or receive the contents of import files merely by opening a dialog.
+Ask to export a note as HTML or PDF, or a Notes folder as a static site. For an open note, the assistant can use the current editor text, including unsaved changes. The normal save dialog lets you choose the destination. The chat distinguishes completion, cancellation and failure, and reports supported export warnings. Rich rendering can differ from the editor; an unsupported diagram or asset is reported instead of being described as successfully rendered. The assistant does not choose arbitrary filesystem paths or receive the contents of import files merely by opening a dialog.
+
+## Use Application Views and Settings
+
+Ask to open a record or fragment, find text, switch a supported view, format code, copy content or export a rendered image. These actions use the existing editor and panels. Executable Code Preview requires confirmation. Selecting an image, custom icon or upload file remains a native file-picker step.
+
+In Notes, you can also ask to insert an image already on your clipboard or move a node in the graph without opening its note. Clipboard image data stays on your device; graph positions are temporary, as with manual dragging.
+
+The assistant can change supported Code, Notes, HTTP and appearance settings through the same settings used by the app. For Storage, provider setup and reload, it opens the corresponding native flow and waits for its outcome. You enter provider keys locally. Storage or provider changes end the current task and clear its queued work so it cannot continue with the previous context.
 
 ## Conversations and Privacy
 

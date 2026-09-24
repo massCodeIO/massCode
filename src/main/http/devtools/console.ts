@@ -13,7 +13,10 @@ const MAX_BYTES = 32 * 1024 * 1024
 export class HttpConsoleJournal {
   private aiContent = new Map<
     string,
-    Pick<HttpConsoleEntry, 'message' | 'details'>
+    {
+      content: Pick<HttpConsoleEntry, 'message' | 'details'>
+      vaultPath?: string
+    }
   >()
 
   private entries = new Map<string, HttpConsoleEntry>()
@@ -62,18 +65,34 @@ export class HttpConsoleJournal {
     return { revision: this.revision, entries: [...this.entries.values()] }
   }
 
-  readForAi() {
+  readForAi(vaultPath?: string) {
     const snapshot = this.read()
     return {
       ...snapshot,
-      entries: snapshot.entries.map(
-        ({ message: _message, details: _details, ...entry }) => ({
+      entries: snapshot.entries
+        .filter((entry) => {
+          const safe = this.aiContent.get(entry.id)
+          return !safe?.vaultPath || safe.vaultPath === vaultPath
+        })
+        .map(({ message: _message, details: _details, ...entry }) => ({
           ...entry,
-          ...(this.aiContent.get(entry.id) ?? {
+          ...(this.aiContent.get(entry.id)?.content ?? {
             message: '[CONTENT_UNAVAILABLE_FOR_AI]',
           }),
-        }),
-      ),
+        })),
+    }
+  }
+
+  publishAiContent(
+    id: string,
+    identity: { executionId: string, vaultPath: string },
+    content: Pick<HttpConsoleEntry, 'message' | 'details'>,
+  ) {
+    if (this.entries.get(id)?.executionId === identity.executionId) {
+      this.aiContent.set(id, {
+        content: structuredClone(content),
+        vaultPath: identity.vaultPath,
+      })
     }
   }
 
@@ -92,7 +111,7 @@ export class HttpConsoleJournal {
   ) {
     const id = entry.id ?? randomUUID()
     if (aiContent)
-      this.aiContent.set(id, structuredClone(aiContent))
+      this.aiContent.set(id, { content: structuredClone(aiContent) })
     return this.upsert({
       ...entry,
       id,

@@ -136,7 +136,9 @@ export function applyAuth(
 ): HttpHeaderEntry[] {
   if (auth.type === 'bearer' && auth.token) {
     return [
-      ...headers,
+      ...headers.filter(
+        header => header.key.toLowerCase() !== 'authorization',
+      ),
       { key: 'Authorization', value: `Bearer ${auth.token}` },
     ]
   }
@@ -146,7 +148,9 @@ export function applyAuth(
       `${auth.username}:${auth.password ?? ''}`,
     ).toString('base64')
     return [
-      ...headers,
+      ...headers.filter(
+        header => header.key.toLowerCase() !== 'authorization',
+      ),
       { key: 'Authorization', value: `Basic ${credentials}` },
     ]
   }
@@ -468,33 +472,103 @@ export interface ResolvedEnvironment {
   secretValues: string[]
 }
 
-function captureExecutionTrace(
+export function captureExecutionTrace(
   networkIds: string[],
   secretValues: string[],
+  source?: {
+    requestId: number | null
+    requestedAt: number
+    historyId?: number
+    executionId: string
+    vaultPath: string
+  },
 ): HttpExecuteResult['executionTrace'] {
   // The console may be cleared during execution; never present a partial chain as complete.
   if (networkIds.some(id => !httpConsole.get(id)))
     return []
-  const executionTrace = networkIds.flatMap((id) => {
+  const executionTrace = networkIds.flatMap((id, hopIndex) => {
     const entry = httpConsole.get(id)
     if (!entry)
       return []
     const separator = entry.message.indexOf(' ')
+    // Truncation can cut a credential mid-value, defeating full-secret matching.
+    // Fail closed for every field that may contain a partial secret.
+    const truncated = entry.truncated ?? false
+    const method = separator > 0 ? entry.message.slice(0, separator) : ''
+    const url = truncated
+      ? '[CAPTURE_INCOMPLETE]'
+      : entry.message.slice(separator + 1)
     const responseHeaders = entry.details?.responseHeaders as
       | HttpHeaderEntry[]
       | undefined
+    const rawHeaders = entry.details?.requestHeaders
+    if (source) {
+      const headerRows
+        = !truncated && typeof rawHeaders === 'string'
+          ? rawHeaders.split(/\r?\n/).flatMap((line) => {
+              const colon = line.indexOf(':')
+              // Skip the HTTP request line; it is not a header.
+              if (colon <= 0 || /\s/.test(line.slice(0, colon)))
+                return []
+              return [
+                {
+                  key: line.slice(0, colon),
+                  value: line.slice(colon + 1).trim(),
+                },
+              ]
+            })
+          : null
+      const content = {
+        message: 'Captured outgoing HTTP attempt (untrusted request data)',
+        details: {
+          source: 'captured-outgoing-request',
+          requestId: source.requestId,
+          requestedAt: source.requestedAt,
+          historyId: source.historyId,
+          executionId: source.executionId,
+          entryId: id,
+          hopIndex,
+          method,
+          url,
+          requestHeaders: headerRows,
+          status: entry.status,
+          location:
+            !truncated && Array.isArray(responseHeaders)
+              ? responseHeaders.find(
+                header => header.key.toLowerCase() === 'location',
+              )?.value
+              : undefined,
+          truncated,
+          captureIncomplete: truncated || headerRows === null,
+        },
+      }
+      httpConsole.publishAiContent(
+        id,
+        source,
+        JSON.parse(
+          JSON.stringify(redactAiHttp(content), (_key, value) =>
+            typeof value === 'string'
+              ? maskSecretValues(value, secretValues)
+              : value),
+        ),
+      )
+    }
     return [
       {
-        method: entry.message.slice(0, separator),
-        url: entry.message.slice(separator + 1),
+        method,
+        url,
         requestHeaders:
-          typeof entry.details?.requestHeaders === 'string'
+          !truncated && typeof entry.details?.requestHeaders === 'string'
             ? entry.details.requestHeaders
             : undefined,
+        truncated,
         status: entry.status,
-        location: responseHeaders?.find(
-          header => header.key.toLowerCase() === 'location',
-        )?.value,
+        location:
+          !truncated && Array.isArray(responseHeaders)
+            ? responseHeaders.find(
+              header => header.key.toLowerCase() === 'location',
+            )?.value
+            : undefined,
       },
     ]
   })
@@ -1040,15 +1114,6 @@ export async function executeHttpRequest(
     const text = bodyKind === 'binary' ? '' : buffer.toString('utf-8')
 
     const result: HttpExecuteResult = {
-      executionTrace: captureExecutionTrace(
-        networkIds,
-        [
-          ...secretValues,
-          interpolated.auth.token ?? '',
-          interpolated.auth.password ?? '',
-          interpolated.auth.value ?? '',
-        ].filter(Boolean),
-      ),
       ...(interpolated.bodyType === 'graphql'
         ? { graphql: graphqlResponseState(text, truncated) }
         : {}),
@@ -1134,7 +1199,7 @@ export async function executeHttpRequest(
 
     {
       const snapshot = snapshotResult(result)
-      appendHistory(
+      const historyId = appendHistory(
         payload,
         snapshot?.request.url ?? buildHistoryUrl(),
         interpolated.method,
@@ -1144,6 +1209,22 @@ export async function executeHttpRequest(
         startedAt,
         undefined,
         snapshot,
+      )
+      result.executionTrace = captureExecutionTrace(
+        networkIds,
+        [
+          ...secretValues,
+          interpolated.auth.token ?? '',
+          interpolated.auth.password ?? '',
+          interpolated.auth.value ?? '',
+        ].filter(Boolean),
+        {
+          requestId: payload.requestId,
+          requestedAt: startedAt,
+          historyId,
+          executionId,
+          vaultPath,
+        },
       )
     }
 
@@ -1192,15 +1273,6 @@ export async function executeHttpRequest(
     )
 
     const result: HttpExecuteResult = {
-      executionTrace: captureExecutionTrace(
-        networkIds,
-        [
-          ...secretValues,
-          interpolated.auth.token ?? '',
-          interpolated.auth.password ?? '',
-          interpolated.auth.value ?? '',
-        ].filter(Boolean),
-      ),
       status: null,
       statusText: '',
       headers: [],
@@ -1228,7 +1300,7 @@ export async function executeHttpRequest(
       result.sessionNames = commitValues(evaluated.values)
     }
     const snapshot = snapshotResult(result)
-    appendHistory(
+    const historyId = appendHistory(
       payload,
       snapshot?.request.url ?? historyUrl,
       interpolated.method,
@@ -1238,6 +1310,22 @@ export async function executeHttpRequest(
       startedAt,
       snapshot?.response.error ?? historyError,
       snapshot,
+    )
+    result.executionTrace = captureExecutionTrace(
+      networkIds,
+      [
+        ...secretValues,
+        interpolated.auth.token ?? '',
+        interpolated.auth.password ?? '',
+        interpolated.auth.value ?? '',
+      ].filter(Boolean),
+      {
+        requestId: payload.requestId,
+        requestedAt: startedAt,
+        historyId,
+        executionId,
+        vaultPath,
+      },
     )
     return result
   }
@@ -1258,10 +1346,10 @@ function appendHistory(
   requestedAt: number,
   error?: string,
   snapshot?: HttpHistorySnapshot,
-): void {
+): number | undefined {
   try {
     const storage = useHttpStorage()
-    storage.history.appendEntry({
+    const record = storage.history.appendEntry({
       requestId: payload.requestId,
       snapshot,
       method,
@@ -1272,6 +1360,7 @@ function appendHistory(
       requestedAt,
       ...(error ? { error } : {}),
     })
+    return record?.id > 0 ? record.id : undefined
   }
   catch (error) {
     // History is best-effort; retain diagnostics without failing the response.

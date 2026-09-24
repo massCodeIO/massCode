@@ -142,6 +142,7 @@ export function prepareHttpRunSnapshot(
     controller: new AbortController(),
     view: {
       runId: randomUUID(),
+      folderId: root.id,
       folderName: root.name,
       environmentName:
         storage.environments
@@ -228,6 +229,7 @@ export async function startHttpRun(
     id => active.view.steps.find(step => step.requestId === id)!,
   )
   active.view.state = 'running'
+  active.view.continueOnFailure = options.continueOnFailure
   const variables: Record<string, string> = Object.create(null)
   const timer = setInterval(() => {
     if (!current())

@@ -30,6 +30,20 @@ export function getHttpSession(
   }
 }
 
+/** Read-only snapshot for previews; observing another environment must not reset a live session. */
+export function readHttpSession(
+  vaultPath: string,
+  environmentId: number | null,
+) {
+  const matches
+    = context?.vaultPath === vaultPath && context.environmentId === environmentId
+  return {
+    generation,
+    variables: matches ? Object.fromEntries(values) : {},
+    names: matches ? [...values.keys()] : [],
+  }
+}
+
 export function isHttpSessionCurrent(token: number): boolean {
   return generation === token
 }

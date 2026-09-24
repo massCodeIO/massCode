@@ -22,6 +22,7 @@ import {
   readWebSocket,
   readWebSocketForAi,
   sendWebSocket,
+  waitForWebSocket,
 } from '../session'
 
 const mocks = vi.hoisted(() => ({
@@ -417,4 +418,16 @@ it('redacts echoed auth/environment/session secrets for AI without changing the 
   expect(safe).not.toContain('env-value')
   expect(safe).not.toContain('session-value')
   expect(safe).toContain('[REDACTED]')
+})
+
+it('waits for actual connection and closure before dependent actions continue', async () => {
+  const request = input()
+  const initial = connectWebSocket(1, request)
+  expect(initial.state).toBe('connecting')
+  await waitForWebSocket(1, request.connectionId, 'connected')
+  expect(readWebSocket(1, request.connectionId, 0).state).toBe('open')
+  await sendWebSocket(1, request.connectionId, 'after open')
+  disconnectWebSocket(1, request.connectionId)
+  await waitForWebSocket(1, request.connectionId, 'closed')
+  expect(readWebSocket(1, request.connectionId, 0).state).toBe('closed')
 })

@@ -256,7 +256,18 @@ describe('folder runner', () => {
         operator: 'eq',
         expected: 201,
       })
-      const result = await start(prepareHttpRun(7, 1), continueOnFailure)
+      const prepared = prepareHttpRun(7, 1)
+      expect(prepared.continueOnFailure).toBeUndefined()
+      const pending = start(prepared, continueOnFailure)
+      expect(getHttpRun(7, prepared.runId)).toMatchObject({
+        state: 'running',
+        continueOnFailure,
+      })
+      const result = await pending
+      expect(result.continueOnFailure).toBe(continueOnFailure)
+      expect(getHttpRun(7, prepared.runId).continueOnFailure).toBe(
+        continueOnFailure,
+      )
       expect(result.state).toBe('failed')
       expect(result.steps.map(step => step.state)).toEqual([
         'failed',
@@ -277,6 +288,7 @@ describe('folder runner', () => {
     await expect(startHttpRun(7, options)).rejects.toThrow(
       'HTTP_RUN_INVALID_ORDER',
     )
+    expect(getHttpRun(7, view.runId).continueOnFailure).toBeUndefined()
     await expect(
       startHttpRun(8, { ...options, requestIds: [2, 1] }),
     ).rejects.toThrow('HTTP_RUN_NOT_FOUND')

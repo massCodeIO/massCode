@@ -375,3 +375,42 @@ export function disposeWebSocket(owner: number, id?: string) {
   connection.socket.terminate()
   connections.delete(owner)
 }
+
+/** Wait for the existing socket lifecycle; never start another connection. */
+export function waitForWebSocket(
+  owner: number,
+  id: string,
+  until: 'connected' | 'closed',
+): Promise<void> {
+  const connection = owned(owner, id)
+  const ready = () =>
+    until === 'connected'
+      ? connection.view.state !== 'connecting'
+      : ['closed', 'error'].includes(connection.view.state)
+  if (ready())
+    return Promise.resolve()
+  return new Promise((resolve, reject) => {
+    const socket = connection.socket
+    const events = ['open', 'close', 'error', 'unexpected-response'] as const
+    let timer: ReturnType<typeof setTimeout>
+    function cleanup() {
+      clearTimeout(timer)
+      for (const event of events) socket.off(event, changed)
+    }
+    function changed() {
+      if (!ready())
+        return
+      cleanup()
+      resolve()
+    }
+    timer = setTimeout(
+      () => {
+        cleanup()
+        reject(new Error('WS_TIMEOUT'))
+      },
+      until === 'connected' ? 20000 : 5000,
+    )
+    for (const event of events) socket.on(event, changed)
+    changed()
+  })
+}

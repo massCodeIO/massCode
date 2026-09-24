@@ -101,6 +101,7 @@ export interface HttpExecuteResult {
     method: string
     url: string
     requestHeaders?: string
+    truncated?: boolean
     status?: number
     location?: string
   }[]

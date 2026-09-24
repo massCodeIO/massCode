@@ -56,6 +56,7 @@ export function scriptsTrusted(
   requestId: number | null,
   scripts?: HttpScripts,
   subject: 'request' | 'collection' = 'request',
+  readOnly = false,
 ): boolean {
   if (requestId === null)
     return !hasHttpScripts(scripts)
@@ -67,13 +68,13 @@ export function scriptsTrusted(
     grant?.code === digest(scripts)
     && (grant.baseline === baseline || grant.code === baseline)
   ) {
-    if (grant.baseline !== baseline) {
+    if (!readOnly && grant.baseline !== baseline) {
       grants[key] = { ...grant, baseline }
       trust.set('grants', grants)
     }
     return true
   }
-  if (grant) {
+  if (grant && !readOnly) {
     delete grants[key]
     trust.set('grants', grants)
   }

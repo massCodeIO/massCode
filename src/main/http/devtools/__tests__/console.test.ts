@@ -69,3 +69,41 @@ it('uses explicitly safe AI content and never falls back to raw diagnostics', ()
     'CONTENT_UNAVAILABLE_FOR_AI',
   )
 })
+
+it('publishes safe network content only for its existing execution and vault', () => {
+  const journal = new HttpConsoleJournal()
+  const id = journal.append({ ...entry, kind: 'network' })
+  const safe = { message: 'safe capture', details: { requestId: 1 } }
+  journal.publishAiContent(
+    id,
+    { executionId: 'other', vaultPath: '/vault' },
+    safe,
+  )
+  expect(journal.readForAi('/vault').entries[0].message).toBe(
+    '[CONTENT_UNAVAILABLE_FOR_AI]',
+  )
+  journal.publishAiContent(
+    id,
+    { executionId: 'test', vaultPath: '/vault' },
+    safe,
+  )
+  expect(journal.readForAi('/vault').entries[0].message).toBe('safe capture')
+  expect(journal.readForAi('/other-vault').entries).toEqual([])
+  journal.clear()
+  journal.publishAiContent(
+    id,
+    { executionId: 'test', vaultPath: '/vault' },
+    safe,
+  )
+  expect(journal.readForAi('/vault').entries).toEqual([])
+  const pruned = journal.append({
+    ...entry,
+    timestamp: Date.now() - CONSOLE_MAX_AGE - 1,
+  })
+  journal.publishAiContent(
+    pruned,
+    { executionId: 'test', vaultPath: '/vault' },
+    safe,
+  )
+  expect(journal.readForAi('/vault').entries).toEqual([])
+})

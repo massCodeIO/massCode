@@ -2,7 +2,9 @@
 import { Button } from '@/components/ui/shadcn/button'
 import { Checkbox } from '@/components/ui/shadcn/checkbox'
 import * as Select from '@/components/ui/shadcn/select'
+import { registerNativeBridge } from '@/composables/ai/nativeBridges'
 import { useHttpConsole } from '@/composables/spaces/http/devtools/useHttpConsole'
+import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
 import { useDateFormat } from '@/composables/useDateFormat'
 import { i18n, ipc } from '@/electron'
 import { useClipboard, useVirtualList } from '@vueuse/core'
@@ -74,6 +76,34 @@ watch(
     }
   },
 )
+let unregister: (() => void) | undefined
+const copyNative = useCopyToClipboard()
+onMounted(() => {
+  if (props.detached)
+    return
+  unregister = registerNativeBridge('httpConsole', async (action, current) => {
+    if (!current())
+      return { status: 'stale' }
+    if (action.action !== 'httpDevtools')
+      return { status: 'unavailable' }
+    if (action.command === 'consoleDetach') {
+      await ipc.invoke('spaces:http:console:detach', undefined)
+      return { status: 'done', panel: 'console' }
+    }
+    if (action.command === 'consoleCopy') {
+      const text = visible.value
+        .map(entry => JSON.stringify(entry))
+        .join('\n')
+      const copied = await copyNative(text)
+      return {
+        status: copied ? 'done' : 'failed',
+        characters: copied ? text.length : undefined,
+      }
+    }
+    return { status: 'unavailable' }
+  })
+})
+onBeforeUnmount(() => unregister?.())
 </script>
 
 <template>

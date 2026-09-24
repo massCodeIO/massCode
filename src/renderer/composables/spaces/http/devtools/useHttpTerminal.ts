@@ -161,9 +161,9 @@ async function init() {
   })()
   return initializing
 }
-async function create() {
+async function create(current: () => boolean = () => true) {
   await init()
-  if (!initialized || loading.value)
+  if (!initialized || loading.value || !current())
     return
   error.value = ''
   loading.value = true
@@ -174,6 +174,7 @@ async function create() {
     })) as TerminalSession
     install(session)
     activeId.value = session.id
+    return session.id
   }
   catch (cause) {
     reportError(cause)
@@ -207,14 +208,83 @@ function resize() {
   if (host?.clientWidth && host.clientHeight)
     instance?.fit.fit()
 }
+async function control(
+  command:
+    | 'terminalOpen'
+    | 'terminalCreate'
+    | 'terminalClear'
+    | 'terminalClose',
+  id: string | undefined,
+  current: () => boolean,
+) {
+  await init()
+  if (!initialized || !current())
+    return false
+  // Opening the mounted panel may already be creating its first session.
+  const { until } = await import('@vueuse/core')
+  await until(loading).toBe(false, { timeout: 15000, throwOnTimeout: true })
+  if (!current())
+    return false
+  if (command === 'terminalCreate') {
+    const created = await create(current)
+    if (!created)
+      return false
+    const actual = (await ipc.invoke(
+      'spaces:http:terminal:list',
+      undefined,
+    )) as TerminalSession[]
+    return (
+      current()
+      && actual.some(session => session.id === created)
+      && activeId.value === created
+    )
+  }
+  if (command === 'terminalOpen' && !sessions.value.length)
+    await create()
+  const target = id ?? activeId.value
+  const existing = (await ipc.invoke(
+    'spaces:http:terminal:list',
+    undefined,
+  )) as TerminalSession[]
+  if (!current() || !existing.some(session => session.id === target))
+    return false
+  if (command === 'terminalOpen') {
+    activeId.value = target
+    return true
+  }
+  await ipc.invoke(
+    command === 'terminalClear'
+      ? 'spaces:http:terminal:clear'
+      : 'spaces:http:terminal:kill',
+    { id: target },
+  )
+  const after = (await ipc.invoke(
+    'spaces:http:terminal:list',
+    undefined,
+  )) as TerminalSession[]
+  if (command === 'terminalClose') {
+    if (after.some(session => session.id === target))
+      return false
+    remove(target)
+    return true
+  }
+  // A running process may emit fresh output after clear; the sequence proves
+  // the clear event was applied, without confusing new output with a failure.
+  return (
+    (after.find(session => session.id === target)?.sequence ?? -1)
+    > existing.find(session => session.id === target)!.sequence
+  )
+}
+
 export function useHttpTerminal() {
   return {
     sessions,
+    control,
     activeId,
     error,
     loading,
     init,
-    create,
+    create: () => create(),
     mount,
     resize,
     clear: () => invoke('clear', { id: activeId.value }),

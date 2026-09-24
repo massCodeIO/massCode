@@ -1,10 +1,12 @@
 import process from 'node:process'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AI_DEFAULT_URLS, aiProviderSchema } from '../../../shared/ai'
+import { findInternalLinks } from '../../../shared/notes/internalLinks'
 import { streamAiChat } from '../client'
-import { buildAiInstructions } from '../instructions'
+import { buildAiInstructions, NOTES_LINK_GUIDANCE } from '../instructions'
 import { createWorkspaceManager } from '../workspace'
 import { creationPlan } from '../workspaceCreation'
+import { verifyWrite } from '../workspaceStorage'
 import {
   workspaceInventory,
   workspaceRead,
@@ -18,6 +20,7 @@ const state = vi.hoisted(() => ({
   next: 10,
   fail: false,
   dropContent: false,
+  dropLabel: false,
   records: {} as Record<string, any[]>,
   folders: {} as Record<string, any[]>,
   tags: {} as Record<string, any[]>,
@@ -104,6 +107,12 @@ vi.mock('../../storage', () => {
         createNote: create,
         updateNote: update,
         updateNoteProperties: (id: number, patch: any) => {
+          if (
+            !Object.keys(patch.properties ?? {}).length
+            && !(patch.unset ?? []).length
+          ) {
+            return { invalidInput: true, notFound: false }
+          }
           for (const key of patch.unset ?? []) delete get(id).properties[key]
           Object.assign(get(id).properties, patch.properties)
           return {}
@@ -119,7 +128,11 @@ vi.mock('../../storage', () => {
         createSnippet: create,
         updateSnippet: update,
         createSnippetContent: (id: number, data: any) => {
-          const content = { id: state.next++, ...data }
+          const content = {
+            id: state.next++,
+            ...data,
+            ...(state.dropLabel ? { label: 'Fragment' } : {}),
+          }
           get(id).contents.push(content)
           return content
         },
@@ -154,6 +167,7 @@ beforeEach(() => {
   state.next = 10
   state.fail = false
   state.dropContent = false
+  state.dropLabel = false
   for (const space of ['code', 'notes', 'http']) {
     state.records[space] = [
       {
@@ -505,6 +519,44 @@ it('redacts secret fields from model reads and rejects placeholders in writes', 
   ).toThrow('REDACTED_VALUE')
 })
 
+it('creates a note with content and empty properties without moving it to trash', () => {
+  const created = createWorkspaceManager().create(
+    creationPlan({
+      summary: 'Create note',
+      items: [
+        { type: 'note', name: 'Shopping', content: 'Milk', properties: {} },
+      ],
+    }),
+  )
+
+  expect(created.failed).toBeUndefined()
+  expect(created.items).toHaveLength(1)
+  expect(
+    state.records.notes!.find(item => item.id === created.items[0]!.id),
+  ).toMatchObject({
+    name: 'Shopping',
+    content: 'Milk',
+    properties: {},
+    isDeleted: 0,
+  })
+})
+
+it('clears existing note properties when an update supplies empty properties', () => {
+  state.records.notes![0].properties = {
+    type: 'task',
+    status: 'todo',
+    custom: 'value',
+  }
+  const manager = createWorkspaceManager()
+  const proposal = manager.propose({
+    summary: 'Clear properties',
+    operations: [{ ...update, fields: { properties: {} } }],
+  })
+
+  expect(manager.apply(proposal.id, [0]).failed).toBeUndefined()
+  expect(state.records.notes![0].properties).toEqual({})
+})
+
 it('creates real Notes task properties and preserves them during a content update', () => {
   const manager = createWorkspaceManager()
   const created = manager.create({
@@ -517,7 +569,12 @@ it('creates real Notes task properties and preserves them during a content updat
         fields: {
           name: 'QA task',
           content: 'Check release',
-          properties: { type: 'task', status: 'todo', due: '2026-09-22' },
+          properties: {
+            type: 'task',
+            status: 'todo',
+            due: '2026-09-22',
+            custom: 'value',
+          },
         },
       },
     ],
@@ -533,6 +590,7 @@ it('creates real Notes task properties and preserves them during a content updat
     type: 'task',
     status: 'todo',
     due: '2026-09-22',
+    custom: 'value',
   })
 })
 
@@ -547,7 +605,7 @@ it('returns actionable field errors without exposing storage errors or values', 
           space: 'notes',
           kind: 'item',
           action: 'create',
-          fields: { name: 'Shopping', content: 'Milk', language: 'ru' },
+          fields: { name: 'Shopping', content: 'Milk', language: 'javascript' },
         },
       ],
     })
@@ -923,4 +981,336 @@ it('wires creation title clarification consistently into workspace instructions 
     'Preserve the complete requested title',
   )
   expect(creation.function.description).not.toContain('immediately')
+})
+
+it('partially undoes a task mutation without overwriting a conflicting field or independent properties', () => {
+  const manager = createWorkspaceManager()
+  const proposal = manager.propose({ summary: 'Edit', operations: [update] })
+  manager.apply(proposal.id, [0])
+  state.records.notes![0].name = 'Manual title'
+  state.records.notes![0].properties = { custom: 'manual' }
+  expect(manager.undo(proposal.id, 0, true)).toEqual({
+    undone: false,
+    conflicts: ['name'],
+  })
+  expect(state.records.notes![0]).toMatchObject({
+    name: 'Manual title',
+    content: 'old',
+    properties: { custom: 'manual' },
+  })
+})
+
+it('undoes create then update in reverse order despite persistence timestamp changes', () => {
+  const manager = createWorkspaceManager()
+  const created = manager.create({
+    summary: 'Create',
+    operations: [
+      {
+        space: 'notes',
+        kind: 'item',
+        action: 'create',
+        fields: { name: 'Task note', content: 'Original' },
+      },
+    ],
+  })
+  const id = created.items[0].id
+  const proposal = manager.propose({
+    summary: 'Edit',
+    operations: [
+      {
+        space: 'notes',
+        kind: 'item',
+        action: 'update',
+        id,
+        fields: { content: 'Revised' },
+      },
+    ],
+  })
+  manager.apply(proposal.id, [0])
+  state.records.notes!.find(item => item.id === id).updatedAt = 9001
+  expect(manager.undo(proposal.id, 0, true)).toEqual({
+    undone: true,
+    conflicts: [],
+  })
+  expect(manager.undo(created.proposal.id, 0, true)).toEqual({
+    undone: true,
+    conflicts: [],
+  })
+  expect(state.records.notes!.find(item => item.id === id)).toMatchObject({
+    isDeleted: 1,
+  })
+})
+
+it('creates an undated high-priority task with exact existing and typed planned links', () => {
+  const manager = createWorkspaceManager()
+  const content
+    = '[[snippet:1|Code]] [[http-request:1|Request]] [[masscode:planned:note|Future guide]]'
+  const created = manager.create(
+    creationPlan({
+      summary: 'Create review task',
+      items: [
+        {
+          type: 'note',
+          name: 'Review',
+          content,
+          properties: { type: 'task', status: 'todo', priority: 'high' },
+        },
+      ],
+    }),
+  )
+  expect(created.failed).toBeUndefined()
+  const saved = state.records.notes!.find(
+    item => item.id === created.items[0]!.id,
+  )
+  expect(saved.properties).toEqual({
+    type: 'task',
+    status: 'todo',
+    priority: 'high',
+  })
+  expect(saved.properties).not.toHaveProperty('due')
+  expect(findInternalLinks(saved.content)).toMatchObject([
+    { legacyTarget: { type: 'snippet', id: 1 }, plannedTarget: null },
+    { legacyTarget: { type: 'http-request', id: 1 }, plannedTarget: null },
+    {
+      legacyTarget: null,
+      plannedTarget: { type: 'note' },
+      alias: 'Future guide',
+    },
+  ])
+  for (const name of ['create_workspace_items', 'propose_workspace_changes']) {
+    const description = workspaceTools.find(
+      tool => tool.function.name === name,
+    )!.function.description
+    expect(description).toContain('due')
+    expect(description).toContain('optional')
+    expect(description).toContain('do not ask for or invent a date')
+    expect(description).toContain(NOTES_LINK_GUIDANCE)
+    expect(description).toContain('[[masscode:planned:note|Title]]')
+    expect(description).toContain('[[http-request:ID|Label]]')
+    expect(description).toContain('masscode://goto?snippetId=ID')
+    expect(description).not.toContain('due:"YYYY-MM-DD" and optional priority')
+  }
+})
+
+it.each(['create_workspace_items', 'propose_workspace_changes'])(
+  'documents literal assertion operands for saved HTTP tool %s',
+  (name) => {
+    const description = workspaceTools.find(
+      tool => tool.function.name === name,
+    )!.function.description
+    expect(description).toContain('{{variable}} is not interpolated')
+    expect(description).toContain(
+      'add only status checks using the exact codes from the inspected contract',
+    )
+  },
+)
+
+it('explains invalid runner subsets without exposing arbitrary error details', () => {
+  expect(workspaceToolError(new Error('HTTP_RUN_INVALID_ORDER'))).toEqual({
+    error: 'HTTP_RUN_INVALID_ORDER',
+    hint: expect.stringContaining(
+      'For individually requested saved requests use send with source saved',
+    ),
+  })
+  expect(
+    workspaceToolError(new Error('HTTP_RUN_INVALID_ORDER /private/secret')),
+  ).toEqual({
+    error: 'INVALID_WORKSPACE_OPERATION',
+    hint: 'The operation failed. Do not claim it succeeded.',
+  })
+})
+
+it.each(['notes', 'code'] as const)(
+  'supports a reviewed saved %s content edit without a live editor tool',
+  (space) => {
+    expect(
+      workspaceTools.some(tool => tool.function.name === 'propose_edit'),
+    ).toBe(false)
+    const tool = workspaceTools.find(
+      tool => tool.function.name === 'propose_workspace_changes',
+    )!
+    expect(tool.function.description).toContain(
+      'Prefer propose_edit for live Code/Notes editor text when that tool is available',
+    )
+    expect(tool.function.description).toContain(
+      'read_workspace_item first, then use this tool with kind item, action update and fields.content',
+    )
+    expect(tool.function.description).toContain(
+      'Code also requires fields.contentId',
+    )
+    expect(tool.function.description).toContain(
+      'does not edit an unsaved editor draft',
+    )
+    const saved = workspaceRead({ space, id: 1 })
+    const manager = createWorkspaceManager()
+    const proposal = manager.propose({
+      summary: 'Preview old to new',
+      operations: [
+        {
+          space,
+          kind: 'item',
+          action: 'update',
+          id: saved.id,
+          fields: {
+            content: 'new',
+            ...(space === 'code' ? { contentId: saved.contents[0].id } : {}),
+          },
+        },
+      ],
+    })
+    const content = () =>
+      space === 'notes'
+        ? state.records.notes![0].content
+        : state.records.code![0].contents[0].value
+    expect(content()).toBe('old')
+    expect(proposal.changes).toHaveLength(1)
+    expect(manager.apply(proposal.id, [0]).applied).toEqual([0])
+    expect(content()).toBe('new')
+  },
+)
+
+it.each(['A', undefined])(
+  'persists initial Code fragment label=%s and supports creation Undo',
+  (label) => {
+    const manager = createWorkspaceManager()
+    const created = manager.create(
+      creationPlan({
+        summary: 'Create',
+        items: [
+          {
+            type: 'folder',
+            space: 'code',
+            name: 'Typed folder',
+            defaultLanguage: 'typescript',
+          },
+          {
+            type: 'snippet',
+            name: 'Snippet',
+            ...(label ? { label } : {}),
+            content: 'const a = 1',
+            language: 'typescript',
+            folderOperation: 0,
+          },
+        ],
+      }),
+    )
+    expect(created.failed).toBeUndefined()
+    const item = created.items[0]!
+    expect(
+      state.records.code!.find(record => record.id === item.id).contents,
+    ).toEqual([
+      expect.objectContaining({
+        label: label ?? 'Fragment',
+        value: 'const a = 1',
+        language: 'typescript',
+      }),
+    ])
+    expect(
+      state.folders.code!.find(folder => folder.name === 'Typed folder')
+        .defaultLanguage,
+    ).toBe('typescript')
+    expect(manager.undo(created.proposal.id, 1)).toBe(true)
+    expect(
+      state.records.code!.find(record => record.id === item.id).isDeleted,
+    ).toBe(1)
+    expect(manager.undo(created.proposal.id, 0)).toBe(true)
+  },
+)
+it('reports an unverified write when storage drops the requested initial fragment label', () => {
+  state.dropLabel = true
+  const manager = createWorkspaceManager()
+  const result = manager.create(
+    creationPlan({
+      summary: 'Create',
+      items: [
+        {
+          type: 'snippet',
+          name: 'Snippet',
+          label: 'A',
+          content: 'a',
+          language: 'typescript',
+        },
+      ],
+    }),
+  )
+  expect(result).toMatchObject({ failed: 0, applied: [] })
+  expect(result.items).toEqual([])
+  expect(() =>
+    verifyWrite(
+      { space: 'code', kind: 'item', action: 'create', fields: { label: 'A' } },
+      state.records.code!.at(-1).id,
+    ),
+  ).toThrow('WRITE_NOT_VERIFIED')
+})
+
+it('retains the initial A fragment and resolves its saved ID after adding fragment B', () => {
+  const manager = createWorkspaceManager()
+  const created = manager.create(
+    creationPlan({
+      summary: 'Create',
+      items: [
+        {
+          type: 'snippet',
+          name: 'Example',
+          label: 'A',
+          content: 'const a = 1',
+          language: 'typescript',
+        },
+      ],
+    }),
+  )
+  const id = created.items[0]!.id
+  const initial = workspaceRead({ space: 'code', id })
+  const a = initial.contents.find((fragment: any) => fragment.label === 'A')
+  expect(a).toMatchObject({ value: 'const a = 1', language: 'typescript' })
+  const proposal = manager.propose({
+    summary: 'Add B',
+    operations: [
+      {
+        space: 'code',
+        kind: 'fragment',
+        action: 'create',
+        id,
+        fields: { label: 'B', content: 'const b = 2', language: 'typescript' },
+      },
+    ],
+  })
+  expect(manager.apply(proposal.id, [0]).applied).toEqual([0])
+  const saved = workspaceRead({ space: 'code', id })
+  expect(saved.contents.map(({ id, label }: any) => ({ id, label }))).toEqual([
+    { id: a.id, label: 'A' },
+    { id: expect.any(Number), label: 'B' },
+  ])
+  expect(saved.contents[0].id).not.toBe(saved.contents[1].id)
+  expect(() =>
+    manager.propose({
+      summary: 'Wrong path',
+      operations: [
+        {
+          space: 'code',
+          kind: 'item',
+          action: 'update',
+          id,
+          fields: { label: 'Renamed', contentId: a.id },
+        },
+      ],
+    }),
+  ).toThrow()
+})
+
+it('exposes initial fragment naming and saved-label navigation guidance to creation tools', () => {
+  const tool = workspaceTools.find(
+    tool => tool.function.name === 'create_workspace_items',
+  )!.function
+  expect(tool.description).toContain('exactly one initial fragment')
+  expect(JSON.stringify(tool.parameters)).toContain('defaultLanguage')
+  expect(JSON.stringify(tool.parameters)).toContain('label')
+  const instructions = buildAiInstructions([
+    'create_workspace_items',
+    'propose_workspace_changes',
+  ])
+  expect(instructions).toContain(
+    'snippet name and its fragment label are distinct',
+  )
+  expect(instructions).toContain('map its actual label to contentId')
 })

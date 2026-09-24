@@ -196,7 +196,14 @@ async function applyImport() {
     const { data } = await api.httpImport.postHttpImportApply({
       files: files.value,
     })
-    application.report('applied', importCounts(data))
+    application.report('applied', importCounts(data), {
+      items: data.warnings.map(warning => ({
+        source: warning.source,
+        message: i18n.t(warning.message, { defaultValue: warning.message }),
+      })),
+      count: data.warnings.length,
+      truncated: false,
+    })
     if (!application.isCurrent())
       return
     lastSummary.value = data

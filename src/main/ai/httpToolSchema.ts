@@ -33,7 +33,7 @@ export const httpProposalToolSchema = z
                 'JSON Pointer for json; header name for header; null for status and durationMs.',
               ),
             expected: httpExpectedSchema.describe(
-              'Comparison operand. Use null for exists/type checks; null is also a valid explicit JSON equality operand.',
+              'Literal comparison operand; {{variable}} is not interpolated, even for extracted variables. Use null for exists/type checks; null is also a valid explicit JSON equality operand.',
             ),
           })
           .strict(),

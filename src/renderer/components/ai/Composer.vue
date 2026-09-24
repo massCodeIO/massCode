@@ -7,7 +7,16 @@ import { ArrowUp, Square } from 'lucide-vue-next'
 
 const props = defineProps<{ ready: boolean }>()
 const emit = defineEmits<{ submit: [] }>()
-const { conversation, isStreaming, send, cancel } = useAi()
+const {
+  conversation,
+  isStreaming,
+  send,
+  cancel,
+  steer,
+  enqueue,
+  runQueued,
+  removeQueued,
+} = useAi()
 const draft = computed({
   get: () => conversation.value?.draft ?? '',
   set: (value: string | number) => {
@@ -15,14 +24,28 @@ const draft = computed({
       conversation.value.draft = String(value)
   },
 })
+const busy = ref(false)
+const failed = ref(false)
 const canSend = computed(
-  () => props.ready && !isStreaming.value && Boolean(draft.value.trim()),
+  () => props.ready && !busy.value && Boolean(draft.value.trim()),
 )
-function submit() {
+async function submit() {
   if (!canSend.value)
     return
   emit('submit')
-  void send(draft.value)
+  busy.value = true
+  failed.value = false
+  try {
+    failed.value = !(isStreaming.value
+      ? await steer(draft.value)
+      : await send(draft.value))
+  }
+  catch {
+    failed.value = true
+  }
+  finally {
+    busy.value = false
+  }
 }
 function onKeydown(event: KeyboardEvent) {
   if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
@@ -33,7 +56,43 @@ function onKeydown(event: KeyboardEvent) {
 </script>
 
 <template>
-  <div class="shrink-0 p-2">
+  <div class="shrink-0 space-y-2 p-2">
+    <div
+      v-for="task in conversation?.queue"
+      :key="task.id"
+      class="flex items-center gap-2 rounded-md border p-2"
+    >
+      <UiText
+        variant="caption"
+        class="min-w-0 flex-1 truncate"
+      >
+        {{ i18n.t("ai.task.queued") }}: {{ task.prompt }}
+      </UiText>
+      <Button
+        v-if="!isStreaming"
+        variant="outline"
+        size="sm"
+        @click="runQueued"
+      >
+        {{ i18n.t("ai.task.startQueue") }}
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        @click="removeQueued(task.id)"
+      >
+        {{ i18n.t("ai.task.removeQueue") }}
+      </Button>
+    </div>
+    <UiText
+      v-if="failed"
+      as="p"
+      variant="caption"
+      class="text-destructive"
+      role="alert"
+    >
+      {{ i18n.t("ai.task.messageFailed") }}
+    </UiText>
     <div
       class="border-input bg-background focus-within:border-ring overflow-hidden rounded-lg border shadow-xs"
     >
@@ -61,17 +120,33 @@ function onKeydown(event: KeyboardEvent) {
           <Square class="size-3 fill-current" />
         </Button>
         <Button
-          v-else
+          v-if="isStreaming && draft.trim()"
+          variant="outline"
+          size="sm"
+          :disabled="busy || (conversation?.queue?.length ?? 0) >= 8"
+          @click="enqueue(draft)"
+        >
+          {{ i18n.t("ai.task.queue") }}
+        </Button>
+        <Button
           size="icon"
           class="size-7 shrink-0"
           :disabled="!canSend"
-          :aria-label="i18n.t('ai.send')"
-          :title="i18n.t('ai.send')"
+          :aria-label="i18n.t(isStreaming ? 'ai.task.steer' : 'ai.send')"
+          :title="i18n.t(isStreaming ? 'ai.task.steer' : 'ai.send')"
           @click="submit"
         >
           <ArrowUp class="size-4" />
         </Button>
       </div>
     </div>
+    <UiText
+      v-if="isStreaming"
+      as="p"
+      variant="caption"
+      muted
+    >
+      {{ i18n.t("ai.task.controlHint") }}
+    </UiText>
   </div>
 </template>

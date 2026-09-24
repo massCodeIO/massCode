@@ -121,7 +121,7 @@ async function refreshAfterStorageSync() {
       }
 
       if (router.currentRoute.value.name === RouterName.notesGraph) {
-        await getNotesGraph()
+        await getNotesGraph({ fresh: true })
       }
       break
     case 'http':

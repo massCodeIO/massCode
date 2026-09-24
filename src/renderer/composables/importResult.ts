@@ -1,8 +1,9 @@
-import type { AiDataAction } from '~/shared/aiDataActions'
+import type { AiDataAction, AiDataWarnings } from '~/shared/aiDataActions'
 
 export type ImportReporter = (
   status: AiDataAction['status'],
   summary?: Record<string, number>,
+  warnings?: AiDataWarnings,
 ) => void
 
 // An in-flight Apply owns its receipt even after its dialog is closed/replaced.
@@ -51,6 +52,7 @@ export function createImportResultSession() {
       const report = (
         status: AiDataAction['status'],
         summary?: Record<string, number>,
+        warnings?: AiDataWarnings,
       ) => {
         if (
           !opening
@@ -61,7 +63,11 @@ export function createImportResultSession() {
         ) {
           return
         }
-        opening.reporter?.(status, summary)
+        opening.reporter?.(
+          status,
+          summary,
+          ...(warnings ? ([warnings] as const) : []),
+        )
       }
       return Object.assign(report, { isCurrent })
     },
@@ -74,13 +80,21 @@ export function createImportResultSession() {
       let finished = false
       return {
         isCurrent: () => opening === current && !opening.closed,
-        report(status: 'applied' | 'failed', summary?: Record<string, number>) {
+        report(
+          status: 'applied' | 'failed',
+          summary?: Record<string, number>,
+          warnings?: AiDataWarnings,
+        ) {
           if (finished)
             return
           finished = true
           opening.applying = false
           opening.terminal = status
-          opening.reporter?.(status, summary)
+          opening.reporter?.(
+            status,
+            summary,
+            ...(warnings ? ([warnings] as const) : []),
+          )
         },
       }
     },

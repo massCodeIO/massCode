@@ -1,8 +1,10 @@
 import type { AiHttpContext, AiHttpProposal } from '../../../shared/aiHttp'
 import { describe, expect, it, vi } from 'vitest'
 import { httpContextText } from '../../../shared/aiHttp'
+import { workspaceRuntimePatchSchema } from '../../../shared/aiWorkspace'
 import { httpContextDocument } from '../httpContextDocument'
 import { createHttpTools } from '../httpTools'
+import { httpProposalToolSchema, parseHttpProposal } from '../httpToolSchema'
 
 const context: AiHttpContext = {
   contextId: 'a52a8b2b-09be-42c2-9355-05b89bb86817',
@@ -129,4 +131,32 @@ it('keeps an unsupported proposal out of review and accepts a corrected structur
   })
   expect(t.hasProposal()).toBe(true)
   expect(t.callback).toHaveBeenCalledTimes(1)
+})
+
+it('publishes literal expected semantics while preserving brace text in saved and attached assertions', () => {
+  const tool = createHttpTools(context, vi.fn()).tools.find(
+    tool => tool.function.name === 'propose_http_assertions',
+  )!
+  expect(tool.function.description).toContain(
+    '{{variable}} is not interpolated',
+  )
+  expect(tool.function.description).toContain(
+    'add only status checks using the exact codes from the inspected contract',
+  )
+  const expectedSchema
+    = httpProposalToolSchema.shape.assertions.element.shape.expected
+  expect(expectedSchema.description).toContain(
+    '{{variable}} is not interpolated',
+  )
+  const assertion = {
+    name: 'Literal placeholder text',
+    source: 'json',
+    path: '/text',
+    operator: 'eq',
+    expected: '{{orderId}}',
+  }
+  const saved = workspaceRuntimePatchSchema.parse({ assertions: [assertion] })
+  const attached = parseHttpProposal({ ...proposal, assertions: [assertion] })
+  expect(saved.assertions![0]!.expected).toBe('{{orderId}}')
+  expect(attached.assertions[0]!.expected).toBe('{{orderId}}')
 })

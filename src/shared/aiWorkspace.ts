@@ -1,5 +1,6 @@
 import type { AiVaultItem } from './ai'
 import { z } from 'zod'
+import { codeLanguageIds, normalizeCodeLanguage } from './codeLanguages'
 import { httpCollectionSchema } from './httpCollection'
 import { httpRuntimeSchema } from './httpRuntime'
 import { httpScriptsSchema } from './httpScripts'
@@ -43,11 +44,7 @@ export const workspaceFieldsSchema = z
     description: z.string().max(100000).optional(),
     content: z.string().max(200000).optional(),
     language: z
-      .string()
-      .trim()
-      .min(1)
-      .max(100)
-      .toLowerCase()
+      .preprocess(normalizeCodeLanguage, z.enum(codeLanguageIds))
       .optional()
       .describe(
         'Code items only: programming language of the snippet, not the language of the conversation. Omit for Notes and HTTP.',
@@ -118,7 +115,13 @@ export const workspaceFieldsSchema = z
         'GraphQL is a serialized editor draft: {"query":"query text","variables":"{}","operationName":""}; variables must be a STRING, not an object. For structured form-urlencoded formData use body:null; non-null body is a legacy raw form. Binary body is an explicit user-supplied file path or an existing saved file reference.',
       ),
     collection: z.boolean().optional(),
-    defaultLanguage: z.string().max(100).optional(),
+    defaultLanguage: z
+      .preprocess(
+        normalizeCodeLanguage,
+        z.union([z.enum(codeLanguageIds), z.literal('')]),
+      )
+      .optional(),
+    orderIndex: z.number().int().min(0).max(1000000).optional(),
     isFavorites: z.union([z.literal(0), z.literal(1)]).optional(),
     isDeleted: z.union([z.literal(0), z.literal(1)]).optional(),
     properties: z.record(z.string(), z.unknown()).optional(),
@@ -194,9 +197,11 @@ export interface WorkspaceProposal {
   changes: WorkspaceChange[]
 }
 export interface WorkspaceItem extends AiVaultItem {
+  requestedName?: string
   operationIndex: number
 }
 export interface WorkspaceContainer {
+  requestedName?: string
   operationIndex: number
   id: number
   name: string
@@ -237,6 +242,14 @@ export function workspaceCreationHistory(creation: WorkspaceCreation) {
     containers: creation.containers.map(
       ({ operationIndex: _index, ...container }) => container,
     ),
+    ...([...creation.items, ...creation.containers].some(
+      item => item.requestedName !== undefined,
+    )
+      ? {
+          nameAllocationNote:
+            'Native storage allocated the reported actual names for entries with requestedName. Continue using their returned IDs and names, and disclose the difference. Do not rename solely to reverse this allocation; a later explicit user request to rename remains allowed.',
+        }
+      : {}),
     ...(creation.failedOperationIndex === undefined
       ? {}
       : {

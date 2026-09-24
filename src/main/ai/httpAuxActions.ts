@@ -1,4 +1,9 @@
-import type { AiHttpAuxAction, AiHttpDraft } from '../../shared/aiHttpActions'
+import type {
+  AiHttpActionView,
+  AiHttpAuxAction,
+  AiHttpDraft,
+  AiHttpRequestPreview,
+} from '../../shared/aiHttpActions'
 import type { HttpCookieSnapshot } from '../../shared/httpCookies'
 import type { HttpRunView } from '../../shared/httpRunner'
 import type { HttpScripts } from '../../shared/httpScripts'
@@ -7,6 +12,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import { Cookie } from 'tough-cookie'
 import { redactAiHttp } from '../../shared/aiHttp'
 import { readHttpCollection } from '../../shared/httpCollection'
+import { emptyHttpRuntime } from '../../shared/httpRuntime'
 import { emptyHttpScripts } from '../../shared/httpScripts'
 import { wsConnectSchema } from '../../shared/httpWebSocket'
 import { getHttpCookieJar } from '../http/cookies/store'
@@ -23,7 +29,11 @@ import {
   registerHttpRun,
   startHttpRun,
 } from '../http/runtime/runner'
-import { getHttpSession, resetHttpSession } from '../http/runtime/session'
+import {
+  getHttpSession,
+  readHttpSession,
+  resetHttpSession,
+} from '../http/runtime/session'
 import { scriptsTrusted, setScriptTrust } from '../http/scripts/trust'
 import { revealEnvironmentSecret } from '../http/secrets'
 import {
@@ -34,9 +44,12 @@ import {
   readWebSocket,
   readWebSocketForAi,
   sendWebSocket,
+  waitForWebSocket,
 } from '../http/websocket/session'
 import { useHttpStorage } from '../storage'
+import { getVaultPath } from '../storage/providers/markdown/runtime/paths'
 import { store } from '../store'
+import { httpRequestPreview, httpScriptPreview } from './httpPreview'
 import { vaultIdentity } from './vault'
 
 export interface HttpAuxSnapshot {
@@ -48,6 +61,8 @@ export interface HttpAuxSnapshot {
   cookies?: HttpCookieSnapshot
   scripts?: HttpScripts
   preview: unknown
+  requestPreview?: AiHttpRequestPreview
+  requestPreviews?: AiHttpRequestPreview[]
 }
 export function publicCookies(snapshot: HttpCookieSnapshot) {
   return {
@@ -108,11 +123,25 @@ export function httpAuxBaseline(
         environments: db.environments.getEnvironments(),
         active: db.environments.getActiveEnvironmentId(),
         settings: store.preferences.get('http'),
+        scripts: snapshot.run!.steps.map(step =>
+          httpScriptPreview(
+            step.requestId,
+            db.requests.getRequestById(step.requestId)?.runtime ?? undefined,
+          ),
+        ),
+        session: readHttpSession(
+          String(vaultIdentity()),
+          db.environments.getActiveEnvironmentId(),
+        ),
       }
       break
     case 'connectWebSocket':
       data = {
         record: db.requests.getRequestById(action.requestId),
+        session: readHttpSession(
+          String(vaultIdentity()),
+          db.environments.getActiveEnvironmentId(),
+        ),
         folders: db.folders.getFolders(),
         environments: db.environments.getEnvironments(),
         active: db.environments.getActiveEnvironmentId(),
@@ -202,6 +231,18 @@ export function prepareHttpAux(
       snapshot.run.steps = ids.map(
         id => snapshot.run!.steps.find(step => step.requestId === id)!,
       )
+      snapshot.requestPreviews = snapshot.run.steps.map((step) => {
+        const payload = snapshot.preparedRun!.requests.get(step.requestId)!
+        const settings = store.preferences.get('http')
+        return httpRequestPreview(
+          {
+            ...payload,
+            transport: settings.transport,
+            skipCertificateVerification: settings.skipCertificateVerification,
+          },
+          { includeSession: false },
+        )
+      })
       snapshot.preview = {
         run: snapshot.run,
         options: {
@@ -243,6 +284,16 @@ export function prepareHttpAux(
           snapshot.draft?.skipCertificateVerification
           ?? store.preferences.get('http').skipCertificateVerification,
       })
+      snapshot.requestPreview = httpRequestPreview(
+        {
+          requestId: record.id,
+          request,
+          environmentId: snapshot.ws.environmentId,
+          runtime: emptyHttpRuntime(),
+          skipCertificateVerification: snapshot.ws.skipCertificateVerification,
+        },
+        { protocol: 'websocket' },
+      )
       snapshot.preview = redactAiHttp(snapshot.ws)
       break
     }
@@ -349,12 +400,14 @@ export async function applyHttpAux(
   owner: number,
   action: AiHttpAuxAction,
   snapshot: HttpAuxSnapshot,
+  onRun?: (runId: string) => void,
 ) {
   const jar = getHttpCookieJar()
   const db = useHttpStorage()
   switch (action.action) {
     case 'runCollection': {
       registerHttpRun(owner, snapshot.preparedRun!)
+      onRun?.(snapshot.run!.runId)
       const settings = store.preferences.get('http')
       return startHttpRun(owner, {
         runId: snapshot.run!.runId,
@@ -366,6 +419,7 @@ export async function applyHttpAux(
     }
     case 'connectWebSocket':
       connectWebSocket(owner, snapshot.ws!)
+      await waitForWebSocket(owner, snapshot.ws!.connectionId, 'connected')
       return readWebSocketForAi(owner, snapshot.ws!.connectionId, 0)
     case 'sendWebSocket':
       await sendWebSocket(owner, action.connectionId, action.text)
@@ -515,14 +569,27 @@ export function readHttpAuxState(
   const offset = input.offset ?? 0
   const limit = Math.min(input.limit ?? 16000, 16000)
   switch (input.kind) {
-    case 'history':
+    case 'history': {
+      const snapshot
+        = input.id === undefined ? undefined : db.history.getSnapshot(input.id)
+      // Existing history snapshots store pre-transport input; they have no wire capture.
+      // In particular, the Cookie interceptor runs after these headers are collected.
       return boundedHttpData(
         input.id === undefined
           ? db.history.getEntries()
-          : db.history.getSnapshot(input.id),
+          : snapshot
+            ? {
+                executionInput: snapshot.request,
+                capturedRequest: null,
+                evidence:
+                  'History stores request input before transport adds Cookie and other headers, not the captured outgoing request. Missing headers here do not prove they were not sent. Captured outgoing headers are unavailable in this history snapshot. If read_http_context is available for the attached request, inspect its response executionTrace and verify it matches this execution before using it as evidence. Use read_http_state with kind console for safe captured outgoing attempts when available. Match historyId when present, otherwise requestId and requestedAt from the history list plus URL, executionId and hopIndex; follow nextOffset for more entries. Legacy or cleared console entries may lack capture. If no matching complete capture exists, report outgoing headers as unknown.',
+                response: snapshot.response,
+              }
+            : snapshot,
         offset,
         limit,
       )
+    }
     case 'runner':
       return boundedHttpData(
         getHttpRun(owner, input.activityId!),
@@ -543,7 +610,11 @@ export function readHttpAuxState(
         ).names,
       }
     case 'console':
-      return boundedHttpData(httpConsole.readForAi(), offset, limit)
+      return boundedHttpData(
+        httpConsole.readForAi(getVaultPath()),
+        offset,
+        limit,
+      )
     case 'cookies':
       return boundedHttpData(
         publicCookies(getHttpCookieJar().read(input.id ?? null)),
@@ -561,4 +632,80 @@ export function readHttpAuxState(
     default:
       throw new Error('UNKNOWN_HTTP_STATE')
   }
+}
+
+export function httpAuxPreviewDetails(
+  action: AiHttpAuxAction,
+  snapshot: HttpAuxSnapshot,
+): Pick<AiHttpActionView, 'details' | 'irreversible' | 'trust' | 'cookie'> {
+  const data = snapshot.preview as Record<string, unknown>
+  const details: NonNullable<AiHttpActionView['details']> = []
+  for (const [key, label] of [
+    ['name', 'target'],
+    ['key', 'variable'],
+    ['count', 'count'],
+    ['scope', 'scope'],
+  ] as const) {
+    if (typeof data[key] === 'string' || typeof data[key] === 'number') {
+      details.push({
+        label,
+        value: String(redactAiHttp(data[key])).slice(0, 1000),
+      })
+    }
+  }
+  if ('domain' in action) {
+    details.push({
+      label: 'domain',
+      value: String(redactAiHttp(action.domain)).slice(0, 1000),
+    })
+  }
+  if ('id' in action && !data.name)
+    details.push({ label: 'target', value: String(action.id) })
+  if ('connectionId' in action)
+    details.push({ label: 'target', value: action.connectionId })
+  if (action.action === 'scriptTrust')
+    details.push({ label: 'scope', value: action.subject })
+  let cookie: AiHttpActionView['cookie']
+  if (action.action === 'cookiesEnabled')
+    cookie = { requestId: action.requestId, enabled: action.enabled }
+  if (action.action === 'cookieCreate')
+    cookie = { name: Cookie.parse(action.raw)?.key }
+  if (action.action === 'cookieMetadata' || action.action === 'cookieDelete') {
+    const before = snapshot.cookies?.cookies.find(
+      item => item.id === action.id,
+    )
+    cookie = { name: before?.name }
+    if (before && action.action === 'cookieMetadata') {
+      cookie.changes = Object.entries(action.fields).map(([field, after]) => ({
+        field: field as 'path' | 'secure' | 'httpOnly' | 'expires',
+        before: before[field as keyof typeof action.fields],
+        after,
+      }))
+    }
+  }
+  if (action.action === 'clearSession' && Array.isArray(data.names))
+    details.push({ label: 'count', value: String(data.names.length) })
+  return {
+    details,
+    cookie,
+    irreversible:
+      data.irreversible === true || action.action === 'clearWebSocket',
+    ...(action.action === 'scriptTrust'
+      ? { trust: { allowed: action.allowed } }
+      : {}),
+  }
+}
+
+export async function waitForHttpAuxControl(
+  owner: number,
+  action: AiHttpAuxAction,
+  snapshot: HttpAuxSnapshot,
+) {
+  const id
+    = snapshot.ws?.connectionId
+      ?? ('connectionId' in action ? action.connectionId : undefined)
+  if (!id)
+    return undefined
+  await waitForWebSocket(owner, id, 'closed')
+  return readWebSocketForAi(owner, id, 0)
 }

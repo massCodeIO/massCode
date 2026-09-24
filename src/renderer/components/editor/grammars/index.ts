@@ -13,6 +13,9 @@ export function loadGrammars() {
 
 async function initializeGrammars() {
   await loadWASM(onigasmFile)
+  // RST references these optional embedded languages; keep their bodies plain.
+  for (const scopeName of ['source.cmake', 'source.kconfig', 'source.dts'])
+    addGrammar(scopeName, { scopeName, patterns: [] })
   const grammars: Record<string, GrammarOption> = {}
 
   languages

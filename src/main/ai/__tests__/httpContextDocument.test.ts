@@ -14,7 +14,9 @@ it('explains snapshot bookkeeping without losing draft and execution differences
   )
   expect(text).toContain('Body format:\nnone')
   expect(text).toContain('Body format:\njson')
-  expect(text).toContain('Draft used for this execution')
+  expect(text).toContain(
+    'Request definition used for this execution (before variable interpolation)',
+  )
   expect(text).toContain('Check results: None recorded.')
   expect(text).toContain('Duration in milliseconds:\n7')
   expect(text).not.toMatch(
@@ -56,4 +58,22 @@ it('preserves explicit truncation markers and non-object captures', () => {
     = '{"body":"first\n[TRUNCATED: middle omitted; original tail follows]\nQA-END'
   expect(httpContextDocument(partial)).toBe(partial)
   expect(httpContextDocument('[1,2]')).toBe('[1,2]')
+})
+
+it('preserves incomplete outgoing capture evidence in the model document', () => {
+  const text = httpContextDocument(
+    JSON.stringify({
+      executionTrace: [
+        {
+          method: 'GET',
+          url: 'https://example.test',
+          requestHeaders: 'X-Large: partial…',
+          truncated: true,
+        },
+      ],
+    }),
+  )
+  expect(text).toContain('Captured outgoing attempts')
+  expect(text).toContain('"truncated": true')
+  expect(text).toContain('X-Large: partial…')
 })

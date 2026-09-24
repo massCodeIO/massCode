@@ -11,9 +11,11 @@ import {
 import { useHttpPanels } from '@/composables/spaces/http/useHttpPanels'
 import { ipc } from '@/electron'
 import { getActiveSpaceId } from '@/spaceDefinitions'
+import { getCodeFormatterParser } from '~/shared/codeFormatter'
 import { createMainMenuContext } from './context'
 
 const {
+  state,
   codeLayoutMode,
   isCompactListMode,
   isShowCodePreview,
@@ -33,7 +35,13 @@ const { httpLayoutMode, httpState } = useHttpApp()
 const { isExecuting } = useHttpExecute()
 const { currentDraft, currentRequest, isCurrentRequestLoading }
   = useHttpRequests()
-const { isAvailableToCodePreview, selectedSnippetContent } = useSnippets()
+const {
+  isAvailableToCodePreview,
+  selectedSnippetContent,
+  selectedSnippet,
+  selectedSnippetIds,
+  selectedSnippetRecordStatus,
+} = useSnippets()
 const { contentSortState } = useContentSort()
 
 export function registerMainMenuContextSync() {
@@ -45,6 +53,11 @@ export function registerMainMenuContextSync() {
         isCompactListMode.value,
         isAvailableToCodePreview.value,
         selectedSnippetContent.value?.language,
+        selectedSnippetContent.value?.value !== undefined,
+        selectedSnippetRecordStatus.value,
+        selectedSnippet.value?.id,
+        selectedSnippetIds.value.length,
+        state.snippetId,
         isShowCodePreview.value,
         isShowJsonVisualizer.value,
         Boolean(selectedNote.value),
@@ -90,6 +103,12 @@ export function registerMainMenuContextSync() {
             drawings: { ...contentSortState.drawings },
           },
           code: {
+            canFormat:
+              selectedSnippetRecordStatus.value === 'ready'
+              && selectedSnippetIds.value.length === 1
+              && selectedSnippet.value?.id === state.snippetId
+              && selectedSnippetContent.value?.value !== undefined
+              && !!getCodeFormatterParser(selectedSnippetContent.value.language),
             canPreviewCode: isAvailableToCodePreview.value,
             canPreviewJson: selectedSnippetContent.value?.language === 'json',
             isCodePreviewShown: isShowCodePreview.value,

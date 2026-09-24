@@ -5,6 +5,7 @@ import type {
   ImportPreviewResponse,
 } from '@/services/api/generated'
 import type { ImportMarkdownFolderResponse } from '~/main/types/ipc'
+import type { AiDataWarnings } from '~/shared/aiDataActions'
 import * as Alert from '@/components/ui/shadcn/alert'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Dialog from '@/components/ui/shadcn/dialog'
@@ -377,6 +378,10 @@ async function applyImport() {
   const application = beginImportApply()
   if (!application)
     return
+  const readWarnings = fileReadWarnings.value.map(warning => ({
+    source: warning.source,
+    message: getImportWarningMessage(warning),
+  }))
   errorMessage.value = ''
   isApplying.value = true
   try {
@@ -384,7 +389,19 @@ async function applyImport() {
     const { data } = await api.imports.postImportsApply(
       getImportPayload(preview.value.source),
     )
-    application.report('applied', importCounts(data))
+    const items = [
+      ...readWarnings,
+      ...data.warnings.map(warning => ({
+        source: warning.source,
+        message: getImportWarningMessage(warning),
+      })),
+    ]
+    const warnings: AiDataWarnings = {
+      items,
+      count: items.length,
+      truncated: false,
+    }
+    application.report('applied', importCounts(data), warnings)
     if (!application.isCurrent())
       return
     lastSummary.value = data

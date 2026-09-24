@@ -1,6 +1,11 @@
 import { EventEmitter } from 'node:events'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { emptyHttpRuntime } from '../../../shared/httpRuntime'
+import {
+  commitHttpSession,
+  getHttpSession,
+  resetHttpSession,
+} from '../../http/runtime/session'
 import { createHttpActionManager } from '../httpActions'
 
 const fixture = vi.hoisted(() => ({
@@ -9,9 +14,19 @@ const fixture = vi.hoisted(() => ({
   active: 1,
   record: {} as any,
   folders: [] as any[],
+  trusted: false,
+  environment: {
+    id: 1,
+    name: 'Local',
+    variables: {} as Record<string, string>,
+    secretKeys: [] as string[],
+  },
 }))
 vi.mock('../../http/runtime/ownedExecution', () => ({
   executeOwnedHttpRequest: fixture.execute,
+}))
+vi.mock('../../http/scripts/trust', () => ({
+  scriptsTrusted: () => fixture.trusted,
 }))
 vi.mock('../vault', () => ({ vaultIdentity: () => fixture.vault }))
 vi.mock('../../store', () => ({
@@ -27,12 +42,15 @@ vi.mock('../../storage', () => ({
     folders: { getFolders: () => fixture.folders },
     environments: {
       getActiveEnvironmentId: () => fixture.active,
-      getEnvironments: () => [{ id: 1, variables: {} }],
+      getEnvironments: () => [fixture.environment],
     },
   }),
 }))
 const owner = Object.assign(new EventEmitter(), { id: 1 }) as any
 beforeEach(() => {
+  resetHttpSession()
+  fixture.trusted = false
+  fixture.environment = { id: 1, name: 'Local', variables: {}, secretKeys: [] }
   fixture.vault = '/vault'
   fixture.active = 1
   fixture.folders = []
@@ -99,9 +117,8 @@ it('prepares without network and executes exactly once with private auth but pub
   )
   expect(result.view.state).toBe('done')
   expect(JSON.stringify(result.view)).not.toContain('private-token')
-  await expect(manager.apply(proposal.id)).rejects.toThrow(
-    'ACTION_ALREADY_USED',
-  )
+  expect(await manager.apply(proposal.id)).toEqual(result)
+  expect(fixture.execute).toHaveBeenCalledTimes(1)
 })
 it.each(['request', 'runtime', 'folder', 'environment', 'vault'])(
   'rejects stale %s before execution',
@@ -167,9 +184,7 @@ it('draft mutation awaits renderer acknowledgement and save failure is never rep
     result: { saved: 'unknown', sent: false },
   })
   expect(fixture.execute).not.toHaveBeenCalled()
-  await expect(manager.complete(proposal.id, true)).rejects.toThrow(
-    'ACTION_UNAVAILABLE',
-  )
+  expect((await manager.complete(proposal.id, true)).view.state).toBe('failed')
 })
 
 it('validates file references against the effective draft and exact existing references', () => {
@@ -279,9 +294,10 @@ it('patchAndSend waits for the trusted exact draft acknowledgement and preserves
     url: fresh.request.url,
     auth: { token: 'private-token' },
   })
-  await expect(manager.complete(proposal.id, true, fresh)).rejects.toThrow(
-    'ACTION_UNAVAILABLE',
+  expect((await manager.complete(proposal.id, true, fresh)).view.state).toBe(
+    'done',
   )
+  expect(fixture.execute).toHaveBeenCalledTimes(1)
 })
 it('saveAndSend never sends after SaveFail, and reports its applied draft as a partial result', async () => {
   const manager = createHttpActionManager(owner)
@@ -458,3 +474,139 @@ it.each(['http', 'websocket'])(
     expect(fixture.execute).toHaveBeenCalledTimes(protocol === 'http' ? 1 : 0)
   },
 )
+
+it('shows resolved masked destinations and body metadata without credentials', () => {
+  fixture.environment.variables = {
+    host: 'https://local.test',
+    privateId: 'hidden-env-id',
+  }
+  fixture.environment.secretKeys = ['privateId']
+  fixture.record.url = '{{host}}/{{privateId}}'
+  fixture.record.auth = {
+    type: 'apikey',
+    in: 'query',
+    key: 'custom-id',
+    value: 'hidden-api-key',
+  }
+  fixture.record.query = [{ key: 'query', value: 'two words' }]
+  fixture.record.body = 'hidden-body'
+  const view = createHttpActionManager(owner).propose(intent)
+  expect(view.request).toMatchObject({
+    environmentName: 'Local',
+    bodyCharacters: 11,
+    authType: 'apikey',
+  })
+  expect(view.request?.url).toContain('https://local.test/')
+  expect(view.request?.url).toContain('query=two%20words')
+  for (const secret of ['hidden-env-id', 'hidden-api-key', 'hidden-body'])
+    expect(JSON.stringify(view.request)).not.toContain(secret)
+  expect(fixture.execute).not.toHaveBeenCalled()
+})
+it.each(['trust', 'session'])(
+  'rejects a changed %s after preview before dispatch',
+  async (kind) => {
+    fixture.record.runtime.scripts = {
+      preRequest: 'console.log(1)',
+      postResponse: '',
+    }
+    const manager = createHttpActionManager(owner)
+    const proposal = manager.propose(intent)
+    expect(proposal.request?.scripts[0].trusted).toBe(false)
+    if (kind === 'trust') {
+      fixture.trusted = true
+    }
+    else {
+      commitHttpSession(
+        getHttpSession('/vault', 1).generation,
+        new Map([['id', 'new-session-id']]),
+      )
+    }
+    await expect(manager.apply(proposal.id)).rejects.toThrow('ACTION_STALE')
+    expect(fixture.execute).not.toHaveBeenCalled()
+  },
+)
+
+it('previewing a stale environment never clears the active session', () => {
+  const captured = draft()
+  fixture.active = 2
+  const session = getHttpSession('/vault', 2)
+  commitHttpSession(
+    session.generation,
+    new Map([['keep', 'active-session-value']]),
+  )
+  const before = getHttpSession('/vault', 2)
+  createHttpActionManager(owner).propose(
+    { ...intent, source: 'draft' },
+    captured,
+  )
+  expect(getHttpSession('/vault', 2)).toEqual(before)
+})
+it('uses execution transport precedence when the TLS compatibility setting differs', () => {
+  const captured = draft()
+  captured.transport = {
+    skipCertificateVerification: true,
+  } as typeof captured.transport
+  const proposal = createHttpActionManager(owner).propose(
+    { ...intent, source: 'draft' },
+    captured,
+  )
+  expect(proposal.request?.transport.skipCertificateVerification).toBe(true)
+})
+it('previews the proposed draft URL without mutating the captured draft', () => {
+  const captured = draft()
+  const before = structuredClone(captured)
+  const proposal = createHttpActionManager(owner).propose(
+    {
+      action: 'patchDraft',
+      summary: 'Change URL',
+      fields: { url: 'https://new.test' },
+    },
+    captured,
+  )
+  expect(proposal.request?.url).toBe('https://new.test')
+  expect(captured).toEqual(before)
+  expect(fixture.execute).not.toHaveBeenCalled()
+})
+
+it('keeps dispatch outcome unknown after the transport loses its response and never replays Apply', async () => {
+  let loseResponse!: (error: Error) => void
+  fixture.execute.mockImplementationOnce(
+    () =>
+      new Promise((_resolve, reject) => {
+        loseResponse = reject
+      }),
+  )
+  const manager = createHttpActionManager(owner)
+  const action = manager.propose(intent)
+  const applying = manager.apply(action.id)
+  expect(fixture.execute).toHaveBeenCalledTimes(1)
+  loseResponse(new Error('ECONNRESET after request bytes were dispatched'))
+  const receipt = await applying
+  expect(receipt.view).toMatchObject({
+    state: 'failed',
+    result: { sendAttempted: true, sent: 'unknown', error: 'EXECUTION_FAILED' },
+  })
+  expect(receipt.response).toBeUndefined()
+  expect(await manager.apply(action.id)).toEqual(receipt)
+  expect(fixture.execute).toHaveBeenCalledTimes(1)
+})
+
+it('excludes compound mutations from the model schema while retaining sequential actions', async () => {
+  const { aiHttpModelActionSchema } = await import(
+    '../../../shared/aiHttpActions'
+  )
+  const { httpActionTools } = await import('../httpActions')
+  const schema = JSON.stringify(httpActionTools[0].function.parameters)
+  for (const action of ['patchAndSend', 'saveAndSend']) {
+    expect(schema).not.toContain(action)
+    expect(
+      aiHttpModelActionSchema.safeParse({
+        action,
+        fields: { method: 'PUT' },
+        summary: 'Change and send',
+      }).success,
+    ).toBe(false)
+  }
+  for (const action of ['patchDraft', 'saveDraft', 'send'])
+    expect(schema).toContain(action)
+})

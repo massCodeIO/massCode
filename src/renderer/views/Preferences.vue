@@ -141,6 +141,7 @@ provide(preferencesKeys, {
         ref="scrollRef"
         class="scrollbar h-full min-h-0 overflow-y-auto px-5 pt-3 pb-5"
       >
+        <AiPreferenceHandoff />
         <RouterView />
       </div>
     </template>

@@ -9,7 +9,10 @@ import {
   useNotesApp,
   useNoteUpdate,
 } from '@/composables'
+import { registerNativeBridge } from '@/composables/ai/nativeBridges'
+import { nativeEditorMutation } from '@/composables/ai/taskUndo'
 import { useAi } from '@/composables/ai/useAi'
+import { useNoteContent } from '@/composables/spaces/notes/useNoteContent'
 import { useResizeHandle } from '@/composables/useResizeHandle'
 import { i18n, ipc, store } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
@@ -114,9 +117,10 @@ const panelWidth = computed(() =>
 )
 const showInspector = computed(
   () =>
-    (isNotesInspectorOpen.value || aiOpen.value)
-    && !isNotesMindmapShown.value
-    && !isNotesPresentationShown.value,
+    aiOpen.value
+    || (isNotesInspectorOpen.value
+      && !isNotesMindmapShown.value
+      && !isNotesPresentationShown.value),
 )
 function toggleInspector() {
   if (showInspector.value)
@@ -463,18 +467,73 @@ let unregisterAiEditor: (() => void) | undefined
 onMounted(() => {
   unregisterAiEditor = useAi().registerEditor(
     readAiEditor,
-    (snapshot: EditSnapshot, replacement: string) =>
-      Boolean(
-        readAiEditor()
-        && notesEditorRef.value?.applyAiEdit(
+    async (snapshot: EditSnapshot, replacement: string) => {
+      if (
+        snapshot.space !== 'notes'
+        || !readAiEditor()
+        || !notesEditorRef.value?.applyAiEdit(
           snapshot,
           replacement,
           store.preferences.get<string>('storage.vaultPath') ?? '',
-        ),
-      ),
+        )
+      ) {
+        return false
+      }
+      await nextTick()
+      await useNoteContent().flushNoteContent(snapshot.noteId)
+      return true
+    },
   )
 })
 onBeforeUnmount(() => unregisterAiEditor?.())
+let unregisterNativeEditor: (() => void) | undefined
+onMounted(() => {
+  unregisterNativeEditor = registerNativeBridge(
+    'notesEditor',
+    async (action, current) => {
+      if (!current() || !readAiEditor())
+        return { status: 'stale' }
+      if (action.action === 'findInContent') {
+        const search = notesEditorRef.value?.findNativeContent(action)
+        return { status: search ? 'done' : 'unavailable', search }
+      }
+      if (action.action === 'notesReveal') {
+        return {
+          status: notesEditorRef.value?.nativeReveal(action)
+            ? 'done'
+            : 'unavailable',
+        }
+      }
+      if (action.action !== 'editorCommand' && action.action !== 'notesSection')
+        return { status: 'unavailable' }
+      const before = readAiEditor()!
+      if (
+        !(action.action === 'notesSection'
+          ? notesEditorRef.value?.nativeSection(action)
+          : notesEditorRef.value?.nativeCommand(action))
+      ) {
+        return { status: 'unavailable' }
+      }
+      const after = readAiEditor()
+      if (!after)
+        return { status: 'stale' }
+      const mutation = nativeEditorMutation(
+        before,
+        after.text,
+        store.preferences.get<string>('storage.vaultPath') ?? '',
+      )
+      try {
+        await nextTick()
+        await useNoteContent().flushNoteContent(before.noteId)
+        return { status: 'done', persisted: true, mutation }
+      }
+      catch {
+        return { status: 'failed', persisted: false, mutation }
+      }
+    },
+  )
+})
+onBeforeUnmount(() => unregisterNativeEditor?.())
 watch(
   () => [
     editorCursor.value,
@@ -768,7 +827,9 @@ onBeforeUnmount(() => {
         :style="{ width: `${panelWidth}px` }"
         class="h-full min-h-0 shrink-0 overflow-hidden"
       >
+        <AiPanel v-if="isNotesMindmapShown || isNotesPresentationShown" />
         <AiInspectorTabs
+          v-else
           @close="closeInspector"
           @inspector="isNotesInspectorOpen = true"
         >

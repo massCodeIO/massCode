@@ -366,3 +366,43 @@ describe('graphQL code generation', () => {
     },
   )
 })
+
+it.each([
+  { type: 'bearer' as const, token: 'synthetic-token' },
+  { type: 'basic' as const, username: 'user', password: 'pass' },
+])(
+  'uses one generated $type Authorization across all preview formats',
+  (auth) => {
+    const draft = createDraft({
+      auth,
+      headers: [
+        { key: 'authorization', value: 'manual-one' },
+        { key: 'AUTHORIZATION', value: 'manual-two' },
+        { key: 'aUtHoRiZaTiOn', value: 'disabled', enabled: false },
+      ],
+    })
+    const expected
+      = auth.type === 'bearer' ? 'Bearer synthetic-token' : 'Basic dXNlcjpwYXNz'
+    expect(
+      buildHarRequest(draft).headers.filter(
+        header => header.name.toLowerCase() === 'authorization',
+      ),
+    ).toEqual([{ name: 'Authorization', value: expected }])
+    for (const format of ['http', 'curl', 'fetch', 'axios'] as const) {
+      const preview = buildRequestPreview(draft, format)
+      expect(preview).toContain(expected)
+      expect(preview).not.toMatch(/manual-one|manual-two|disabled/)
+    }
+  },
+)
+it.each([{ type: 'none' as const }, { type: 'bearer' as const, token: '' }])(
+  'retains manual Authorization when $type produces no header',
+  (auth) => {
+    const draft = createDraft({
+      auth,
+      headers: [{ key: 'authorization', value: 'manual-one' }],
+    })
+    for (const format of ['http', 'curl', 'fetch', 'axios'] as const)
+      expect(buildRequestPreview(draft, format)).toContain('manual-one')
+  },
+)

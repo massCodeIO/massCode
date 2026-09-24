@@ -263,9 +263,15 @@ export async function openNoteDeepLink(
 export async function openHttpRequestDeepLink(
   requestId: number,
   history = false,
-): Promise<void> {
-  if (!history && !(await httpRuntimeNavigation.confirmLeave()))
-    return
+  current: () => boolean = () => true,
+): Promise<boolean> {
+  if (
+    !current()
+    || (!history && !(await httpRuntimeNavigation.confirmLeave()))
+    || !current()
+  ) {
+    return false
+  }
   const previousState = {
     activePanel: httpState.activePanel,
     folderId: httpState.folderId,
@@ -279,16 +285,26 @@ export async function openHttpRequestDeepLink(
     // Finish restoring the previous selection before mounting the HTTP space:
     // its initialization must not race with the explicit link target.
     await initHttpSpace()
+    if (!current())
+      return false
     if (!history)
       await ensureHttpRoute()
+    if (!current())
+      return false
     const request = await readNavigationEntity(
       () => api.httpRequests.getHttpRequestsById(String(requestId)),
       history,
     )
 
+    if (!current())
+      return false
     if (request.folderId !== null) {
       await getHttpFolders()
+      if (!current())
+        return false
       await selectHttpFolder(request.folderId)
+      if (!current())
+        return false
       httpState.libraryFilter = undefined
       await getHttpRequests({
         folderId: request.folderId,
@@ -305,25 +321,44 @@ export async function openHttpRequestDeepLink(
       )
     }
 
-    if (history)
-      await selectHttpRequest(requestId, false, { preservePanel: true })
-    else await selectHttpRequest(requestId)
+    if (!current())
+      return false
+    if (history) {
+      await selectHttpRequest(requestId, false, {
+        preservePanel: true,
+        current,
+      })
+    }
+    else {
+      await selectHttpRequest(requestId, false, { current })
+    }
+    if (!current())
+      return false
     if (history) {
       if (useHttpRequests().currentRequest.value?.id !== requestId)
-        return
+        return false
       await ensureHttpRoute()
       if (router.currentRoute.value.name !== RouterName.httpSpace)
-        return
+        return false
       httpState.activePanel = 'request'
+    }
+    if (
+      !current()
+      || useHttpRequests().currentRequest.value?.id !== requestId
+      || router.currentRoute.value.name !== RouterName.httpSpace
+    ) {
+      return false
     }
     restored = true
     isHttpSpaceInitialized.value = true
+    return true
   }
   catch (error) {
     if (history)
       throw error
     console.error('Failed to open HTTP request deep link:', error)
     await initHttpSpace()
+    return false
   }
   finally {
     if (history && !restored)

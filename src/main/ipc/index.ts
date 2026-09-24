@@ -2,7 +2,9 @@ import type { Channel } from '../types/ipc'
 import type { MainMenuContext } from '../types/menu'
 import { createRequire } from 'node:module'
 import { BrowserWindow, ipcMain } from 'electron'
+import i18n from '../i18n'
 import { updateMainMenu } from '../menu/main'
+import { getVaultPath } from '../storage/providers/markdown/runtime'
 import { store } from '../store'
 import { isSqliteFile } from '../utils'
 import { registerDialogHandlers } from './handlers/dialog'
@@ -34,30 +36,40 @@ export function registerIPC() {
     updateMainMenu(payload)
   })
 
-  ipcMain.handle('db:migrate-to-markdown', async (_, sqliteDbPath?: string) => {
-    const storagePath = store.preferences.get('storage.rootPath') as string
-    const dbPath
-      = typeof sqliteDbPath === 'string' && sqliteDbPath.trim()
-        ? sqliteDbPath
-        : `${storagePath}/massCode.db`
+  ipcMain.handle(
+    'db:migrate-to-markdown',
+    async (_, payload?: string | { path: string, expectedVault: string }) => {
+      if (
+        typeof payload === 'object'
+        && (!payload || payload.expectedVault !== getVaultPath())
+      ) {
+        throw new Error(i18n.t('ai.native.stale'))
+      }
+      const sqliteDbPath = typeof payload === 'object' ? payload.path : payload
+      const storagePath = store.preferences.get('storage.rootPath') as string
+      const dbPath
+        = typeof sqliteDbPath === 'string' && sqliteDbPath.trim()
+          ? sqliteDbPath
+          : `${storagePath}/massCode.db`
 
-    if (!isSqliteFile(dbPath)) {
-      throw new Error(
-        'No valid massCode.db found. '
-        + 'Select a massCode.db file from a previous version and try again.',
-      )
-    }
+      if (!isSqliteFile(dbPath)) {
+        throw new Error(
+          'No valid massCode.db found. '
+          + 'Select a massCode.db file from a previous version and try again.',
+        )
+      }
 
-    const { closeDB } = lazyRequire('../db') as typeof import('../db')
-    const { migrateSqliteToMarkdownStorage } = lazyRequire(
-      '../storage/providers/markdown',
-    ) as typeof import('../storage/providers/markdown')
+      const { closeDB } = lazyRequire('../db') as typeof import('../db')
+      const { migrateSqliteToMarkdownStorage } = lazyRequire(
+        '../storage/providers/markdown',
+      ) as typeof import('../storage/providers/markdown')
 
-    try {
-      return migrateSqliteToMarkdownStorage(dbPath)
-    }
-    finally {
-      closeDB()
-    }
-  })
+      try {
+        return migrateSqliteToMarkdownStorage(dbPath)
+      }
+      finally {
+        closeDB()
+      }
+    },
+  )
 }

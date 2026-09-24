@@ -8,6 +8,14 @@ import { readGraphqlDraft } from '../../shared/httpGraphql'
 import { httpRuntimeSchema } from '../../shared/httpRuntime'
 import { useHttpStorage, useNotesStorage, useStorage } from '../storage'
 
+// Stored descriptions can be absent even though public edits accept strings.
+// Undo must retain that value rather than turn it into an explicit empty string.
+type StorageOperation = Omit<WorkspaceOperation, 'fields'> & {
+  fields: Omit<WorkspaceOperation['fields'], 'description'> & {
+    description?: string | null
+  }
+}
+
 export class WorkspaceFieldError extends Error {
   constructor(readonly allowedFields: string[]) {
     super('UNSUPPORTED_FIELD')
@@ -21,7 +29,7 @@ export function folders(space: WorkspaceOperation['space']) {
       ? useNotesStorage().folders
       : useHttpStorage().folders
 }
-export function read(op: WorkspaceOperation) {
+export function read(op: StorageOperation) {
   if (!op.id)
     return null
   if (op.kind === 'tag' || op.kind === 'environment')
@@ -59,7 +67,7 @@ export function validate(op: WorkspaceOperation) {
           'name',
           'folderId',
           'folderOperation',
-          ...(op.space === 'code' ? ['defaultLanguage'] : []),
+          ...(op.space === 'code' ? ['defaultLanguage', 'orderIndex'] : []),
           ...(op.space === 'http' ? ['collection', 'collectionConfig'] : []),
         ]
       : [
@@ -87,7 +95,11 @@ export function validate(op: WorkspaceOperation) {
                 'content',
                 'tags',
                 ...(op.space === 'code'
-                  ? ['language', 'contentId']
+                  ? [
+                      'language',
+                      'contentId',
+                      ...(op.action === 'create' ? ['label'] : []),
+                    ]
                   : ['properties']),
               ]),
         ]
@@ -224,10 +236,11 @@ function tagNames(space: 'code' | 'notes', id: number, names: string[]) {
     else check(useNotesStorage().notes.addTagToNote(id, tag.id))
   }
 }
-export function write(op: WorkspaceOperation, id: number, restoring = false) {
+export function write(op: StorageOperation, id: number, restoring = false) {
   const f = op.fields
   if (op.kind === 'folder') {
     const metadata = {
+      ...(f.orderIndex !== undefined ? { orderIndex: f.orderIndex } : {}),
       ...(f.name !== undefined ? { name: f.name } : {}),
       ...(f.defaultLanguage !== undefined
         ? { defaultLanguage: f.defaultLanguage }
@@ -288,7 +301,11 @@ export function write(op: WorkspaceOperation, id: number, restoring = false) {
     const storage = useStorage().snippets
     if (Object.keys(metadata).length)
       check(storage.updateSnippet(id, metadata))
-    if (f.content !== undefined || f.language !== undefined) {
+    if (
+      f.content !== undefined
+      || f.language !== undefined
+      || f.label !== undefined
+    ) {
       const contentId
         = f.contentId ?? storage.getSnippetById(id)?.contents[0]?.id
       if (contentId) {
@@ -296,13 +313,14 @@ export function write(op: WorkspaceOperation, id: number, restoring = false) {
           storage.updateSnippetContent(id, contentId, {
             ...(f.content !== undefined ? { value: f.content } : {}),
             ...(f.language !== undefined ? { language: f.language } : {}),
+            ...(f.label !== undefined ? { label: f.label } : {}),
           }),
         )
       }
       else {
         storage.createSnippetContent(id, {
-          label: 'Fragment',
-          language: f.language ?? 'plaintext',
+          label: f.label ?? 'Fragment',
+          language: f.language ?? 'plain_text',
           value: f.content ?? '',
         })
       }
@@ -311,7 +329,10 @@ export function write(op: WorkspaceOperation, id: number, restoring = false) {
   else if (op.space === 'notes') {
     if (Object.keys(metadata).length)
       check(useNotesStorage().notes.updateNote(id, metadata))
-    if (f.properties) {
+    if (
+      f.properties
+      && (op.action !== 'create' || Object.keys(f.properties).length > 0)
+    ) {
       const current = useNotesStorage().notes.getNoteById(id)!
       check(
         useNotesStorage().notes.updateNoteProperties(id, {
@@ -344,8 +365,18 @@ export function write(op: WorkspaceOperation, id: number, restoring = false) {
       label: _label,
       ...fields
     } = f
-    if (Object.keys(fields).length)
-      check(useHttpStorage().requests.updateRequest(id, fields))
+    if (Object.keys(fields).length) {
+      const { description, ...requestFields } = fields
+      // HTTP storage requires a string; nullable descriptions belong to Code/Notes.
+      if (description === null)
+        throw new Error('INVALID_OPERATION')
+      check(
+        useHttpStorage().requests.updateRequest(id, {
+          ...requestFields,
+          ...(description !== undefined ? { description } : {}),
+        }),
+      )
+    }
     if (scripts || runtimePatch) {
       const current = useHttpStorage().requests.getRequestById(id)
       if (!current?.runtimeRevision || current.runtimeState !== 'ready')
@@ -406,10 +437,10 @@ function mergeRuntime(
   })
 }
 export function snapshotFields(
-  op: WorkspaceOperation,
+  op: StorageOperation,
   record: NonNullable<ReturnType<typeof read>>,
   restoring = false,
-): WorkspaceOperation['fields'] {
+): StorageOperation['fields'] {
   const result: Record<string, unknown> = {}
   for (const key of Object.keys(op.fields)) {
     if (key === 'runtime' || key === 'collectionConfig') {
@@ -467,6 +498,9 @@ export function snapshotFields(
               ? record.folderId
               : null
     }
+    else if (key === 'description') {
+      result[key] = 'description' in record ? record.description : null
+    }
     else if (key === 'body' && op.space === 'http') {
       result[key] = 'body' in record ? record.body : null
     }
@@ -479,19 +513,19 @@ export function snapshotFields(
       result[key] = op.fields.contentId
     }
     else if (
-      (key === 'content' || key === 'language')
+      (key === 'content' || key === 'language' || key === 'label')
       && op.space === 'code'
     ) {
       const content = ('contents' in record ? record.contents : []).find(
         (item: { id: number }) => item.id === op.fields.contentId,
       )
-      result[key] = content?.[key === 'content' ? 'value' : 'language'] ?? ''
+      result[key] = content?.[key === 'content' ? 'value' : key] ?? ''
     }
     else {
       result[key] = (record as unknown as Record<string, unknown>)[key] ?? ''
     }
   }
-  return result as WorkspaceOperation['fields']
+  return result as StorageOperation['fields']
 }
 
 export function removeCreated(op: WorkspaceOperation, id: number) {
@@ -536,7 +570,7 @@ export function removeCreated(op: WorkspaceOperation, id: number) {
 }
 
 // A successful storage return is not enough: read back every requested field.
-export function verifyWrite(op: WorkspaceOperation, id: number) {
+export function verifyWrite(op: StorageOperation, id: number) {
   const record = read({ ...op, id })
   if (!record)
     throw new Error('WRITE_NOT_VERIFIED')

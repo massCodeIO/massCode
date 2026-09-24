@@ -17,6 +17,13 @@ const folderFields = workspaceFieldsSchema.pick({
   folderId: true,
   folderOperation: true,
 })
+const codeFolderFields = folderFields.extend({
+  defaultLanguage: workspaceFieldsSchema.shape.defaultLanguage,
+  orderIndex: workspaceFieldsSchema.shape.orderIndex,
+})
+const tagFields = z
+  .object({ name: workspaceFieldsSchema.shape.name.unwrap() })
+  .strict()
 const updateTarget = {
   action: z.literal('update'),
   id: z.number().int().positive(),
@@ -30,6 +37,22 @@ export const workspaceReviewSchema = z
     operations: z
       .array(
         z.union([
+          z
+            .object({
+              space: z.literal('notes'),
+              kind: z.literal('tag'),
+              action: z.literal('create'),
+              fields: tagFields,
+            })
+            .strict(),
+          z
+            .object({
+              space: z.literal('notes'),
+              kind: z.literal('tag'),
+              ...updateTarget,
+              fields: tagFields,
+            })
+            .strict(),
           z
             .object({
               space: z.literal('http'),
@@ -189,7 +212,16 @@ export const workspaceReviewSchema = z
             .strict(),
           z
             .object({
-              space: z.enum(['code', 'notes']),
+              space: z.literal('code'),
+              ...folderCreate,
+              fields: codeFolderFields.extend({
+                name: workspaceFieldsSchema.shape.name.unwrap(),
+              }),
+            })
+            .strict(),
+          z
+            .object({
+              space: z.literal('notes'),
               ...folderCreate,
               fields: folderFields.extend({
                 name: workspaceFieldsSchema.shape.name.unwrap(),
@@ -208,7 +240,21 @@ export const workspaceReviewSchema = z
             .strict(),
           z
             .object({
-              space: workspaceSpaceSchema,
+              space: z.literal('code'),
+              ...folderUpdate,
+              fields: codeFolderFields,
+            })
+            .strict(),
+          z
+            .object({
+              space: z.literal('notes'),
+              ...folderUpdate,
+              fields: folderFields,
+            })
+            .strict(),
+          z
+            .object({
+              space: z.literal('http'),
               ...folderUpdate,
               fields: folderFields.extend({
                 collectionConfig: workspaceFieldsSchema.shape.collectionConfig,

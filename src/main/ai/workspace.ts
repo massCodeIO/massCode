@@ -5,12 +5,14 @@ import type {
 } from '../../shared/aiWorkspace'
 import { randomUUID } from 'node:crypto'
 import { redactAiHttp } from '../../shared/aiHttp'
+import { applyAiPatch, inverseAiPatch } from '../../shared/aiUndo'
 import {
   workspaceCreateSchema,
   workspacePlanSchema,
 } from '../../shared/aiWorkspace'
 import { useHttpStorage, useNotesStorage, useStorage } from '../storage'
 import { PartialCreateError } from '../storage/partialCreateError'
+import { assertUniqueSiblingFolderName } from '../storage/providers/markdown/runtime/validation'
 import { vaultIdentity } from './vault'
 import {
   applyLifecycle,
@@ -42,6 +44,26 @@ function fingerprint(value: unknown): string {
       : item)
 }
 
+function undoFingerprint(value: unknown, createdFolder = false): string {
+  // Opening a created folder in the sidebar must not prevent its removal.
+  // Only omit the folder's own UI flag, never similarly named config fields.
+  if (
+    createdFolder
+    && value
+    && typeof value === 'object'
+    && 'isOpen' in value
+  ) {
+    const { isOpen: _isOpen, ...record } = value
+    value = record
+  }
+  return fingerprint(
+    JSON.parse(
+      JSON.stringify(value, (key, item) =>
+        key === 'updatedAt' || key === 'runtimeRevision' ? undefined : item),
+    ),
+  )
+}
+
 // A proposal is owned by the main process; the renderer can only approve its ID.
 // Existing-record changes require review. Creation uses a create-only schema.
 // Baselines are checked again immediately before writes.
@@ -60,6 +82,15 @@ export function createWorkspaceManager() {
         {
           id: number
           baseline: string
+          fields?: {
+            before: Record<string, unknown>
+            after: Record<string, unknown>
+          }
+          folderOrder?: {
+            read: () => string
+            baseline: string
+            restore: (name?: string) => void
+          }
           restore?: () => void
           read?: () => unknown
         }
@@ -126,7 +157,9 @@ export function createWorkspaceManager() {
             const preview = lifecyclePreview(operation)
             return {
               operation,
-              name: String(preview.before.name),
+              name: String(
+                'name' in preview ? preview.name : preview.before.name,
+              ),
               irreversible: preview.irreversible,
               before: JSON.stringify(preview.before, null, 2),
               after: JSON.stringify(preview.after, null, 2),
@@ -166,7 +199,7 @@ export function createWorkspaceManager() {
       })
       return value
     },
-    undo(id: string, index: number) {
+    undo(id: string, index: number, partial = false) {
       const plan = proposals.get(id)
       const applied = plan?.undo.get(index)
       const op = plan?.value.changes[index]?.operation
@@ -175,13 +208,97 @@ export function createWorkspaceManager() {
         || !op
         || !applied
         || plan.vault !== vaultIdentity()
-        || fingerprint(
-          applied.read ? applied.read() : read({ ...op, id: applied.id }),
-        ) !== applied.baseline
+        || (!applied.fields
+          && undoFingerprint(
+            applied.read ? applied.read() : read({ ...op, id: applied.id }),
+            op.action === 'create' && op.kind === 'folder',
+          ) !== applied.baseline)
       ) {
         throw new Error('STALE_PROPOSAL')
       }
-      if (applied.restore) {
+      if (applied.folderOrder) {
+        if (applied.folderOrder.read() !== applied.folderOrder.baseline)
+          throw new Error('STALE_PROPOSAL')
+      }
+      if (applied.fields) {
+        const current = read({ ...op, id: applied.id })
+        if (!current)
+          throw new Error('STALE_PROPOSAL')
+        const inverse = inverseAiPatch(
+          applied.fields.before,
+          applied.fields.after,
+          snapshotFields(op, current, true),
+        )
+        if (inverse.conflicts.length && !partial)
+          throw new Error('STALE_PROPOSAL')
+        if (applied.folderOrder) {
+          applied.folderOrder.restore(
+            typeof inverse.patch.name === 'string'
+              ? inverse.patch.name
+              : undefined,
+          )
+          delete inverse.patch.name
+          delete applied.folderOrder
+        }
+        if (Object.keys(inverse.patch).length) {
+          const currentFields = snapshotFields(op, current, true)
+          const merged = applyAiPatch(currentFields, inverse.patch)
+          // Runtime version is a discriminator: an independently edited script
+          // retained by partial Undo still requires v2.
+          for (const path of [['runtime'], ['collectionConfig', 'runtime']]) {
+            const runtimeIn = (fields: Record<string, unknown>) =>
+              path.reduce<Record<string, unknown> | undefined>(
+                (value, key) =>
+                  value?.[key] as Record<string, unknown> | undefined,
+                fields,
+              )
+            const runtime = runtimeIn(merged)
+            if (!runtime?.scripts || runtime.version === 2)
+              continue
+            runtime.version = 2
+            // The discriminator was deferred, not undone. Keep it with the
+            // conflicting scripts so a later retry can restore the exact v1.
+            if (
+              inverse.conflicts.length
+              && runtimeIn(inverse.patch)?.version === 1
+            ) {
+              for (const [remaining, original] of [
+                [inverse.remainingBefore, applied.fields.before],
+                [inverse.remainingAfter, applied.fields.after],
+              ]) {
+                let target = remaining!
+                for (const key of path) {
+                  target[key] ??= {}
+                  target = target[key] as Record<string, unknown>
+                }
+                target.version = runtimeIn(original!)?.version
+              }
+            }
+          }
+          const fields = Object.fromEntries(
+            Object.keys(inverse.patch).map(key => [key, merged[key]]),
+          )
+          const restored = {
+            ...op,
+            fields: {
+              ...fields,
+              ...(op.fields.contentId
+                ? { contentId: op.fields.contentId }
+                : {}),
+            },
+          }
+          write(restored, applied.id, true)
+          verifyWrite(restored, applied.id)
+        }
+        if (inverse.conflicts.length) {
+          applied.fields = {
+            before: inverse.remainingBefore,
+            after: inverse.remainingAfter,
+          }
+          return { undone: false, conflicts: inverse.conflicts }
+        }
+      }
+      else if (applied.restore) {
         applied.restore()
       }
       else if (op.action === 'create') {
@@ -198,7 +315,7 @@ export function createWorkspaceManager() {
       plan.undo.delete(index)
       plan.applied.delete(index)
       plan.failed.add(index)
-      return true
+      return partial ? { undone: true, conflicts: [] } : true
     },
     create(input: unknown, userMessages: string[] = []) {
       const plan = workspaceCreateSchema.parse(input)
@@ -257,6 +374,8 @@ export function createWorkspaceManager() {
           op.fields.folderId = plan.undo.get(op.fields.folderOperation)!.id
           delete op.fields.folderOperation
         }
+        const requestedName
+          = op.action === 'create' ? op.fields.name : undefined
         let target = op.id
         try {
           if (isLifecycle(op)) {
@@ -266,7 +385,7 @@ export function createWorkspaceManager() {
             if (result.restore) {
               plan.undo.set(i, {
                 id: result.id,
-                baseline: fingerprint(result.read()),
+                baseline: undoFingerprint(result.read()),
                 restore: result.restore,
                 read: result.read,
               })
@@ -309,12 +428,135 @@ export function createWorkspaceManager() {
                   : op.space === 'notes'
                     ? useNotesStorage().notes.createNote(input).id
                     : useHttpStorage().requests.createRequest(input).id
+            const created = read({ ...op, id: target })
+            if (!created)
+              throw new Error('WRITE_NOT_VERIFIED')
+            // Native storage may choose a suffix for an occupied vault path.
+            op.fields.name = created.name
           }
-          write(op, target!)
+          const originalFolder
+            = op.space === 'code'
+              && op.kind === 'folder'
+              && op.action === 'update'
+              && (op.fields.orderIndex !== undefined
+                || op.fields.folderId !== undefined)
+              ? useStorage()
+                  .folders
+                  .getFolders()
+                  .find(folder => folder.id === target)
+              : undefined
+          if (
+            originalFolder
+            && op.fields.folderId !== undefined
+            && op.fields.folderId !== originalFolder.parentId
+          ) {
+            assertUniqueSiblingFolderName(
+              { folders: useStorage().folders.getFolders() },
+              op.fields.folderId,
+              op.fields.name ?? originalFolder.name,
+              target,
+            )
+          }
+          const orderBefore = originalFolder
+            ? {
+                parentId: originalFolder.parentId,
+                orderIndex: originalFolder.orderIndex,
+              }
+            : undefined
+          const orderParents = orderBefore
+            ? new Set([
+              orderBefore.parentId,
+              op.fields.folderId === undefined
+                ? orderBefore.parentId
+                : op.fields.folderId,
+            ])
+            : undefined
+          const readOrder = () =>
+            JSON.stringify(
+              useStorage()
+                .folders.getFolders()
+                .filter(folder => orderParents?.has(folder.parentId))
+                .map(({ id, parentId, orderIndex }) => ({
+                  id,
+                  parentId,
+                  orderIndex,
+                }))
+                .sort((a, b) => a.id - b.id),
+            )
+          const writeOp = structuredClone(op)
+          if (op.action === 'create')
+            delete writeOp.fields.name
+          write(writeOp, target!)
           const saved = verifyWrite(op, target!)
+          if (op.action === 'create') {
+            const change = plan.value.changes[i]!
+            change.name = saved.name
+            change.operation.fields.name = saved.name
+            change.after = JSON.stringify(
+              { ...JSON.parse(change.after), name: saved.name },
+              null,
+              2,
+            )
+          }
+          const fieldSnapshot = (
+            record: NonNullable<ReturnType<typeof read>>,
+          ) => {
+            const fields = snapshotFields(op, record, true)
+            if (orderBefore) {
+              delete fields.folderId
+              delete fields.orderIndex
+            }
+            return fields
+          }
           plan.undo.set(i, {
             id: target!,
-            baseline: fingerprint(saved),
+            baseline: undoFingerprint(
+              saved,
+              op.action === 'create' && op.kind === 'folder',
+            ),
+            ...(orderBefore
+              ? {
+                  folderOrder: {
+                    read: readOrder,
+                    baseline: readOrder(),
+                    restore: (name) => {
+                      const currentFolders = useStorage().folders.getFolders()
+                      const currentFolder = currentFolders.find(
+                        folder => folder.id === target,
+                      )
+                      if (!currentFolder)
+                        throw new Error('STALE_PROPOSAL')
+                      assertUniqueSiblingFolderName(
+                        { folders: currentFolders },
+                        orderBefore.parentId,
+                        name ?? currentFolder.name,
+                        target,
+                      )
+                      const result = useStorage().folders.updateFolder(
+                        target!,
+                        {
+                          ...orderBefore,
+                          ...(name !== undefined ? { name } : {}),
+                        },
+                      )
+                      if (
+                        ('notFound' in result && result.notFound)
+                        || ('invalidInput' in result && result.invalidInput)
+                      ) {
+                        throw new Error('WRITE_NOT_VERIFIED')
+                      }
+                    },
+                  },
+                }
+              : {}),
+            ...(op.action === 'update'
+              ? {
+                  fields: {
+                    before: fieldSnapshot(plan.before[i]!),
+                    after: fieldSnapshot(saved),
+                  },
+                }
+              : {}),
           })
           plan.applied.add(i)
           applied.push(i)
@@ -323,6 +565,9 @@ export function createWorkspaceManager() {
               operationIndex: i,
               id: target!,
               name: saved.name,
+              ...(requestedName !== undefined && requestedName !== saved.name
+                ? { requestedName }
+                : {}),
               space: op.space,
               kind: op.fields.collection ? 'collection' : 'folder',
             })
@@ -332,6 +577,9 @@ export function createWorkspaceManager() {
               operationIndex: i,
               id: target!,
               name: saved.name,
+              ...(requestedName !== undefined && requestedName !== saved.name
+                ? { requestedName }
+                : {}),
               type:
                 op.space === 'code'
                   ? 'snippet'

@@ -20,14 +20,14 @@ const replacement = computed(() => props.message.replacement)
 const available = computed(() => {
   // Subscribe to editor changes while the review dialog is open.
   void context.value
-  return canApply(props.message)
+  return !props.message.mutationBusy && canApply(props.message)
 })
 function reject() {
   rejectEdit(props.message)
   open.value = false
 }
-function apply() {
-  failed.value = !applyEdit(props.message)
+async function apply() {
+  failed.value = !(await applyEdit(props.message))
   if (!failed.value)
     open.value = false
 }
@@ -48,7 +48,7 @@ function apply() {
   >
     {{ i18n.t("ai.edit.rejected") }}
   </UiText>
-  <template v-else-if="message.status !== 'streaming'">
+  <template v-else-if="message.mutationId || message.status !== 'streaming'">
     <div
       v-if="replacement !== undefined"
       class="flex flex-wrap items-center gap-2"

@@ -2,14 +2,20 @@ import type { ImportReporter } from '@/composables/importResult'
 import type { AiContext } from './useAi'
 import type {
   NoteExportResponse,
+  NoteExportWarnings,
   NoteFolderSiteExportPrepareResponse,
   NoteFolderSiteExportResponse,
 } from '~/main/types/ipc'
 import type { AiDataAction } from '~/shared/aiDataActions'
 import {
+  getMermaidSources,
+  renderDiagramPreviews,
+} from '@/components/notes/diagramExport'
+import {
   renderDrawingPreviews,
   renderDrawingPreviewsFromMarkdown,
 } from '@/components/notes/drawingExport'
+import { showNoteExportWarnings } from '@/components/notes/exportWarnings'
 import { useContentSort } from '@/composables/useContentSort'
 import { useHttpImportDialog } from '@/composables/useHttpImportDialog'
 import { useImportDialog } from '@/composables/useImportDialog'
@@ -57,20 +63,27 @@ export async function executeDataAction(
     if (preparation.status !== 'ready')
       throw new Error('TARGET_UNAVAILABLE')
     const drawingPreviews = await renderDrawingPreviews(preparation.drawingIds)
+    const diagramPreviews = await renderDiagramPreviews(
+      preparation.mermaidSources ?? [],
+      Math.max(0, 500 - drawingPreviews.length),
+    )
     if (!isCurrent())
       return report('cancelled')
     report('opened')
     const result = (await ipc.invoke('fs:export-note-folder-site', {
       folderId: action.input.id,
       drawingPreviews,
+      diagramPreviews,
       ...useContentSort().getContentSortQuery('notes'),
     })) as NoteFolderSiteExportResponse
-    report(
+    finishExport(
+      report,
       result.status === 'exported'
         ? 'applied'
         : result.status === 'canceled'
           ? 'cancelled'
           : 'failed',
+      result.status === 'exported' ? result.warnings : undefined,
     )
     return
   }
@@ -98,6 +111,10 @@ export async function executeDataAction(
     name = data.name
   }
   const drawingPreviews = await renderDrawingPreviewsFromMarkdown(content)
+  const diagramPreviews = await renderDiagramPreviews(
+    getMermaidSources(content),
+    Math.max(0, 50 - drawingPreviews.length),
+  )
   if (!isCurrent())
     return report('cancelled')
   report('opened')
@@ -106,6 +123,33 @@ export async function executeDataAction(
     name,
     format: action.input.format,
     drawingPreviews,
+    diagramPreviews,
   })) as NoteExportResponse
-  report(result.canceled ? 'cancelled' : 'applied')
+  finishExport(
+    report,
+    result.canceled ? 'cancelled' : 'applied',
+    result.warnings,
+  )
+}
+
+function finishExport(
+  report: ImportReporter,
+  status: 'applied' | 'cancelled' | 'failed',
+  warnings?: NoteExportWarnings,
+) {
+  if (status === 'applied' && warnings && Object.keys(warnings).length) {
+    report(
+      status,
+      Object.fromEntries(
+        Object.entries(warnings).map(([kind, count]) => [
+          `${kind}Warnings`,
+          count,
+        ]),
+      ),
+    )
+    showNoteExportWarnings(warnings)
+  }
+  else {
+    report(status)
+  }
 }

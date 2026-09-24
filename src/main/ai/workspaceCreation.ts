@@ -50,6 +50,9 @@ const snippet = z
         'Requested content. Preserve supplied literal text; do not add extra instructions or commentary to it.',
       ),
     language: fields.language.unwrap(),
+    label: fields.label.describe(
+      'Name of the one initial Code fragment, distinct from the snippet name. Omit only when no fragment name was requested.',
+    ),
   })
   .strict()
 const http = z
@@ -73,13 +76,23 @@ const http = z
     scripts: fields.scripts,
   })
   .strict()
-const folder = z
-  .object({
-    type: z.literal('folder'),
-    space: workspaceSpaceSchema,
-    ...common,
-  })
-  .strict()
+const folder = z.discriminatedUnion('space', [
+  z
+    .object({
+      type: z.literal('folder'),
+      space: z.literal('code'),
+      ...common,
+      defaultLanguage: fields.defaultLanguage,
+    })
+    .strict(),
+  z
+    .object({ type: z.literal('folder'), space: z.literal('notes'), ...common })
+    .strict(),
+  z
+    .object({ type: z.literal('folder'), space: z.literal('http'), ...common })
+    .strict(),
+])
+
 const collection = z
   .object({
     type: z.literal('http_collection'),

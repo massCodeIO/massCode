@@ -1,4 +1,4 @@
-import type { NativeImage } from 'electron'
+import type { BrowserWindow, NativeImage } from 'electron'
 import type {
   FolderIconSetPayload,
   FolderIconSpaceId,
@@ -6,9 +6,9 @@ import type {
   FolderIconWritePayload,
 } from './types/ipc'
 import { Buffer } from 'node:buffer'
-import { createHash, randomBytes } from 'node:crypto'
+import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import path from 'node:path'
-import { nativeImage } from 'electron'
+import { dialog, nativeImage } from 'electron'
 import fs from 'fs-extra'
 import { useHttpStorage, useNotesStorage, useStorage } from './storage'
 import { prioritizeCloudDownload } from './storage/providers/markdown/cloudDownloads'
@@ -29,6 +29,40 @@ const FOLDER_ICON_SPACES = new Set<FolderIconSpaceId>([
   'http',
 ])
 const pendingFolderIconMutations = new Map<string, Promise<unknown>>()
+interface IconState {
+  icon: string | null
+  png: Buffer | null
+}
+const iconUndo = new Map<
+  string,
+  {
+    target: FolderIconTarget
+    vault: string
+    before: IconState
+    after: IconState
+    expiresAt: number
+    undone?: boolean
+  }
+>()
+const ICON_UNDO_TTL = 30 * 60 * 1000
+const ICON_UNDO_MAX_BYTES = 64 * 1024 * 1024
+function pruneIconUndo() {
+  let bytes = 0
+  for (const [id, receipt] of [...iconUndo].reverse()) {
+    bytes
+      += (receipt.before.png?.length ?? 0) + (receipt.after.png?.length ?? 0)
+    if (
+      receipt.vault !== getVaultPath()
+      || receipt.expiresAt <= Date.now()
+      || bytes > ICON_UNDO_MAX_BYTES
+    ) {
+      iconUndo.delete(id)
+    }
+  }
+  while (iconUndo.size > 128) iconUndo.delete(iconUndo.keys().next().value!)
+}
+// Release private image buffers even when the user leaves the conversation idle.
+setInterval(pruneIconUndo, 60 * 1000).unref()
 const emojiSegmenter = new Intl.Segmenter(undefined, {
   granularity: 'grapheme',
 })
@@ -271,6 +305,7 @@ async function replaceFolderIconFile(tempPath: string, iconPath: string) {
 }
 
 async function writeFolderIconUnlocked(payload: FolderIconWritePayload) {
+  const vault = getVaultPath()
   const context = getSpaceFoldersAndRoot(payload.spaceId)
   const folder = context.folders.find(item => item.id === payload.folderId)
   if (!folder)
@@ -306,13 +341,15 @@ async function writeFolderIconUnlocked(payload: FolderIconWritePayload) {
     await replaceFolderIconFile(tempPath, iconPath)
     rememberAppFileChange(iconPath)
 
+    if (getVaultPath() !== vault)
+      throw new Error('Stale folder icon vault')
     metadataUpdateAttempted = true
     const result = context.updateIcon(payload.folderId, iconValue)
     if (result.invalidInput || result.notFound)
       throw new TypeError('Folder icon metadata could not be updated')
   }
   catch (error) {
-    if (metadataUpdateAttempted) {
+    if (metadataUpdateAttempted && getVaultPath() === vault) {
       try {
         context.updateIcon(payload.folderId, previousIconValue)
       }
@@ -336,7 +373,7 @@ async function writeFolderIconUnlocked(payload: FolderIconWritePayload) {
     rememberAppFileChange(tempPath)
   }
 
-  return iconValue
+  return { icon: iconValue, png }
 }
 
 async function removeFolderIconFile(target: FolderIconTarget): Promise<void> {
@@ -348,35 +385,233 @@ async function removeFolderIconFile(target: FolderIconTarget): Promise<void> {
 }
 
 export function writeFolderIcon(payload: FolderIconWritePayload) {
-  return runFolderIconMutation(payload, () => writeFolderIconUnlocked(payload))
+  return runFolderIconMutation(
+    payload,
+    async () => (await writeFolderIconUnlocked(payload)).icon,
+  )
+}
+
+async function setFolderIconUnlocked(payload: FolderIconSetPayload) {
+  const vault = getVaultPath()
+  const context = getSpaceFoldersAndRoot(payload.spaceId)
+  const folder = context.folders.find(item => item.id === payload.folderId)
+  if (!folder)
+    throw new TypeError('Folder was not found')
+
+  const previousIcon = folder.icon
+  const result = context.updateIcon(payload.folderId, payload.icon)
+  if (result.invalidInput || result.notFound)
+    throw new TypeError('Folder icon metadata could not be updated')
+
+  if (previousIcon?.startsWith('custom:')) {
+    try {
+      await removeFolderIconFile(payload)
+    }
+    catch (error) {
+      try {
+        if (getVaultPath() === vault)
+          context.updateIcon(payload.folderId, previousIcon)
+      }
+      catch {
+        // Preserve the cleanup failure; storage sync can reconcile metadata.
+      }
+      throw error
+    }
+  }
 }
 
 export function setFolderIcon(payload: FolderIconSetPayload) {
-  return runFolderIconMutation(payload, async () => {
-    const context = getSpaceFoldersAndRoot(payload.spaceId)
-    const folder = context.folders.find(item => item.id === payload.folderId)
-    if (!folder)
-      throw new TypeError('Folder was not found')
+  return runFolderIconMutation(payload, () => setFolderIconUnlocked(payload))
+}
 
-    const previousIcon = folder.icon
-    const result = context.updateIcon(payload.folderId, payload.icon)
-    if (result.invalidInput || result.notFound)
-      throw new TypeError('Folder icon metadata could not be updated')
-
-    if (previousIcon?.startsWith('custom:')) {
-      try {
-        await removeFolderIconFile(payload)
+async function readIconState(target: FolderIconTarget): Promise<IconState> {
+  const folder = getSpaceFoldersAndRoot(target.spaceId).folders.find(
+    item => item.id === target.folderId,
+  )
+  if (!folder)
+    throw new Error('Folder was not found')
+  let png: Buffer | null = null
+  if (folder.icon?.startsWith('custom:')) {
+    const file = resolveFolderIconPath(target.spaceId, target.folderId)
+    if (!file)
+      throw new Error('Folder icon is unavailable')
+    const availability = getFileAvailability(file)
+    if (availability.isCloudPlaceholder)
+      throw new Error('Folder icon is temporarily unavailable')
+    if (availability.exists) {
+      const stat = await fs.lstat(file)
+      if (
+        !stat.isFile()
+        || stat.isSymbolicLink()
+        || stat.size > FOLDER_ICON_MAX_BYTES
+      ) {
+        throw new Error('Invalid folder icon')
       }
-      catch (error) {
-        try {
-          context.updateIcon(payload.folderId, previousIcon)
-        }
-        catch {
-          // Preserve the cleanup failure; storage sync can reconcile metadata.
-        }
-        throw error
+      png = await fs.readFile(file)
+      if (png.length > FOLDER_ICON_MAX_BYTES)
+        throw new Error('Invalid folder icon')
+    }
+  }
+  return { icon: folder.icon, png }
+}
+
+async function restoreIconState(
+  target: FolderIconTarget,
+  state: IconState,
+  previous: IconState,
+  vault: string,
+) {
+  if (getVaultPath() !== vault)
+    throw new Error('Stale folder icon vault')
+  const context = getSpaceFoldersAndRoot(target.spaceId)
+  const file = resolveFolderIconPath(target.spaceId, target.folderId)
+  if (!file)
+    throw new Error('Folder was not found')
+  async function write(value: IconState) {
+    if (value.png) {
+      const temporary = `${file}.${randomBytes(6).toString('hex')}.tmp`
+      try {
+        await fs.writeFile(temporary, value.png, { flag: 'wx' })
+        await replaceFolderIconFile(temporary, file!)
+      }
+      finally {
+        await fs.remove(temporary).catch(() => {})
+        rememberAppFileChange(temporary)
       }
     }
+    else {
+      await fs.remove(file!)
+    }
+    rememberAppFileChange(file!)
+  }
+  try {
+    await write(state)
+    if (getVaultPath() !== vault)
+      throw new Error('Stale folder icon vault')
+    const result = context.updateIcon(target.folderId, state.icon)
+    if (result.invalidInput || result.notFound)
+      throw new Error('Folder icon metadata could not be updated')
+  }
+  catch (error) {
+    await write(previous)
+    if (getVaultPath() === vault)
+      context.updateIcon(target.folderId, previous.icon)
+    throw error
+  }
+}
+
+/** Capture and apply share the same native mutation queue as the manual picker. */
+export async function changeFolderIconWithUndo(
+  payload: unknown,
+  parent?: BrowserWindow,
+) {
+  const input = payload as {
+    vault?: unknown
+    chooseImage?: unknown
+    icon?: unknown
+  }
+  const target = parseFolderIconTarget(payload)
+  if (
+    !target
+    || typeof input.vault !== 'string'
+    || input.vault !== getVaultPath()
+  ) {
+    return { status: 'stale' as const }
+  }
+  const vault = input.vault
+  let mutation = parseFolderIconSetPayload(payload) as
+    | FolderIconSetPayload
+    | FolderIconWritePayload
+    | null
+  if (input.chooseImage === true) {
+    const options = {
+      properties: ['openFile'] as ['openFile'],
+      filters: [{ name: 'PNG / JPEG', extensions: ['png', 'jpg', 'jpeg'] }],
+    }
+    const chosen = parent
+      ? await dialog.showOpenDialog(parent, options)
+      : await dialog.showOpenDialog(options)
+    if (chosen.canceled || chosen.filePaths.length !== 1)
+      return { status: 'cancelled' as const }
+    if (getVaultPath() !== vault)
+      return { status: 'stale' as const }
+    const stat = await fs.lstat(chosen.filePaths[0])
+    if (
+      !stat.isFile()
+      || stat.isSymbolicLink()
+      || stat.size > FOLDER_ICON_MAX_BYTES
+    ) {
+      return { status: 'failed' as const }
+    }
+    const bytes = await fs.readFile(chosen.filePaths[0])
+    mutation = parseFolderIconWritePayload({
+      ...target,
+      buffer: bytes.buffer.slice(
+        bytes.byteOffset,
+        bytes.byteOffset + bytes.byteLength,
+      ),
+    })
+  }
+  if (!mutation)
+    return { status: 'unavailable' as const }
+  const change = mutation
+  return runFolderIconMutation(target, async () => {
+    if (getVaultPath() !== vault)
+      return { status: 'stale' as const }
+    const before = await readIconState(target)
+    if (getVaultPath() !== vault)
+      return { status: 'stale' as const }
+    let after: IconState
+    if ('buffer' in change) {
+      after = await writeFolderIconUnlocked(change)
+    }
+    else {
+      await setFolderIconUnlocked(change)
+      after = { icon: change.icon, png: null }
+    }
+    // Save the exact PNG bytes in a private receipt; never return them to the model.
+    const id = randomUUID()
+    iconUndo.set(id, {
+      target,
+      vault,
+      before,
+      after,
+      expiresAt: Date.now() + ICON_UNDO_TTL,
+    })
+    pruneIconUndo()
+    return { status: 'done' as const, receiptId: id, icon: after.icon }
+  })
+}
+
+export async function undoFolderIconChange(id: unknown) {
+  pruneIconUndo()
+  const receipt = typeof id === 'string' ? iconUndo.get(id) : undefined
+  if (!receipt || receipt.vault !== getVaultPath())
+    return { undone: false }
+  return runFolderIconMutation(receipt.target, async () => {
+    if (receipt.undone)
+      return { undone: true }
+    if (receipt.vault !== getVaultPath())
+      return { undone: false }
+    const current = await readIconState(receipt.target)
+    if (
+      current.icon !== receipt.after.icon
+      || (current.png === null) !== (receipt.after.png === null)
+      || (current.png && !current.png.equals(receipt.after.png!))
+      || receipt.vault !== getVaultPath()
+    ) {
+      return { undone: false }
+    }
+    await restoreIconState(
+      receipt.target,
+      receipt.before,
+      current,
+      receipt.vault,
+    )
+    receipt.undone = true
+    receipt.before.png = null
+    receipt.after.png = null
+    return { undone: true }
   })
 }
 

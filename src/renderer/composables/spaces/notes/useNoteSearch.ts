@@ -29,7 +29,7 @@ const displayedNotes = computed(() => {
 
 // --- Search ---
 
-async function search() {
+async function search(current: () => boolean = () => true) {
   if (searchQuery.value) {
     if (!isSearch.value) {
       saveNotesStateSnapshot('beforeSearch')
@@ -38,13 +38,15 @@ async function search() {
     isSearch.value = true
     isRestoreStateBlocked.value = false
 
-    await getNotes()
-    selectFirstNote()
+    if (!(await getNotes()) || !current())
+      return false
+    await selectFirstNote()
     searchSelectedIndex.value = 0
   }
   else {
     isSearch.value = false
   }
+  return true
 }
 
 async function selectSearchNote(index: number) {

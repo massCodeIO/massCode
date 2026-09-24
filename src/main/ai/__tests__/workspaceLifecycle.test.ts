@@ -11,10 +11,13 @@ import { ensureStateFile } from '../../storage/providers/markdown/runtime/state'
 import { resetRuntimeCache } from '../../storage/providers/markdown/runtime/sync'
 import { createWorkspaceManager } from '../workspace'
 import { creationPlan } from '../workspaceCreation'
+import { workspaceReviewSchema } from '../workspaceReview'
 import {
   readCurrentWorkspace,
   workspaceInventory,
   workspaceRead,
+  workspaceToolError,
+  workspaceTools,
 } from '../workspaceTools'
 
 let tempVaultPath = ''
@@ -107,9 +110,12 @@ function operation(
 ) {
   return { space, kind, action, id, fields }
 }
-function apply(op: ReturnType<typeof operation>) {
+function apply(op: ReturnType<typeof operation>, publicContract = false) {
   const manager = createWorkspaceManager()
-  const proposal = manager.propose({ summary: 'Change', operations: [op] })
+  const input = { summary: 'Change', operations: [op] }
+  const proposal = manager.propose(
+    publicContract ? workspaceReviewSchema.parse(input) : input,
+  )
   const result = manager.apply(proposal.id, [0])
   expect(result.failed).toBeUndefined()
   return { manager, proposal, result }
@@ -177,6 +183,75 @@ it('duplicates stored multi-fragment snippets and notes without changing the sou
     properties: { type: 'task', status: 'todo' },
   })
 })
+it.each([null, ''])(
+  'restores the exact %j description before undoing a duplicate',
+  (description) => {
+    const { snippets, folders } = useStorage()
+    const source = snippets.createSnippet({ name: 'Source' }).id
+    for (const label of ['Implementation', 'Usage']) {
+      snippets.createSnippetContent(source, {
+        label,
+        value: `${label}()`,
+        language: 'javascript',
+      })
+    }
+    const original = structuredClone(snippets.getSnippetById(source))
+    const destination = folders.createFolder({ name: 'Destination' }).id
+    const manager = createWorkspaceManager()
+    const created = manager.create(
+      creationPlan({
+        summary: 'Duplicate',
+        items: [
+          {
+            type: 'duplicate',
+            space: 'code',
+            sourceId: source,
+            folderId: destination,
+          },
+        ],
+      }),
+    )
+    expect(created.failed).toBeUndefined()
+    const id = created.items[0]!.id
+    // Empty and absent descriptions are distinct persisted values.
+    if (description === '')
+      snippets.updateSnippet(id, { description })
+    const copy = snippets.getSnippetById(id)!
+    expect(copy.description).toBe(description)
+    const changes = copy.contents.map((fragment, index) => {
+      const change = manager.propose({
+        summary: 'Edit',
+        operations: [
+          operation('code', 'item', 'update', id, {
+            contentId: fragment.id,
+            content: `changed${index}()`,
+            ...(index === 0
+              ? { description: 'AI description', tags: ['ai'], isFavorites: 1 }
+              : {}),
+          }),
+        ],
+      })
+      expect(manager.apply(change.id, [0]).failed).toBeUndefined()
+      return change
+    })
+    for (const change of changes.reverse())
+      expect(manager.undo(change.id, 0)).toBe(true)
+    resetRuntimeCache()
+    expect(snippets.getSnippetById(id)!.description).toBe(description)
+    expect(snippets.getSnippetById(source)).toEqual(original)
+    if (description === null) {
+      // Creation's full-record guard must still protect independent manual edits.
+      snippets.updateSnippet(id, { description: '' })
+      expect(() => manager.undo(created.proposal.id, 0)).toThrow(
+        'STALE_PROPOSAL',
+      )
+      snippets.updateSnippet(id, { description: null })
+      expect(manager.undo(created.proposal.id, 0)).toBe(true)
+      expect(snippets.getSnippetById(id)!.isDeleted).toBe(1)
+    }
+  },
+)
+
 it('targets exact snippet and fragment IDs and preserves siblings through edit and Undo', () => {
   const db = useStorage().snippets
   const id = db.createSnippet({ name: 'Code' }).id
@@ -249,6 +324,12 @@ it.each(['code', 'notes'] as const)(
       }),
     )
     const id = made.items[0]!.id
+    const originalFolder = (
+      space === 'code' ? useStorage() : useNotesStorage()
+    ).folders.createFolder({ name: 'Original folder' }).id
+    apply(operation(space, 'item', 'update', id, { folderId: originalFolder }))
+    const beforeTrash = workspaceRead({ space, id })
+    expect(beforeTrash.folder.id).toBe(originalFolder)
     expect(() => apply(operation(space, 'item', 'restore', id))).toThrow(
       'TARGET_UNAVAILABLE',
     )
@@ -268,6 +349,9 @@ it.each(['code', 'notes'] as const)(
     ).toThrow('TARGET_UNAVAILABLE')
     const restored = apply(operation(space, 'item', 'restore', id))
     expect(restored.result.items[0]!.id).toBe(id)
+    const afterRestore = workspaceRead({ space, id })
+    expect(afterRestore.isDeleted).toBe(0)
+    expect(afterRestore.folder).toBeNull()
     restored.manager.undo(restored.proposal.id, 0)
     const removed = apply(operation(space, 'item', 'permanentDelete', id))
     expect(removed.result.items).toEqual([])
@@ -545,17 +629,19 @@ it.each(['code', 'notes'] as const)(
 it('reviews Notes tag dictionary creation/rename and preserves relations on Undo', () => {
   const db = useNotesStorage()
   const manager = createWorkspaceManager()
-  const proposal = manager.propose({
-    summary: 'Create tag',
-    operations: [
-      {
-        space: 'notes',
-        kind: 'tag',
-        action: 'create',
-        fields: { name: 'Topic' },
-      },
-    ],
-  })
+  const proposal = manager.propose(
+    workspaceReviewSchema.parse({
+      summary: 'Create tag',
+      operations: [
+        {
+          space: 'notes',
+          kind: 'tag',
+          action: 'create',
+          fields: { name: 'Topic' },
+        },
+      ],
+    }),
+  )
   expect(db.tags.getTags()).toEqual([])
   manager.apply(proposal.id, [0])
   const tag = db.tags.getTags()[0]!
@@ -564,6 +650,7 @@ it('reviews Notes tag dictionary creation/rename and preserves relations on Undo
   expect(() => manager.undo(proposal.id, 0)).toThrow()
   const renamed = apply(
     operation('notes', 'tag', 'update', tag.id, { name: 'Subject' }),
+    true,
   )
   expect(db.tags.getTags()[0]?.name).toBe('Subject')
   renamed.manager.undo(renamed.proposal.id, 0)
@@ -580,6 +667,7 @@ it('updates Code folder language and filters task/favorite inventory without rea
     operation('code', 'folder', 'update', id, {
       defaultLanguage: 'typescript',
     }),
+    true,
   )
   expect(
     code.folders.getFolders().find(folder => folder.id === id)?.defaultLanguage,
@@ -628,4 +716,435 @@ it('resolves only captured workspace IDs from list metadata without hydrating no
   expect(JSON.stringify(result)).not.toContain('Private body')
   expect(read).not.toHaveBeenCalled()
   read.mockRestore()
+})
+
+it('projects native fragment previews to changed fields without exposing the parent snapshot', () => {
+  const db = useStorage().snippets
+  const id = db.createSnippet({ name: 'Preview code' }).id
+  const contentId = db.createSnippetContent(id, {
+    label: 'Main',
+    value: 'alpha',
+    language: 'javascript',
+  }).id
+  const manager = createWorkspaceManager()
+  const propose = (
+    action: 'create' | 'update' | 'delete',
+    fields: Record<string, unknown>,
+  ) =>
+    manager.propose(
+      workspaceReviewSchema.parse({
+        summary: 'Preview',
+        operations: [operation('code', 'fragment', action, id, fields)],
+      }),
+    ).changes[0]!
+  const update = propose('update', { contentId, content: 'beta' })
+  expect(update.name).toBe('Preview code')
+  expect(JSON.parse(update.before)).toEqual({ content: 'alpha' })
+  expect(JSON.parse(update.after)).toEqual({ content: 'beta' })
+  expect(db.getSnippetById(id)!.contents[0]).toMatchObject({
+    label: 'Main',
+    value: 'alpha',
+    language: 'javascript',
+  })
+  const metadata = propose('update', {
+    contentId,
+    label: 'Renamed',
+    language: 'typescript',
+  })
+  expect(JSON.parse(metadata.before)).toEqual({
+    label: 'Main',
+    language: 'javascript',
+  })
+  expect(JSON.parse(metadata.after)).toEqual({
+    label: 'Renamed',
+    language: 'typescript',
+  })
+  const created = propose('create', {
+    label: 'Extra',
+    content: 'new',
+    language: 'text',
+  })
+  expect(JSON.parse(created.before)).toEqual({})
+  expect(JSON.parse(created.after)).toEqual({
+    label: 'Extra',
+    content: 'new',
+    language: 'plain_text',
+  })
+  db.createSnippetContent(id, {
+    label: 'Sibling',
+    value: 'keep',
+    language: 'text',
+  })
+  const deleted = propose('delete', { contentId })
+  expect(JSON.parse(deleted.before)).toEqual({
+    label: 'Main',
+    content: 'alpha',
+    language: 'javascript',
+  })
+  expect(JSON.parse(deleted.after)).toEqual({})
+  expect(deleted.irreversible).toBe(true)
+})
+
+it('applies ordered workspace calls and reverses their receipts while retaining an independent manual field', () => {
+  const { snippets, folders } = useStorage()
+  const ids = ['First', 'Second', 'Third'].map(
+    name => snippets.createSnippet({ name }).id,
+  )
+  const destination = folders.createFolder({ name: 'Destination' }).id
+  const manager = createWorkspaceManager()
+  const change = (operations: ReturnType<typeof operation>[]) =>
+    manager.propose(
+      workspaceReviewSchema.parse({ summary: 'Organize', operations }),
+    )
+  const trash = operation('code', 'item', 'trash', ids[2]!)
+  const restore = operation('code', 'item', 'restore', ids[2]!)
+  expect(() => change([trash, restore])).toThrow('DUPLICATE_TARGET')
+  const update = change(
+    ids
+      .slice(0, 2)
+      .map(id =>
+        operation('code', 'item', 'update', id, {
+          folderId: destination,
+          tags: ['organized'],
+          isFavorites: 1,
+        }),
+      ),
+  )
+  expect(manager.apply(update.id, [0, 1]).applied).toEqual([0, 1])
+  const trashed = change([trash])
+  expect(manager.apply(trashed.id, [0]).applied).toEqual([0])
+  expect(snippets.getSnippetById(ids[2]!)!.isDeleted).toBe(1)
+  const restored = change([restore])
+  expect(manager.apply(restored.id, [0]).applied).toEqual([0])
+  expect(snippets.getSnippetById(ids[2]!)!.isDeleted).toBe(0)
+  snippets.updateSnippet(ids[0]!, {
+    description: 'Independent manual description',
+  })
+  for (const [id, index] of [
+    [restored.id, 0],
+    [trashed.id, 0],
+    [update.id, 1],
+    [update.id, 0],
+  ] as const) {
+    expect(manager.undo(id, index, true)).toEqual({
+      undone: true,
+      conflicts: [],
+    })
+  }
+  for (const id of ids) {
+    const item = snippets.getSnippetById(id)!
+    expect(item.isDeleted).toBe(0)
+    expect(item.isFavorites).toBe(0)
+    expect(item.folder).toBeNull()
+    expect(item.tags).toEqual([])
+  }
+  expect(snippets.getSnippetById(ids[0]!)!.description).toBe(
+    'Independent manual description',
+  )
+  const hint = workspaceToolError(new Error('DUPLICATE_TARGET'))
+  expect(hint).toMatchObject({
+    hint: expect.stringContaining('ordered lifecycle actions'),
+  })
+  const description = workspaceTools.find(
+    tool => tool.function.name === 'propose_workspace_changes',
+  )!.function.description
+  expect(description).toContain(
+    'Reversible effects across calls in the same task are collected by task Undo',
+  )
+  expect(description).toContain(
+    'do not ask for extra approval solely because a batch must be split',
+  )
+  expect(description).toContain(
+    'explicit preview or required confirmation still applies',
+  )
+})
+
+it.each(['order', 'moveAndOrder', 'move'] as const)(
+  'restores Code sibling order after %s, preserving unrelated metadata',
+  (mode) => {
+    const { folders } = useStorage()
+    const parent = folders.createFolder({ name: 'Parent' }).id
+    const ids = ['A', 'B', 'C'].map(
+      name => folders.createFolder({ name }).id,
+    )
+    const original = folders
+      .getFolders()
+      .map(({ id, parentId, orderIndex }) => ({ id, parentId, orderIndex }))
+      .sort((a, b) => a.id - b.id)
+    const manager = createWorkspaceManager()
+    const proposal = manager.propose(
+      workspaceReviewSchema.parse({
+        summary: 'Reorder',
+        operations: [
+          operation('code', 'folder', 'update', ids[2]!, {
+            ...(mode !== 'move' ? { orderIndex: 0 } : {}),
+            ...(mode !== 'order' ? { folderId: parent } : {}),
+          }),
+        ],
+      }),
+    )
+    expect(manager.apply(proposal.id, [0]).failed).toBeUndefined()
+    if (mode !== 'move') {
+      expect(
+        folders.getFolders().find(folder => folder.id === ids[2])!.orderIndex,
+      ).toBe(0)
+    }
+    folders.updateFolder(ids[0]!, {
+      name: 'Manual A',
+      defaultLanguage: 'typescript',
+    })
+    expect(manager.undo(proposal.id, 0, true)).toEqual({
+      undone: true,
+      conflicts: [],
+    })
+    expect(
+      folders
+        .getFolders()
+        .map(({ id, parentId, orderIndex }) => ({ id, parentId, orderIndex }))
+        .sort((a, b) => a.id - b.id),
+    ).toEqual(original)
+    expect(
+      folders.getFolders().find(folder => folder.id === ids[0]),
+    ).toMatchObject({ name: 'Manual A', defaultLanguage: 'typescript' })
+  },
+)
+it('refuses order Undo after a manual sibling reorder without restoring an outdated sequence', () => {
+  const { folders } = useStorage()
+  const ids = ['A', 'B', 'C'].map(name => folders.createFolder({ name }).id)
+  const manager = createWorkspaceManager()
+  const proposal = manager.propose(
+    workspaceReviewSchema.parse({
+      summary: 'Reorder',
+      operations: [
+        operation('code', 'folder', 'update', ids[2]!, { orderIndex: 0 }),
+      ],
+    }),
+  )
+  manager.apply(proposal.id, [0])
+  folders.updateFolder(ids[1]!, { orderIndex: 0 })
+  const before = folders.getFolders()
+  expect(() => manager.undo(proposal.id, 0, true)).toThrow('STALE_PROPOSAL')
+  expect(
+    folders.getFolders().map(({ updatedAt, ...folder }) => folder),
+  ).toEqual(before.map(({ updatedAt, ...folder }) => folder))
+})
+
+it('refuses a Code folder move that would silently rename the target', () => {
+  const { folders } = useStorage()
+  const parent = folders.createFolder({ name: 'Parent' }).id
+  folders.createFolder({ name: 'Target', parentId: parent })
+  const target = folders.createFolder({ name: 'Target' }).id
+  const manager = createWorkspaceManager()
+  const proposal = manager.propose(
+    workspaceReviewSchema.parse({
+      summary: 'Move',
+      operations: [
+        operation('code', 'folder', 'update', target, {
+          folderId: parent,
+          orderIndex: 0,
+        }),
+      ],
+    }),
+  )
+  const before = structuredClone(folders.getFolders())
+  expect(manager.apply(proposal.id, [0]).failed).toBe(0)
+  expect(
+    folders.getFolders().map(({ updatedAt, ...folder }) => folder),
+  ).toEqual(before.map(({ updatedAt, ...folder }) => folder))
+})
+
+it('preserves a manual sibling rename that conflicts with moving a Code folder back during Undo', () => {
+  const { folders } = useStorage()
+  const parent = folders.createFolder({ name: 'Parent' }).id
+  const sibling = folders.createFolder({ name: 'Sibling' }).id
+  const target = folders.createFolder({ name: 'Target' }).id
+  const manager = createWorkspaceManager()
+  const proposal = manager.propose(
+    workspaceReviewSchema.parse({
+      summary: 'Move',
+      operations: [
+        operation('code', 'folder', 'update', target, {
+          folderId: parent,
+          orderIndex: 0,
+        }),
+      ],
+    }),
+  )
+  expect(manager.apply(proposal.id, [0]).failed).toBeUndefined()
+  folders.updateFolder(sibling, { name: 'Target' })
+  const before = structuredClone(folders.getFolders())
+  expect(() => manager.undo(proposal.id, 0, true)).toThrow()
+  expect(folders.getFolders()).toEqual(before)
+  folders.updateFolder(sibling, { name: 'Manual renamed sibling' })
+  expect(manager.undo(proposal.id, 0, true)).toEqual({
+    undone: true,
+    conflicts: [],
+  })
+  expect(
+    folders.getFolders().find(folder => folder.id === target),
+  ).toMatchObject({ name: 'Target', parentId: null })
+})
+
+it.each([true, false])(
+  'checks the final name before atomically undoing Code folder move and rename (conflict=%s)',
+  (conflict) => {
+    const { folders } = useStorage()
+    const parent = folders.createFolder({ name: 'Parent' }).id
+    const sibling = folders.createFolder({ name: 'Sibling' }).id
+    const target = folders.createFolder({ name: 'Original' }).id
+    const manager = createWorkspaceManager()
+    const proposal = manager.propose(
+      workspaceReviewSchema.parse({
+        summary: 'Move and rename',
+        operations: [
+          operation('code', 'folder', 'update', target, {
+            name: 'Changed',
+            folderId: parent,
+            orderIndex: 0,
+          }),
+        ],
+      }),
+    )
+    expect(manager.apply(proposal.id, [0]).failed).toBeUndefined()
+    folders.updateFolder(sibling, { name: conflict ? 'Original' : 'Changed' })
+    const before = structuredClone(folders.getFolders())
+    if (conflict) {
+      expect(() => manager.undo(proposal.id, 0, true)).toThrow()
+      expect(folders.getFolders()).toEqual(before)
+    }
+    else {
+      expect(manager.undo(proposal.id, 0, true)).toEqual({
+        undone: true,
+        conflicts: [],
+      })
+      expect(
+        folders.getFolders().find(folder => folder.id === target),
+      ).toMatchObject({ name: 'Original', parentId: null })
+    }
+  },
+)
+
+it('persists canonical languages through folder, initial fragment and later fragment creation', () => {
+  const manager = createWorkspaceManager()
+  const created = manager.create(
+    creationPlan({
+      summary: 'Create',
+      items: [
+        {
+          type: 'folder',
+          space: 'code',
+          name: 'Sources',
+          defaultLanguage: 'TypeScript',
+        },
+        {
+          type: 'snippet',
+          name: 'Sample',
+          label: 'A',
+          content: 'const x = 1',
+          language: 'TS',
+          folderOperation: 0,
+        },
+      ],
+    }),
+  )
+  expect(created.failed).toBeUndefined()
+  const { snippets, folders } = useStorage()
+  expect(
+    folders
+      .getFolders()
+      .find(folder => folder.id === created.containers[0]!.id)
+      ?.defaultLanguage,
+  ).toBe('typescript')
+  const folderId = created.containers[0]!.id
+  const changedDefault = apply(
+    operation('code', 'folder', 'update', folderId, { defaultLanguage: 'JS' }),
+    true,
+  )
+  expect(
+    folders.getFolders().find(folder => folder.id === folderId)?.defaultLanguage,
+  ).toBe('javascript')
+  expect(changedDefault.manager.undo(changedDefault.proposal.id, 0)).toBe(true)
+  expect(
+    folders.getFolders().find(folder => folder.id === folderId)?.defaultLanguage,
+  ).toBe('typescript')
+  const clear = apply(
+    operation('code', 'folder', 'update', folderId, { defaultLanguage: '' }),
+    true,
+  )
+  expect(
+    folders.getFolders().find(folder => folder.id === folderId)?.defaultLanguage,
+  ).toBe('')
+  resetRuntimeCache()
+  expect(
+    folders.getFolders().find(folder => folder.id === folderId)?.defaultLanguage,
+  ).toBe('')
+  folders.updateFolder(folderId, { name: 'Renamed sources' })
+  expect(
+    folders.getFolders().find(folder => folder.id === folderId)?.defaultLanguage,
+  ).toBe('')
+  expect(clear.manager.undo(clear.proposal.id, 0, true)).toEqual({
+    undone: true,
+    conflicts: [],
+  })
+  expect(
+    folders.getFolders().find(folder => folder.id === folderId),
+  ).toMatchObject({ name: 'Renamed sources', defaultLanguage: 'typescript' })
+  const id = created.items[0]!.id
+  expect(snippets.getSnippetById(id)!.contents[0]).toMatchObject({
+    label: 'A',
+    language: 'typescript',
+  })
+  const fragment = apply(
+    operation('code', 'fragment', 'create', id, {
+      label: 'B',
+      content: 'Title',
+      language: 'reStructuredText',
+    }),
+    true,
+  )
+  expect(snippets.getSnippetById(id)!.contents[1]).toMatchObject({
+    label: 'B',
+    language: 'rst',
+  })
+  expect(fragment.manager.undo(fragment.proposal.id, 0)).toBe(true)
+  expect(snippets.getSnippetById(id)!.contents).toHaveLength(1)
+})
+
+it('preserves legacy stored languages through content-only edits, duplication and language Undo', () => {
+  const { snippets } = useStorage()
+  const id = snippets.createSnippet({ name: 'Legacy' }).id
+  const contentId = snippets.createSnippetContent(id, {
+    label: 'Old',
+    value: 'before',
+    language: 'legacy-custom-language',
+  }).id
+  const content = apply(
+    operation('code', 'item', 'update', id, { contentId, content: 'after' }),
+    true,
+  )
+  expect(snippets.getSnippetById(id)!.contents[0]).toMatchObject({
+    value: 'after',
+    language: 'legacy-custom-language',
+  })
+  expect(content.manager.undo(content.proposal.id, 0)).toBe(true)
+  const manager = createWorkspaceManager()
+  const copy = manager.create(
+    creationPlan({
+      summary: 'Copy',
+      items: [{ type: 'duplicate', space: 'code', sourceId: id }],
+    }),
+  )
+  expect(copy.failed).toBeUndefined()
+  expect(snippets.getSnippetById(copy.items[0]!.id)!.contents[0]).toMatchObject(
+    { value: 'before', language: 'legacy-custom-language' },
+  )
+  const language = apply(
+    operation('code', 'fragment', 'update', id, { contentId, language: 'JS' }),
+    true,
+  )
+  expect(snippets.getSnippetById(id)!.contents[0]!.language).toBe('javascript')
+  expect(language.manager.undo(language.proposal.id, 0)).toBe(true)
+  expect(snippets.getSnippetById(id)!.contents[0]!.language).toBe(
+    'legacy-custom-language',
+  )
 })

@@ -38,7 +38,8 @@ export function isLocalAiProvider(provider: AiProvider) {
   return provider === 'ollama' || provider === 'lmstudio'
 }
 export const AI_LIMITS = {
-  messages: 40,
+  messages: 128,
+  toolRounds: 24,
   inputBytes: 256 * 1024,
   outputBytes: 1024 * 1024,
   eventBytes: 256 * 1024,
@@ -278,7 +279,31 @@ export type AiErrorCode =
 export type AiResult<T> =
   | { ok: true, data: T }
   | { ok: false, error: AiErrorCode }
-export type AiEvent =
+type AiTaskEvent =
+  | {
+    requestId: string
+    type: 'nativeAction'
+    action: import('./aiNativeActions').AiNativeActionView
+    autoApply: boolean
+  }
+  | {
+    requestId: string
+    type: 'clarification'
+    question: import('./aiChatControl').AiClarification
+  }
+  | { requestId: string, type: 'superseded', actionId: string }
+  | { requestId: string, type: 'steering', text: string }
+  | {
+    requestId: string
+    type: 'taskState'
+    state:
+      | 'working'
+      | 'waitingConfirmation'
+      | 'waitingNative'
+      | 'waitingAnswer'
+  }
+
+type AiActionEvent =
   | {
     requestId: string
     type: 'workspaceProposal'
@@ -287,15 +312,42 @@ export type AiEvent =
     items?: WorkspaceItem[]
     containers?: WorkspaceContainer[]
     failedOperationIndex?: number
+    mutation?: boolean
   }
   | { requestId: string, type: 'dataAction', action: AiDataAction }
-  | { requestId: string, type: 'httpAction', action: AiHttpActionView }
-  | { requestId: string, type: 'httpProposal', proposal: AiHttpProposal }
+  | {
+    requestId: string
+    type: 'httpAction'
+    action: AiHttpActionView
+    autoApply?: boolean
+  }
+  | {
+    requestId: string
+    type: 'httpRun'
+    actionId: string
+    runId: string
+    vault: string
+  }
+  | {
+    requestId: string
+    type: 'httpProposal'
+    proposal: AiHttpProposal
+    actionId?: string
+    policy?: import('./aiTask').AiTaskPolicy
+  }
+
+type AiResponseEvent =
   | { requestId: string, type: 'answerReset' }
   | { requestId: string, type: 'searchResults', result: AiSearchResults }
   | { requestId: string, type: 'delta', text: string }
   | { requestId: string, type: 'activity', name: string, detail: string }
-  | { requestId: string, type: 'tools', calls: AiToolCall[] }
+  | {
+    requestId: string
+    type: 'tools'
+    calls: AiToolCall[]
+    actionId?: string
+    policy?: import('./aiTask').AiTaskPolicy
+  }
   | { requestId: string, type: 'protocol', messages: AiMessage[] }
   | { requestId: string, type: 'notice', error: AiErrorCode }
   | { requestId: string, type: 'historyOmitted' }
@@ -306,3 +358,5 @@ export type AiEvent =
     error: AiErrorCode
     diagnostic?: string
   }
+
+export type AiEvent = AiTaskEvent | AiActionEvent | AiResponseEvent

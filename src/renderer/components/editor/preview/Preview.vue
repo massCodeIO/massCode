@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useApp, useSnippets } from '@/composables'
-import { i18n, ipc } from '@/electron'
+import { useNativeExportBridge } from '@/composables/ai/nativeBridges'
+import { saveRenderedArtifact } from '@/composables/useRenderedArtifactExport'
+import { i18n, ipc, store } from '@/electron'
 import { useDark } from '@vueuse/core'
 import { FileDown, Moon, RefreshCcw, Sun } from 'lucide-vue-next'
 
@@ -86,10 +88,13 @@ watch(
   { immediate: true },
 )
 
-async function onSaveHtml() {
+async function onSaveHtml(current: () => boolean = () => true) {
+  const vault = store.preferences.get('storage.vaultPath')
   const snippetId = state.snippetId
+  const snippet = displayedSnippet.value
   if (
-    selectedSnippetRecordStatus.value !== 'ready'
+    !snippet
+    || selectedSnippetRecordStatus.value !== 'ready'
     || selectedSnippet.value?.id !== snippetId
     || displayedSnippet.value?.id !== snippetId
   ) {
@@ -97,6 +102,7 @@ async function onSaveHtml() {
   }
 
   let html = generateHtmlPreview(true)
+  const baseline = html
 
   try {
     html = await ipc.invoke('prettier:format', {
@@ -110,6 +116,8 @@ async function onSaveHtml() {
 
   if (
     selectedSnippetRecordStatus.value !== 'ready'
+    || store.preferences.get('storage.vaultPath') !== vault
+    || generateHtmlPreview(true) !== baseline
     || state.snippetId !== snippetId
     || selectedSnippet.value?.id !== snippetId
     || displayedSnippet.value?.id !== snippetId
@@ -117,14 +125,34 @@ async function onSaveHtml() {
     return
   }
 
-  const blob = new Blob([html], { type: 'text/html' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-
-  a.href = url
-  a.download = `${displayedSnippet.value?.name}.html`
-  a.click()
+  return saveRenderedArtifact(
+    'html',
+    snippet.name,
+    async () => html,
+    () =>
+      current()
+      && displayedSnippet.value?.id === snippetId
+      && state.snippetId === snippetId,
+  )
 }
+useNativeExportBridge(
+  'codePreview',
+  (_format, current) => onSaveHtml(current),
+  async (action, current) => {
+    if (action.action !== 'codePreview')
+      return { status: 'unavailable' }
+    if (!current() || selectedSnippetRecordStatus.value !== 'ready')
+      return { status: 'stale' }
+    if (action.command === 'refresh')
+      previewKey.value++
+    else isDarkPreview.value = action.command === 'dark'
+    await nextTick()
+    return {
+      status: current() ? 'done' : 'stale',
+      visual: { theme: isDarkPreview.value ? 'dark' : 'light' },
+    }
+  },
+)
 </script>
 
 <template>
@@ -150,7 +178,7 @@ async function onSaveHtml() {
       <UiActionButton
         size="iconText"
         :tooltip="`${i18n.t('button.saveAs')} HTML`"
-        @click="onSaveHtml"
+        @click="onSaveHtml()"
       >
         <div class="flex items-center gap-1">
           HTML <FileDown class="h-3 w-3" />

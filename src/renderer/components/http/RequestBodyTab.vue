@@ -3,7 +3,8 @@ import type { HttpRequestDraft } from '@/composables'
 import type { HttpBodyType, HttpFormDataEntry } from '~/main/types/http'
 import * as Select from '@/components/ui/shadcn/select'
 import { useHttpSettings } from '@/composables'
-import { i18n, ipc } from '@/electron'
+import { chooseHttpFile } from '@/composables/spaces/http/chooseHttpFile'
+import { i18n } from '@/electron'
 import { readHttpFormEntries } from '~/shared/httpForm'
 
 const draft = defineModel<HttpRequestDraft>({ required: true })
@@ -104,14 +105,8 @@ const bodyText = computed({
 })
 
 async function chooseFile(entry?: HttpFormDataEntry) {
-  const path = await ipc.invoke('main-menu:open-dialog', {
-    properties: ['openFile'],
-  })
-  if (!path)
-    return
-  if (entry)
-    entry.value = path
-  else bodyText.value = path
+  const current = draft.value
+  await chooseHttpFile(current, entry, () => draft.value === current)
 }
 
 function addFormDataRow(): HttpFormDataEntry {

@@ -8,6 +8,7 @@ const fixture = vi.hoisted(() => ({
   open: vi.fn(),
   httpOpen: vi.fn(),
   push: vi.fn(),
+  exportWarning: vi.fn(),
 }))
 vi.mock('@/electron', () => ({ ipc: { invoke: fixture.invoke } }))
 vi.mock('@/services/api', () => ({
@@ -24,6 +25,9 @@ vi.mock('@/components/notes/drawingExport', () => ({
   renderDrawingPreviews: async () => [],
   renderDrawingPreviewsFromMarkdown: async () => [],
 }))
+vi.mock('@/components/notes/exportWarnings', () => ({
+  showNoteExportWarnings: fixture.exportWarning,
+}))
 vi.mock('@/composables/useContentSort', () => ({
   useContentSort: () => ({
     getContentSortQuery: () => ({ sort: 'name', order: 'ASC' }),
@@ -37,6 +41,37 @@ vi.mock('@/composables/useHttpImportDialog', () => ({
 }))
 Object.assign(globalThis, { nextTick: async () => {} })
 beforeEach(() => vi.clearAllMocks())
+it('reports real export losses to the assistant after the native write completes', async () => {
+  fixture.note.mockResolvedValue({
+    data: { id: 7, name: 'Diagram', content: 'saved text' },
+  })
+  fixture.invoke.mockResolvedValue({
+    canceled: false,
+    filePath: '/tmp/report.html',
+    warnings: { mermaid: 1, remoteImages: 2 },
+  })
+  const report = vi.fn()
+  await executeDataAction(
+    {
+      id: 'export-loss',
+      kind: 'export',
+      status: 'pending',
+      input: { kind: 'note', id: 7, format: 'html', source: 'saved' },
+    },
+    undefined,
+    () => undefined,
+    report,
+    () => true,
+  )
+  expect(report.mock.calls.at(-1)).toEqual([
+    'applied',
+    { mermaidWarnings: 1, remoteImagesWarnings: 2 },
+  ])
+  expect(fixture.exportWarning).toHaveBeenCalledWith({
+    mermaid: 1,
+    remoteImages: 2,
+  })
+})
 it('opens the existing import flow without claiming apply and waits for actual callbacks', async () => {
   const report = vi.fn()
   await executeDataAction(

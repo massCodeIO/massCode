@@ -152,7 +152,6 @@ onMounted(() => {
       <div class="flex shrink-0 gap-1">
         <UiActionButton
           :tooltip="i18n.t('ai.newChat')"
-          :disabled="isStreaming"
           @click="clearConversation"
         >
           <SquarePen class="size-4" />
@@ -192,6 +191,16 @@ onMounted(() => {
               : 'mr-auto w-full'
           "
         >
+          <AiTaskStatus
+            v-if="message.role === 'assistant'"
+            :message="message"
+          />
+          <AiNativeActionReview
+            v-for="action in message.nativeActions"
+            :key="action.id"
+            :message="message"
+            :action="action"
+          />
           <AiSearchResults
             v-for="(result, resultIndex) in message.searchResults"
             :key="resultIndex"
@@ -280,6 +289,8 @@ onMounted(() => {
                   || message.httpProposal
                   || message.httpActions?.length
                   || message.dataActions?.length
+                  || message.nativeActions?.length
+                  || message.taskMutations?.length
                   || message.workspaceProposal
                   || message.workspaceCreations?.length
                   || canRetry(message))
@@ -293,6 +304,7 @@ onMounted(() => {
             >
               <Copy class="size-3" />
             </UiActionButton>
+            <AiTaskUndo :message="message" />
             <AiWorkspaceReview
               v-if="message.workspaceProposal"
               :message="message"

@@ -117,3 +117,58 @@ it('preserves complete literal labels when a word also specifies a property or c
     language: 'javascript',
   })
 })
+
+it('maps a Code folder default and a separately named initial fragment without making language optional', () => {
+  const plan = creationPlan({
+    summary: 'Create Code',
+    items: [
+      {
+        type: 'folder',
+        space: 'code',
+        name: 'Code folder',
+        defaultLanguage: 'typescript',
+      },
+      {
+        type: 'snippet',
+        name: 'Snippet title',
+        label: 'A',
+        content: 'const a = 1',
+        language: 'TypeScript',
+        folderOperation: 0,
+      },
+    ],
+  })
+  expect(plan.operations[0]!.fields).toMatchObject({
+    defaultLanguage: 'typescript',
+  })
+  expect(plan.operations[1]!.fields).toMatchObject({
+    name: 'Snippet title',
+    label: 'A',
+    language: 'typescript',
+    folderOperation: 0,
+  })
+  expect(
+    workspaceCreationSchema.safeParse({
+      summary: 'Create',
+      items: [{ type: 'snippet', name: 'Snippet', label: 'A', content: 'a' }],
+    }).success,
+  ).toBe(false)
+})
+it.each(['notes', 'http'])(
+  'rejects defaultLanguage on %s folder creation',
+  (space) => {
+    expect(
+      workspaceCreationSchema.safeParse({
+        summary: 'Create',
+        items: [
+          {
+            type: 'folder',
+            space,
+            name: 'Folder',
+            defaultLanguage: 'typescript',
+          },
+        ],
+      }).success,
+    ).toBe(false)
+  },
+)

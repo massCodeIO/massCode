@@ -420,6 +420,10 @@ export async function streamAiChat(
       function: { name: string, [key: string]: unknown }
     }[]
     execute: (name: string, args: string) => Promise<unknown>
+    beforeRound?: () => Promise<AiMessage[]>
+    hasUpdates?: () => boolean
+    filterTool?: (name: string) => boolean
+    executeEdits?: (calls: AiToolCall[]) => Promise<unknown>
     remaining: number
     onToolRound?: () => void
     onToolExchange?: (messages: AiMessage[]) => void
@@ -430,6 +434,9 @@ export async function streamAiChat(
 ): Promise<AiToolCall[]> {
   if (!connection.model)
     throw new AiError('notConfigured')
+  const updates = (await vault?.beforeRound?.()) ?? []
+  if (updates.length)
+    messages = [...messages, ...updates]
   const budget = budgetAiHistory(messages, currentTurn)
   if (!budget.fits)
     throw new AiError('inputLimit')
@@ -437,6 +444,10 @@ export async function streamAiChat(
     onHistoryOmitted?.()
   currentTurn -= messages.length - budget.messages.length
   messages = budget.messages
+  const availableTools
+    = vault?.tools.filter(
+      tool => vault.filterTool?.(tool.function.name) ?? true,
+    ) ?? []
   const requiredTool = vault?.requiredTool?.()
   if (requiredTool && !vault?.remaining)
     throw new AiError('proposalUnavailable')
@@ -445,7 +456,7 @@ export async function streamAiChat(
       buildAiInstructions(
         [
           ...(editContextId ? ['propose_edit'] : []),
-          ...(vault?.tools.map(tool => tool.function.name) ?? []),
+          ...availableTools.map(tool => tool.function.name),
         ],
         vault?.remaining,
       ),
@@ -467,7 +478,7 @@ export async function streamAiChat(
     tools: [
       ...(editContextId && !requiredTool ? [editTool(editContextId)] : []),
       ...(vault?.remaining
-        ? vault.tools.filter(
+        ? availableTools.filter(
             tool => !requiredTool || tool.function.name === requiredTool,
           )
         : []),
@@ -485,6 +496,24 @@ export async function streamAiChat(
     ...replayFields(replay),
   }
   if (!calls.length) {
+    if (vault?.hasUpdates?.() && vault.remaining <= 0)
+      throw new AiError('outputLimit')
+    if (vault?.hasUpdates?.() && vault.remaining > 0) {
+      vault.onToolRound?.()
+      return streamAiChat(
+        connection,
+        [...messages, assistant],
+        signal,
+        onDelta,
+        editContextId,
+        editContextText,
+        repairRemaining,
+        currentTurn,
+        onHistoryOmitted,
+        onResponse,
+        { ...vault, remaining: vault.remaining - 1 },
+      )
+    }
     if (requiredTool)
       throw new AiError('proposalUnavailable')
     onResponse?.(messages, answer, replay)
@@ -510,8 +539,9 @@ export async function streamAiChat(
         { name: call.function.name },
         { arguments: call.function.arguments },
       )
-      const result
-        = call.function.name === 'propose_edit'
+      const result = vault.isComplete?.()
+        ? { error: 'SESSION_CHANGED', executed: false }
+        : call.function.name === 'propose_edit'
           ? {
               error: 'READ_FIRST',
               instruction:
@@ -574,6 +604,34 @@ export async function streamAiChat(
   }
   catch {
     // Schema/JSON failures are tool failures, not failed conversations.
+  }
+  if (validated.length && vault?.executeEdits) {
+    signal.throwIfAborted()
+    const outcome = await vault.executeEdits(validated)
+    signal.throwIfAborted()
+    const continuation = [
+      ...messages,
+      assistant,
+      ...validated.map(call => ({
+        role: 'tool' as const,
+        tool_call_id: call.id,
+        content: JSON.stringify(outcome),
+      })),
+    ]
+    vault.onToolExchange?.(continuation)
+    return streamAiChat(
+      connection,
+      continuation,
+      signal,
+      onDelta,
+      undefined,
+      undefined,
+      repairRemaining,
+      currentTurn,
+      onHistoryOmitted,
+      onResponse,
+      { ...vault, remaining: Math.max(0, vault.remaining - 1) },
+    )
   }
   if (validated.length) {
     onResponse?.(messages, answer, replay)

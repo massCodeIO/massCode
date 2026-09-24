@@ -57,7 +57,10 @@ export function redactAiHttp(value: unknown): unknown {
     return Object.fromEntries(
       Object.entries(record).map(([key, child]) => [
         key,
-        sensitiveKey.test(key) || (sensitiveEntry && key === 'value')
+        sensitiveKey.test(key)
+        || (sensitiveEntry && key === 'value')
+        || (record.type === 'file' && key === 'value')
+        || (record.bodyType === 'binary' && key === 'body')
           ? '[REDACTED]'
           : key === 'expected'
             && sensitiveKey.test(String(record.path ?? record.name ?? ''))
@@ -91,7 +94,10 @@ export function redactAiHttp(value: unknown): unknown {
         /((?:password|secret|token|api[_-]?key|authorization|cookie)[^=\s&]*=)[^&\s]+/gi,
         '$1[REDACTED]',
       )
-      .replace(/(https?:\/\/)[^\s/@][^\s/:@]*:[^\s/@]+@/gi, '$1[REDACTED]@')
+      .replace(
+        /((?:https?|wss?):\/\/)[^\s/@][^\s/:@]*:[^\s/@]+@/gi,
+        '$1[REDACTED]@',
+      )
   }
   return value
 }

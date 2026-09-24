@@ -55,10 +55,12 @@ async function getHttpHistory() {
     const { data } = await api.httpHistory.getHttpHistory()
     if (token === historyGeneration)
       history.value = data
+    return token === historyGeneration
   }
   catch {
     if (token === historyGeneration)
       loadError.value = true
+    return false
   }
   finally {
     if (token === historyGeneration)

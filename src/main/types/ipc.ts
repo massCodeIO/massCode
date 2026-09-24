@@ -46,15 +46,18 @@ type MainMenuAction =
 type DBAction = 'migrate-to-markdown'
 
 type SystemAction =
-  | `ai:${'settings' | 'configure' | 'models' | 'context-search' | 'start' | 'cancel' | 'event' | 'workspace-apply' | 'workspace-undo' | 'http-apply' | 'http-complete' | 'http-cancel'}`
+  | `ai:${'settings' | 'configure' | 'models' | 'context-search' | 'start' | 'cancel' | 'event' | 'workspace-apply' | 'workspace-undo' | 'http-apply' | 'http-complete' | 'http-cancel' | 'data-complete' | 'mutation-complete' | 'mutation-start' | 'native-start' | 'native-complete' | 'workspace-cancel' | 'workspace-undo-partial' | 'steer' | 'answer'}`
   | 'activate-license'
   | 'api-request'
   | 'api-token-generate'
   | 'api-token-revoke'
+  | 'clipboard-write-text'
   | 'currency-rates'
   | 'currency-rates-refresh'
   | 'crypto-rates-refresh'
   | 'get-directory-state'
+  | 'tasks-cleanup'
+  | 'tasks-cleanup-undo'
   | 'reload'
   | 'move-vault'
   | 'set-vault-path'
@@ -81,12 +84,16 @@ type SystemAction =
 type PrettierAction = 'format'
 type FsAction =
   | 'assets'
+  | 'export-rendered-artifact'
   | 'export-note'
   | 'export-note-folder-site'
   | 'prepare-note-folder-site-export'
   | 'folder-icon:set'
   | 'folder-icon:write'
+  | 'folder-icon:change'
+  | 'folder-icon:undo'
   | 'import-markdown-folder'
+  | 'pick-note-image'
   | 'notes-asset'
 type ThemeAction = 'list' | 'get' | 'open-dir' | 'create-template' | 'changed'
 type SpacesAction =
@@ -182,6 +189,9 @@ export interface FolderIconWritePayload extends FolderIconTarget {
 export interface FolderIconSetPayload extends FolderIconTarget {
   icon: string | null
 }
+export type FolderIconChangeResult =
+  | { status: 'done', receiptId: string, icon: string | null }
+  | { status: 'cancelled' | 'stale' | 'failed' | 'unavailable' }
 
 export interface ImportMarkdownFolderFile {
   content: string
@@ -203,14 +213,43 @@ export interface ImportMarkdownFolderResponse {
 
 export type NoteExportFormat = 'html' | 'pdf'
 
+export interface RenderedArtifactExportPayload {
+  format: 'png' | 'svg' | 'html'
+  name: string
+  data: string
+  vault: string
+}
+
+export type RenderedArtifactExportResult =
+  | { status: 'saved', filePath: string, bytes: number }
+  | { status: 'cancelled' | 'stale' | 'failed' }
+
 export interface NoteExportDrawingPreview {
   id: string
   svg: string
 }
 
+export interface NoteExportDiagramPreview {
+  code: string
+  svg: string
+}
+
+export type NoteExportWarnings = Partial<
+  Record<
+    | 'mermaid'
+    | 'drawings'
+    | 'managedImages'
+    | 'remoteImages'
+    | 'richFormatting'
+    | 'internalLinks',
+    number
+  >
+>
+
 export interface NoteExportPayload {
   content: string
   drawingPreviews?: NoteExportDrawingPreview[]
+  diagramPreviews?: NoteExportDiagramPreview[]
   format: NoteExportFormat
   name: string
 }
@@ -218,6 +257,7 @@ export interface NoteExportPayload {
 export interface NoteExportResponse {
   canceled: boolean
   filePath?: string
+  warnings?: NoteExportWarnings
 }
 
 export type NoteFolderSiteExportSort = 'createdAt' | 'updatedAt' | 'name'
@@ -230,6 +270,7 @@ export interface NoteFolderSiteExportPreparePayload {
 export type NoteFolderSiteExportPrepareResponse =
   | {
     drawingIds: string[]
+    mermaidSources?: string[]
     status: 'ready'
   }
   | {
@@ -238,6 +279,7 @@ export type NoteFolderSiteExportPrepareResponse =
 
 export interface NoteFolderSiteExportPayload {
   drawingPreviews: NoteExportDrawingPreview[]
+  diagramPreviews?: NoteExportDiagramPreview[]
   folderId: number
   order: NoteFolderSiteExportOrder
   sort: NoteFolderSiteExportSort
@@ -248,6 +290,7 @@ export type NoteFolderSiteExportResponse =
     canceled: false
     directoryPath: string
     status: 'exported'
+    warnings?: NoteExportWarnings
   }
   | {
     canceled: true
@@ -257,3 +300,22 @@ export type NoteFolderSiteExportResponse =
     canceled: false
     status: 'cloud-unavailable'
   }
+
+export interface NoteImagePickerInput {
+  vault: string
+  source?: 'picker' | 'clipboardImage'
+}
+export type NoteImagePickerResult =
+  | { status: 'saved', url: string, bytes: number }
+  | { status: 'cancelled' | 'stale' | 'failed' }
+
+export interface TaskCleanupResult {
+  status: 'done' | 'failed' | 'stale'
+  count: number
+  receiptId?: string
+}
+export interface TaskCleanupUndoResult {
+  undone: boolean
+  restored: number
+  conflicts: string[]
+}

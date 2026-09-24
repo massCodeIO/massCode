@@ -14,6 +14,7 @@ import { z } from 'zod'
 import { redactAiHttp } from '../../shared/aiHttp'
 import {
   aiHttpActionSchema,
+  aiHttpModelActionSchema,
   aiHttpRequestSchema,
   isHttpAuxAction,
 } from '../../shared/aiHttpActions'
@@ -23,6 +24,7 @@ import {
   normalizeHttpDraftPatch,
 } from '../../shared/httpUrlQuery'
 import { executeOwnedHttpRequest } from '../http/runtime/ownedExecution'
+import { readHttpSession } from '../http/runtime/session'
 import { useHttpStorage } from '../storage'
 import { store } from '../store'
 import {
@@ -31,8 +33,11 @@ import {
   controlHttpAux,
   disposeHttpAux,
   httpAuxBaseline,
+  httpAuxPreviewDetails,
   prepareHttpAux,
+  waitForHttpAuxControl,
 } from './httpAuxActions'
+import { httpRequestPreview, httpScriptPreview } from './httpPreview'
 import { vaultIdentity } from './vault'
 import { validateFileReferences } from './workspaceStorage'
 
@@ -42,8 +47,8 @@ export const httpActionTools = [
     function: {
       name: 'propose_http_action',
       description:
-        'Prepare ONE user-requested HTTP action for review; never executes it. Send uses the exact saved definition or captured current draft. patchDraft changes only the unsaved draft; saveDraft saves request and runtime; discardDraft drops unsaved changes. The user must Apply; do not claim sent/saved until actual result. Assessment is not permission. runCollection prepares the exact collection order, applies existing runner options and reports real results. WebSocket connect/send require review. To disconnect an approved WebSocket, call control_http_activity with {id: connectionId, action: "disconnect"}; disconnectWebSocket is not a proposal action. Cookies, clearing history/console/session and scriptTrust are reviewed actions; cookie values are never returned. Script trust is never implied by sending. For explicitly requested compound operations use patchAndSend to change the unsaved draft then send, or saveAndSend to optionally patch, save request/runtime, and send only after a successful save. The review displays the whole sequence; never save implicitly.',
-      parameters: z.toJSONSchema(aiHttpActionSchema),
+        'Prepare ONE user-requested HTTP action for review; never executes it. Send uses the exact saved definition or captured current draft. patchDraft changes only the unsaved draft; saveDraft saves request and runtime; discardDraft drops unsaved changes. Ordinary draft changes, Save and Discard apply automatically unless preview was requested; Send always requires confirmation. Do not claim sent/saved until actual result. Assessment is not permission. runCollection requestIds specifies the full collection request set exactly once in execution order, never a subset. For individually requested saved requests use send with source saved; never broaden scope to the whole collection. It applies existing runner options and reports real results. WebSocket connect/send require review. To disconnect an approved WebSocket, call control_http_activity with {id: connectionId, action: "disconnect"}; disconnectWebSocket is not a proposal action. Cookies, clearing history/console/session and scriptTrust are reviewed actions; cookie values are never returned. Script trust is never implied by sending. For a requested change-and-send sequence call patchDraft first, then saveDraft only if saving was explicitly requested, then send with source draft. Wait for each actual successful receipt before proposing the next step. A failed or cancelled step blocks dependent actions. Cancelling Send preserves the applied draft and task Undo; never save implicitly.',
+      parameters: z.toJSONSchema(aiHttpModelActionSchema),
     },
   },
   {
@@ -65,7 +70,10 @@ export const httpActionTools = [
   },
 ] as const
 
-export function createHttpActionManager(owner: WebContents) {
+export function createHttpActionManager(
+  owner: WebContents,
+  onRun?: (actionId: string, runId: string) => void,
+) {
   interface BasePlan {
     view: AiHttpActionView
     vault: string
@@ -86,9 +94,12 @@ export function createHttpActionManager(owner: WebContents) {
     action: AiHttpAuxAction
     snapshot: HttpAuxSnapshot
     approved?: boolean
+    awaitingWebSocketAdoption?: boolean
   }
   const plans = new Map<string, CorePlan | AuxPlan>()
-  function baseline(id: number) {
+  const applying = new Map<string, Promise<AiHttpActionApplyResult>>()
+  const completing = new Map<string, Promise<AiHttpActionApplyResult>>()
+  function baseline(id: number, runtime?: HttpExecutePayload['runtime']) {
     const db = useHttpStorage()
     return JSON.stringify({
       vault: vaultIdentity(),
@@ -97,6 +108,14 @@ export function createHttpActionManager(owner: WebContents) {
       environments: db.environments.getEnvironments(),
       activeEnvironment: db.environments.getActiveEnvironmentId(),
       settings: store.preferences.get('http'),
+      scripts: httpScriptPreview(
+        id,
+        runtime ?? db.requests.getRequestById(id)?.runtime ?? undefined,
+      ),
+      session: readHttpSession(
+        String(vaultIdentity()),
+        db.environments.getActiveEnvironmentId(),
+      ),
     })
   }
   function get(id: string) {
@@ -185,7 +204,7 @@ export function createHttpActionManager(owner: WebContents) {
       return { view: view(id) }
     }
   }
-  return {
+  const manager = {
     propose(input: unknown, draft?: AiHttpDraft, userMessages: string[] = []) {
       const action = aiHttpActionSchema.parse(input)
       if (plans.size >= 30)
@@ -201,6 +220,28 @@ export function createHttpActionManager(owner: WebContents) {
             action.action === 'connectWebSocket' ? action.source : 'workspace',
           state: 'pending',
           preview: boundedHttpData(snapshot.preview),
+          ...httpAuxPreviewDetails(action, snapshot),
+          request: snapshot.requestPreview,
+          ...(action.action === 'sendWebSocket'
+            ? {
+                message: {
+                  connectionId: action.connectionId,
+                  text: String(redactAiHttp(action.text)).slice(0, 2000),
+                  characters: action.text.length,
+                },
+              }
+            : {}),
+          ...(action.action === 'runCollection' && snapshot.run
+            ? {
+                run: {
+                  view: structuredClone(snapshot.run),
+                  requests: snapshot.requestPreviews,
+                  continueOnFailure: action.continueOnFailure,
+                  skipCertificateVerification:
+                    store.preferences.get('http').skipCertificateVerification,
+                },
+              }
+            : {}),
         }
         plans.set(id, {
           mode: 'aux',
@@ -297,7 +338,7 @@ export function createHttpActionManager(owner: WebContents) {
           userMessages,
           new Set(existing.filter(Boolean)),
         )
-        if (action.action !== 'patchDraft') {
+        {
           const { runtime, ...request } = fields
           payload.request = aiHttpRequestSchema.parse(
             normalizeHttpDraftPatch(
@@ -334,6 +375,9 @@ export function createHttpActionManager(owner: WebContents) {
         summary: action.summary,
         source: usesDraft ? 'draft' : 'saved',
         state: 'pending',
+        request: httpRequestPreview(payload),
+        changedFields:
+          'fields' in action ? Object.keys(action.fields ?? {}) : [],
         preview: {
           name: record.name,
           method: payload.request.method,
@@ -351,7 +395,7 @@ export function createHttpActionManager(owner: WebContents) {
         action: structuredClone(action),
         draft: usesDraft ? structuredClone(draft) : undefined,
         vault: String(vaultIdentity()),
-        baseline: baseline(id),
+        baseline: baseline(id, payload.runtime),
         requestId: id,
         requestCreatedAt: record.createdAt,
         payload,
@@ -365,7 +409,7 @@ export function createHttpActionManager(owner: WebContents) {
     ): Promise<AiHttpActionApplyResult> {
       const plan = get(id)
       if (plan.view.state !== 'pending')
-        throw new Error('ACTION_ALREADY_USED')
+        return { view: view(id) }
       if (plan.mode === 'aux') {
         if (
           httpAuxBaseline(owner.id, plan.action, plan.snapshot)
@@ -382,16 +426,41 @@ export function createHttpActionManager(owner: WebContents) {
             owner.id,
             plan.action,
             plan.snapshot,
+            runId => onRun?.(id, runId),
           )
           plan.view.result = boundedHttpData(result)
-          plan.view.state = plan.controller.signal.aborted
-            ? 'cancelled'
-            : result
+          if (plan.action.action === 'runCollection' && plan.view.run) {
+            plan.view.run.view = redactAiHttp(
+              result,
+            ) as typeof plan.view.run.view
+          }
+          const state
+            = result && typeof result === 'object' && 'state' in result
+              ? result.state
+              : undefined
+          const transportFailed
+            = result
               && typeof result === 'object'
-              && 'state' in result
-              && ['failed', 'error', 'cancelled'].includes(String(result.state))
-              ? 'failed'
-              : 'done'
+              && 'steps' in result
+              && Array.isArray(result.steps)
+              && result.steps.some(step => step.error)
+          plan.view.state
+            = plan.controller.signal.aborted || state === 'cancelled'
+              ? 'cancelled'
+              : state === 'error'
+                || (plan.action.action === 'connectWebSocket'
+                  && state !== 'open')
+                || transportFailed
+                || (state === 'failed' && plan.action.action !== 'runCollection')
+                ? 'failed'
+                : 'done'
+          if (
+            plan.action.action === 'connectWebSocket'
+            && plan.view.state === 'done'
+          ) {
+            plan.awaitingWebSocketAdoption = true
+            plan.view.state = 'running'
+          }
         }
         catch {
           plan.view.state = plan.controller.signal.aborted
@@ -401,7 +470,7 @@ export function createHttpActionManager(owner: WebContents) {
         }
         return {
           view: view(id),
-          ...(plan.view.state === 'done'
+          ...(plan.awaitingWebSocketAdoption
             && plan.action.action === 'connectWebSocket'
             && plan.snapshot.ws
             ? {
@@ -415,7 +484,7 @@ export function createHttpActionManager(owner: WebContents) {
         }
       }
       if (
-        plan.baseline !== baseline(plan.requestId)
+        plan.baseline !== baseline(plan.requestId, plan.payload.runtime)
         || (plan.draft && JSON.stringify(plan.draft) !== JSON.stringify(fresh))
       ) {
         throw new Error('ACTION_STALE')
@@ -431,6 +500,48 @@ export function createHttpActionManager(owner: WebContents) {
       fresh?: AiHttpDraft,
     ): Promise<AiHttpActionApplyResult> {
       const plan = get(id)
+      if (['done', 'failed', 'cancelled'].includes(plan.view.state))
+        return { view: view(id) }
+      if (plan.mode === 'aux' && plan.awaitingWebSocketAdoption) {
+        plan.awaitingWebSocketAdoption = false
+        try {
+          const actual = success
+            ? controlHttpAux(owner.id, plan.action, plan.snapshot, 'status')
+            : undefined
+          if (
+            success
+            && actual
+            && 'state' in actual
+            && actual.state === 'open'
+          ) {
+            plan.view.state = 'done'
+            plan.view.result = boundedHttpData(actual)
+            return { view: view(id) }
+          }
+          disposeHttpAux(owner.id, plan.snapshot)
+          plan.view.state = success ? 'failed' : 'cancelled'
+          plan.view.result = {
+            error: 'WEBSOCKET_ADOPTION_FAILED',
+            connectionAdopted: false,
+            cleanup: 'disposed',
+          }
+        }
+        catch {
+          let disposed = false
+          try {
+            disposeHttpAux(owner.id, plan.snapshot)
+            disposed = true
+          }
+          catch {}
+          plan.view.state = 'failed'
+          plan.view.result = {
+            error: 'WEBSOCKET_ADOPTION_FAILED',
+            connectionAdopted: false,
+            cleanup: disposed ? 'disposed' : 'failed',
+          }
+        }
+        return { view: view(id) }
+      }
       if (
         plan.mode === 'aux'
         || plan.action.action === 'send'
@@ -486,7 +597,7 @@ export function createHttpActionManager(owner: WebContents) {
         return { view: view(id) }
       }
       const before = JSON.parse(plan.baseline)
-      const after = JSON.parse(baseline(plan.requestId))
+      const after = JSON.parse(baseline(plan.requestId, plan.payload.runtime))
       if (plan.action.action === 'saveAndSend') {
         const expectedRequest = {
           ...plan.payload.request,
@@ -563,10 +674,7 @@ export function createHttpActionManager(owner: WebContents) {
       }
       if (
         action === 'cancel'
-        && (plan.view.state === 'pending'
-          || (plan.view.state === 'running'
-            && (plan.action.action === 'send'
-              || (plan.mode === 'core' && plan.networkStarted))))
+        && (plan.view.state === 'pending' || plan.view.state === 'running')
       ) {
         plan.controller.abort()
         plan.view.state = 'cancelled'
@@ -580,6 +688,76 @@ export function createHttpActionManager(owner: WebContents) {
           disposeHttpAux(owner.id, plan.snapshot)
       }
       plans.clear()
+      applying.clear()
+      completing.clear()
+    },
+  }
+  return {
+    ...manager,
+    async controlAndWait(
+      id: string,
+      action: 'status' | 'cancel' | 'disconnect',
+    ) {
+      const initial = manager.control(id, action)
+      const plan = get(initial.id)
+      if (action !== 'status' && plan.mode === 'aux' && plan.approved) {
+        const completed = await waitForHttpAuxControl(
+          owner.id,
+          plan.action,
+          plan.snapshot,
+        )
+        if (completed)
+          plan.view.result = boundedHttpData(completed)
+      }
+      return view(initial.id)
+    },
+    async cancel(id: string) {
+      get(id)
+      const executing = completing.get(id) ?? applying.get(id)
+      const cancelled = manager.control(id, 'cancel')
+      if (!executing) {
+        const plan = get(id)
+        if (plan.mode === 'aux' && plan.approved) {
+          const completed = await waitForHttpAuxControl(
+            owner.id,
+            plan.action,
+            plan.snapshot,
+          )
+          if (completed)
+            plan.view.result = boundedHttpData(completed)
+        }
+        return view(cancelled.id)
+      }
+      const result = await executing
+      return result.view.state === 'running' ? view(id) : result.view
+    },
+    async apply(id: string, fresh?: AiHttpDraft) {
+      get(id)
+      if (completing.has(id))
+        return completing.get(id)!
+      if (!applying.has(id)) {
+        applying.set(
+          id,
+          manager.apply(id, fresh).catch((error) => {
+            applying.delete(id)
+            throw error
+          }),
+        )
+      }
+      return applying.get(id)!
+    },
+    async complete(id: string, success: boolean, fresh?: AiHttpDraft) {
+      get(id)
+      if (!completing.has(id)) {
+        completing.set(
+          id,
+          manager.complete(id, success, fresh).catch((error) => {
+            completing.delete(id)
+            throw error
+          }),
+        )
+      }
+      return completing.get(id)!
     },
   }
 }

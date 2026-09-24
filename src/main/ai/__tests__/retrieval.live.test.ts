@@ -138,7 +138,7 @@ for (const [index, scenario] of cases.entries()) {
           },
         ],
       )}`
-      if (plan.scope === 'vault') {
+      if (plan.scope === 'vault' && 'type' in plan && 'queries' in plan) {
         const found = await retrieveVaultItems(plan.type, plan.queries)
         results.push(found)
         planned = true

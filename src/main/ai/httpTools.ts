@@ -6,6 +6,7 @@ import { httpContextDocument } from './httpContextDocument'
 import { validateHttpEvidence } from './httpEvidence'
 import { httpObservations } from './httpObservations'
 import { httpProposalToolSchema, parseHttpProposal } from './httpToolSchema'
+import { HTTP_ASSERTION_GUIDANCE } from './instructions'
 
 const readSchema = z
   .object({
@@ -43,7 +44,7 @@ export function createHttpTools(
         type: 'function',
         function: {
           name: 'propose_http_assertions',
-          description: `Add HTTP tests/checks/assertions requested by the user by creating a reviewable proposal. You MUST CALL this function to add checks; writing JSON or tests in prose does not create a proposal. Never apply them directly. context_id must be ${context.contextId}. Use JSON Pointer paths for json (e.g. /data/0/id), header names for header, no path for status/durationMs. Preserve existing assertions; do not duplicate them. Expected values are required for comparison operators, omitted for exists/type checks. Response examples are observations, not proof of the intended contract. Do not assert dynamic IDs/tokens/timestamps from a single response. Explain failures rather than blindly asserting a failing status is correct. Comparisons of business values and timing limits require evidence: assertionIndex (zero-based), source user or description, and an exact relevant quote from that source. Do not cite sample response values as requirements. Without a source, omit the comparison and prefer structural checks. The application renders the exact proposed checks; do not repeat their list in prose.`,
+          description: `Add HTTP tests/checks/assertions requested by the user in the draft, waiting for review only when the user explicitly requests a preview. You MUST CALL this function to add checks; writing JSON or tests in prose does not create a proposal. The application performs the requested draft changes and returns the actual result; no save or send is implied. context_id must be ${context.contextId}. Use JSON Pointer paths for json (e.g. /data/0/id), header names for header, no path for status/durationMs. Preserve existing assertions; do not duplicate them. Expected values are required for comparison operators, omitted for exists/type checks. ${HTTP_ASSERTION_GUIDANCE} Response examples are observations, not proof of the intended contract. Do not assert dynamic IDs/tokens/timestamps from a single response. Explain failures rather than blindly asserting a failing status is correct. Comparisons of business values and timing limits require evidence: assertionIndex (zero-based), source user or description, and an exact relevant quote from that source. Do not cite sample response values as requirements. Without a source, omit the comparison and prefer structural checks. The application renders the exact proposed checks; do not repeat their list in prose.`,
           strict: true,
           parameters: z.toJSONSchema(httpProposalToolSchema, { io: 'input' }),
         },

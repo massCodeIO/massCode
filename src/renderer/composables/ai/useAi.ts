@@ -1,4 +1,6 @@
 import type { EditorTarget, EditSnapshot } from './edit'
+import type { NativeBridgeResult } from './nativeBridges'
+import type { TaskMutation } from './taskUndo'
 import type { HttpAiSnapshot } from './useHttpAi'
 import type { HttpExecuteResult } from '~/main/types/http'
 import type {
@@ -12,7 +14,12 @@ import type {
   AiVaultItem,
   AiWorkspaceContext,
 } from '~/shared/ai'
-import type { AiDataAction } from '~/shared/aiDataActions'
+import type { AiClarification } from '~/shared/aiChatControl'
+import type {
+  AiDataAction,
+  AiDataActionResult,
+  AiDataWarnings,
+} from '~/shared/aiDataActions'
 import type { AiHttpProposal } from '~/shared/aiHttp'
 import type {
   AiHttpAction,
@@ -22,17 +29,26 @@ import type {
   AiHttpWebSocketReceipt,
 } from '~/shared/aiHttpActions'
 import type {
+  AiNativeActionView,
+  AiNativeResult,
+} from '~/shared/aiNativeActions'
+import type { AiMutationResult } from '~/shared/aiTask'
+import type {
   WorkspaceCreation,
   WorkspaceItem,
   WorkspaceProposal,
 } from '~/shared/aiWorkspace'
-import { ipc, store } from '@/electron'
+import { i18n, ipc, store } from '@/electron'
 import { AI_LIMITS, aiProposalSchema } from '~/shared/ai'
+import { sanitizeAiDataWarnings } from '~/shared/aiDataActions'
 import { budgetAiHistory } from '~/shared/aiHistory'
 import { aiHttpProposalSchema } from '~/shared/aiHttp'
+import { isBoundaryNativeAction } from '~/shared/aiNativeActions'
+import { applyAiPatch, inverseAiPatch } from '~/shared/aiUndo'
 import { workspaceCreationHistory } from '~/shared/aiWorkspace'
 import { buildReplacement, matchesSnapshot } from './edit'
 import { httpProposalText } from './httpProposalText'
+import { inverseEditorEdits } from './taskUndo'
 import { unavailableWorkspaceItems } from './workspaceLinks'
 
 export type AiContext = EditorTarget & {
@@ -44,6 +60,14 @@ export type AiContext = EditorTarget & {
   language: string
 }
 export interface ChatMessage extends AiMessage {
+  clarification?: AiClarification
+  steering?: string[]
+  userContinuations?: string[]
+  taskState?:
+    | 'working'
+    | 'waitingConfirmation'
+    | 'waitingNative'
+    | 'waitingAnswer'
   createdAt?: number
   httpSnapshot?: HttpAiSnapshot
   workspaceCreations?: WorkspaceCreation[]
@@ -53,7 +77,16 @@ export interface ChatMessage extends AiMessage {
   workspaceItems?: WorkspaceItem[]
   workspaceProposal?: WorkspaceProposal
   dataActions?: AiDataAction[]
+  nativeActions?: AiNativeActionView[]
   httpActions?: AiHttpActionView[]
+  actionRequestId?: string
+  mutationId?: string
+  mutationFailed?: boolean
+  mutationBusy?: boolean
+  taskMutations?: TaskMutation[]
+  undoConflicts?: string[]
+  undoBusy?: boolean
+  taskIrreversible?: boolean
   httpProposal?: AiHttpProposal
   role: 'user' | 'assistant'
   rejected?: boolean
@@ -76,7 +109,15 @@ export interface ChatMessage extends AiMessage {
   context?: string
   status?: 'streaming' | 'done' | 'cancelled' | 'error'
 }
+interface CapturedTask {
+  editor?: AiContext
+  mode: 'none' | 'selection' | 'fragment'
+  workspace?: AiWorkspaceContext
+  attachments: AiVaultItem[]
+  http?: HttpAiSnapshot
+}
 interface Conversation {
+  queue?: { id: string, prompt: string, context: CapturedTask }[]
   messages: ChatMessage[]
   draft: string
   undoEvents?: { after: number, content: string }[]
@@ -112,10 +153,14 @@ const conversations = reactive<Record<string, Conversation>>({})
 const currentKey = ref('vault')
 conversations.vault = { messages: [], draft: '' }
 const active = ref<{ requestId: string, key: string }>()
+let nativeBoundary: { requestId: string, cancelled: boolean } | undefined
 let vault = ''
 let snapshotReader: (() => AiContext | undefined) | undefined
 let editorWriter:
-  | ((snapshot: EditSnapshot, replacement: string) => boolean)
+  | ((
+    snapshot: EditSnapshot,
+    replacement: string,
+  ) => boolean | Promise<boolean>)
   | undefined
 let httpReader: (() => HttpAiSnapshot | undefined) | undefined
 let httpWriter:
@@ -171,7 +216,11 @@ function syncVault() {
   const next = store.preferences.get<string>('storage.vaultPath') ?? ''
   if (next === vault)
     return
-  cancel()
+  if (nativeBoundary?.requestId !== active.value?.requestId)
+    cancel()
+  clearVaultContext(next)
+}
+function clearVaultContext(next: string) {
   for (const key of Object.keys(conversations)) delete conversations[key]
   vault = next
   currentKey.value = 'vault'
@@ -188,6 +237,12 @@ function syncVault() {
 function onEvent(_event: unknown, event: AiEvent) {
   if (event.requestId !== active.value?.requestId)
     return
+  if (
+    nativeBoundary?.requestId === event.requestId
+    && ['done', 'error', 'cancelled'].includes(event.type)
+  ) {
+    return
+  }
   const conversation = conversations[active.value.key]
   const message = conversation?.messages.at(-1)
   if (!message || message.role !== 'assistant')
@@ -195,8 +250,55 @@ function onEvent(_event: unknown, event: AiEvent) {
   syncVault()
   if (event.requestId !== active.value?.requestId)
     return
+  if (event.type === 'nativeAction') {
+    message.actionRequestId = event.requestId
+    message.nativeActions ??= []
+    // Read through the reactive getter: ??= itself returns the raw new array.
+    const actions = message.nativeActions
+    if (actions.some(action => action.id === event.action.id))
+      return
+    actions.push(event.action)
+    if (event.autoApply)
+      void applyNativeAction(message, actions.at(-1)!)
+    return
+  }
+  if (event.type === 'taskState') {
+    message.taskState = event.state
+    return
+  }
+  if (event.type === 'clarification') {
+    message.clarification = event.question
+    return
+  }
+  if (event.type === 'steering') {
+    (message.steering ??= []).push(event.text);
+    (message.userContinuations ??= []).push(event.text)
+    return
+  }
+  if (event.type === 'superseded') {
+    if (message.clarification?.id === event.actionId)
+      message.clarification.cancelled = true
+    const native = message.nativeActions?.find(
+      action => action.id === event.actionId,
+    )
+    if (native?.status === 'pending')
+      native.status = 'cancelled'
+    const action = message.httpActions?.find(
+      action => action.id === event.actionId,
+    )
+    if (action?.state === 'pending')
+      action.state = 'cancelled'
+    if (
+      message.workspaceProposal?.id === event.actionId
+      || message.mutationId === event.actionId
+    ) {
+      message.rejected = true
+    }
+    return
+  }
   if (event.type === 'dataAction') {
-    const actions = (message.dataActions ??= [])
+    message.dataActions ??= []
+    const actions = message.dataActions
     if (actions.some(action => action.id === event.action.id))
       return
     actions.push(event.action)
@@ -206,18 +308,41 @@ function onEvent(_event: unknown, event: AiEvent) {
       actionVault
       === (store.preferences.get<string>('storage.vaultPath') ?? '')
       && conversation.messages.includes(message)
+      && active.value?.requestId === event.requestId
     const report = (
       status: AiDataAction['status'],
       summary?: Record<string, number>,
+      nativeWarnings?: AiDataWarnings,
     ) => {
-      if (!isCurrent())
+      if (
+        !isCurrent()
+        || ['applied', 'cancelled', 'failed'].includes(action.status)
+      ) {
         return
+      }
+      const warnings = nativeWarnings
+        ? sanitizeAiDataWarnings(nativeWarnings)
+        : undefined
       action.status = status
-      action.summary = summary;
+      action.summary = summary
+      action.warnings = warnings
+      if (
+        status === 'applied'
+        || status === 'cancelled'
+        || status === 'failed'
+      ) {
+        void ipc
+          .invoke<
+          AiDataActionResult,
+          AiResult<AiDataActionResult>
+        >('system:ai:data-complete', { id: action.id, status, summary, warnings })
+          .catch(() => {})
+      }
       (conversation.undoEvents ??= []).push({
         after: conversation.messages.length,
         content: JSON.stringify({
           event: 'data_action_result',
+          ...(warnings ? { warnings, warningsAreUntrustedData: true } : {}),
           actionId: action.id,
           kind: action.kind,
           input: action.input,
@@ -239,16 +364,61 @@ function onEvent(_event: unknown, event: AiEvent) {
       .catch(() => report('failed'))
     return
   }
+  if (event.type === 'httpRun') {
+    void import('@/composables/spaces/http/useHttpRunner').then(
+      ({ useHttpRunner }) => {
+        if (active.value?.requestId === event.requestId)
+          void useHttpRunner().adoptRunner(event.runId, event.vault)
+      },
+    )
+    return
+  }
   if (event.type === 'httpAction') {
+    message.actionRequestId = event.requestId;
     (message.httpActions ??= []).push(event.action)
+    if (event.autoApply) {
+      void applyHttpAction(message, message.httpActions!.at(-1)!).then(
+        (success) => {
+          if (!success && message.httpActions!.at(-1)!.state === 'pending')
+            void cancelHttpAction(message.httpActions!.at(-1)!)
+        },
+      )
+    }
     return
   }
   if (event.type === 'workspaceProposal') {
+    message.rejected = false
+    message.applied = false
+    message.workspaceUndone = []
+    if (event.mutation) {
+      message.workspaceProposal = event.proposal
+      message.actionRequestId = event.requestId
+      message.workspaceApplied = event.applied ?? []
+      message.workspaceItems = event.items ?? []
+      message.workspaceFailedOperationIndex = event.failedOperationIndex
+      for (const index of event.applied ?? []) {
+        recordWorkspaceMutation(
+          message,
+          event.proposal.id,
+          index,
+          event.proposal.changes[index]?.irreversible,
+        )
+      }
+      return
+    }
     if (event.applied !== undefined) {
       const receipts = (message.workspaceCreations ??= [])
       if (
         !receipts.some(receipt => receipt.proposal.id === event.proposal.id)
       ) {
+        for (const index of event.applied) {
+          recordWorkspaceMutation(
+            message,
+            event.proposal.id,
+            index,
+            event.proposal.changes[index]?.irreversible,
+          )
+        }
         receipts.push({
           proposal: event.proposal,
           applied: event.applied,
@@ -273,8 +443,25 @@ function onEvent(_event: unknown, event: AiEvent) {
       parsed.success
       && parsed.data.context_id === message.httpSnapshot?.context.contextId
     ) {
+      message.rejected = false
+      message.applied = false
+      message.mutationFailed = false
       message.httpProposal = parsed.data
+      message.mutationId = event.actionId
+      message.actionRequestId = event.requestId
       message.content = httpProposalText(parsed.data)
+      if (event.policy === 'apply')
+        void applyHttp(message)
+    }
+    else if (event.actionId) {
+      message.mutationFailed = true
+      void ipc
+        .invoke('system:ai:mutation-complete', {
+          id: event.actionId,
+          status: 'failed',
+          persisted: false,
+        })
+        .catch(() => {})
     }
     return
   }
@@ -310,6 +497,10 @@ function onEvent(_event: unknown, event: AiEvent) {
     return
   }
   if (event.type === 'tools') {
+    message.rejected = false
+    message.applied = false
+    message.mutationId = event.actionId
+    message.actionRequestId = event.requestId
     message.toolContent = message.content
     message.calls = event.calls
     if (message.edit) {
@@ -320,6 +511,8 @@ function onEvent(_event: unknown, event: AiEvent) {
             aiProposalSchema.parse(JSON.parse(call.function.arguments)).summary,
         )
         .join('\n')
+      if (event.policy === 'apply')
+        void applyEdit(message)
     }
     return
   }
@@ -333,16 +526,84 @@ function onEvent(_event: unknown, event: AiEvent) {
     conversation.diagnostic = event.diagnostic
   }
   active.value = undefined
+  if (event.type === 'done' && conversation.queue?.length)
+    void runQueued()
+}
+
+async function steer(text: string) {
+  syncVault()
+  if (!active.value || !text.trim())
+    return false
+  const request = active.value
+  const result = (await ipc.invoke('system:ai:steer', {
+    requestId: request.requestId,
+    text: text.trim(),
+  })) as AiResult<null>
+  if (result.ok && active.value === request)
+    conversations[request.key].draft = ''
+  return result.ok
+}
+async function answerQuestion(message: ChatMessage, answer: string) {
+  if (!active.value || !message.clarification || !answer.trim())
+    return false
+  const question = message.clarification
+  const result = (await ipc.invoke('system:ai:answer', {
+    requestId: active.value.requestId,
+    id: question.id,
+    answer: answer.trim(),
+  })) as AiResult<null>
+  if (result.ok) {
+    question.answer = answer.trim();
+    (message.userContinuations ??= []).push(answer.trim())
+  }
+  return result.ok
+}
+function enqueue(prompt: string) {
+  syncVault()
+  const conversation = conversations[currentKey.value]
+  if (!prompt.trim() || (conversation.queue?.length ?? 0) >= 8)
+    return false
+  const context: CapturedTask = JSON.parse(
+    JSON.stringify({
+      editor: attachedEditor.value ?? snapshotReader?.(),
+      mode: contextMode.value,
+      workspace: workspaceContext.value,
+      attachments: attachments.value,
+      http: httpReader?.(),
+    }),
+  );
+  (conversation.queue ??= []).push({
+    id: crypto.randomUUID(),
+    prompt: prompt.trim(),
+    context,
+  })
+  conversation.draft = ''
+  return true
+}
+async function runQueued() {
+  syncVault()
+  const conversation = conversations[currentKey.value]
+  if (active.value || !conversation.queue?.length)
+    return
+  const task = conversation.queue[0]!
+  if (await send(task.prompt, false, undefined, task.context)) {
+    conversation.queue = conversation.queue.filter(
+      item => item.id !== task.id,
+    )
+  }
 }
 
 function cancel() {
+  if (nativeBoundary)
+    nativeBoundary.cancelled = true
   const request = active.value
   if (!request)
     return
   const message = conversations[request.key]?.messages.at(-1)
   if (message?.role === 'assistant')
     message.status = 'cancelled'
-  active.value = undefined
+  if (nativeBoundary?.requestId !== request.requestId)
+    active.value = undefined
   void ipc
     .invoke('system:ai:cancel', { requestId: request.requestId })
     .catch(() => {})
@@ -465,9 +726,49 @@ function registerHttp(
     }
   }
 }
+function recordWorkspaceMutation(
+  message: ChatMessage,
+  id: string,
+  index: number,
+  irreversible = false,
+) {
+  if (irreversible) {
+    message.taskIrreversible = true
+    return
+  }
+  const receipts = (message.taskMutations ??= [])
+  if (
+    !receipts.some(
+      receipt =>
+        receipt.kind === 'workspace'
+        && receipt.id === id
+        && receipt.index === index,
+    )
+  ) {
+    receipts.push({ kind: 'workspace', id, index })
+  }
+}
+function recordDraftMutation(
+  message: ChatMessage,
+  before: HttpAiSnapshot | undefined,
+) {
+  const after = httpReader?.()
+  if (
+    before?.privateDraft
+    && after?.privateDraft
+    && before.privateDraft.requestId === after.privateDraft.requestId
+  ) {
+    (message.taskMutations ??= []).push({
+      kind: 'httpDraft',
+      before: JSON.parse(JSON.stringify(before)),
+      after: JSON.parse(JSON.stringify(after)),
+    })
+  }
+}
 function canApplyHttp(message: ChatMessage) {
   return Boolean(
-    message.status === 'done'
+    (message.status === 'done'
+      || (message.mutationId && canPerformHttpAction(message)))
     && !message.applied
     && !message.rejected
     && message.httpSnapshot
@@ -475,25 +776,122 @@ function canApplyHttp(message: ChatMessage) {
     && httpWriter?.(message.httpSnapshot, message.httpProposal, true),
   )
 }
-function applyHttp(message: ChatMessage) {
+function refreshHttpSnapshot(message: ChatMessage, allowTargetChange = false) {
+  const previous = message.httpSnapshot
+  const current = httpReader?.()
   if (
-    !canApplyHttp(message)
-    || !httpWriter?.(message.httpSnapshot!, message.httpProposal!)
+    !current
+    || (!allowTargetChange
+      && previous
+      && previous.context.requestId !== current.context.requestId)
   ) {
+    return
+  }
+  if (!previous || previous.context.requestId !== current.context.requestId) {
+    message.httpSnapshot = current
+    return
+  }
+  // A task keeps one public context identity while rebasing to its own writes.
+  // Reader UUIDs describe observations, not a new task or a different target.
+  const contextId = previous.context.contextId
+  message.httpSnapshot = {
+    ...current,
+    context: { ...current.context, contextId },
+    ...(current.privateDraft
+      ? { privateDraft: { ...current.privateDraft, contextId } }
+      : {}),
+  }
+}
+async function beginMutation(message: ChatMessage) {
+  if (!message.mutationId)
+    return true
+  const result = (await ipc.invoke('system:ai:mutation-start', {
+    id: message.mutationId,
+  })) as AiResult<null>
+  return result.ok
+}
+async function applyHttp(message: ChatMessage) {
+  if (message.applied || message.mutationBusy)
+    return false
+  message.mutationBusy = true
+  try {
+    const before = httpReader?.()
+    if (
+      !canApplyHttp(message)
+      || !(await beginMutation(message))
+      || !canApplyHttp(message)
+      || !httpWriter?.(message.httpSnapshot!, message.httpProposal!)
+    ) {
+      await reportMutation(message, 'failed', false)
+      return false
+    }
+    message.applied = true
+    recordDraftMutation(message, before)
+    refreshHttpSnapshot(message)
+    await reportMutation(message, 'applied', false)
+    return true
+  }
+  catch {
+    message.mutationFailed = true
+    await reportMutation(message, 'failed', false).catch(() => {})
     return false
   }
-  message.applied = true
-  return true
+  finally {
+    message.mutationBusy = false
+  }
 }
 
-async function applyHttpAction(message: ChatMessage, action: AiHttpActionView) {
-  if (action.state !== 'pending')
+function canPerformHttpAction(message: ChatMessage) {
+  return Boolean(
+    active.value
+    && message.actionRequestId === active.value.requestId
+    && conversations[active.value.key]?.messages.includes(message),
+  )
+}
+
+async function applyHttpAction(
+  message: ChatMessage,
+  action: AiHttpActionView,
+  previewAcceptedByUser?: true,
+) {
+  syncVault()
+  if (action.state !== 'pending' || !canPerformHttpAction(message))
     return false
   const conversation = Object.values(conversations).find(value =>
     value.messages.includes(message),
   )
   if (!conversation)
     return false
+  const capturedVault
+    = store.preferences.get<string>('storage.vaultPath') ?? ''
+  const isCurrent = () =>
+    canPerformHttpAction(message)
+    && capturedVault
+    === (store.preferences.get<string>('storage.vaultPath') ?? '')
+  if (action.action === 'connectWebSocket' && action.source === 'saved') {
+    action.state = 'running'
+    const requestId = action.request?.requestId
+    let opened = false
+    if (requestId && isCurrent()) {
+      try {
+        const { openHttpRequestDeepLink } = await import(
+          '@/ipc/listeners/deepLinks'
+        )
+        opened = await openHttpRequestDeepLink(requestId, false, isCurrent)
+        await nextTick()
+        opened = opened && isCurrent()
+      }
+      catch {}
+    }
+    if (!opened) {
+      const cancelled = (await ipc.invoke('system:ai:http-cancel', {
+        id: action.id,
+      })) as AiResult<AiHttpActionView>
+      if (cancelled.ok)
+        Object.assign(action, cancelled.data)
+      return false
+    }
+  }
   const snapshot = message.httpSnapshot
   const fresh = action.source === 'draft' ? httpReader?.() : undefined
   if (
@@ -523,34 +921,51 @@ async function applyHttpAction(message: ChatMessage, action: AiHttpActionView) {
     action.state = 'running'
     response = (await ipc.invoke(
       'system:ai:http-apply',
-      JSON.parse(JSON.stringify({ id: action.id, draft })),
+      JSON.parse(
+        JSON.stringify({
+          id: action.id,
+          draft,
+          ...(previewAcceptedByUser ? { previewAcceptedByUser } : {}),
+        }),
+      ),
     )) as AiResult<Applied>
     if (!response.ok) {
-      action.state = 'pending'
+      action.state = 'failed'
       return undefined
     }
     Object.assign(action, response.data.view)
     if (response.data.webSocket) {
       webSocketAdopted = false
       try {
-        if (consumeWebSocket && webSocketConsumer === httpWebSocketConsumer)
+        if (
+          isCurrent()
+          && consumeWebSocket
+          && webSocketConsumer === httpWebSocketConsumer
+        ) {
           webSocketAdopted = await consumeWebSocket(response.data.webSocket)
+        }
       }
       catch {}
-      if (!webSocketAdopted) {
-        let disposed = false
-        try {
-          await ipc.invoke('spaces:http:ws-dispose', {
+      webSocketAdopted = webSocketAdopted && isCurrent()
+      const completed = (await ipc
+        .invoke('system:ai:http-complete', {
+          id: action.id,
+          success: webSocketAdopted,
+        })
+        .catch(() => ({ ok: false }))) as AiResult<Applied>
+      if (completed.ok) {
+        Object.assign(action, completed.data.view)
+      }
+      else {
+        await ipc
+          .invoke('spaces:http:ws-dispose', {
             connectionId: response.data.webSocket.connectionId,
           })
-          disposed = true
-        }
-        catch {}
-        action.state = disposed ? 'cancelled' : 'failed'
+          .catch(() => {})
+        action.state = 'failed'
         action.result = {
           error: 'WEBSOCKET_ADOPTION_FAILED',
           connectionAdopted: false,
-          cleanup: disposed ? 'disposed' : 'failed',
         }
       }
     }
@@ -583,12 +998,14 @@ async function applyHttpAction(message: ChatMessage, action: AiHttpActionView) {
           )
         }
         catch {}
+        refreshHttpSnapshot(message)
         const completed = (await ipc.invoke('system:ai:http-complete', {
           id: action.id,
           success,
           draft:
-            JSON.parse(JSON.stringify(httpReader?.()?.privateDraft ?? null))
-            ?? undefined,
+            JSON.parse(
+              JSON.stringify(message.httpSnapshot?.privateDraft ?? null),
+            ) ?? undefined,
         })) as AiResult<Applied>
         if (completed.ok) {
           Object.assign(action, completed.data.view)
@@ -598,7 +1015,16 @@ async function applyHttpAction(message: ChatMessage, action: AiHttpActionView) {
       }
     }
     if (!response?.ok)
-      return false;
+      return false
+    if (
+      ['patchDraft', 'patchAndSend', 'saveAndSend', 'discardDraft'].includes(
+        action.action,
+      )
+    ) {
+      recordDraftMutation(message, fresh)
+    }
+    if (action.source === 'draft')
+      refreshHttpSnapshot(message);
     (conversation.undoEvents ??= []).push({
       after: conversation.messages.length,
       content: `HTTP action result (application data): ${JSON.stringify(action)}`,
@@ -615,6 +1041,168 @@ async function cancelHttpAction(action: AiHttpActionView) {
   })) as AiResult<AiHttpActionView>
   if (result.ok)
     Object.assign(action, result.data)
+}
+
+async function completeNativeResult(
+  result: unknown,
+): Promise<AiResult<AiNativeResult> | undefined> {
+  try {
+    // Outcomes can reference reactive action targets or native view state.
+    // Electron requires a plain structured-cloneable DTO, including nested data.
+    return (await ipc.invoke(
+      'system:ai:native-complete',
+      JSON.parse(JSON.stringify(result)),
+    )) as AiResult<AiNativeResult>
+  }
+  catch {
+    return undefined
+  }
+}
+
+async function applyNativeAction(
+  message: ChatMessage,
+  action: AiNativeActionView,
+) {
+  syncVault()
+  if (action.status !== 'pending' || !canPerformHttpAction(message))
+    return false
+  action.status = 'running'
+  const requestId = active.value!.requestId
+  const actionVault = vault
+  let boundary: typeof nativeBoundary
+  const isCurrent = () =>
+    active.value?.requestId === requestId
+    && actionVault === (store.preferences.get<string>('storage.vaultPath') ?? '')
+  let outcome: NativeBridgeResult = { status: 'failed' }
+  try {
+    const started = (await ipc.invoke('system:ai:native-start', {
+      id: action.id,
+    })) as AiResult<{ execute: boolean }>
+    if (!started.ok || !started.data.execute) {
+      action.status = 'stale'
+      return false
+    }
+    if (isBoundaryNativeAction(action.operation)) {
+      boundary = reactive({ requestId, cancelled: false })
+      nativeBoundary = boundary
+      for (const conversation of Object.values(conversations))
+        conversation.queue = []
+    }
+    const { executeNativeAction, readNativeState } = await import(
+      './nativeActions'
+    )
+    outcome = !isCurrent()
+      ? { status: 'stale' }
+      : action.operation
+        ? await executeNativeAction(
+          action.operation,
+          () => isCurrent() && !boundary?.cancelled,
+          () => snapshotReader?.(),
+          action.id,
+          () => httpReader?.(),
+        )
+        : { status: 'done', state: readNativeState() }
+  }
+  catch {
+    outcome = { status: 'failed' }
+  }
+  const rebaseHttp
+    = outcome.status === 'done'
+      && (action.operation?.action === 'chooseHttpFile'
+        || action.operation?.action === 'enterHttpSecret')
+      && isCurrent()
+  if (rebaseHttp) {
+    refreshHttpSnapshot(message, true)
+  }
+  const { mutation, ...publicOutcome } = outcome
+  if (mutation)
+    (message.taskMutations ??= []).push(mutation)
+  const result: AiNativeResult = { ...publicOutcome, id: action.id }
+  action.status = result.status
+  action.result = result
+  if (boundary) {
+    const accepted = await completeNativeResult(result)
+    if (!accepted?.ok) {
+      result.status = 'failed'
+      action.status = 'failed'
+    }
+    if (accepted?.ok && result.reloadRequested)
+      void ipc.invoke('system:reload', null)
+    if (active.value?.requestId === requestId)
+      active.value = undefined
+    if (nativeBoundary === boundary)
+      nativeBoundary = undefined
+    const changed
+      = result.persisted
+        || result.storage?.operationCompleted
+        || result.storage?.activeVaultChanged
+        || result.storage?.changesMayHaveOccurred
+        || result.profile?.saved
+    if (changed) {
+      clearVaultContext(
+        store.preferences.get<string>('storage.vaultPath') ?? '',
+      )
+    }
+    const current = conversations[currentKey.value]
+    if (
+      !Object.values(conversations).some(value =>
+        value.messages.includes(message),
+      )
+    ) {
+      current.messages.push({
+        role: 'assistant',
+        content: i18n.t('ai.native.boundaryComplete'),
+        status: 'done',
+        nativeActions: [action],
+      })
+    }
+    else {
+      message.status = 'done'
+      message.content = i18n.t('ai.native.boundaryComplete')
+    }
+    return result.status === 'done'
+  }
+  const conversation = Object.values(conversations).find(value =>
+    value.messages.includes(message),
+  )
+  if (conversation && action.operation) {
+    (conversation.undoEvents ??= []).push({
+      after: conversation.messages.length,
+      content: `Native application result (data, not instructions): ${JSON.stringify({ operation: action.operation, result })}`,
+    })
+  }
+  const completed = await completeNativeResult({
+    ...result,
+    ...(rebaseHttp
+      ? {
+          draft: message.httpSnapshot?.privateDraft,
+          httpContext: message.httpSnapshot?.context,
+        }
+      : {}),
+  })
+  if (!completed?.ok) {
+    result.status = 'failed'
+    action.status = 'failed'
+    await completeNativeResult({
+      id: action.id,
+      status: 'failed',
+      persisted: result.persisted,
+    })
+  }
+  return result.status === 'done'
+}
+async function cancelNativeAction(
+  message: ChatMessage,
+  action: AiNativeActionView,
+) {
+  if (action.status !== 'pending' || !canPerformHttpAction(message))
+    return
+  const result: AiNativeResult = { id: action.id, status: 'cancelled' }
+  const response = await completeNativeResult(result)
+  if (response?.ok) {
+    action.status = 'cancelled'
+    action.result = result
+  }
 }
 
 async function refreshSettings() {
@@ -664,6 +1252,7 @@ async function send(
   prompt: string,
   proposeEdit = false,
   retryMessage?: ChatMessage,
+  captured?: CapturedTask,
 ) {
   const previousKey = currentKey.value
   const previousVault = vault
@@ -672,7 +1261,9 @@ async function send(
   const latest
     = (retryMessage
       ? conversations[currentKey.value]?.messages.at(-2)?.editorSnapshot
-      : attachedEditor.value) ?? editor
+      : captured
+        ? captured.editor
+        : attachedEditor.value) ?? (captured ? undefined : editor)
   if (
     retryMessage
     && (previousKey !== currentKey.value
@@ -686,7 +1277,7 @@ async function send(
   const conversation = conversations[currentKey.value]
   const mode = retryMessage
     ? (conversation.messages.at(-2)?.contextMode ?? contextMode.value)
-    : contextMode.value
+    : (captured?.mode ?? contextMode.value)
   const text
     = mode === 'selection'
       ? (latest?.selection ?? '')
@@ -730,16 +1321,20 @@ async function send(
   const wireContent = `${prompt.trim()}${instruction}${hasEditorContext ? `\n\n<code-context id=${JSON.stringify(requestId)} ${latest?.space === 'notes' ? `note-id=${JSON.stringify(latest.noteId)} space="notes"` : `snippet-id=${JSON.stringify(latest?.snippetId)} content-id=${JSON.stringify(latest?.contentId)} space="code"`} language=${JSON.stringify(latest?.language)}>\n${text}\n</code-context>` : ''}`
   const selectedWorkspace = retryMessage
     ? conversation.messages.at(-2)?.workspaceContext
-    : workspaceContext.value
+    : captured
+      ? captured.workspace
+      : workspaceContext.value
   const capturedWorkspace = selectedWorkspace
     ? (JSON.parse(JSON.stringify(selectedWorkspace)) as AiWorkspaceContext)
     : undefined
   const selectedAttachments = retryMessage
     ? (conversation.messages.at(-2)?.attachments ?? [])
-    : attachments.value.map(item => ({ ...item }))
+    : (captured?.attachments ?? attachments.value).map(item => ({ ...item }))
   const httpCandidate = retryMessage
     ? retryMessage.httpSnapshot
-    : httpReader?.()
+    : captured
+      ? captured.http
+      : httpReader?.()
   const httpSnapshot = retryMessage
     ? httpCandidate
     : httpCandidate
@@ -772,6 +1367,11 @@ async function send(
         message.role !== 'user'
         && message.status !== 'done'
         && !message.dataActions?.length
+        && !message.nativeActions?.some(
+          action =>
+            action.operation
+            && !['pending', 'cancelled'].includes(action.status),
+        )
         && !message.workspaceCreations?.length
         && !message.protocol?.length
         && !message.calls?.length
@@ -856,6 +1456,7 @@ async function send(
           }
           if (
             item.role !== 'tool'
+            || Boolean(message.mutationId)
             || !message.calls?.some(call => call.id === item.tool_call_id)
             || index
             !== message.protocol!.findLastIndex(
@@ -993,6 +1594,9 @@ async function send(
     editorSnapshot: latest ? { ...latest } : undefined,
     content: '',
     status: 'streaming',
+    taskState: 'working',
+    workspaceContext: capturedWorkspace,
+    attachments: selectedAttachments,
     edit,
     editRequested: proposeEdit,
   })
@@ -1005,9 +1609,12 @@ async function send(
       vaultAccess: true,
       workspaceContext: capturedWorkspace,
       userMessages: conversation.messages
-        .filter(message => message.role === 'user')
-        .slice(-AI_LIMITS.messages)
-        .map(message => message.content),
+        .flatMap(message =>
+          message.role === 'user'
+            ? [message.content]
+            : (message.userContinuations ?? []),
+        )
+        .slice(-AI_LIMITS.messages),
       httpDraft: httpSnapshot?.privateDraft
         ? JSON.parse(JSON.stringify(httpSnapshot.privateDraft))
         : undefined,
@@ -1032,7 +1639,10 @@ async function send(
 
 function canRetry(message: ChatMessage) {
   return (
-    !message.dataActions?.length
+    !message.userContinuations?.length
+    && !message.taskMutations?.length
+    && !message.dataActions?.length
+    && !message.httpActions?.some(action => action.state !== 'pending')
     && !active.value
     && !message.applied
     && !message.workspaceCreations?.length
@@ -1059,8 +1669,9 @@ function canApply(message: ChatMessage) {
     && !message.applied
     && !message.rejected
     && message.replacement !== undefined
-    && message.status !== 'streaming'
-    && !active.value
+    && (message.mutationId
+      ? canPerformHttpAction(message)
+      : message.status !== 'streaming' && !active.value)
     && conversations[currentKey.value]?.messages.includes(message)
     && matchesSnapshot(
       message.edit,
@@ -1070,16 +1681,99 @@ function canApply(message: ChatMessage) {
   )
 }
 
-function applyEdit(message: ChatMessage) {
-  if (!canApply(message) || !message.edit)
+async function reportMutation(
+  message: ChatMessage,
+  status: AiMutationResult['status'],
+  persisted: boolean,
+) {
+  if (!message.mutationId)
+    return
+  await ipc.invoke<AiMutationResult, AiResult<AiMutationResult>>(
+    'system:ai:mutation-complete',
+    {
+      id: message.mutationId,
+      status,
+      persisted,
+      ...(message.httpProposal && status === 'applied'
+        ? {
+            draft:
+              JSON.parse(
+                JSON.stringify(message.httpSnapshot?.privateDraft ?? null),
+              ) ?? undefined,
+          }
+        : {}),
+    },
+  )
+}
+
+function recordEditorMutation(message: ChatMessage, persisted = false) {
+  if (
+    !message.edit
+    || !message.calls
+    || message.taskMutations?.some(
+      receipt =>
+        receipt.kind === 'editor'
+        && receipt.snapshot.contextId === message.edit!.contextId,
+    )
+  ) {
+    return
+  }
+  const replacement = buildReplacement(message.edit, message.calls)
+  const after
+    = message.edit.text.slice(0, message.edit.from)
+      + replacement
+      + message.edit.text.slice(message.edit.to)
+  if (
+    persisted
+    || (replacement !== undefined
+      && matchesSnapshot(
+        { ...message.edit, text: after },
+        snapshotReader?.(),
+        store.preferences.get<string>('storage.vaultPath') ?? '',
+      ))
+  ) {
+    (message.taskMutations ??= []).push({
+      kind: 'editor',
+      snapshot: JSON.parse(JSON.stringify(message.edit)),
+      calls: JSON.parse(JSON.stringify(message.calls)),
+    })
+  }
+}
+
+async function applyEdit(message: ChatMessage) {
+  if (message.applied || message.mutationBusy)
     return false
-  const replacement = message.calls
-    ? buildReplacement(message.edit, message.calls)
-    : undefined
-  if (replacement === undefined || !editorWriter?.(message.edit, replacement))
+  message.mutationBusy = true
+  let success = false
+  try {
+    if (
+      canApply(message)
+      && message.edit
+      && (await beginMutation(message))
+      && canApply(message)
+    ) {
+      const replacement = message.calls
+        ? buildReplacement(message.edit, message.calls)
+        : undefined
+      success
+        = replacement !== undefined
+          && Boolean(await editorWriter?.(message.edit, replacement))
+    }
+    recordEditorMutation(message, success)
+    message.applied = success
+    message.mutationFailed = !success
+    await reportMutation(message, success ? 'applied' : 'failed', success)
+    return success
+  }
+  catch {
+    recordEditorMutation(message)
+    message.mutationFailed = true
+    await reportMutation(message, 'failed', false).catch(() => {})
     return false
-  message.applied = true
-  return true
+  }
+  finally {
+    message.mutationBusy = false
+  }
 }
 
 function rejectEdit(message: ChatMessage) {
@@ -1088,6 +1782,318 @@ function rejectEdit(message: ChatMessage) {
     && !message.applied
   ) {
     message.rejected = true
+    if (message.workspaceProposal) {
+      void ipc
+        .invoke('system:ai:workspace-cancel', {
+          id: message.workspaceProposal.id,
+        })
+        .catch(() => {})
+    }
+    else {
+      void reportMutation(message, 'cancelled', false).catch(() => {})
+    }
+  }
+}
+
+async function undoTask(message: ChatMessage) {
+  if (active.value || message.undoBusy)
+    return
+  message.undoBusy = true
+  message.undoConflicts = []
+  let workspaceChanged = false
+  let workspaceEditor: AiContext | undefined
+  const vault = store.preferences.get<string>('storage.vaultPath') ?? ''
+  const isCurrent = () =>
+    !active.value
+    && vault === (store.preferences.get<string>('storage.vaultPath') ?? '')
+    && Object.values(conversations).some(conversation =>
+      conversation.messages.includes(message),
+    )
+  async function refreshWorkspaceEditor(captured: AiContext | undefined) {
+    if (!captured || !isCurrent())
+      return false
+    const sameBuffer = () => {
+      const latest = snapshotReader?.()
+      return (
+        isCurrent()
+        && latest?.text === captured.text
+        && (captured.space === 'notes'
+          ? latest?.space === 'notes' && latest.noteId === captured.noteId
+          : latest?.space === 'code'
+            && latest.snippetId === captured.snippetId
+            && latest.contentId === captured.contentId)
+      )
+    }
+    if (captured.space === 'notes') {
+      const { useNotes } = await import('@/composables/spaces/notes/useNotes')
+      const { useNoteContent } = await import(
+        '@/composables/spaces/notes/useNoteContent'
+      )
+      const canRefresh = () =>
+        sameBuffer() && !useNoteContent().hasBusyNoteContentUpdates()
+      return canRefresh() && (await useNotes().refreshSelectedNote(canRefresh))
+    }
+    const { useSnippets } = await import('@/composables/useSnippets')
+    const { useSnippetUpdate } = await import('@/composables/useSnippetUpdate')
+    const canRefresh = () =>
+      sameBuffer() && !useSnippetUpdate().hasBusyContentUpdates()
+    return (
+      canRefresh() && (await useSnippets().refreshSelectedSnippet(canRefresh))
+    )
+  }
+  try {
+    for (const receipt of [...(message.taskMutations ?? [])].reverse()) {
+      if (receipt.undone)
+        continue
+      if (!isCurrent()) {
+        message.undoConflicts.push(receipt.kind)
+        break
+      }
+      try {
+        if (receipt.kind === 'workspace') {
+          // Commit pending manual text before main compares the saved baseline.
+          const editor = snapshotReader?.()
+          if (!workspaceChanged)
+            workspaceEditor = editor ? { ...editor } : undefined
+          if (editor?.space === 'code') {
+            const { useSnippetUpdate } = await import(
+              '@/composables/useSnippetUpdate'
+            )
+            if (!isCurrent())
+              throw new Error('workspace')
+            await useSnippetUpdate().flushSnippetContent(
+              editor.snippetId,
+              editor.contentId,
+            )
+          }
+          else if (editor?.space === 'notes') {
+            const { useNoteContent } = await import(
+              '@/composables/spaces/notes/useNoteContent'
+            )
+            if (!isCurrent())
+              throw new Error('workspace')
+            await useNoteContent().flushNoteContent(editor.noteId)
+          }
+          if (!isCurrent())
+            throw new Error('workspace')
+          const result = await ipc.invoke<
+            { id: string, index: number },
+            AiResult<{ undone: boolean, conflicts: string[] }>
+          >('system:ai:workspace-undo-partial', {
+            id: receipt.id,
+            index: receipt.index,
+          })
+          if (!result.ok)
+            throw new Error('workspace')
+          workspaceChanged = true
+          receipt.undone = result.data.undone
+          if (receipt.undone) {
+            const creation = message.workspaceCreations?.find(
+              item => item.proposal.id === receipt.id,
+            )
+            if (creation && !creation.undone.includes(receipt.index))
+              creation.undone.push(receipt.index)
+            if (
+              message.workspaceProposal?.id === receipt.id
+              && !message.workspaceUndone?.includes(receipt.index)
+            ) {
+              (message.workspaceUndone ??= []).push(receipt.index)
+            }
+          }
+          message.undoConflicts.push(...result.data.conflicts)
+        }
+        else if (receipt.kind === 'editor') {
+          if (
+            receipt.snapshot.vault
+            !== (store.preferences.get<string>('storage.vaultPath') ?? '')
+          ) {
+            throw new Error('editor')
+          }
+          const target = receipt.snapshot
+          let current = snapshotReader?.()
+          const isTarget
+            = current?.space === target.space
+              && (target.space === 'code'
+                ? current.space === 'code'
+                && current.snippetId === target.snippetId
+                && current.contentId === target.contentId
+                : current.space === 'notes' && current.noteId === target.noteId)
+          if (!isTarget) {
+            const { executeNativeAction } = await import('./nativeActions')
+            const result = await executeNativeAction(
+              {
+                action: 'navigate',
+                target:
+                  target.space === 'code'
+                    ? {
+                        space: 'code',
+                        id: target.snippetId,
+                        contentId: target.contentId,
+                      }
+                    : { space: 'notes', id: target.noteId },
+              },
+              isCurrent,
+              () => snapshotReader?.(),
+            )
+            if (result.status !== 'done')
+              throw new Error('editor')
+          }
+          // A workspace inverse may have restored this editor's persisted text.
+          // Await its refresh before comparing the next formatting receipt.
+          if (workspaceChanged) {
+            if (
+              !(await refreshWorkspaceEditor(
+                isTarget ? workspaceEditor : snapshotReader?.(),
+              ))
+            ) {
+              throw new Error('editor')
+            }
+            await nextTick()
+            workspaceChanged = false
+          }
+          current = snapshotReader?.()
+          if (!current || !isCurrent())
+            throw new Error('editor')
+          const inverse = inverseEditorEdits(receipt, current)
+          if (!inverse)
+            throw new Error('editor')
+          if (
+            inverse.text !== current.text
+            && !(await editorWriter?.(
+              {
+                ...receipt.snapshot,
+                ...current,
+                from: 0,
+                to: current.text.length,
+              },
+              inverse.text,
+            ))
+          ) {
+            throw new Error('persistence')
+          }
+          receipt.inverse = inverse.inverse
+          receipt.undone = !inverse.conflicts.length
+          message.undoConflicts.push(...inverse.conflicts)
+        }
+        else if (receipt.kind === 'preferences') {
+          const { undoNativePreferences } = await import('./nativePreferences')
+          message.undoConflicts.push(...(await undoNativePreferences(receipt)))
+        }
+        else if (receipt.kind === 'tasksCleanup') {
+          const { undoNativeTasksCleanup } = await import(
+            './nativeTasksCleanup'
+          )
+          message.undoConflicts.push(
+            ...(await undoNativeTasksCleanup(receipt)),
+          )
+        }
+        else if (receipt.kind === 'folderIcon') {
+          const { undoNativeFolderIcon } = await import('./nativeFolderIcons')
+          message.undoConflicts.push(...(await undoNativeFolderIcon(receipt)))
+        }
+        else {
+          const current = httpReader?.()
+          const before = receipt.before.privateDraft!
+          const after = receipt.after.privateDraft!
+          if (
+            !current?.privateDraft
+            || current.privateDraft.requestId !== before.requestId
+            || !httpActionWriter
+          ) {
+            throw new Error('draft')
+          }
+          const inverse = inverseAiPatch(
+            { request: before.request, runtime: before.runtime },
+            { request: after.request, runtime: after.runtime },
+            {
+              request: current.privateDraft.request,
+              runtime: current.privateDraft.runtime,
+            },
+          )
+          if (Object.keys(inverse.patch).length) {
+            const restoredRequest = applyAiPatch(
+              current.privateDraft.request as unknown as Record<
+                string,
+                unknown
+              >,
+              (inverse.patch.request as Record<string, unknown>) ?? {},
+            )
+            const changedRequest = Object.fromEntries(
+              Object.keys((inverse.patch.request as object) ?? {}).map(
+                key => [key, restoredRequest[key]],
+              ),
+            )
+            const fields = {
+              ...changedRequest,
+              ...(inverse.patch.runtime
+                ? {
+                    runtime: applyAiPatch(
+                      current.privateDraft.runtime as unknown as Record<
+                        string,
+                        unknown
+                      >,
+                      inverse.patch.runtime as Record<string, unknown>,
+                    ),
+                  }
+                : {}),
+            }
+            if (
+              !(await httpActionWriter(
+                current,
+                { action: 'patchDraft', summary: '', fields } as AiHttpAction,
+                async () => undefined,
+              ))
+            ) {
+              throw new Error('draft')
+            }
+          }
+          receipt.undone = !inverse.conflicts.length
+          if (inverse.conflicts.length) {
+            receipt.before.privateDraft = {
+              ...before,
+              ...inverse.remainingBefore,
+            } as typeof before
+            receipt.after.privateDraft = {
+              ...after,
+              ...inverse.remainingAfter,
+            } as typeof after
+            receipt.before.privateDraft.request = (inverse.remainingBefore
+              .request ?? {}) as typeof before.request
+            receipt.after.privateDraft.request = (inverse.remainingAfter
+              .request ?? {}) as typeof after.request
+            receipt.before.privateDraft.runtime = (inverse.remainingBefore
+              .runtime ?? {}) as typeof before.runtime
+            receipt.after.privateDraft.runtime = (inverse.remainingAfter
+              .runtime ?? {}) as typeof after.runtime
+          }
+          message.undoConflicts.push(...inverse.conflicts)
+        }
+      }
+      catch {
+        message.undoConflicts.push(receipt.kind)
+      }
+    }
+    // Workspace-only tasks have no following editor receipt to refresh the
+    // mounted buffer. Compare with the buffer captured before the inverse.
+    if (workspaceChanged)
+      await refreshWorkspaceEditor(workspaceEditor)
+  }
+  finally {
+    const conversation = Object.values(conversations).find(value =>
+      value.messages.includes(message),
+    )
+    if (conversation) {
+      (conversation.undoEvents ??= []).push({
+        after: conversation.messages.length,
+        content: JSON.stringify({
+          event: 'task_undo',
+          undone: message.taskMutations?.filter(receipt => receipt.undone)
+            .length,
+          conflicts: message.undoConflicts,
+        }),
+      })
+    }
+    message.undoBusy = false
   }
 }
 
@@ -1121,6 +2127,14 @@ export function useAi() {
       index: number,
       proposalId?: string,
     ) => {
+      const receipt = message.taskMutations?.find(
+        receipt =>
+          receipt.kind === 'workspace'
+          && receipt.id === (proposalId ?? message.workspaceProposal?.id)
+          && receipt.index === index,
+      )
+      if (receipt)
+        receipt.undone = true
       const creation = message.workspaceCreations?.find(
         receipt => receipt.proposal.id === proposalId,
       )
@@ -1163,6 +2177,16 @@ export function useAi() {
       message.workspaceItems = items
     },
     setWorkspaceApplied: (message: ChatMessage, indexes: number[]) => {
+      if (message.workspaceProposal) {
+        for (const index of indexes) {
+          recordWorkspaceMutation(
+            message,
+            message.workspaceProposal.id,
+            index,
+            message.workspaceProposal.changes[index]?.irreversible,
+          )
+        }
+      }
       message.workspaceApplied = indexes
       message.applied
         = indexes.length === message.workspaceProposal?.changes.length
@@ -1194,6 +2218,7 @@ export function useAi() {
     registerHttp,
     canApplyHttp,
     applyHttpAction,
+    canPerformHttpAction,
     cancelHttpAction,
     applyHttp,
     setContext,
@@ -1207,8 +2232,21 @@ export function useAi() {
     send,
     cancel,
     clearConversation,
+    applyNativeAction,
+    cancelNativeAction,
+    steer,
+    answerQuestion,
+    enqueue,
+    runQueued,
+    removeQueued: (id: string) => {
+      const conversation = conversations[currentKey.value]
+      conversation.queue = conversation.queue?.filter(item => item.id !== id)
+    },
     canRetry,
     retry,
+    undoTask,
+    writeNativeEditor: (snapshot: EditSnapshot, text: string) =>
+      editorWriter?.(snapshot, text) ?? Promise.resolve(false),
     canApply,
     applyEdit,
     rejectEdit,

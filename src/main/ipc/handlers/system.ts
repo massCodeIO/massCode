@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { app, ipcMain, shell } from 'electron'
+import { app, clipboard, ipcMain, shell } from 'electron'
 import {
   generateIntegrationToken,
   revokeIntegrationToken,
@@ -40,6 +40,7 @@ import {
   stopMarkdownWatcher,
 } from '../../storage/providers/markdown/watcher'
 import { store } from '../../store'
+import { runTasksCleanupWithUndo, undoTasksCleanup } from '../../tasks'
 import { installDownloadedUpdate } from '../../updates'
 import { log } from '../../utils'
 
@@ -131,6 +132,17 @@ function moveVaultAndRestartWatcher(
 }
 
 export function registerSystemHandlers() {
+  ipcMain.handle('system:clipboard-write-text', (_, value: string) => {
+    if (typeof value !== 'string')
+      throw new Error(i18n.t('messages:error.copyFailed'))
+
+    clipboard.writeText(value)
+  })
+
+  ipcMain.handle('system:tasks-cleanup', (_, payload: { vault: string }) =>
+    runTasksCleanupWithUndo(payload.vault))
+  ipcMain.handle('system:tasks-cleanup-undo', (_, payload: { id: string }) =>
+    undoTasksCleanup(payload.id))
   ipcMain.handle('system:activate-license', (_, payload: { key: string }) => {
     return activateLicense(payload.key)
   })
@@ -178,7 +190,13 @@ export function registerSystemHandlers() {
 
   ipcMain.handle(
     'system:set-vault-path',
-    (_, payload: { vaultPath: string }) => {
+    (_, payload: { vaultPath: string, expectedVault?: string }) => {
+      if (
+        payload.expectedVault !== undefined
+        && payload.expectedVault !== getVaultPath()
+      ) {
+        throw new Error(i18n.t('ai.native.stale'))
+      }
       if (typeof payload?.vaultPath !== 'string' || !payload.vaultPath.trim()) {
         throw new Error(i18n.t('messages:error.vaultPathRequired'))
       }
@@ -189,13 +207,22 @@ export function registerSystemHandlers() {
     },
   )
 
-  ipcMain.handle('system:move-vault', (_, payload: { targetPath: string }) => {
-    const sourcePath = getVaultPath()
+  ipcMain.handle(
+    'system:move-vault',
+    (_, payload: { targetPath: string, expectedVault?: string }) => {
+      const sourcePath = getVaultPath()
+      if (
+        payload.expectedVault !== undefined
+        && payload.expectedVault !== sourcePath
+      ) {
+        throw new Error(i18n.t('ai.native.stale'))
+      }
 
-    moveVaultAndRestartWatcher(sourcePath, payload.targetPath)
+      moveVaultAndRestartWatcher(sourcePath, payload.targetPath)
 
-    return { vaultPath: payload.targetPath }
-  })
+      return { vaultPath: payload.targetPath }
+    },
+  )
 
   ipcMain.handle('system:reload', () => {
     return requestLifecycleAction(() => {

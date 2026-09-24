@@ -2,10 +2,8 @@
 import { Button } from '@/components/ui/shadcn/button'
 import * as Card from '@/components/ui/shadcn/card'
 import { useHttpCollection } from '@/composables/spaces/http/useHttpCollection'
-import { flattenFolderTree } from '@/composables/spaces/http/useHttpFolderTree'
+import { useHttpCollectionOverview } from '@/composables/spaces/http/useHttpCollectionOverview'
 import { useHttpHistory } from '@/composables/spaces/http/useHttpHistory'
-import { useHttpRequests } from '@/composables/spaces/http/useHttpRequests'
-import { useHttpRunner } from '@/composables/spaces/http/useHttpRunner'
 import { useDateFormat } from '@/composables/useDateFormat'
 import { i18n } from '@/electron'
 import { Clock3, Folder, History, Send } from 'lucide-vue-next'
@@ -13,58 +11,14 @@ import { Clock3, Folder, History, Send } from 'lucide-vue-next'
 const { formatDateTime } = useDateFormat()
 
 const { collection } = useHttpCollection()
-const { allRequests } = useHttpRequests()
 const {
   openHistory,
-  history,
   loading,
   loadError: failed,
   getHttpHistory,
 } = useHttpHistory()
-const { view, folderId } = useHttpRunner()
-const folderIds = computed(
-  () =>
-    new Set(
-      collection.value
-        ? flattenFolderTree([collection.value]).map(folder => folder.id)
-        : [],
-    ),
-)
-const requests = computed(() =>
-  allRequests.value.filter(
-    request =>
-      request.folderId !== null
-      && folderIds.value.has(request.folderId)
-      && !request.isDeleted,
-  ),
-)
-const methods = computed(() => {
-  const counts = new Map<string, number>()
-  requests.value.forEach((request) => {
-    const method = request.protocol === 'websocket' ? 'WS' : request.method
-    counts.set(method, (counts.get(method) ?? 0) + 1)
-  })
-  return [...counts].sort(([a], [b]) => a.localeCompare(b))
-})
-const recent = computed(() => {
-  const byId = new Map(requests.value.map(request => [request.id, request]))
-  return history.value
-    .filter(item => item.requestId !== null && byId.has(item.requestId))
-    .toSorted((a, b) => b.requestedAt - a.requestedAt || b.id - a.id)
-    .slice(0, 5)
-    .map(item => ({ ...item, name: byId.get(item.requestId!)!.name }))
-})
-const lastRun = computed(() =>
-  folderId.value === collection.value?.id
-  && view.value
-  && ['passed', 'failed', 'cancelled'].includes(view.value.state)
-    ? view.value
-    : null,
-)
-const passed = computed(
-  () =>
-    lastRun.value?.steps.filter(step => step.state === 'passed').length ?? 0,
-)
+const { folderIds, requests, methods, recent, lastRun, passed }
+  = useHttpCollectionOverview(() => collection.value?.id)
 
 watch(
   () => collection.value?.id,

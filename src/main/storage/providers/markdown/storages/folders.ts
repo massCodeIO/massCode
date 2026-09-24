@@ -192,7 +192,7 @@ export function createFoldersStorage(): FoldersStorage {
 
       if ('defaultLanguage' in input) {
         folder.defaultLanguage
-          = input.defaultLanguage || folder.defaultLanguage
+          = input.defaultLanguage ?? folder.defaultLanguage
       }
 
       if ('isOpen' in input) {

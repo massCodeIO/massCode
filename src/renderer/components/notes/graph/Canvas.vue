@@ -5,6 +5,7 @@ import {
   useNotesWorkspaceNavigation,
   useTheme,
 } from '@/composables'
+import { registerNativeBridge } from '@/composables/ai/nativeBridges'
 import { i18n } from '@/electron'
 import { ArrowLeft, LoaderCircle, LocateFixed } from 'lucide-vue-next'
 import { getNotesGraphPalette } from '../shared/graphPalette'
@@ -12,6 +13,11 @@ import { loadNotesGraphIfNeeded } from './loader'
 
 interface GraphSceneExposed {
   resetViewport: () => void
+  zoomIn: () => void
+  zoomOut: () => void
+  panViewport: (x: number, y: number) => void
+  focusNode: (id: number) => boolean
+  moveNode: (id: number, dx: number, dy: number) => boolean
 }
 
 const {
@@ -29,6 +35,49 @@ const graphPalette = computed(() => getNotesGraphPalette(isDark.value))
 
 onMounted(() => {
   loadNotesGraphIfNeeded(graphData.value, getNotesGraph)
+})
+let unregister: (() => void) | undefined
+let disposed = false
+onMounted(() => {
+  unregister = registerNativeBridge('notesGraph', async (action, current) => {
+    if (disposed || !current())
+      return { status: 'stale' }
+    if (isGraphLoading.value)
+      await getNotesGraph()
+    await nextTick()
+    if (disposed || !current())
+      return { status: 'stale' }
+    if (
+      action.action !== 'notesGraph'
+      || !graphSceneRef.value
+      || isGraphLoading.value
+      || graphError.value
+    ) {
+      return { status: 'unavailable' }
+    }
+    const scene = graphSceneRef.value
+    const command = action.command
+    if (command.kind === 'focus' && !scene.focusNode(command.noteId))
+      return { status: 'unavailable' }
+    if (
+      command.kind === 'moveNode'
+      && !scene.moveNode(command.noteId, command.dx, command.dy)
+    ) {
+      return { status: 'unavailable' }
+    }
+    if (command.kind === 'reset')
+      scene.resetViewport()
+    if (command.kind === 'pan')
+      scene.panViewport(command.x, command.y)
+    if (command.kind === 'zoomIn' || command.kind === 'zoomOut')
+      scene[command.kind]()
+    await nextTick()
+    return { status: current() ? 'done' : 'stale', panel: 'graph' }
+  })
+})
+onBeforeUnmount(() => {
+  disposed = true
+  unregister?.()
 })
 </script>
 

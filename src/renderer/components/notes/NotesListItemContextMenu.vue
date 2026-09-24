@@ -15,11 +15,13 @@ import {
   useSonner,
 } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
-import { i18n, ipc } from '@/electron'
+import { i18n, ipc, store } from '@/electron'
 import { isMac } from '@/utils'
 import { useClipboard } from '@vueuse/core'
 import { api } from '~/renderer/services/api'
+import { getMermaidSources, renderDiagramPreviews } from './diagramExport'
 import { renderDrawingPreviewsFromMarkdown } from './drawingExport'
+import { showNoteExportWarnings } from './exportWarnings'
 
 interface NoteTagInfo {
   id: number
@@ -163,6 +165,7 @@ function showCloudFileNotReadyWarning() {
 }
 
 async function onExport(format: NoteExportFormat) {
+  const vault = store.preferences.get('storage.vaultPath')
   try {
     let content: string
     if (selectedNote.value?.id === props.note.id) {
@@ -193,17 +196,24 @@ async function onExport(format: NoteExportFormat) {
     }
 
     const drawingPreviews = await renderDrawingPreviewsFromMarkdown(content)
+    const diagramPreviews = await renderDiagramPreviews(
+      getMermaidSources(content),
+      Math.max(0, 50 - drawingPreviews.length),
+    )
+    if (store.preferences.get('storage.vaultPath') !== vault)
+      throw new Error('VAULT_CHANGED')
     const result = await ipc.invoke<NoteExportPayload, NoteExportResponse>(
       'fs:export-note',
       {
         content,
         drawingPreviews,
+        diagramPreviews,
         format,
         name: props.note.name,
       },
     )
 
-    if (!result.canceled) {
+    if (!result.canceled && !showNoteExportWarnings(result.warnings)) {
       sonner({
         message: i18n.t('messages:success.noteExported'),
         type: 'success',

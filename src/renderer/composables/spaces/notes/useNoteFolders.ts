@@ -319,9 +319,11 @@ async function getNoteFolders(shouldEnsureVisibility = true) {
     if (shouldEnsureVisibility) {
       await ensureSelectedFolderIsVisible()
     }
+    return true
   }
   catch (error) {
     console.error(error)
+    return false
   }
 }
 

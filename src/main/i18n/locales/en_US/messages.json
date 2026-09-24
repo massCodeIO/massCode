@@ -14,7 +14,7 @@
     ],
     "migrateToMarkdown": [
       "Migrate to Markdown Vault?",
-      "The selected vault will be overwritten with the current SQLite library."
+      "All current vault content (including Notes, HTTP, Math and Drawings) will be replaced by the selected SQLite library. This cannot be undone here. Back up the current vault first."
     ],
     "vaultDoctorApply": [
       "Apply vault fixes?",
@@ -30,7 +30,8 @@
     "noteExported": "Note exported successfully.",
     "noteFolderSiteExported": "Notes folder exported as an HTML site.",
     "vaultDoctorApplied": "Vault Doctor applied {{count}} fixes.",
-    "vaultDoctorClean": "Vault Doctor found no issues."
+    "vaultDoctorClean": "Vault Doctor found no issues.",
+    "artifactExported": "File saved"
   },
   "warning": {
     "noUndo": "You cannot undo this action.",
@@ -47,9 +48,19 @@
     "vaultDoctorConflicts": "Vault: {{count}} sync conflict(s) need attention",
     "vaultDoctorReview": "Review",
     "vaultDoctorNotReady": "Vault is still syncing with cloud storage. Try scanning again in a moment.",
-    "cloudFileNotReady": "This item is still syncing from cloud storage. Try again in a moment."
+    "cloudFileNotReady": "This item is still syncing from cloud storage. Try again in a moment.",
+    "noteExportIncomplete": "Export saved with limitations: {{details}}",
+    "noteExportLoss": {
+      "mermaid": "Diagrams kept as source",
+      "drawings": "Missing drawing previews",
+      "managedImages": "Unavailable managed images",
+      "remoteImages": "Remote images blocked",
+      "richFormatting": "Editor formatting kept as Markdown",
+      "internalLinks": "Internal links kept as text"
+    }
   },
   "error": {
+    "formatFailed": "Could not format or save the fragment.",
     "migration": "Auto-migration from SQLite failed: {{error}}",
     "secretNameRequired": "Enter a name for the secret before saving its value.",
     "secretEnvironmentMissing": "This environment no longer exists.",
@@ -76,7 +87,8 @@
       "update": "Failed to save the environment. Your changes have not been saved.",
       "delete": "Failed to delete the environment.",
       "activate": "Failed to switch the environment."
-    }
+    },
+    "artifactExportFailed": "Could not save the file"
   },
   "description": {
     "storageVault": "Choose the vault directory. To sync between devices, select a folder in iCloud Drive, Google Drive or Dropbox.",

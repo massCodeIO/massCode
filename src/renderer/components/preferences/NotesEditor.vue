@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { TasksSettings } from '~/main/store/types'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import { Switch } from '@/components/ui/shadcn/switch'
 import { useNotes, useNotesEditor } from '@/composables'
-import { i18n, store } from '@/electron'
+import { useTaskPreferences } from '@/composables/useTaskPreferences'
+import { i18n } from '@/electron'
 
 const { settings } = useNotesEditor()
 const { cleanupCompletedTasks } = useNotes()
@@ -20,19 +20,7 @@ watch(
   { deep: true },
 )
 
-const tasksSettings = reactive(store.preferences.get('tasks') as TasksSettings)
-
-if (!tasksSettings.autoCleanupCompleted) {
-  tasksSettings.autoCleanupCompleted = 'never'
-}
-
-watch(
-  tasksSettings,
-  () => {
-    store.preferences.set('tasks', JSON.parse(JSON.stringify(tasksSettings)))
-  },
-  { deep: true },
-)
+const { settings: tasksSettings } = useTaskPreferences()
 
 const autoCleanupOptions = [
   { label: i18n.t('preferences:tasks.autoCleanup.never'), value: 'never' },

@@ -4,8 +4,10 @@ import path from 'node:path'
 import { Readable } from 'node:stream'
 import fs from 'fs-extra'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { workspaceCreationHistory } from '../../../shared/aiWorkspace'
 import {
   emptyHttpCollection,
+  httpCollectionSchema,
   resolveHttpFolderConfig,
 } from '../../../shared/httpCollection'
 import { emptyHttpRuntime } from '../../../shared/httpRuntime'
@@ -143,6 +145,211 @@ function apply(operation: unknown) {
   expect(result.failed).toBeUndefined()
   return { manager, proposal, result }
 }
+it('keeps the native creation suffix when a trashed HTTP request occupies the requested path', () => {
+  const db = useHttpStorage().requests
+  const trashedId = db.createRequest({ name: 'Socket' }).id
+  db.updateRequest(trashedId, { isDeleted: 1 })
+  const trashed = structuredClone(db.getRequestById(trashedId))
+  const originalPath = path.join(tempVaultPath, 'http', 'Socket.md')
+  const originalFile = fs.readFileSync(originalPath, 'utf8')
+  const manager = createWorkspaceManager()
+  const result = manager.create(
+    creationPlan({
+      summary: 'Create socket',
+      items: [
+        {
+          type: 'http_request',
+          name: 'Socket',
+          protocol: 'websocket',
+          method: 'GET',
+          url: 'wss://example.test/socket',
+          description: 'Socket description',
+          headers: [{ key: 'X-Test', value: 'preserved', enabled: true }],
+        },
+      ],
+    }),
+  )
+  expect(result.failed).toBeUndefined()
+  expect(result.items).toHaveLength(1)
+  const created = result.items[0]!
+  expect(created.name).toBe('Socket 1')
+  expect(created.requestedName).toBe('Socket')
+  const history = workspaceCreationHistory({ ...result, undone: [] })
+  expect(history.created[0]).toMatchObject({
+    name: 'Socket 1',
+    requestedName: 'Socket',
+  })
+  expect(history.nameAllocationNote).toContain('Native storage allocated')
+  expect(history.nameAllocationNote).not.toContain('collision')
+  expect(db.getRequestById(created.id)).toMatchObject({
+    name: 'Socket 1',
+    protocol: 'websocket',
+    method: 'GET',
+    url: 'wss://example.test/socket',
+    description: 'Socket description',
+    headers: [{ key: 'X-Test', value: 'preserved', enabled: true }],
+    isDeleted: 0,
+  })
+  expect(fs.existsSync(path.join(tempVaultPath, 'http', 'Socket 1.md'))).toBe(
+    true,
+  )
+  expect(fs.existsSync(path.join(tempVaultPath, 'http', 'Socket 2.md'))).toBe(
+    false,
+  )
+  expect(result.proposal.changes[0]).toMatchObject({
+    name: 'Socket 1',
+    operation: { fields: { name: 'Socket 1' } },
+  })
+  expect(JSON.parse(result.proposal.changes[0]!.after).name).toBe('Socket 1')
+  expect(db.getRequestById(trashedId)).toEqual(trashed)
+  expect(fs.readFileSync(originalPath, 'utf8')).toBe(originalFile)
+  manager.undo(result.proposal.id, 0)
+  expect(db.getRequestById(created.id)).toMatchObject({
+    name: 'Socket 1',
+    isDeleted: 1,
+  })
+  expect(db.getRequestById(trashedId)).toEqual(trashed)
+  expect(fs.readFileSync(originalPath, 'utf8')).toBe(originalFile)
+})
+
+it('omits name allocation provenance when native creation preserves the requested name', () => {
+  const result = createWorkspaceManager().create(
+    creationPlan({
+      summary: 'Create request and folder',
+      items: [
+        { type: 'folder', space: 'http', name: 'Requests' },
+        {
+          type: 'http_request',
+          name: 'Request',
+          method: 'GET',
+          url: 'https://example.test',
+          folderOperation: 0,
+        },
+      ],
+    }),
+  )
+  expect(result.failed).toBeUndefined()
+  const history = workspaceCreationHistory({ ...result, undone: [] })
+  expect(history.created[0]).toMatchObject({ name: 'Request' })
+  expect(history.containers[0]).toMatchObject({ name: 'Requests' })
+  expect(history.created[0]).not.toHaveProperty('requestedName')
+  expect(history.containers[0]).not.toHaveProperty('requestedName')
+  expect(history).not.toHaveProperty('nameAllocationNote')
+})
+
+it('undoes a new collection after only its sidebar expansion changes', () => {
+  const manager = createWorkspaceManager()
+  const result = manager.create(
+    creationPlan({
+      summary: 'Create collection',
+      items: [{ type: 'http_collection', name: 'Orders' }],
+    }),
+  )
+  expect(result.failed).toBeUndefined()
+  const folderId = result.containers[0]!.id
+  useHttpStorage().folders.updateFolder(folderId, { isOpen: 1 })
+  resetHttpRuntimeCache()
+  expect(manager.undo(result.proposal.id, 0)).toBe(true)
+  expect(
+    useHttpStorage()
+      .folders.getFolders()
+      .some(folder => folder.id === folderId),
+  ).toBe(false)
+})
+
+it('undoes an expanded new collection after its requests, preserving manually edited folders and children', () => {
+  const db = useHttpStorage()
+  const manager = createWorkspaceManager()
+  const result = manager.create(
+    creationPlan({
+      summary: 'Create collection',
+      items: [
+        { type: 'http_collection', name: 'Orders' },
+        {
+          type: 'http_request',
+          name: 'Get order',
+          method: 'GET',
+          url: 'https://example.test/orders',
+          folderOperation: 0,
+        },
+      ],
+    }),
+  )
+  expect(result.failed).toBeUndefined()
+  const folderId = result.containers[0]!.id
+  const readFolder = () =>
+    db.folders.getFolders().find(folder => folder.id === folderId)
+  const original = structuredClone(readFolder()!)
+  expect(original.isOpen).toBe(0)
+  db.folders.updateFolder(folderId, { isOpen: 1 })
+  expect(manager.undo(result.proposal.id, 1)).toBe(true)
+  expect(db.requests.getRequestById(result.items[0]!.id)).toMatchObject({
+    isDeleted: 1,
+    folderId: null,
+  })
+
+  for (const metadata of [
+    { name: 'Manual' },
+    { icon: 'manual-icon' },
+    {
+      collectionConfig: {
+        ...emptyHttpCollection(),
+        documentation: 'Manual documentation',
+      },
+    },
+  ]) {
+    db.folders.updateFolder(folderId, metadata)
+    expect(() => manager.undo(result.proposal.id, 0)).toThrow('STALE_PROPOSAL')
+    expect(readFolder()).toMatchObject(metadata)
+    db.folders.updateFolder(folderId, {
+      name: original.name,
+      icon: original.icon,
+      collectionConfig: httpCollectionSchema.parse(original.collectionConfig),
+    })
+  }
+  const child = db.folders.createFolder({
+    name: 'Manual child',
+    parentId: folderId,
+  }).id
+  expect(() => manager.undo(result.proposal.id, 0)).toThrow('FOLDER_NOT_EMPTY')
+  expect(readFolder()).toBeDefined()
+  db.folders.deleteFolder(child)
+  const request = db.requests.createRequest({
+    name: 'Manual request',
+    folderId,
+  }).id
+  expect(() => manager.undo(result.proposal.id, 0)).toThrow('FOLDER_NOT_EMPTY')
+  expect(db.requests.getRequestById(request)).toMatchObject({
+    folderId,
+    isDeleted: 0,
+  })
+  db.requests.updateRequest(request, { folderId: null })
+  resetHttpRuntimeCache()
+  expect(readFolder()!.isOpen).toBe(1)
+  expect(manager.undo(result.proposal.id, 0)).toBe(true)
+  expect(readFolder()).toBeUndefined()
+})
+
+it('still requires the exact requested name for explicit HTTP updates', () => {
+  const db = useHttpStorage().requests
+  const trashedId = db.createRequest({ name: 'Socket' }).id
+  db.updateRequest(trashedId, { isDeleted: 1 })
+  const id = db.createRequest({ name: 'Other' }).id
+  const manager = createWorkspaceManager()
+  const proposal = manager.propose(
+    plan([op('item', 'update', id, { name: 'Socket' })]),
+  )
+  expect(manager.apply(proposal.id, [0])).toMatchObject({
+    applied: [],
+    failed: 0,
+  })
+  expect(db.getRequestById(id)).toMatchObject({ name: 'Other', isDeleted: 0 })
+  expect(db.getRequestById(trashedId)).toMatchObject({
+    name: 'Socket',
+    isDeleted: 1,
+  })
+})
+
 it('duplicates complete WebSocket definitions and runtime from storage, with no favorite or secret leakage', () => {
   const db = useHttpStorage().requests
   const id = db.createRequest({
@@ -330,6 +537,10 @@ it('supports HTTP trash/restore collisions, permanent deletion and descendant fo
   })
   const restore = apply(op('item', 'restore', first))
   expect(restore.result.items[0]!.type).toBe('http_request')
+  expect(db.requests.getRequestById(first)).toMatchObject({
+    isDeleted: 0,
+    folderId: null,
+  })
   restore.manager.undo(restore.proposal.id, 0)
   apply(op('item', 'permanentDelete', first))
   expect(db.requests.getRequestById(first)).toBeNull()
@@ -584,4 +795,98 @@ it('keeps the real redacted execution snapshot with persistent history disabled'
   expect(JSON.stringify(result.view)).not.toContain('private-token')
   expect(useHttpStorage().history.getEntries()).toEqual([])
   expect(transport.request).toHaveBeenCalledOnce()
+})
+
+it('retries partial request script Undo with the original runtime discriminator', () => {
+  const db = useHttpStorage().requests
+  const id = db.createRequest({ name: 'Request script Undo' }).id
+  const original = structuredClone(db.getRequestById(id)!.runtime)
+  const applied = apply(
+    op('item', 'update', id, {
+      runtime: { scripts: { preRequest: 'console.log(1)', postResponse: '' } },
+    }),
+  )
+  const saved = db.getRequestById(id)!
+  db.updateRuntime(
+    id,
+    {
+      ...saved.runtime!,
+      scripts: { preRequest: 'manual script', postResponse: '' },
+    },
+    saved.runtimeRevision!,
+  )
+  expect(applied.manager.undo(applied.proposal.id, 0, true)).toMatchObject({
+    undone: false,
+    conflicts: ['runtime.scripts'],
+  })
+  const current = db.getRequestById(id)!
+  expect(current.runtime).toMatchObject({
+    version: 2,
+    scripts: { preRequest: 'manual script' },
+  })
+  db.updateRuntime(
+    id,
+    { ...current.runtime!, scripts: saved.runtime!.scripts },
+    current.runtimeRevision!,
+  )
+  expect(applied.manager.undo(applied.proposal.id, 0, true)).toEqual({
+    undone: true,
+    conflicts: [],
+  })
+  expect(db.getRequestById(id)!.runtime).toEqual(original)
+})
+
+it('partially undoes collection changes while retaining manually edited first scripts and valid runtime version', () => {
+  const db = useHttpStorage().folders
+  const id = db.createFolder({ name: 'Scripts Undo' }).id
+  db.updateFolder(id, { collectionConfig: emptyHttpCollection() })
+  const applied = apply(
+    op('folder', 'update', id, {
+      collectionConfig: {
+        documentation: 'AI documentation',
+        runtime: {
+          scripts: { preRequest: 'console.log(1)', postResponse: '' },
+        },
+      },
+    }),
+  )
+  const saved = httpCollectionSchema.parse(
+    db.getFolders().find(folder => folder.id === id)!.collectionConfig,
+  )
+  db.updateFolder(id, {
+    collectionConfig: {
+      ...saved,
+      runtime: {
+        ...saved.runtime,
+        scripts: { preRequest: 'manual script', postResponse: '' },
+      },
+    },
+  })
+  const result = applied.manager.undo(applied.proposal.id, 0, true)
+  expect(result).toMatchObject({
+    undone: false,
+    conflicts: ['collectionConfig.runtime.scripts'],
+  })
+  const current = httpCollectionSchema.parse(
+    db.getFolders().find(folder => folder.id === id)!.collectionConfig,
+  )
+  expect(current.documentation).toBe('')
+  expect(current.runtime).toMatchObject({
+    version: 2,
+    scripts: { preRequest: 'manual script', postResponse: '' },
+  })
+  db.updateFolder(id, {
+    collectionConfig: {
+      ...current,
+      runtime: { ...current.runtime, scripts: saved.runtime.scripts },
+    },
+  })
+  expect(applied.manager.undo(applied.proposal.id, 0, true)).toEqual({
+    undone: true,
+    conflicts: [],
+  })
+  const restored = httpCollectionSchema.parse(
+    db.getFolders().find(folder => folder.id === id)!.collectionConfig,
+  )
+  expect(restored.runtime).toEqual(emptyHttpCollection().runtime)
 })

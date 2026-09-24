@@ -9,6 +9,55 @@ function plan(operation: unknown) {
   }
 }
 describe('workspace review contract', () => {
+  it('exposes Code folder defaults without leaking fields to other spaces', () => {
+    const update = {
+      space: 'code',
+      kind: 'folder',
+      action: 'update',
+      id: 1,
+      fields: { defaultLanguage: 'typescript' },
+    }
+    expect(workspaceReviewSchema.parse(plan(update)).operations[0]).toEqual(
+      update,
+    )
+    for (const space of ['notes', 'http']) {
+      expect(
+        workspaceReviewSchema.safeParse(plan({ ...update, space })).success,
+      ).toBe(false)
+    }
+    expect(
+      workspaceReviewSchema.safeParse(
+        plan({ ...update, fields: { collectionConfig: null } }),
+      ).success,
+    ).toBe(false)
+  })
+  it('exposes Notes tag create/rename and rejects unsupported tag operations', () => {
+    const create = {
+      space: 'notes',
+      kind: 'tag',
+      action: 'create',
+      fields: { name: 'Topic' },
+    }
+    const update = { ...create, action: 'update', id: 1 }
+    expect(workspaceReviewSchema.parse(plan(create)).operations[0]).toEqual(
+      create,
+    )
+    expect(workspaceReviewSchema.parse(plan(update)).operations[0]).toEqual(
+      update,
+    )
+    for (const operation of [
+      { ...create, id: 1 },
+      { ...update, id: undefined },
+      { ...update, space: 'code' },
+      { ...update, space: 'http' },
+      { ...update, fields: { name: '' } },
+      { ...update, fields: { name: 'Topic', tags: ['extra'] } },
+    ]) {
+      expect(workspaceReviewSchema.safeParse(plan(operation)).success).toBe(
+        false,
+      )
+    }
+  })
   it.each([
     [
       'code',

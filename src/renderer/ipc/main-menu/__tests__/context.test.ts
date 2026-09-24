@@ -10,64 +10,68 @@ const contentSort = {
 } as const
 
 describe('createMainMenuContext', () => {
-  it('builds code-space menu context from layout and editor state', () => {
-    const context = createMainMenuContext({
-      activeSpaceId: 'code',
-      compactListMode: true,
-      hideCompletedTasksInFolders: false,
-      contentSort,
-      code: {
+  it.each([false, true])(
+    'builds code-space menu context with actual format availability=%s',
+    (canFormat) => {
+      const context = createMainMenuContext({
+        activeSpaceId: 'code',
+        compactListMode: true,
+        hideCompletedTasksInFolders: false,
+        contentSort,
+        code: {
+          canFormat,
+          canPreviewCode: true,
+          canPreviewJson: true,
+          isCodePreviewShown: false,
+          isJsonPreviewShown: true,
+          layoutMode: 'list-editor',
+        },
+        notes: {
+          hasSelectedNote: false,
+          isMindmapShown: false,
+          isPresentationShown: false,
+          layoutMode: 'all-panels',
+          mode: 'livePreview',
+        },
+        http: {
+          layoutMode: 'all-panels',
+          canSendRequest: false,
+        },
+      })
+
+      expect(context.file).toEqual({
+        canCreateFragment: true,
+        canCreateTask: false,
+        primaryAction: 'new-snippet',
+        secondaryAction: 'new-folder',
+      })
+      expect(context.view).toEqual({
+        canToggleCompactMode: true,
+        canToggleHideCompletedTasks: false,
+        isHideCompletedTasksInFolders: false,
+        canToggleMindmap: false,
+        canTogglePresentation: false,
+        contentSortField: 'updatedAt',
+        contentSortOrder: 'DESC',
+        isCompactMode: true,
+        isMindmapShown: false,
+        isPresentationShown: false,
+        layoutMode: 'list-editor',
+        layoutModes: ['all-panels', 'list-editor', 'editor-only'],
+      })
+      expect(context.editor).toEqual({
+        canAdjustFontSize: true,
+        canSendRequest: false,
+        canFormat,
         canPreviewCode: true,
         canPreviewJson: true,
         isCodePreviewShown: false,
         isJsonPreviewShown: true,
-        layoutMode: 'list-editor',
-      },
-      notes: {
-        hasSelectedNote: false,
-        isMindmapShown: false,
-        isPresentationShown: false,
-        layoutMode: 'all-panels',
-        mode: 'livePreview',
-      },
-      http: {
-        layoutMode: 'all-panels',
-        canSendRequest: false,
-      },
-    })
-
-    expect(context.file).toEqual({
-      canCreateFragment: true,
-      canCreateTask: false,
-      primaryAction: 'new-snippet',
-      secondaryAction: 'new-folder',
-    })
-    expect(context.view).toEqual({
-      canToggleCompactMode: true,
-      canToggleHideCompletedTasks: false,
-      isHideCompletedTasksInFolders: false,
-      canToggleMindmap: false,
-      canTogglePresentation: false,
-      contentSortField: 'updatedAt',
-      contentSortOrder: 'DESC',
-      isCompactMode: true,
-      isMindmapShown: false,
-      isPresentationShown: false,
-      layoutMode: 'list-editor',
-      layoutModes: ['all-panels', 'list-editor', 'editor-only'],
-    })
-    expect(context.editor).toEqual({
-      canAdjustFontSize: true,
-      canSendRequest: false,
-      canFormat: true,
-      canPreviewCode: true,
-      canPreviewJson: true,
-      isCodePreviewShown: false,
-      isJsonPreviewShown: true,
-      kind: 'code',
-      noteMode: null,
-    })
-  })
+        kind: 'code',
+        noteMode: null,
+      })
+    },
+  )
 
   it('builds notes-space menu context with markdown view actions', () => {
     const context = createMainMenuContext({
@@ -76,6 +80,7 @@ describe('createMainMenuContext', () => {
       hideCompletedTasksInFolders: false,
       contentSort,
       code: {
+        canFormat: true,
         canPreviewCode: false,
         canPreviewJson: false,
         isCodePreviewShown: false,
@@ -136,6 +141,7 @@ describe('createMainMenuContext', () => {
       hideCompletedTasksInFolders: false,
       contentSort,
       code: {
+        canFormat: true,
         canPreviewCode: false,
         canPreviewJson: false,
         isCodePreviewShown: false,
@@ -195,6 +201,7 @@ describe('createMainMenuContext', () => {
       hideCompletedTasksInFolders: false,
       contentSort,
       code: {
+        canFormat: true,
         canPreviewCode: false,
         canPreviewJson: false,
         isCodePreviewShown: false,
@@ -237,6 +244,7 @@ describe('createMainMenuContext', () => {
       hideCompletedTasksInFolders: false,
       contentSort,
       code: {
+        canFormat: true,
         canPreviewCode: false,
         canPreviewJson: false,
         isCodePreviewShown: false,
@@ -302,6 +310,7 @@ describe('createMainMenuContext', () => {
       hideCompletedTasksInFolders: false,
       contentSort,
       code: {
+        canFormat: true,
         canPreviewCode: false,
         canPreviewJson: false,
         isCodePreviewShown: false,

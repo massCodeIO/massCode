@@ -305,9 +305,11 @@ async function getHttpFolders(shouldEnsureVisibility = true) {
     if (shouldEnsureVisibility) {
       await ensureSelectedFolderIsVisible()
     }
+    return true
   }
   catch (error) {
     console.error(error)
+    return false
   }
 }
 
@@ -476,10 +478,14 @@ async function selectHttpFolder(
   }
 }
 
-async function openHttpFolder(folderId: number) {
+async function openHttpFolder(
+  folderId: number,
+  current: () => boolean = () => true,
+) {
   const token = ++httpRuntimeNavigation.transitionToken
   if (
     !(await httpRuntimeNavigation.confirmLeave())
+    || !current()
     || token !== httpRuntimeNavigation.transitionToken
   ) {
     return false
@@ -491,10 +497,10 @@ async function openHttpFolder(folderId: number) {
     httpState.requestId = currentRequest.value?.id
   httpState.activePanel = 'folder'
   await selectHttpFolder(folderId)
-  if (token !== httpRuntimeNavigation.transitionToken)
+  if (!current() || token !== httpRuntimeNavigation.transitionToken)
     return false
-  await useHttpRequests().getHttpRequests({ folderId })
-  return token === httpRuntimeNavigation.transitionToken
+  const loaded = await useHttpRequests().getHttpRequests({ folderId })
+  return loaded && current() && token === httpRuntimeNavigation.transitionToken
 }
 
 function resetHttpFoldersState() {

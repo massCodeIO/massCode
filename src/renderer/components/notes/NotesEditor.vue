@@ -5,6 +5,7 @@ import type { NoteAnnotation } from './inspector/annotations'
 import type { ExternalLinkMatch } from './inspector/externalLinks'
 import type { OutlineHeading, OutlineMove } from './inspector/outline'
 import type { EditorMenuCommand } from './NotesEditorContextMenu.vue'
+import type { AiNativeAction } from '~/shared/aiNativeActions'
 import type { InternalLinkMatch } from '~/shared/notes/internalLinks'
 import { createCodeHighlight } from '@/components/cm-extensions/codeHighlight'
 import { editorScrollbarTheme } from '@/components/cm-extensions/scrollbarTheme'
@@ -96,6 +97,7 @@ import {
 } from './cm-extensions/tableBlocks'
 import { moveSelectionToAdjacentTableCell } from './cm-extensions/tableNavigation'
 import { isOwnNoteContentEcho } from './editorSync'
+import { resolveNativeNoteTarget } from './inspector/nativeTarget'
 import { createOutlineMove, getOutline } from './inspector/outline'
 import { createNotesEditTheme } from './theme'
 
@@ -360,7 +362,7 @@ function createEditorState(doc: string): EditorState {
   }
   else {
     extensions.push(placeholder('Start typing...'))
-    extensions.push(createImageInsert())
+    extensions.push(createImageInsert(() => props.noteId))
   }
 
   if (!raw) {
@@ -763,7 +765,123 @@ function applyAiEdit(
     vault,
   )
 }
+function findNativeContent(
+  action: Extract<AiNativeAction, { action: 'findInContent' }>,
+) {
+  if (!view || props.disabled)
+    return
+  if (!action.command || action.command === 'search') {
+    if (!action.query)
+      return
+    openContentSearch(false)
+    contentSearchQuery.value = action.query
+    refreshContentSearch()
+  }
+  else if (action.command === 'close') {
+    closeContentSearch(false)
+  }
+  else {
+    if (!isContentSearchOpen.value)
+      return
+    selectContentSearchMatch(
+      contentSearchIndex.value + (action.command === 'next' ? 1 : -1),
+    )
+  }
+  return {
+    open: isContentSearchOpen.value,
+    index: isContentSearchOpen.value ? contentSearchIndex.value : -1,
+    count: isContentSearchOpen.value ? contentSearchMatches.value.length : 0,
+  }
+}
+
+function nativeCommand(
+  action: Extract<AiNativeAction, { action: 'editorCommand' }>,
+) {
+  if (
+    !view
+    || props.disabled
+    || isPreviewMode.value
+    || (action.command === 'normalizeLineBreaks'
+      && action.location.kind !== 'document')
+  ) {
+    return false
+  }
+  const text = view.state.doc.toString()
+  const location = action.location
+  let from = location.kind === 'end' ? text.length : 0
+  let to = location.kind === 'document' ? text.length : from
+  if (location.kind === 'text') {
+    from = text.indexOf(location.text)
+    if (from < 0 || text.includes(location.text, from + 1))
+      return false
+    to = from + location.text.length
+  }
+  view.dispatch({ selection: { anchor: from, head: to } })
+  if (action.command === 'normalizeLineBreaks')
+    normalizeLineBreaks(view)
+  else onMenuCommand(action.command, true)
+  return true
+}
+
+function nativeSection(
+  action: Extract<AiNativeAction, { action: 'notesSection' }>,
+) {
+  if (!view || props.disabled || (action.destination && isPreviewMode.value))
+    return false
+  const content = view.state.doc.toString()
+  const outline = getOutline(content)
+  const sources = outline.filter(heading => heading.title === action.heading)
+  if (sources.length !== 1)
+    return false
+  const source = sources[0]!
+  if (!action.destination) {
+    revealHeading(source)
+    return true
+  }
+  const targets = outline.filter(
+    heading => heading.title === action.destination!.heading,
+  )
+  if (targets.length !== 1)
+    return false
+  const transaction = createOutlineMove(content, {
+    content,
+    from: source.from,
+    target: targets[0]!.from,
+    after: action.destination.placement === 'after',
+    inside: action.destination.placement === 'inside',
+  })
+  if (!transaction)
+    return false
+  view.dispatch(transaction)
+  view.dispatch({
+    effects: EditorView.scrollIntoView(view.state.selection.main.head, {
+      y: 'center',
+    }),
+  })
+  return true
+}
+
+function nativeReveal(
+  action: Extract<AiNativeAction, { action: 'notesReveal' }>,
+) {
+  if (!view || props.disabled)
+    return false
+  const target = resolveNativeNoteTarget(view.state.doc.toString(), action)
+  if (!target)
+    return false
+  if (target.kind === 'heading')
+    revealHeading(target.match)
+  else if (target.kind === 'annotation')
+    revealAnnotation(target.match)
+  else revealLink(target.match)
+  return true
+}
+
 defineExpose({
+  nativeReveal,
+  nativeSection,
+  nativeCommand,
+  findNativeContent,
   readAiContext,
   applyAiEdit,
   revealAnnotation,
@@ -896,7 +1014,7 @@ function onContextMenuCloseAutoFocus(event: Event) {
   pendingInsertedTableStart = null
 }
 
-function onMenuCommand(command: EditorMenuCommand) {
+function onMenuCommand(command: EditorMenuCommand, rootOnly = false) {
   if (!view)
     return
 
@@ -907,7 +1025,7 @@ function onMenuCommand(command: EditorMenuCommand) {
 
   // Внутри ячейки таблицы inline-команды идут во вложенный редактор, а
   // блочные (заголовки, списки, вставка) не имеют смысла — игнорируем.
-  const cellEditor = getActiveTableCellEditor()
+  const cellEditor = rootOnly ? null : getActiveTableCellEditor()
   const inlineTarget = cellEditor ?? view
   const isInlineCommand = [
     'bold',

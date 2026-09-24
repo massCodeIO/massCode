@@ -34,6 +34,7 @@ const contentUpdateTimers = ref<Map<string, ReturnType<typeof setTimeout>>>(
   new Map(),
 )
 const inFlightContentKeys = ref<Set<string>>(new Set())
+const inFlightContentUpdates = new Map<string, Promise<void>>()
 const retryAttemptsByKey = ref<Map<string, number>>(new Map())
 
 function nextRetryDelay(key: string): number {
@@ -95,38 +96,66 @@ function getContentUpdateKey(snippetId: number, contentId: number) {
   return `${snippetId}-${contentId}`
 }
 
-async function flushContentUpdate(key: string) {
+function flushContentUpdate(key: string): Promise<void> {
+  const pending = inFlightContentUpdates.get(key)
+  if (pending)
+    return pending
   const update = updateContentQueue.value.get(key)
-  if (!update) {
-    return
-  }
+  if (!update)
+    return Promise.resolve()
 
   updateContentQueue.value.delete(key)
   inFlightContentKeys.value.add(key)
 
-  let shouldRetry = false
-  try {
-    await updateSnippetContent(update.snippetId, update.contentId, update.data)
-    retryAttemptsByKey.value.delete(key)
-  }
-  catch (error) {
-    console.error(error)
-    shouldRetry = isRetriableSaveError(error)
-  }
-  finally {
-    inFlightContentKeys.value.delete(key)
-
-    // Временный сбой (503 на evicted-файле, сеть) возвращает payload в
-    // очередь: набранный текст ретраится с backoff до успеха и не гибнет
-    // при hydration refresh. Более свежий ввод приоритетнее возвращаемого.
-    if (shouldRetry && !updateContentQueue.value.has(key)) {
-      updateContentQueue.value.set(key, update)
+  const saving = (async () => {
+    let failed = false
+    let shouldRetry = false
+    try {
+      await updateSnippetContent(
+        update.snippetId,
+        update.contentId,
+        update.data,
+      )
+      retryAttemptsByKey.value.delete(key)
     }
-
-    if (updateContentQueue.value.has(key)) {
-      scheduleContentUpdate(key, shouldRetry ? nextRetryDelay(key) : undefined)
+    catch (error) {
+      failed = true
+      shouldRetry = isRetriableSaveError(error)
+      // Даже постоянная ошибка оставляет несохранённый текст доступным
+      // для явного retry; автоматический backoff — только для временных.
+      if (!updateContentQueue.value.has(key))
+        updateContentQueue.value.set(key, update)
+      throw error
     }
-  }
+    finally {
+      inFlightContentKeys.value.delete(key)
+      inFlightContentUpdates.delete(key)
+      const queued = updateContentQueue.value.get(key)
+      if (queued && (!failed || shouldRetry || queued !== update)) {
+        scheduleContentUpdate(
+          key,
+          shouldRetry ? nextRetryDelay(key) : undefined,
+        )
+      }
+    }
+  })()
+  inFlightContentUpdates.set(key, saving)
+  return saving
+}
+
+async function flushSnippetContent(snippetId: number, contentId: number) {
+  const key = getContentUpdateKey(snippetId, contentId)
+  do {
+    const timer = contentUpdateTimers.value.get(key)
+    if (timer) {
+      clearTimeout(timer)
+      contentUpdateTimers.value.delete(key)
+    }
+    await flushContentUpdate(key)
+  } while (
+    updateContentQueue.value.has(key)
+    || inFlightContentUpdates.has(key)
+  )
 }
 
 function scheduleContentUpdate(key: string, delayMs = UPDATE_DEBOUNCE_TIME) {
@@ -137,7 +166,7 @@ function scheduleContentUpdate(key: string, delayMs = UPDATE_DEBOUNCE_TIME) {
 
   const timer = setTimeout(() => {
     contentUpdateTimers.value.delete(key)
-    void flushContentUpdate(key)
+    void flushContentUpdate(key).catch(error => console.error(error))
   }, delayMs)
 
   contentUpdateTimers.value.set(key, timer)
@@ -196,6 +225,7 @@ export function useSnippetUpdate() {
     addToUpdateContentQueue,
     addToUpdateQueue,
     getPendingContentUpdate,
+    flushSnippetContent,
     hasBusyContentUpdates,
     isContentUpdateBusy,
   }

@@ -10,8 +10,8 @@ const { canApplyHttp, applyHttp, rejectEdit } = useAi()
 const open = ref(false)
 const failed = ref(false)
 const available = computed(() => canApplyHttp(props.message))
-function apply() {
-  failed.value = !applyHttp(props.message)
+async function apply() {
+  failed.value = !(await applyHttp(props.message))
   if (!failed.value)
     open.value = false
 }
@@ -36,7 +36,7 @@ function reject() {
   >
     {{ i18n.t("ai.edit.rejected") }}
   </UiText>
-  <template v-else-if="message.status === 'done'">
+  <template v-else-if="message.mutationId || message.status === 'done'">
     <Button
       variant="outline"
       size="sm"

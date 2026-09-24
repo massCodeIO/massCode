@@ -15,9 +15,11 @@ import {
   useNoteFolders,
   useSonner,
 } from '@/composables'
-import { i18n, ipc } from '@/electron'
+import { i18n, ipc, store } from '@/electron'
 import { isMac } from '@/utils'
+import { renderDiagramPreviews } from './diagramExport'
 import { renderDrawingPreviews } from './drawingExport'
+import { showNoteExportWarnings } from './exportWarnings'
 
 const props = defineProps<{
   contextNode: any
@@ -122,6 +124,7 @@ function showCloudFileNotReadyWarning() {
 }
 
 async function onExportSite() {
+  const vault = store.preferences.get('storage.vaultPath')
   if (!props.contextNode) {
     return
   }
@@ -138,18 +141,28 @@ async function onExportSite() {
     }
 
     const drawingPreviews = await renderDrawingPreviews(preparation.drawingIds)
+    const diagramPreviews = await renderDiagramPreviews(
+      preparation.mermaidSources ?? [],
+      Math.max(0, 500 - drawingPreviews.length),
+    )
+    if (store.preferences.get('storage.vaultPath') !== vault)
+      throw new Error('VAULT_CHANGED')
     const result = await ipc.invoke<
       NoteFolderSiteExportPayload,
       NoteFolderSiteExportResponse
     >('fs:export-note-folder-site', {
       drawingPreviews,
+      diagramPreviews,
       folderId,
       ...getContentSortQuery('notes'),
     })
     if (result.status === 'cloud-unavailable') {
       showCloudFileNotReadyWarning()
     }
-    else if (result.status === 'exported') {
+    else if (
+      result.status === 'exported'
+      && !showNoteExportWarnings(result.warnings)
+    ) {
       sonner({
         message: i18n.t('messages:success.noteFolderSiteExported'),
         type: 'success',

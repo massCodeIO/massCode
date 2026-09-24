@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { useNotes } from '@/composables'
+import { useNativeExportBridge } from '@/composables/ai/nativeBridges'
+import { saveRenderedArtifact } from '@/composables/useRenderedArtifactExport'
 import { i18n } from '@/electron'
 import domToImage from 'dom-to-image'
 import { FileDown, Maximize, Minus, Plus } from 'lucide-vue-next'
 import { Transformer } from 'markmap-lib'
 import { Markmap } from 'markmap-view'
 
-const { selectedNote } = useNotes()
+const { selectedNote, selectedNoteRecordStatus } = useNotes()
 
 const mindmapRef = useTemplateRef('mindmapRef')
 const svgRef = useTemplateRef('svgRef')
@@ -15,21 +17,35 @@ const transformer = new Transformer()
 
 let mm: Markmap | null = null
 
-async function update() {
-  // Контент выбранной заметки ещё загружается — оставляем предыдущую карту,
-  // без мигания через "# Empty".
-  if (selectedNote.value && selectedNote.value.content === undefined) {
-    return
+let renderRevision = 0
+let rendered: { id: number, content: string } | undefined
+let rendering = Promise.resolve()
+function update() {
+  const revision = ++renderRevision
+  rendered = undefined
+  const note = selectedNote.value
+  if (
+    !note
+    || selectedNoteRecordStatus.value !== 'ready'
+    || typeof note.content !== 'string'
+  ) {
+    return rendering
   }
-
-  const value = selectedNote.value?.content || '# Empty'
-
-  const { root } = transformer.transform(value)
-
-  if (mm) {
-    await mm.setData(root)
-    await mm.fit()
-  }
+  const snapshot = { id: note.id, content: note.content }
+  rendering = rendering
+    .then(async () => {
+      if (revision !== renderRevision || !mm)
+        return
+      const { root } = transformer.transform(snapshot.content || '# Empty')
+      await mm.setData(root)
+      await mm.fit()
+      if (revision === renderRevision)
+        rendered = snapshot
+    })
+    .catch((error) => {
+      console.error('[notes] Mindmap render failed', error)
+    })
+  return rendering
 }
 
 function init() {
@@ -44,43 +60,70 @@ function init() {
   void update()
 }
 
-function onZoom(type: 'zoomIn' | 'zoomOut' | 'fit') {
+async function onZoom(type: 'zoomIn' | 'zoomOut' | 'fit') {
   if (!mm)
     return
   if (type === 'zoomIn') {
-    mm.rescale(1.25)
+    await mm.rescale(1.25)
   }
 
   if (type === 'zoomOut') {
-    mm.rescale(0.8)
+    await mm.rescale(0.8)
   }
 
   if (type === 'fit') {
-    mm.fit()
+    await mm.fit()
   }
 }
 
-async function onSaveScreenshot(type: 'png' | 'svg' = 'png') {
-  let data = ''
-
-  if (!mm)
-    return
-
-  await mm.fit()
-
-  if (type === 'png') {
-    data = await domToImage.toPng(mindmapRef.value!)
+async function onSaveScreenshot(
+  type: 'png' | 'svg' = 'png',
+  current: () => boolean = () => true,
+) {
+  const note = selectedNote.value
+  if (
+    !note
+    || !mm
+    || selectedNoteRecordStatus.value !== 'ready'
+    || typeof note.content !== 'string'
+  ) {
+    return { status: 'stale' as const }
   }
-
-  if (type === 'svg') {
-    data = await domToImage.toSvg(mindmapRef.value!)
+  const content = note.content
+  await rendering
+  const renderedVersion = rendered
+  if (
+    !current()
+    || renderedVersion?.id !== note.id
+    || renderedVersion.content !== content
+  ) {
+    return { status: 'stale' as const }
   }
+  return saveRenderedArtifact(
+    type,
+    note.name,
+    async () => {
+      let data = ''
 
-  const name = selectedNote.value?.name || 'note'
-  const a = document.createElement('a')
-  a.href = data
-  a.download = `${name}.${type}`
-  a.click()
+      await mm!.fit()
+
+      if (type === 'png') {
+        data = await domToImage.toPng(mindmapRef.value!)
+      }
+
+      if (type === 'svg') {
+        data = await domToImage.toSvg(mindmapRef.value!)
+      }
+
+      return data
+    },
+    () =>
+      current()
+      && rendered === renderedVersion
+      && selectedNoteRecordStatus.value === 'ready'
+      && selectedNote.value?.id === note.id
+      && selectedNote.value?.content === content,
+  )
 }
 
 onMounted(() => {
@@ -88,6 +131,8 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  renderRevision++
+  rendered = undefined
   mm?.destroy()
   mm = null
 })
@@ -95,9 +140,63 @@ onUnmounted(() => {
 // Контент приходит позже id (полная запись загружается отдельно),
 // поэтому отслеживаются оба: карта обновится, когда контент будет готов.
 watch(
-  () => [selectedNote.value?.id, selectedNote.value?.content],
+  () => [
+    selectedNote.value?.id,
+    selectedNote.value?.content,
+    selectedNoteRecordStatus.value,
+  ],
   () => {
     void update()
+  },
+)
+useNativeExportBridge(
+  'mindmap',
+  (format, current) =>
+    format === 'html'
+      ? Promise.resolve(undefined)
+      : onSaveScreenshot(format, current),
+  async (action, current) => {
+    if (action.action !== 'mindmap' || !mm)
+      return { status: 'unavailable' }
+    await rendering
+    if (
+      !current()
+      || selectedNoteRecordStatus.value !== 'ready'
+      || rendered?.id !== action.target.id
+      || rendered.content !== selectedNote.value?.content
+    ) {
+      return { status: 'stale' }
+    }
+    if (action.command === 'collapse' || action.command === 'expand') {
+      const root = mm.state.data
+      if (!root)
+        return { status: 'unavailable' }
+      const nodeText = action.nodeText
+      type MindmapNode = NonNullable<Markmap['state']['data']>
+      const matches: MindmapNode[] = []
+      function collect(node: MindmapNode) {
+        const text = new DOMParser()
+          .parseFromString(node.content, 'text/html')
+          .body
+          .textContent
+          ?.trim()
+        if (text === nodeText)
+          matches.push(node)
+        node.children?.forEach(collect)
+      }
+      if (action.nodeText)
+        collect(root)
+      else matches.push(root)
+      if (matches.length !== 1 || !matches[0].children?.length)
+        return { status: 'unavailable' }
+      const node = matches[0]
+      if (Boolean(node.payload?.fold) !== (action.command === 'collapse'))
+        await mm.toggleNode(node)
+    }
+    else {
+      await onZoom(action.command)
+    }
+    return { status: current() ? 'done' : 'stale' }
   },
 )
 </script>

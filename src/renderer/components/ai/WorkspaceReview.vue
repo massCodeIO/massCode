@@ -93,14 +93,9 @@ async function apply() {
       failed.value = true
       return
     }
-    setWorkspaceItems(props.message, [
-      ...(props.message.workspaceItems ?? []),
-      ...result.data.items,
-    ])
-    setWorkspaceApplied(props.message, [
-      ...applied.value,
-      ...result.data.applied,
-    ])
+    // IPC returns the cumulative receipt for this proposal.
+    setWorkspaceItems(props.message, result.data.items)
+    setWorkspaceApplied(props.message, result.data.applied)
     selected.value = selected.value.filter(
       i => !applied.value.includes(i) && !undone.value.includes(i),
     )
@@ -150,9 +145,7 @@ async function undo(index: number) {
     />
   </div>
   <Button
-    v-if="
-      applied.length || (!message.rejected && message.status !== 'streaming')
-    "
+    v-if="applied.length || !message.rejected"
     variant="outline"
     size="sm"
     @click="review"

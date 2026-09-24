@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { getNotesHeatmapPalette } from '../../shared/heatmapPalette'
 import {
+  getNotesHeatmapCells,
   getNotesHeatmapColor,
   getNotesHeatmapTooltipLines,
 } from '../activityHeatmap'
@@ -31,4 +32,15 @@ describe('notesDashboardActivityHeatmap', () => {
     expect(getNotesHeatmapColor(7, palette)).toBe(palette.scale[3])
     expect(getNotesHeatmapColor(10, palette)).toBe(palette.scale[4])
   })
+})
+
+it('uses all 371 native cells for a rolling range, excluding unrelated activity dates', () => {
+  const cells = getNotesHeatmapCells(
+    { '2026-09-23': 3, '2020-01-01': 100 },
+    new Date(2026, 8, 23, 12),
+  )
+  expect(cells).toHaveLength(371)
+  expect(cells.at(-1)).toMatchObject({ key: '2026-09-23', count: 3 })
+  expect(cells.reduce((sum, cell) => sum + cell.count, 0)).toBe(3)
+  expect(cells[0]!.key).not.toBe('2026-01-01')
 })

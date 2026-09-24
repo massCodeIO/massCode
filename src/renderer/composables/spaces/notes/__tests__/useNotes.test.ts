@@ -8,6 +8,7 @@ globalThis.shallowRef = shallowRef
 globalThis.watch = watch
 
 interface SetupOptions {
+  confirmed?: boolean
   folderId?: number
   isSearch?: boolean
   libraryFilter?: string
@@ -52,6 +53,11 @@ async function setup(options: SetupOptions = {}) {
   const patchNotesByIdContent = vi.fn(async () => undefined)
   const postNotesByIdTagsByTagId = vi.fn(async () => undefined)
   const sonner = vi.fn()
+  const invoke = vi.fn(async () => ({
+    status: 'done',
+    count: 1,
+    receiptId: 'private-cleanup',
+  }))
 
   vi.doMock('@/composables/useContentSort', () => ({
     useContentSort: () => ({
@@ -61,7 +67,7 @@ async function setup(options: SetupOptions = {}) {
 
   vi.doMock('@/composables/useDialog', () => ({
     useDialog: () => ({
-      confirm: vi.fn(async () => true),
+      confirm: vi.fn(async () => options.confirmed ?? true),
     }),
   }))
 
@@ -83,6 +89,8 @@ async function setup(options: SetupOptions = {}) {
   }))
 
   vi.doMock('@/electron', () => ({
+    ipc: { invoke },
+    store: { preferences: { get: () => '/vault' } },
     i18n: {
       t: (key: string) => key,
     },
@@ -135,6 +143,7 @@ async function setup(options: SetupOptions = {}) {
   const { selectedNoteIds, useNotes } = await import('../useNotes')
 
   return {
+    invoke,
     getNotes,
     getNotesById,
     markPersistedStorageMutation,
@@ -157,6 +166,56 @@ beforeEach(() => {
 })
 
 describe('useNotes', () => {
+  it('keeps a loaded editor readable while a guarded refresh checks and applies its new baseline', async () => {
+    const context = await setup({ noteId: 5 })
+    const notes = context.useNotes()
+    await notes.refreshSelectedNote()
+    let finish!: (value: { data: { id: number, content: string } }) => void
+    context.getNotesById.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        }),
+    )
+    // NotesEditorPane exposes its snapshot only while the record is ready.
+    const readEditor = () =>
+      notes.selectedNoteRecordStatus.value === 'ready'
+        ? notes.displayedNoteRecord.value
+        : undefined
+    const current = readEditor()
+    const refreshing = notes.refreshSelectedNote(
+      () => readEditor() === current,
+    )
+    expect(readEditor()).toBe(current)
+    finish({ data: { id: 5, content: 'restored baseline' } })
+    expect(await refreshing).toBe(true)
+    expect(notes.displayedNoteRecord.value?.content).toBe('restored baseline')
+    expect(notes.selectedNoteRecordStatus.value).toBe('ready')
+  })
+
+  it('preserves the displayed note when a guarded refresh becomes stale during its GET', async () => {
+    const context = await setup({ noteId: 5 })
+    const notes = context.useNotes()
+    await notes.refreshSelectedNote()
+    let accept = true
+    let finish!: (value: { data: { id: number, content: string } }) => void
+    context.getNotesById.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        }),
+    )
+    const refreshing = notes.refreshSelectedNote(() => accept)
+    const current = notes.displayedNoteRecord.value!
+    current.content = 'new manual input'
+    accept = false
+    finish({ data: { id: 5, content: 'outdated persisted text' } })
+    expect(await refreshing).toBe(false)
+    expect(notes.displayedNoteRecord.value).toBe(current)
+    expect(notes.displayedNoteRecord.value?.content).toBe('new manual input')
+    expect(notes.selectedNoteRecordStatus.value).toBe('ready')
+  })
+
   it('keeps selected note aligned while loading and after an error', async () => {
     const context = await setup({ noteId: 5 })
     const notes = context.useNotes()
@@ -444,4 +503,37 @@ describe('useNotes', () => {
       type: 'success',
     })
   })
+})
+
+it('retains the cleanup receipt when the native mutation succeeds but refresh fails', async () => {
+  const context = await setup()
+  context.getNotes.mockRejectedValueOnce(new Error('refresh failed'))
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+  try {
+    expect(
+      await context
+        .useNotes()
+        .cleanupCompletedTasks({ skipConfirm: true, captureUndo: true }),
+    ).toEqual({
+      status: 'failed',
+      count: 1,
+      persisted: true,
+      receiptId: 'private-cleanup',
+    })
+    expect(context.invoke).toHaveBeenCalledWith('system:tasks-cleanup', {
+      vault: '/vault',
+    })
+    expect(context.postNotesTasksCleanup).not.toHaveBeenCalled()
+  }
+  finally {
+    log.mockRestore()
+  }
+})
+it('does not start native cleanup when confirmation is cancelled', async () => {
+  const context = await setup({ confirmed: false })
+  expect(
+    await context.useNotes().cleanupCompletedTasks({ captureUndo: true }),
+  ).toEqual({ status: 'cancelled' })
+  expect(context.invoke).not.toHaveBeenCalled()
+  expect(context.postNotesTasksCleanup).not.toHaveBeenCalled()
 })

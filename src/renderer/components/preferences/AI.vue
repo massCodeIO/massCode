@@ -1,8 +1,17 @@
 <script setup lang="ts">
+import type { NativeBridgeResult } from '@/composables/ai/nativeBridges'
 import type { AiProvider, AiResult, AiSettings } from '~/shared/ai'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import { Textarea } from '@/components/ui/shadcn/textarea'
+import {
+  cancelPreferenceHandoff,
+  claimPreferenceHandoff,
+  finishPreferenceHandoff,
+  preferenceHandoff,
+  registerPreferenceFlow,
+  waitForPreferenceUser,
+} from '@/composables/ai/nativePreferenceFlows'
 import { useAi } from '@/composables/ai/useAi'
 import { useSonner } from '@/composables/useSonner'
 import { i18n, ipc } from '@/electron'
@@ -76,14 +85,20 @@ function loadProfile() {
 }
 watch(provider, loadProfile)
 async function saveAndCheck() {
+  const handoffId = claimPreferenceHandoff('configureAi')
+  if (preferenceHandoff.value?.kind === 'configureAi' && !handoffId)
+    return
   busy.value = true
   const savedProvider = provider.value
+  let outcome: NativeBridgeResult = { status: 'failed', persisted: false }
+  let keepOpen = false
   try {
     const result = (await ipc.invoke('system:ai:configure', {
       provider: provider.value,
       baseURL: baseURL.value,
       model: model.value,
       userInstructions: userInstructions.value,
+      ...(handoffId ? { nativeActionId: handoffId } : {}),
       ...(apiKey.value.trim()
         ? { apiKey: apiKey.value.trim() }
         : removeKey.value
@@ -95,6 +110,16 @@ async function saveAndCheck() {
       return
     }
     settings.value = result.data
+    outcome = {
+      status: 'failed',
+      persisted: true,
+      profile: {
+        provider: savedProvider,
+        model: result.data.profiles[savedProvider].model,
+        saved: true,
+        connectionCheck: 'failed',
+      },
+    }
     baseURL.value = result.data.profiles[provider.value].baseURL
     apiKey.value = ''
     removeKey.value = false
@@ -112,6 +137,12 @@ async function saveAndCheck() {
     }
     if (settings.value)
       settings.value.profiles[savedProvider].models = modelsResult.data
+    outcome = {
+      ...outcome,
+      status: 'done',
+      profile: { ...outcome.profile!, connectionCheck: 'passed' },
+    }
+    keepOpen = !outcome.profile!.model
     sonner({ type: 'success', message: i18n.t('ai.connected') })
   }
   catch {
@@ -119,6 +150,7 @@ async function saveAndCheck() {
   }
   finally {
     busy.value = false
+    finishPreferenceHandoff(handoffId, outcome, keepOpen)
   }
 }
 onMounted(async () => {
@@ -139,7 +171,17 @@ onMounted(async () => {
 })
 onBeforeUnmount(() => {
   apiKey.value = ''
+  if (preferenceHandoff.value?.kind === 'configureAi')
+    cancelPreferenceHandoff()
 })
+const unregisterNative = registerPreferenceFlow(
+  'configureAi',
+  async (action, id, current) =>
+    action.action === 'configureAi'
+      ? waitForPreferenceUser('configureAi', id, current)
+      : { status: 'unavailable' },
+)
+onBeforeUnmount(unregisterNative)
 </script>
 
 <template>

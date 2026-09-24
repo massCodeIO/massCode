@@ -598,3 +598,22 @@ it.each(['code', 'notes', 'http', null] as const)(
     }
   },
 )
+
+it.each([false, true])(
+  'enables Code Format only when renderer reports canFormat=%s',
+  async (canFormat) => {
+    const { createMainMenu } = await import('../main')
+    const context = createNotesContext()
+    context.editor.kind = 'code'
+    context.editor.canFormat = canFormat
+    buildFromTemplate.mockClear()
+    createMainMenu(context)
+    const template = buildFromTemplate.mock.calls[0]![0] as Array<{
+      submenu?: Array<{ label?: string, enabled?: boolean }>
+    }>
+    const format = template
+      .flatMap(item => item.submenu ?? [])
+      .find(item => item.label === 'menu:editor.format')
+    expect(format?.enabled).toBe(canFormat)
+  },
+)

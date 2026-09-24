@@ -97,7 +97,13 @@ export const aiHttpAuxActionSchema = z.discriminatedUnion('action', [
       action: z.literal('runCollection'),
       summary,
       folderId: z.number().int().positive(),
-      requestIds: z.array(z.number().int().positive()).max(500).optional(),
+      requestIds: z
+        .array(z.number().int().positive())
+        .max(500)
+        .optional()
+        .describe(
+          'Ordering only: the full collection request set, each ID exactly once. Not a subset filter. For individual saved requests use send with source saved.',
+        ),
       continueOnFailure: z.boolean().default(false),
     })
     .strict(),
@@ -204,6 +210,15 @@ export const aiHttpActionSchema = z.discriminatedUnion('action', [
   ...aiHttpCoreActionSchema.options,
   ...aiHttpAuxActionSchema.options,
 ])
+// Model calls must separate local mutations from network confirmation.
+const [sendAction, patchDraftAction, , , saveOrDiscardDraftAction]
+  = aiHttpCoreActionSchema.options
+export const aiHttpModelActionSchema = z.discriminatedUnion('action', [
+  sendAction,
+  patchDraftAction,
+  saveOrDiscardDraftAction,
+  ...aiHttpAuxActionSchema.options,
+])
 export function isHttpAuxAction(
   action: AiHttpAction,
 ): action is AiHttpAuxAction {
@@ -217,7 +232,54 @@ export function isHttpAuxAction(
   ].includes(action.action)
 }
 export type AiHttpAction = z.infer<typeof aiHttpActionSchema>
+export interface AiHttpRequestPreview {
+  requestId: number | null
+  name: string
+  method: string
+  url: string
+  environmentName: string | null
+  bodyType: string
+  bodyCharacters: number
+  formEntries: number
+  headers: number
+  authType: string
+  scripts: {
+    source: 'request' | 'collection'
+    id: number
+    preRequest: boolean
+    postResponse: boolean
+    trusted: boolean
+  }[]
+  transport: import('./httpTransport').HttpTransport
+}
 export interface AiHttpActionView {
+  previewAcceptedByUser?: true
+  cookie?: {
+    name?: string
+    requestId?: number | null
+    enabled?: boolean
+    changes?: {
+      field: 'path' | 'secure' | 'httpOnly' | 'expires'
+      before: string | boolean | null
+      after: string | boolean | null
+    }[]
+  }
+  trust?: { allowed: boolean }
+  changedFields?: string[]
+  irreversible?: boolean
+  details?: {
+    label: 'target' | 'variable' | 'domain' | 'count' | 'allowed' | 'scope'
+    value: string
+  }[]
+  request?: AiHttpRequestPreview
+  message?: { connectionId: string, text: string, characters: number }
+
+  run?: {
+    requests?: AiHttpRequestPreview[]
+    view: import('./httpRunner').HttpRunView
+    continueOnFailure: boolean
+    skipCertificateVerification: boolean
+  }
   id: string
   action: AiHttpAction['action']
   summary: string

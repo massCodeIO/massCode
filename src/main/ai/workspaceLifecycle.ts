@@ -218,6 +218,33 @@ export function lifecyclePreview(op: WorkspaceOperation) {
   if (op.kind === 'environment')
     return environmentPreview(op)
   const before = validateLifecycle(op)
+  if (op.kind === 'fragment') {
+    const record = 'record' in before ? before.record : undefined
+    const fragment
+      = record && 'contents' in record
+        ? record.contents.find(content => content.id === op.fields.contentId)
+        : undefined
+    const current = {
+      content: fragment?.value ?? '',
+      label: fragment?.label ?? '',
+      language: fragment?.language ?? '',
+    }
+    const keys = (['content', 'label', 'language'] as const).filter(
+      key => op.action === 'delete' || key in op.fields,
+    )
+    return {
+      name: before.name,
+      before:
+        op.action === 'create'
+          ? {}
+          : Object.fromEntries(keys.map(key => [key, current[key]])),
+      after:
+        op.action === 'delete'
+          ? {}
+          : Object.fromEntries(keys.map(key => [key, op.fields[key]])),
+      irreversible: op.action === 'delete',
+    }
+  }
   return {
     before:
       op.space === 'http'
@@ -382,11 +409,16 @@ export function applyLifecycle(op: WorkspaceOperation) {
                 content => content.id === contentId,
               )!
               check(
-                snippets.updateSnippetContent(op.id!, contentId!, {
-                  label: original.label,
-                  value: original.value,
-                  language: original.language,
-                }),
+                snippets.updateSnippetContent(
+                  op.id!,
+                  contentId!,
+                  Object.fromEntries(
+                    Object.keys(fields).map(key => [
+                      key,
+                      original[key as keyof typeof original],
+                    ]),
+                  ),
+                ),
               )
             }
             const restored = snippets
@@ -396,8 +428,19 @@ export function applyLifecycle(op: WorkspaceOperation) {
             const original = before.contents.find(
               content => content.id === contentId,
             )
-            if (JSON.stringify(restored) !== JSON.stringify(original))
+            if (
+              op.action === 'create'
+                ? Boolean(restored)
+                : !restored
+                  || !original
+                  || Object.keys(fields).some(
+                    key =>
+                      restored[key as keyof typeof restored]
+                      !== original[key as keyof typeof original],
+                  )
+            ) {
               throw new Error('WRITE_NOT_VERIFIED')
+            }
           }
     let saved: NonNullable<ReturnType<typeof snippets.getSnippetById>>
     try {
@@ -477,9 +520,22 @@ export function applyLifecycle(op: WorkspaceOperation) {
               createdAt: current.createdAt,
               isDeleted: current.isDeleted,
               pendingCloudDownload: Boolean(current.pendingCloudDownload),
-              fragment: current.contents.find(
-                content => content.id === contentId,
-              ),
+              fragment: (() => {
+                const fragment = current.contents.find(
+                  content => content.id === contentId,
+                )
+                return fragment && op.action === 'update'
+                  ? {
+                      id: fragment.id,
+                      ...Object.fromEntries(
+                        Object.keys(fields).map(key => [
+                          key,
+                          fragment[key as keyof typeof fragment],
+                        ]),
+                      ),
+                    }
+                  : fragment
+              })(),
               canRemove:
                 op.action === 'create'
                   ? before.contents.length === 0 || current.contents.length > 1

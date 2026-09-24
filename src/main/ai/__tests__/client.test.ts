@@ -388,10 +388,13 @@ describe('bounded request history', () => {
         new Response(stream([toolDelta(0, args, true), toolFinish])),
       )
     vi.stubGlobal('fetch', fetch)
-    const history = Array.from({ length: 19 }, (_, i) => [
-      { role: 'user' as const, content: `Old ${i}` },
-      { role: 'assistant' as const, content: `Answer ${i}` },
-    ]).flat()
+    const history = Array.from(
+      { length: AI_LIMITS.messages / 2 - 1 },
+      (_, i) => [
+        { role: 'user' as const, content: `Old ${i}` },
+        { role: 'assistant' as const, content: `Answer ${i}` },
+      ],
+    ).flat()
     const omitted = vi.fn()
     await streamAiChat(
       { baseURL: 'http://localhost/v1', model: 'qwen' },
@@ -815,4 +818,332 @@ it('projects creation receipts while preserving review partial apply and Undo at
         .content,
     ),
   ).toEqual(review)
+})
+
+it('waits for a validated edit batch and replays exactly one real tool result before continuing', async () => {
+  let complete!: (value: unknown) => void
+  const executeEdits = vi.fn(
+    () =>
+      new Promise((resolve) => {
+        complete = resolve
+      }),
+  )
+  const fetch = vi
+    .fn()
+    .mockResolvedValueOnce(
+      new Response(stream([toolDelta(0, args, true), toolFinish])),
+    )
+    .mockResolvedValueOnce(
+      new Response(stream([`data: ${delta('Saved.')}\n\ndata: [DONE]\n\n`])),
+    )
+  vi.stubGlobal('fetch', fetch)
+  const running = streamAiChat(
+    { baseURL: 'http://localhost/v1', model: 'local' },
+    [{ role: 'user', content: 'Fix the code' }],
+    new AbortController().signal,
+    () => {},
+    contextId,
+    'a + b',
+    1,
+    undefined,
+    undefined,
+    undefined,
+    { tools: [], execute: vi.fn(), executeEdits, remaining: 3 },
+  )
+  await vi.waitFor(() => expect(executeEdits).toHaveBeenCalledOnce())
+  expect(fetch).toHaveBeenCalledOnce()
+  complete({ status: 'applied', persisted: true })
+  await running
+  expect(fetch).toHaveBeenCalledTimes(2)
+  const body = JSON.parse(fetch.mock.calls[1][1].body)
+  expect(
+    body.messages.filter((message: any) => message.role === 'tool'),
+  ).toEqual([
+    {
+      role: 'tool',
+      tool_call_id: 'call_0',
+      content: JSON.stringify({ status: 'applied', persisted: true }),
+    },
+  ])
+})
+
+it('consumes steering after a text response before ending the same bounded task', async () => {
+  let update = false
+  const fetch = vi
+    .fn()
+    .mockImplementationOnce(async () => {
+      update = true
+      return new Response(
+        stream([`data: ${delta('Original answer')}\n\ndata: ${finish}\n\n`]),
+      )
+    })
+    .mockResolvedValueOnce(
+      new Response(
+        stream([`data: ${delta('Updated answer')}\n\ndata: ${finish}\n\n`]),
+      ),
+    )
+  vi.stubGlobal('fetch', fetch)
+  const responses = vi.fn()
+  const reset = vi.fn()
+  await streamAiChat(
+    { baseURL: 'http://localhost/v1', model: 'local' },
+    [{ role: 'user', content: 'Original' }],
+    new AbortController().signal,
+    () => {},
+    undefined,
+    undefined,
+    1,
+    undefined,
+    undefined,
+    responses,
+    {
+      tools: [],
+      remaining: 2,
+      execute: vi.fn(),
+      onToolRound: reset,
+      hasUpdates: () => update,
+      beforeRound: async () => {
+        if (!update)
+          return []
+        update = false
+        return [{ role: 'user', content: 'Use the corrected scope' }]
+      },
+    },
+  )
+  expect(fetch).toHaveBeenCalledTimes(2)
+  expect(JSON.parse(fetch.mock.calls[1]![1].body).messages.at(-1)).toEqual({
+    role: 'user',
+    content: 'Use the corrected scope',
+  })
+  expect(responses).toHaveBeenCalledTimes(1)
+  expect(responses.mock.calls[0]![1]).toBe('Updated answer')
+  expect(reset).toHaveBeenCalledOnce()
+})
+
+it('does not execute remaining calls or another model round after a terminal native boundary', async () => {
+  const calls = ['perform_native_action', 'create_workspace_items'].map(
+    (name, index) => ({
+      index,
+      id: `call_${index}`,
+      type: 'function',
+      function: { name, arguments: '{}' },
+    }),
+  )
+  const fetch = vi
+    .fn()
+    .mockResolvedValue(
+      new Response(
+        stream([
+          `data: ${JSON.stringify({ choices: [{ delta: { tool_calls: calls }, finish_reason: null }] })}\n\ndata: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: 'tool_calls' }] })}\n\ndata: [DONE]\n\n`,
+        ]),
+      ),
+    )
+  vi.stubGlobal('fetch', fetch)
+  let completed = false
+  const execute = vi.fn(async () => {
+    completed = true
+    return { status: 'done' }
+  })
+  const exchange = vi.fn()
+  await streamAiChat(
+    { baseURL: 'http://localhost/v1', model: 'local' },
+    [{ role: 'user', content: 'Move the vault' }],
+    new AbortController().signal,
+    () => {},
+    undefined,
+    undefined,
+    1,
+    undefined,
+    undefined,
+    undefined,
+    {
+      tools: calls.map(call => ({
+        type: 'function',
+        function: { name: call.function.name, parameters: {} },
+      })),
+      remaining: 3,
+      execute,
+      isComplete: () => completed,
+      onToolExchange: exchange,
+    },
+  )
+  expect(execute).toHaveBeenCalledOnce()
+  expect(fetch).toHaveBeenCalledOnce()
+  expect(JSON.parse(exchange.mock.calls.at(-1)![0].at(-1).content)).toEqual({
+    error: 'SESSION_CHANGED',
+    executed: false,
+  })
+})
+
+it('continues beyond six dependent rounds, waits for outcomes, and never resets its task budget', async () => {
+  let release!: () => void
+  const wait = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  const execute = vi.fn(async () => {
+    if (execute.mock.calls.length === 7)
+      await wait
+    return { status: 'done', persisted: true }
+  })
+  const fetch = vi.fn(async (_url: unknown, init: RequestInit) => {
+    const body = JSON.parse(init.body as string)
+    if (!body.tools?.length) {
+      return new Response(
+        stream([
+          `data: ${delta('The step limit was reached.')}\n\ndata: ${finish}\n\n`,
+        ]),
+      )
+    }
+    const call = {
+      index: 0,
+      id: `step_${fetch.mock.calls.length}`,
+      type: 'function',
+      function: { name: 'perform_native_action', arguments: '{}' },
+    }
+    return new Response(
+      stream([
+        `data: ${JSON.stringify({ choices: [{ delta: { tool_calls: [call] }, finish_reason: null }] })}\n\n${toolFinish}`,
+      ]),
+    )
+  })
+  vi.stubGlobal('fetch', fetch)
+  const onResponse = vi.fn()
+  const running = streamAiChat(
+    { baseURL: 'http://localhost/v1', model: 'local' },
+    [{ role: 'user', content: 'Complete the multi-step task' }],
+    new AbortController().signal,
+    () => {},
+    undefined,
+    undefined,
+    1,
+    undefined,
+    undefined,
+    onResponse,
+    {
+      tools: [
+        {
+          type: 'function',
+          function: { name: 'perform_native_action', parameters: {} },
+        },
+      ],
+      remaining: AI_LIMITS.toolRounds,
+      execute,
+    },
+  )
+  await vi.waitFor(() => expect(execute).toHaveBeenCalledTimes(7))
+  expect(fetch).toHaveBeenCalledTimes(7)
+  release()
+  await running
+  expect(execute).toHaveBeenCalledTimes(AI_LIMITS.toolRounds)
+  expect(fetch).toHaveBeenCalledTimes(AI_LIMITS.toolRounds + 1)
+  expect(onResponse.mock.calls[0]![1]).toBe('The step limit was reached.')
+  const next = JSON.parse(fetch.mock.calls[7]![1].body as string)
+  expect(JSON.parse(next.messages.at(-1).content)).toEqual({
+    status: 'done',
+    persisted: true,
+  })
+})
+
+it('preserves completed and unknown receipts for a tool-free budget final without starting the remaining effect', async () => {
+  const request
+    = 'Apply A, send B once, then create C; report what completed, what is unknown and what remains.'
+  const receipts = [
+    {
+      status: 'applied',
+      persisted: true,
+      target: { space: 'notes', id: 41 },
+      changedFields: ['content'],
+    },
+    {
+      state: 'failed',
+      result: {
+        sendAttempted: true,
+        sent: 'unknown',
+        error: 'EXECUTION_FAILED',
+      },
+    },
+  ]
+  const execute = vi.fn(async () => receipts[execute.mock.calls.length - 1])
+  const exchange = vi.fn()
+  const responses = vi.fn()
+  const requests: any[] = []
+  const fetch = vi.fn(async (_url: unknown, init: RequestInit) => {
+    const body = JSON.parse(init.body as string)
+    requests.push(body)
+    if (requests.length === 3) {
+      return new Response(
+        stream([
+          `data: ${delta('Canned terminal response, not evidence of model truthfulness.')}\n\ndata: ${finish}\n\n`,
+        ]),
+      )
+    }
+    const step = requests.length === 1 ? 'A' : 'B'
+    const call = {
+      index: 0,
+      id: step,
+      type: 'function',
+      function: {
+        name: 'perform_native_action',
+        arguments: JSON.stringify({ step }),
+      },
+    }
+    return new Response(
+      stream([
+        `data: ${JSON.stringify({ choices: [{ delta: { tool_calls: [call] }, finish_reason: null }] })}\n\n${toolFinish}`,
+      ]),
+    )
+  })
+  vi.stubGlobal('fetch', fetch)
+  await streamAiChat(
+    { baseURL: 'http://localhost/v1', model: 'local' },
+    [{ role: 'user', content: request }],
+    new AbortController().signal,
+    () => {},
+    undefined,
+    undefined,
+    1,
+    undefined,
+    undefined,
+    responses,
+    {
+      tools: [
+        {
+          type: 'function',
+          function: { name: 'perform_native_action', parameters: {} },
+        },
+      ],
+      remaining: 2,
+      execute,
+      onToolExchange: exchange,
+    },
+  )
+  expect(execute.mock.calls).toEqual([
+    ['perform_native_action', JSON.stringify({ step: 'A' })],
+    ['perform_native_action', JSON.stringify({ step: 'B' })],
+  ])
+  expect(fetch).toHaveBeenCalledTimes(3)
+  const final = requests[2]
+  expect(final.tools ?? []).toEqual([])
+  expect(final.messages).toContainEqual({ role: 'user', content: request })
+  expect(
+    final.messages
+      .filter((message: any) => message.role === 'tool')
+      .map((message: any) => ({
+        id: message.tool_call_id,
+        receipt: JSON.parse(message.content),
+      })),
+  ).toEqual([
+    { id: 'A', receipt: receipts[0] },
+    { id: 'B', receipt: receipts[1] },
+  ])
+  expect(exchange).toHaveBeenCalledTimes(2)
+  expect(exchange.mock.calls[0]![0].at(-1)).toMatchObject({
+    tool_call_id: 'A',
+    content: JSON.stringify(receipts[0]),
+  })
+  expect(exchange.mock.calls[1]![0].at(-1)).toMatchObject({
+    tool_call_id: 'B',
+    content: JSON.stringify(receipts[1]),
+  })
+  expect(responses).toHaveBeenCalledTimes(1)
 })

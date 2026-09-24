@@ -2,6 +2,7 @@ import { EventEmitter } from 'node:events'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { emptyHttpRuntime } from '../../../shared/httpRuntime'
 import { HttpCookieJar } from '../../http/cookies/jar'
+import { httpConsole } from '../../http/devtools/console'
 import { createHttpActionManager } from '../httpActions'
 import { readHttpAuxState } from '../httpAuxActions'
 
@@ -16,8 +17,10 @@ const state = vi.hoisted(() => ({
   start: vi.fn(),
   connect: vi.fn(),
   send: vi.fn(),
+  wait: vi.fn(async () => {}),
   disconnect: vi.fn(),
   dispose: vi.fn(),
+  getHistorySnapshot: vi.fn(),
 }))
 vi.mock('../../store', () => ({
   store: {
@@ -30,6 +33,9 @@ vi.mock('../../store', () => ({
   },
 }))
 vi.mock('../vault', () => ({ vaultIdentity: () => state.vault }))
+vi.mock('../../storage/providers/markdown/runtime/paths', () => ({
+  getVaultPath: () => state.vault,
+}))
 vi.mock('../../http/runtime/ownedExecution', () => ({
   executeOwnedHttpRequest: vi.fn(),
 }))
@@ -47,7 +53,7 @@ vi.mock('../../storage', () => ({
       getActiveEnvironmentId: () => state.env,
       getEnvironments: () => [{ id: 1, variables: {} }],
     },
-    history: { getEntries: () => [] },
+    history: { getEntries: () => [], getSnapshot: state.getHistorySnapshot },
   }),
 }))
 vi.mock('../../http/scripts/trust', () => ({
@@ -58,8 +64,20 @@ vi.mock('../../http/scripts/trust', () => ({
 }))
 vi.mock('../../http/runtime/runner', () => ({
   prepareHttpRunSnapshot: () => ({
+    requests: new Map(
+      state.requests.map(record => [
+        record.id,
+        {
+          requestId: record.id,
+          environmentId: state.env,
+          request: record,
+          runtime: record.runtime,
+        },
+      ]),
+    ),
     view: {
       runId: 'run',
+      folderId: 1,
       folderName: 'Collection',
       environmentName: 'Env',
       state: 'ready',
@@ -87,6 +105,7 @@ vi.mock('../../http/runtime/runner', () => ({
 }))
 vi.mock('../../http/websocket/session', () => ({
   connectWebSocket: state.connect,
+  waitForWebSocket: state.wait,
   sendWebSocket: state.send,
   disconnectWebSocket: state.disconnect,
   disposeWebSocket: state.dispose,
@@ -123,6 +142,9 @@ beforeEach(() => {
     auth: { type: 'none' },
     headers: [],
     query: [],
+    bodyType: 'none',
+    body: null,
+    formData: [],
   }))
   state.start.mockImplementation(async (_owner, options) => ({
     ...state.run,
@@ -170,7 +192,8 @@ it('freezes runner order and actual options, does not start before Apply, and ch
       transport: { timeoutMs: 77 },
     }),
   )
-  await expect(m.apply(proposal.id)).rejects.toThrow('ACTION_ALREADY_USED')
+  expect((await m.apply(proposal.id)).view.state).toBe('done')
+  expect(state.start).toHaveBeenCalledTimes(1)
   const stale = m.propose({
     action: 'runCollection',
     summary: 'Run',
@@ -190,6 +213,10 @@ it('keeps ordinary-name cookie values private and preserves them during metadata
     fields: { httpOnly: true },
   })
   expect(JSON.stringify(proposal)).not.toContain('private-cookie')
+  expect(proposal.cookie).toEqual({
+    name: 'ordinary',
+    changes: [{ field: 'httpOnly', before: false, after: true }],
+  })
   expect((await m.apply(proposal.id)).view.state).toBe('done')
   expect(state.jar.read(null).cookies[0]).toMatchObject({
     value: 'private-cookie',
@@ -223,7 +250,8 @@ it('connects/sends only reviewed WebSocket actions, scopes controls to owner, an
     'ACTION_UNAVAILABLE',
   )
   const applied = await m.apply(proposal.id)
-  expect(applied.view.state).toBe('done')
+  expect(applied.view.state).toBe('running')
+  expect((await m.complete(proposal.id, true)).view.state).toBe('done')
   expect(applied.webSocket).toEqual({
     connectionId: state.ws.connectionId,
     requestId: 1,
@@ -318,7 +346,7 @@ it('cannot disconnect a manual connection through a cancelled unapproved proposa
   expect(state.ws.state).toBe('open')
 })
 
-it.each(['connecting', 'error'])(
+it.each(['open', 'error'])(
   'returns a private adoption receipt only for a successful %s connect',
   async (connectionState) => {
     state.requests[0].protocol = 'websocket'
@@ -342,9 +370,9 @@ it.each(['connecting', 'error'])(
     })
     const result = await m.apply(proposal.id)
     expect(result.view.state).toBe(
-      connectionState === 'connecting' ? 'done' : 'failed',
+      connectionState === 'open' ? 'running' : 'failed',
     )
-    expect(Boolean(result.webSocket)).toBe(connectionState === 'connecting')
+    expect(Boolean(result.webSocket)).toBe(connectionState === 'open')
   },
 )
 
@@ -367,4 +395,287 @@ it('does not authorize a runtime connection ID through an approved send action',
   await m.apply(proposal.id)
   expect(() => m.control(id, 'disconnect')).toThrow('ACTION_UNAVAILABLE')
   expect(state.disconnect).not.toHaveBeenCalled()
+})
+
+it('publishes the registered run before waiting and returns failed assertions as a completed result', async () => {
+  let finish!: (value: unknown) => void
+  state.start.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve
+      }),
+  )
+  const onRun = vi.fn()
+  const m = createHttpActionManager(
+    Object.assign(new EventEmitter(), { id: 1 }) as any,
+    onRun,
+  )
+  const proposal = m.propose({
+    action: 'runCollection',
+    summary: 'Run',
+    folderId: 10,
+  })
+  const first = m.apply(proposal.id)
+  const duplicate = m.apply(proposal.id)
+  expect(onRun).toHaveBeenCalledWith(proposal.id, 'run')
+  expect(state.start).toHaveBeenCalledTimes(1)
+  finish({
+    runId: 'run',
+    state: 'failed',
+    steps: [{ assertions: [{ passed: false }] }],
+  })
+  expect((await first).view.state).toBe('done')
+  expect((await first).view.run?.view).toMatchObject({
+    runId: 'run',
+    state: 'failed',
+    steps: [{ assertions: [{ passed: false }] }],
+  })
+  expect(await duplicate).toEqual(await first)
+})
+
+it('waits for the socket to open before returning a completion receipt', async () => {
+  const m = manager()
+  state.requests[0].protocol = 'websocket'
+  state.requests[0].url = 'ws://example.test'
+  let finish!: () => void
+  state.wait.mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        finish = resolve
+      }),
+  )
+  state.connect.mockImplementationOnce(
+    (_owner, input) =>
+      (state.ws = {
+        connectionId: input.connectionId,
+        state: 'connecting',
+        messages: [],
+        lastId: 0,
+        dropped: 0,
+      }),
+  )
+  const proposal = m.propose({
+    action: 'connectWebSocket',
+    source: 'saved',
+    requestId: 1,
+    summary: 'Connect',
+  })
+  let completed = false
+  const pending = m.apply(proposal.id).then((result) => {
+    completed = true
+    return result
+  })
+  await Promise.resolve()
+  expect(completed).toBe(false)
+  state.ws.state = 'open'
+  finish()
+  expect((await pending).view.state).toBe('running')
+  expect((await m.complete(proposal.id, true)).view.state).toBe('done')
+})
+
+it('shows deterministic global/per-request cookie switches in the primary preview', () => {
+  const m = manager()
+  expect(
+    m.propose({
+      action: 'cookiesEnabled',
+      summary: 'Cookies',
+      requestId: null,
+      enabled: true,
+    }).cookie,
+  ).toEqual({ requestId: null, enabled: true })
+  expect(
+    m.propose({
+      action: 'cookiesEnabled',
+      summary: 'Cookies',
+      requestId: 1,
+      enabled: false,
+    }).cookie,
+  ).toEqual({ requestId: 1, enabled: false })
+})
+it('previews actual WebSocket transport without unsupported HTTP runtime overrides', () => {
+  state.requests[0].protocol = 'websocket'
+  state.requests[0].url = 'wss://example.test'
+  const request = { ...state.requests[0] }
+  const runtime = {
+    ...emptyHttpRuntime(),
+    transport: { skipCertificateVerification: false, timeoutMs: 9000 },
+    scripts: { preRequest: 'must not run', postResponse: '' },
+  }
+  const proposal = manager().propose(
+    {
+      action: 'connectWebSocket',
+      source: 'draft',
+      requestId: 1,
+      summary: 'Connect',
+    },
+    {
+      contextId: '11111111-1111-4111-8111-111111111111',
+      protocol: 'websocket',
+      requestId: 1,
+      environmentId: 1,
+      request,
+      runtime,
+      transport: { timeoutMs: 7000 },
+      skipCertificateVerification: true,
+    },
+  )
+  expect(proposal.request).toMatchObject({
+    scripts: [],
+    transport: {
+      skipCertificateVerification: true,
+      timeoutMs: 15000,
+      followRedirects: false,
+    },
+  })
+  expect(state.connect).not.toHaveBeenCalled()
+})
+
+it('distinguishes historical execution input from unavailable captured outgoing headers', () => {
+  state.getHistorySnapshot.mockReturnValueOnce({
+    request: {
+      method: 'GET',
+      url: 'https://example.test/products',
+      headers: [],
+      body: '',
+      truncated: false,
+    },
+    response: {
+      status: 200,
+      headers: [{ key: 'Set-Cookie', value: 'session=private' }],
+      body: 'ok',
+      bodyKind: 'text',
+      truncated: false,
+    },
+  })
+
+  const result = readHttpAuxState(1, { kind: 'history', id: 123 }) as {
+    content: string
+  }
+  const snapshot = JSON.parse(result.content)
+  expect(state.getHistorySnapshot).toHaveBeenCalledWith(123)
+  expect(snapshot).not.toHaveProperty('request')
+  expect(snapshot.executionInput.headers).toEqual([])
+  expect(snapshot.capturedRequest).toBeNull()
+  expect(snapshot.evidence).toContain(
+    'Missing headers here do not prove they were not sent',
+  )
+  expect(snapshot.response).toMatchObject({
+    status: 200,
+    headers: [{ key: 'Set-Cookie', value: '[REDACTED]' }],
+    body: 'ok',
+  })
+})
+
+it('preserves absent history snapshots and history list pagination', () => {
+  state.getHistorySnapshot.mockReturnValueOnce(null)
+  expect(readHttpAuxState(1, { kind: 'history', id: 404 })).toEqual({
+    content: 'null',
+    totalLength: 4,
+    nextOffset: null,
+  })
+  expect(readHttpAuxState(1, { kind: 'history', limit: 1 })).toEqual({
+    content: '[',
+    totalLength: 2,
+    nextOffset: 1,
+  })
+})
+
+it('reads safe console capture only for the current vault with paging', () => {
+  httpConsole.clear()
+  const id = httpConsole.append({
+    kind: 'network',
+    level: 'log',
+    executionId: 'safe-execution',
+    message: 'raw secret',
+    details: { requestBody: 'raw body' },
+  })
+  httpConsole.publishAiContent(
+    id,
+    { executionId: 'safe-execution', vaultPath: state.vault },
+    {
+      message: 'Captured outgoing HTTP attempt',
+      details: {
+        historyId: 123,
+        requestHeaders: [{ key: 'Cookie', value: '[REDACTED]' }],
+      },
+    },
+  )
+  const full = readHttpAuxState(1, { kind: 'console' }) as { content: string }
+  expect(JSON.parse(full.content).entries[0].details.historyId).toBe(123)
+  expect(full.content).not.toMatch(/raw secret|raw body/)
+  const first = readHttpAuxState(1, { kind: 'console', limit: 10 }) as {
+    content: string
+    nextOffset: number
+  }
+  const remaining = readHttpAuxState(1, {
+    kind: 'console',
+    offset: first.nextOffset,
+  }) as { content: string }
+  expect(first.content + remaining.content).toBe(full.content)
+  state.vault = '/another-vault'
+  expect(
+    JSON.parse(
+      (readHttpAuxState(1, { kind: 'console' }) as { content: string }).content,
+    ).entries,
+  ).toEqual([])
+  httpConsole.clear()
+})
+
+it.each([false, true])(
+  'waits for native adoption and cleans up an unavailable connection (ack=%s)',
+  async (success) => {
+    state.requests[0].protocol = 'websocket'
+    state.requests[0].url = 'wss://example.test'
+    const m = manager()
+    const proposal = m.propose({
+      action: 'connectWebSocket',
+      source: 'saved',
+      requestId: 1,
+      summary: 'Connect',
+    })
+    const connecting = await m.apply(proposal.id)
+    expect(connecting.view.state).toBe('running')
+    if (success)
+      state.ws.state = 'closed'
+    const completed = await m.complete(proposal.id, success)
+    expect(completed.view.state).toBe(success ? 'failed' : 'cancelled')
+    expect(completed.view.result).toMatchObject({
+      connectionAdopted: false,
+      cleanup: 'disposed',
+    })
+    expect(state.dispose).toHaveBeenCalled()
+    const count = state.dispose.mock.calls.length
+    expect(await m.complete(proposal.id, success)).toEqual(completed)
+    expect(state.dispose).toHaveBeenCalledTimes(count)
+    expect(state.connect).toHaveBeenCalledOnce()
+  },
+)
+
+it('rejects WebSocket adoption acknowledgement after a vault switch', async () => {
+  state.requests[0].protocol = 'websocket'
+  state.requests[0].url = 'wss://example.test'
+  const m = manager()
+  const proposal = m.propose({
+    action: 'connectWebSocket',
+    source: 'saved',
+    requestId: 1,
+    summary: 'Connect',
+  })
+  expect((await m.apply(proposal.id)).view.state).toBe('running')
+  state.vault = '/other'
+  await expect(m.complete(proposal.id, true)).rejects.toThrow('ACTION_STALE')
+  expect(state.connect).toHaveBeenCalledOnce()
+})
+
+it('rejects a runner subset before any network execution', () => {
+  const m = manager()
+  expect(() =>
+    m.propose({
+      action: 'runCollection',
+      summary: 'Only one',
+      folderId: 10,
+      requestIds: [1],
+    }),
+  ).toThrow('HTTP_RUN_INVALID_ORDER')
+  expect(state.start).not.toHaveBeenCalled()
 })

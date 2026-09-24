@@ -1,6 +1,7 @@
 import { Buffer } from 'node:buffer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  changeFolderIconWithUndo,
   createFolderIconPng,
   parseFolderIconSetPayload,
   parseFolderIconTarget,
@@ -8,6 +9,7 @@ import {
   resolveFolderIconPath,
   resolveFolderIconResponse,
   setFolderIcon,
+  undoFolderIconChange,
   writeFolderIcon,
 } from '../folderIcons'
 
@@ -23,7 +25,7 @@ const {
   updateNotesFolder,
 } = vi.hoisted(() => ({
   createFromBuffer: vi.fn(),
-  folderIconValues: { code: null as string | null },
+  folderIconValues: { code: null as string | null, vault: '/vault' },
   fsMock: {
     lstat: vi.fn(),
     readFile: vi.fn(),
@@ -93,7 +95,7 @@ vi.mock('../storage', () => ({
 
 vi.mock('../storage/providers/markdown/runtime', () => ({
   getPaths: () => ({ vaultPath: '/vault/code' }),
-  getVaultPath: () => '/vault',
+  getVaultPath: () => folderIconValues.vault,
 }))
 
 vi.mock('../storage/providers/markdown/notes', () => ({
@@ -107,6 +109,7 @@ vi.mock('../storage/providers/markdown/http', () => ({
 beforeEach(() => {
   vi.clearAllMocks()
   folderIconValues.code = null
+  folderIconValues.vault = '/vault'
   fsMock.realpathSync.mockImplementation((value: string) => value)
   getFileAvailability.mockReturnValue({
     exists: false,
@@ -443,5 +446,116 @@ describe('folder icon protocol', () => {
 
     expect(response.status).toBe(404)
     expect(fsMock.lstat).not.toHaveBeenCalled()
+  })
+})
+
+describe('native folder icon task Undo', () => {
+  it('expires old receipts and bounds the receipt count', async () => {
+    let first = ''
+    for (let index = 0; index < 129; index++) {
+      const result = await changeFolderIconWithUndo({
+        spaceId: 'code',
+        folderId: 1,
+        vault: '/vault',
+        icon: 'emoji:📁',
+      })
+      if (index === 0 && result.status === 'done')
+        first = result.receiptId
+    }
+    expect(await undoFolderIconChange(first)).toEqual({ undone: false })
+    const latest = await changeFolderIconWithUndo({
+      spaceId: 'code',
+      folderId: 1,
+      vault: '/vault',
+      icon: 'emoji:🌲',
+    })
+    const clock = vi
+      .spyOn(Date, 'now')
+      .mockReturnValue(Date.now() + 31 * 60 * 1000)
+    try {
+      expect(
+        await undoFolderIconChange(
+          latest.status === 'done' ? latest.receiptId : '',
+        ),
+      ).toEqual({ undone: false })
+    }
+    finally {
+      clock.mockRestore()
+    }
+  })
+  it('does not roll old metadata into a different vault after failed cleanup', async () => {
+    folderIconValues.code = 'custom:old'
+    fsMock.remove.mockImplementationOnce(async () => {
+      folderIconValues.vault = '/other'
+      throw new Error('cleanup failed')
+    })
+    await expect(
+      setFolderIcon({ spaceId: 'code', folderId: 1, icon: null }),
+    ).rejects.toThrow('cleanup failed')
+    expect(updateCodeFolder).toHaveBeenCalledTimes(1)
+  })
+  it('restores the exact previous custom PNG and metadata and is idempotent', async () => {
+    folderIconValues.code = 'custom:previous'
+    const png = Buffer.from('previous exact PNG bytes')
+    getFileAvailability.mockReturnValue({
+      exists: true,
+      isCloudPlaceholder: false,
+    })
+    fsMock.lstat.mockResolvedValue({
+      isFile: () => true,
+      isSymbolicLink: () => false,
+      size: png.length,
+    })
+    fsMock.readFile.mockResolvedValue(png)
+    const changed = await changeFolderIconWithUndo({
+      spaceId: 'code',
+      folderId: 1,
+      vault: '/vault',
+      icon: 'emoji:📁',
+    })
+    expect(changed).toMatchObject({ status: 'done', icon: 'emoji:📁' })
+    if (changed.status !== 'done')
+      throw new Error('missing receipt')
+    expect(await undoFolderIconChange(changed.receiptId)).toEqual({
+      undone: true,
+    })
+    expect(folderIconValues.code).toBe('custom:previous')
+    expect(fsMock.writeFile).toHaveBeenCalledWith(
+      expect.stringContaining('/vault/code/Code/.icon.png.'),
+      png,
+      { flag: 'wx' },
+    )
+    const updates = updateCodeFolder.mock.calls.length
+    expect(await undoFolderIconChange(changed.receiptId)).toEqual({
+      undone: true,
+    })
+    expect(updateCodeFolder).toHaveBeenCalledTimes(updates)
+  })
+  it('preserves a subsequent manual icon and refuses receipts from a different vault', async () => {
+    const changed = await changeFolderIconWithUndo({
+      spaceId: 'code',
+      folderId: 1,
+      vault: '/vault',
+      icon: 'emoji:📁',
+    })
+    if (changed.status !== 'done')
+      throw new Error('missing receipt')
+    await setFolderIcon({ spaceId: 'code', folderId: 1, icon: 'emoji:🌲' })
+    expect(await undoFolderIconChange(changed.receiptId)).toEqual({
+      undone: false,
+    })
+    expect(folderIconValues.code).toBe('emoji:🌲')
+    folderIconValues.vault = '/other'
+    expect(await undoFolderIconChange(changed.receiptId)).toEqual({
+      undone: false,
+    })
+    expect(
+      await changeFolderIconWithUndo({
+        spaceId: 'code',
+        folderId: 1,
+        vault: '/vault',
+        icon: null,
+      }),
+    ).toEqual({ status: 'stale' })
   })
 })

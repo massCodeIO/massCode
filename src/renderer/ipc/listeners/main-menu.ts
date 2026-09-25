@@ -79,8 +79,12 @@ async function refreshActiveSortableList() {
 export function registerMainMenuListeners() {
   ipc.on('main-menu:open-ai', () => {
     const space = getActiveSpaceId()
-    if (space && ['code', 'notes', 'http'].includes(space))
-      void useAi().openAndFocus()
+    if (space && ['code', 'notes', 'http'].includes(space)) {
+      const ai = useAi()
+      if (ai.open.value)
+        ai.setOpen(false)
+      else void ai.openAndFocus()
+    }
   })
   registerMainMenuContextSync()
 

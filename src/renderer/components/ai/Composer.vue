@@ -2,6 +2,7 @@
 import { Button } from '@/components/ui/shadcn/button'
 import { Textarea } from '@/components/ui/shadcn/textarea'
 import { useAi } from '@/composables/ai/useAi'
+import { usePromptHistory } from '@/composables/ai/usePromptHistory'
 import { i18n } from '@/electron'
 import { ArrowUp, Square } from 'lucide-vue-next'
 
@@ -24,6 +25,13 @@ const draft = computed({
       conversation.value.draft = String(value)
   },
 })
+const history = usePromptHistory(draft)
+watch(conversation, () => history.reset())
+function queueDraft() {
+  const prompt = draft.value
+  if (enqueue(prompt))
+    history.remember(prompt)
+}
 const busy = ref(false)
 const failed = ref(false)
 const canSend = computed(
@@ -35,10 +43,13 @@ async function submit() {
   emit('submit')
   busy.value = true
   failed.value = false
+  const prompt = draft.value
   try {
     failed.value = !(isStreaming.value
-      ? await steer(draft.value)
-      : await send(draft.value))
+      ? await steer(prompt)
+      : await send(prompt))
+    if (!failed.value)
+      history.remember(prompt)
   }
   catch {
     failed.value = true
@@ -48,6 +59,7 @@ async function submit() {
   }
 }
 function onKeydown(event: KeyboardEvent) {
+  history.onKeydown(event)
   if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
     event.preventDefault()
     submit()
@@ -105,6 +117,7 @@ function onKeydown(event: KeyboardEvent) {
         :placeholder="i18n.t('ai.placeholder')"
         :aria-label="i18n.t('ai.placeholder')"
         @keydown="onKeydown"
+        @input="history.onInput()"
       />
       <div class="bg-muted/40 flex items-end gap-2 border-t px-2 py-1.5">
         <AiContextPicker class="min-w-0 flex-1" />
@@ -124,7 +137,7 @@ function onKeydown(event: KeyboardEvent) {
           variant="outline"
           size="sm"
           :disabled="busy || (conversation?.queue?.length ?? 0) >= 8"
-          @click="enqueue(draft)"
+          @click="queueDraft"
         >
           {{ i18n.t("ai.task.queue") }}
         </Button>

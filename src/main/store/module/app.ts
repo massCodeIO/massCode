@@ -29,6 +29,7 @@ import {
 } from '../sanitize'
 
 const APP_STORE_DEFAULTS: AppStore = {
+  aiPromptHistory: [],
   window: {
     bounds: {},
     devToolsOpen: true,
@@ -523,6 +524,14 @@ function sanitizeAppStore(value: unknown): AppStore {
   const notesLayoutSource = asRecord(notesSource.layout)
 
   return {
+    aiPromptHistory: Array.isArray(source.aiPromptHistory)
+      ? source.aiPromptHistory
+          .filter(
+            (value): value is string =>
+              typeof value === 'string' && Boolean(value.trim()),
+          )
+          .slice(-100)
+      : [],
     window: {
       devToolsOpen:
         typeof windowSource.devToolsOpen === 'boolean'

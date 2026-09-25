@@ -2,10 +2,14 @@
 import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import { Textarea } from '@/components/ui/shadcn/textarea'
+import { usePromptHistory } from '@/composables/ai/usePromptHistory'
 import { i18n } from '@/electron'
 import { LoaderCircle } from 'lucide-vue-next'
 import { isLocalAiProvider } from '~/shared/ai'
+import { AI_PROMPT_HISTORY_LIMITS } from '~/shared/aiPromptHistory'
 import { useAiPreferences } from './useAiPreferences'
+
+const { limit: promptHistoryLimit } = usePromptHistory()
 
 const {
   settings,
@@ -232,6 +236,28 @@ const {
           >
             {{ i18n.t("button.save") }}
           </Button>
+        </template>
+      </UiMenuFormItem>
+      <UiMenuFormItem :label="i18n.t('ai.promptHistory.label')">
+        <Select.Select
+          :model-value="String(promptHistoryLimit)"
+          @update:model-value="promptHistoryLimit = Number($event)"
+        >
+          <Select.SelectTrigger class="w-32">
+            <Select.SelectValue />
+          </Select.SelectTrigger>
+          <Select.SelectContent>
+            <Select.SelectItem
+              v-for="limit in AI_PROMPT_HISTORY_LIMITS"
+              :key="limit"
+              :value="String(limit)"
+            >
+              {{ limit === 0 ? i18n.t("ai.promptHistory.off") : limit }}
+            </Select.SelectItem>
+          </Select.SelectContent>
+        </Select.Select>
+        <template #description>
+          {{ i18n.t("ai.promptHistory.description") }}
         </template>
       </UiMenuFormItem>
     </UiMenuFormSection>

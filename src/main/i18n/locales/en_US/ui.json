@@ -1437,6 +1437,7 @@
         "activeEnvironmentId": "Active environment",
         "activate": "Activate after creation"
       },
+      "controlHint": "Send updates the current task. Next task queues a separate task. Stop ends assistant work; Undo and native Stop are separate.",
       "undo": "Undo this change",
       "review": "Review vault changes",
       "description": "Choose changes to apply to saved records in your vault.",
@@ -2007,6 +2008,11 @@
     },
     "sentSelection": "Selected records: {{count}}",
     "sentFragment": "Selected text",
-    "sentWholeContent": "Entire editor content"
+    "sentWholeContent": "Entire editor content",
+    "promptHistory": {
+      "label": "Prompt history limit",
+      "off": "Off",
+      "description": "Shared across all chats and saved between restarts. Use ↑ / ↓ at the first / last line to browse history. Disabling clears saved prompts."
+    }
   }
 }

@@ -23,7 +23,7 @@ const tab = computed({
     class="flex h-full min-h-0 flex-col gap-0 pt-[var(--content-top-offset)]"
   >
     <div
-      class="flex h-[calc(41px-var(--content-top-offset))] shrink-0 items-center justify-between gap-1 border-b px-2 pb-1"
+      class="flex h-[calc(var(--inspector-header-height,41px)-var(--content-top-offset))] shrink-0 items-center justify-between gap-1 border-b px-2 pb-1"
     >
       <Tabs.TabsList class="min-w-0 flex-1">
         <Tooltip.Tooltip>
@@ -40,9 +40,7 @@ const tab = computed({
             </Tabs.TabsTrigger>
           </Tooltip.TooltipTrigger>
           <Tooltip.TooltipContent>
-            {{
-              i18n.t("common.inspector")
-            }}
+            {{ i18n.t("common.inspector") }}
           </Tooltip.TooltipContent>
         </Tooltip.Tooltip>
         <Tooltip.Tooltip>

@@ -158,6 +158,7 @@ onMounted(() => {
             class="h-full min-h-0 shrink-0 overflow-hidden"
           >
             <AiInspectorTabs
+              class="[--inspector-header-height:40px]"
               @close="closeInspector"
               @inspector="inspectorOpen = true"
             >

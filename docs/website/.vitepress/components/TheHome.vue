@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import HomeAi from './home/HomeAi.vue'
 import HomeClosing from './home/HomeClosing.vue'
 import HomeDeveloperTools from './home/HomeDeveloperTools.vue'
 import HomeHero from './home/HomeHero.vue'
@@ -14,6 +15,7 @@ import HomeWorkflows from './home/HomeWorkflows.vue'
     <HomeHero />
     <HomeShowcase />
     <HomeWorkflows />
+    <HomeAi />
     <HomeMcp />
     <HomeDeveloperTools />
     <HomeLocal />

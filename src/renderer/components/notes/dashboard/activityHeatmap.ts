@@ -35,3 +35,23 @@ export function getNotesHeatmapColor(
 
   return palette.scale[4]
 }
+
+export const NOTES_HEATMAP_WEEKS = 53
+export const NOTES_HEATMAP_DAYS = 7
+
+export function getNotesHeatmapCells(days: object, now = new Date()) {
+  const today = new Date(now)
+  today.setHours(0, 0, 0, 0)
+  const dayMs = 24 * 60 * 60 * 1000
+  const length = NOTES_HEATMAP_WEEKS * NOTES_HEATMAP_DAYS
+  const start = today.getTime() - (length - 1) * dayMs
+  return Array.from({ length }, (_, index) => {
+    const date = new Date(start + index * dayMs)
+    const key = [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0'),
+    ].join('-')
+    return { date, key, count: (days as Record<string, number>)[key] ?? 0 }
+  })
+}

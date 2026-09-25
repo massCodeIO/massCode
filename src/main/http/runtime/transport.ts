@@ -59,8 +59,19 @@ export async function requestWithRedirects(
       || settings.followAuthorizationHeader === true
       || settings.removeRefererHeaderOnRedirect === true
       || settings.protocolVersion === 'http2'
-  if (!custom)
-    return request(url, options)
+  if (!custom) {
+    const response = await request(url, options)
+    if (
+      (options.maxRedirections ?? 0) > 0
+      && response.headers.location
+      && [300, 301, 302, 303, 307, 308].includes(response.statusCode)
+    ) {
+      response.body.on('error', () => {})
+      response.body.destroy()
+      throw new Error('HTTP_REDIRECT_LIMIT')
+    }
+    return response
+  }
 
   let target = url
   let method = options.method
@@ -83,11 +94,17 @@ export async function requestWithRedirects(
     })
     const location = response.headers.location
     if (
-      hop >= maximum
-      || !location
+      !location
       || ![300, 301, 302, 303, 307, 308].includes(response.statusCode)
     ) {
       return response
+    }
+    if (maximum === 0)
+      return response
+    if (hop >= maximum) {
+      response.body.on('error', () => {})
+      response.body.destroy()
+      throw new Error('HTTP_REDIRECT_LIMIT')
     }
     let next: URL
     try {
@@ -96,6 +113,7 @@ export async function requestWithRedirects(
         throw new Error('HTTP_REDIRECT_PROTOCOL')
     }
     catch (error) {
+      response.body.on('error', () => {})
       response.body.destroy()
       throw error
     }

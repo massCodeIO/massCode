@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import * as Tooltip from '@/components/ui/shadcn/tooltip'
+import { useAi } from '@/composables/ai/useAi'
 import { i18n, store } from '@/electron'
 import { openSpaceTarget } from '@/ipc/listeners/deepLinks'
 import { RouterName } from '@/router'
 import { getSpaceDefinitions } from '@/spaceDefinitions'
 import { isMac } from '@/utils'
-import { Settings } from 'lucide-vue-next'
+import { MessageSquare, Settings } from 'lucide-vue-next'
 import { RouterLink, useRoute } from 'vue-router'
 import packageJson from '../../../../package.json'
 
 const route = useRoute()
+const { open: aiOpen, openAndFocus: openAi } = useAi()
 
 const spaces = computed(() => {
   return getSpaceDefinitions().map(space => ({
@@ -17,6 +19,12 @@ const spaces = computed(() => {
     active: space.isActive(route.name),
   }))
 })
+
+const supportsAi = computed(() =>
+  spaces.value.some(
+    space => space.active && ['code', 'notes', 'http'].includes(space.id),
+  ),
+)
 
 watch(
   () => spaces.value.find(s => s.active)?.id,
@@ -70,6 +78,14 @@ watch(
     <div
       class="mt-auto flex min-h-0 flex-1 flex-col items-center justify-end gap-2 overflow-hidden pb-2"
     >
+      <UiActionButton
+        v-if="supportsAi"
+        :tooltip="`${i18n.t('ai.title')} (${isMac ? '⌘L' : 'Ctrl+L'})`"
+        :aria-pressed="aiOpen"
+        @click="openAi"
+      >
+        <MessageSquare class="size-4" />
+      </UiActionButton>
       <SpaceRailCloudDownloads />
       <SpaceRailUnsponsored />
       <RouterLink

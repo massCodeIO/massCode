@@ -20,7 +20,9 @@ import {
   disconnectWebSocket,
   disposeWebSocket,
   readWebSocket,
+  readWebSocketForAi,
   sendWebSocket,
+  waitForWebSocket,
 } from '../session'
 
 const mocks = vi.hoisted(() => ({
@@ -390,4 +392,42 @@ describe('webSocket sessions', () => {
     expect(view.error).toBe('tooLarge')
     expect(view.messages).toHaveLength(0)
   })
+})
+
+it('redacts echoed auth/environment/session secrets for AI without changing the raw UI log', async () => {
+  const request = {
+    ...input(),
+    auth: { type: 'bearer' as const, token: 'literal-auth' },
+  }
+  const session = getHttpSession(mocks.vault, mocks.envId)
+  commitHttpSession(
+    session.generation,
+    new Map([['session', 'session-value']]),
+  )
+  connectWebSocket(1, request)
+  await waitFor(request.connectionId, view => view.state === 'open')
+  const message = 'literal-auth env-value session-value'
+  for (const socket of server.clients)
+    socket.send(JSON.stringify({ ordinary: message }))
+  await waitFor(request.connectionId, view => view.messages.length > 0)
+  expect(JSON.stringify(readWebSocket(1, request.connectionId, 0))).toContain(
+    message,
+  )
+  const safe = JSON.stringify(readWebSocketForAi(1, request.connectionId, 0))
+  expect(safe).not.toContain('literal-auth')
+  expect(safe).not.toContain('env-value')
+  expect(safe).not.toContain('session-value')
+  expect(safe).toContain('[REDACTED]')
+})
+
+it('waits for actual connection and closure before dependent actions continue', async () => {
+  const request = input()
+  const initial = connectWebSocket(1, request)
+  expect(initial.state).toBe('connecting')
+  await waitForWebSocket(1, request.connectionId, 'connected')
+  expect(readWebSocket(1, request.connectionId, 0).state).toBe('open')
+  await sendWebSocket(1, request.connectionId, 'after open')
+  disconnectWebSocket(1, request.connectionId)
+  await waitForWebSocket(1, request.connectionId, 'closed')
+  expect(readWebSocket(1, request.connectionId, 0).state).toBe('closed')
 })

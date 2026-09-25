@@ -4,6 +4,10 @@ import { Checkbox } from '@/components/ui/shadcn/checkbox'
 import * as Dialog from '@/components/ui/shadcn/dialog'
 import { Input } from '@/components/ui/shadcn/input'
 import { useHttpEnvironmentEditor, useHttpEnvironments } from '@/composables'
+import {
+  closeHttpSecretHandoff,
+  httpSecretHandoff,
+} from '@/composables/ai/nativeHttpHandoffs'
 import { i18n } from '@/electron'
 import { Eye, EyeOff, Plus, Trash2 } from 'lucide-vue-next'
 
@@ -29,6 +33,8 @@ const VARIABLE_COLUMNS = [
 ]
 
 const {
+  addSecretVariable,
+  flushPendingUpdate,
   confirmRemoveVariable,
   createVariable,
   environments,
@@ -47,7 +53,48 @@ const {
   selectedEnv,
   selectedEnvId,
   setSecretValue,
-} = useHttpEnvironmentEditor(open)
+} = useHttpEnvironmentEditor(open, undefined, (environmentId, key, saved) => {
+  const pending = httpSecretHandoff.value
+  if (
+    !pending
+    || pending.action.environmentId !== environmentId
+    || pending.action.key !== key
+  ) {
+    return
+  }
+  pending.finish({
+    status: !pending.current() ? 'stale' : saved ? 'done' : 'failed',
+    persisted: saved,
+    secret: { environmentId, key, present: saved, saved },
+  })
+})
+watch(
+  [httpSecretHandoff, selectedEnv, localVariables],
+  async () => {
+    const pending = httpSecretHandoff.value
+    if (!pending || !open.value || !pending.current())
+      return
+    if (selectedEnvId.value !== pending.action.environmentId) {
+      await onSelectEnvironment(pending.action.environmentId)
+      return
+    }
+    if (
+      !selectedEnv.value
+      || localVariables.value.some(entry => entry.key === pending.action.key)
+    ) {
+      return
+    }
+    addSecretVariable(pending.action.key)
+  },
+  { immediate: true },
+)
+watch(open, (value) => {
+  if (!value)
+    void closeHttpSecretHandoff(flushPendingUpdate)
+})
+onBeforeUnmount(() => {
+  void closeHttpSecretHandoff(flushPendingUpdate)
+})
 </script>
 
 <template>
@@ -61,6 +108,17 @@ const {
         <Dialog.DialogTitle>
           {{ i18n.t("spaces.http.environments.title") }}
         </Dialog.DialogTitle>
+        <UiText
+          v-if="httpSecretHandoff"
+          as="p"
+          variant="sm"
+        >
+          {{
+            i18n.t("ai.native.secretEntry", {
+              key: httpSecretHandoff.action.key,
+            })
+          }}
+        </UiText>
       </Dialog.DialogHeader>
       <div
         class="grid h-[min(560px,calc(100vh-8rem))] min-h-0 grid-cols-[200px_minmax(0,1fr)] gap-4"

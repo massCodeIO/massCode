@@ -1,222 +1,105 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { reactive, ref } from 'vue'
+import { beforeEach, expect, it, vi } from 'vitest'
 
-async function setup() {
-  vi.resetModules()
-
-  const currentRoute = ref({ name: 'notes-space' })
-  const push = vi.fn(async ({ name }: { name: string }) => {
-    currentRoute.value = { name }
-  })
-  const clearSearch = vi.fn()
-  const getNotes = vi.fn(async () => undefined)
-  const selectFirstNote = vi.fn()
-  const selectNote = vi.fn()
-  const getNotesById = vi.fn()
-  const isNavigatingHistory = ref(false)
-  const recordNavigation = vi.fn(async (navigate: () => Promise<void>) => {
-    if (!isNavigatingHistory.value)
-      await navigate()
-  })
-
-  const notesState = reactive<{
-    noteId?: number
-    folderId?: number
-    tagId?: number
-    libraryFilter?: string
-  }>({})
-
-  vi.doMock('@/router', () => ({
-    RouterName: {
-      notesDashboard: 'notes-space/dashboard',
-      notesGraph: 'notes-space/graph',
-      notesSpace: 'notes-space',
+const mock = vi.hoisted(() => ({
+  route: { value: { name: 'dashboard' } },
+  state: {
+    libraryFilter: 'all',
+    folderId: 2 as number | undefined,
+    tagId: 3 as number | undefined,
+  },
+  clear: vi.fn(),
+  load: vi.fn(),
+  select: vi.fn(),
+  blocked: { value: false },
+}))
+vi.mock('@/services/api', () => ({ api: {} }))
+vi.mock('@/router', () => ({
+  router: {
+    currentRoute: mock.route,
+    push: async () => {
+      mock.route.value.name = 'notes'
     },
-    router: {
-      currentRoute,
-      push,
+  },
+  RouterName: { notesSpace: 'notes' },
+}))
+vi.mock('../useNotesApp', () => ({
+  useNotesApp: () => ({ notesState: mock.state }),
+}))
+vi.mock('../useNoteSearch', () => ({
+  useNoteSearch: () => ({ clearSearch: mock.clear }),
+}))
+vi.mock('../useNoteFolders', () => ({
+  useNoteFolders: () => ({
+    clearFolderSelection: () => {
+      mock.state.folderId = undefined
     },
-  }))
-
-  vi.doMock('../useNotesApp', () => ({
-    useNotesApp: () => ({
-      notesState,
-    }),
-  }))
-
-  vi.doMock('../useNoteSearch', () => ({
-    useNoteSearch: () => ({
-      clearSearch,
-      isSearch: ref(false),
-    }),
-  }))
-
-  vi.doMock('../useNotes', () => ({
-    useNotes: () => ({
-      getNotes,
-      selectFirstNote,
-      selectNote,
-    }),
-  }))
-
-  vi.doMock('@/services/api', () => ({
-    api: {
-      notes: {
-        getNotesById,
-      },
-    },
-  }))
-
-  vi.doMock('@/composables/useNavigationHistory', () => ({
-    useNavigationHistory: () => ({
-      isNavigatingHistory,
-      recordNavigation,
-    }),
-  }))
-
-  const module = await import('../useNotesWorkspaceNavigation')
-
-  return {
-    clearSearch,
-    getNotes,
-    getNotesById,
-    currentRoute,
-    notesState,
-    openNoteFromGraph: module.useNotesWorkspaceNavigation().openNoteFromGraph,
-    openNoteInNotesWorkspace:
-      module.useNotesWorkspaceNavigation().openNoteInNotesWorkspace,
-    openTagInNotesWorkspace:
-      module.useNotesWorkspaceNavigation().openTagInNotesWorkspace,
-    recordNavigation,
-    isNavigatingHistory,
-    push,
-    selectFirstNote,
-    selectNote,
-  }
-}
-
+  }),
+}))
+vi.mock('../useNotes', () => ({
+  useNotes: () => ({
+    getNotes: mock.load,
+    selectFirstNote: mock.select,
+    isRestoreStateBlocked: mock.blocked,
+    withNotesLoading: (fn: () => unknown) => fn(),
+  }),
+}))
+const { useNotesWorkspaceNavigation } = await import(
+  '../useNotesWorkspaceNavigation'
+)
 beforeEach(() => {
   vi.clearAllMocks()
+  mock.load.mockResolvedValue(true)
+  mock.route.value.name = 'dashboard'
+  mock.state.folderId = 2
+  mock.state.tagId = 3
 })
-
-describe('useNotesWorkspaceNavigation', () => {
-  it('opens a folder note in the notes workspace and loads its folder list', async () => {
-    const context = await setup()
-
-    context.getNotesById.mockResolvedValue({
-      data: {
-        id: 42,
-        folder: {
-          id: 7,
-          name: 'Docs',
-        },
-      },
+it.each([
+  ['tasks', { propertyType: 'task' }],
+  [
+    'today',
+    { propertyType: 'task', propertyDue: 'today', propertyStatusNot: 'done' },
+  ],
+  [
+    'upcoming',
+    {
+      propertyType: 'task',
+      propertyDue: 'upcoming',
+      propertyStatusNot: 'done',
+    },
+  ],
+  ['completed', { propertyType: 'task', propertyStatus: 'done' }],
+] as const)(
+  'loads the actual %s filter, clears competing filters and selects after success',
+  async (filter, query) => {
+    expect(await useNotesWorkspaceNavigation().openNotesLibrary(filter)).toBe(
+      true,
+    )
+    expect(mock.load).toHaveBeenCalledWith(query)
+    expect(mock.clear).toHaveBeenCalledOnce()
+    expect(mock.state).toEqual({
+      libraryFilter: filter,
+      folderId: undefined,
+      tagId: undefined,
     })
-
-    await context.openNoteInNotesWorkspace(42)
-
-    expect(context.push).toHaveBeenCalledWith({ name: 'notes-space' })
-    expect(context.clearSearch).toHaveBeenCalledTimes(1)
-    expect(context.notesState.tagId).toBeUndefined()
-    expect(context.notesState.libraryFilter).toBeUndefined()
-    expect(context.notesState.folderId).toBe(7)
-    expect(context.getNotes).toHaveBeenCalledWith({ folderId: 7 })
-    expect(context.selectNote).toHaveBeenCalledWith(42)
+    expect(mock.select).toHaveBeenCalledOnce()
+  },
+)
+it('does not select stale list contents after load failure or cancellation', async () => {
+  mock.load.mockResolvedValue(false)
+  expect(await useNotesWorkspaceNavigation().openNotesLibrary('tasks')).toBe(
+    false,
+  )
+  expect(mock.select).not.toHaveBeenCalled()
+  let current = true
+  mock.load.mockImplementation(async () => {
+    current = false
+    return true
   })
-
-  it('opens an inbox note in the notes workspace and loads inbox notes', async () => {
-    const context = await setup()
-
-    context.getNotesById.mockResolvedValue({
-      data: {
-        id: 42,
-        folder: null,
-      },
-    })
-
-    await context.openNoteInNotesWorkspace(42)
-
-    expect(context.notesState.folderId).toBeUndefined()
-    expect(context.notesState.libraryFilter).toBe('inbox')
-    expect(context.getNotes).toHaveBeenCalledWith({ isInbox: 1 })
-    expect(context.selectNote).toHaveBeenCalledWith(42)
-  })
-
-  it('opens a tag in the notes workspace and loads filtered notes', async () => {
-    const context = await setup()
-
-    context.notesState.folderId = 10
-    context.notesState.libraryFilter = 'favorites'
-
-    await context.openTagInNotesWorkspace(11)
-
-    expect(context.push).toHaveBeenCalledWith({ name: 'notes-space' })
-    expect(context.clearSearch).toHaveBeenCalledTimes(1)
-    expect(context.notesState.folderId).toBeUndefined()
-    expect(context.notesState.libraryFilter).toBeUndefined()
-    expect(context.notesState.tagId).toBe(11)
-    expect(context.getNotes).toHaveBeenCalledWith({ tagId: 11 })
-    expect(context.selectFirstNote).toHaveBeenCalledTimes(1)
-  })
-
-  it('records graph-originated note opens in navigation history', async () => {
-    const context = await setup()
-    context.currentRoute.value = { name: 'notes-space/graph' }
-
-    context.getNotesById.mockResolvedValue({
-      data: {
-        id: 42,
-        folder: {
-          id: 7,
-          name: 'Docs',
-        },
-      },
-    })
-
-    await context.openNoteFromGraph(42)
-
-    expect(context.recordNavigation).toHaveBeenCalledTimes(1)
-    expect(context.selectNote).toHaveBeenCalledWith(42)
-  })
-
-  it('blocks explicit graph opens during history restoration', async () => {
-    const context = await setup()
-
-    context.currentRoute.value = { name: 'notes-space/graph' }
-    context.isNavigatingHistory.value = true
-    context.getNotesById.mockResolvedValue({
-      data: {
-        id: 42,
-        folder: {
-          id: 7,
-          name: 'Docs',
-        },
-      },
-    })
-
-    await context.openNoteFromGraph(42)
-
-    expect(context.recordNavigation).toHaveBeenCalledOnce()
-    expect(context.selectNote).not.toHaveBeenCalled()
-  })
-
-  it('records dashboard graph note opens in navigation history', async () => {
-    const context = await setup()
-
-    context.currentRoute.value = { name: 'notes-space/dashboard' }
-    context.getNotesById.mockResolvedValue({
-      data: {
-        id: 42,
-        folder: {
-          id: 7,
-          name: 'Docs',
-        },
-      },
-    })
-
-    await context.openNoteInNotesWorkspace(42)
-
-    expect(context.recordNavigation).toHaveBeenCalledTimes(1)
-    expect(context.selectNote).toHaveBeenCalledWith(42)
-  })
+  expect(
+    await useNotesWorkspaceNavigation().openNotesLibrary(
+      'tasks',
+      () => current,
+    ),
+  ).toBe(false)
+  expect(mock.select).not.toHaveBeenCalled()
 })

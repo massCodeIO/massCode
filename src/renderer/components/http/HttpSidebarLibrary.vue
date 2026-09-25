@@ -1,28 +1,16 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import {
-  useHttpApp,
-  useHttpFolders,
-  useHttpRequests,
-  useHttpSearch,
-} from '@/composables'
-import { httpRuntimeNavigation } from '@/composables/spaces/http/runtimeNavigation'
+import { useHttpApp, useHttpRequests } from '@/composables'
+import { useHttpWorkspaceNavigation } from '@/composables/spaces/http/useHttpWorkspaceNavigation'
 import { LibraryFilter } from '@/composables/types'
 import { i18n } from '@/electron'
-import { router, RouterName } from '@/router'
+import { RouterName } from '@/router'
 import { onClickOutside } from '@vueuse/core'
 import { Archive, FolderTree, Inbox, Star, Trash } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 
 const { httpState } = useHttpApp()
-const { clearFolderSelection } = useHttpFolders()
-const {
-  emptyTrash,
-  getHttpRequests,
-  isRestoreStateBlocked,
-  selectFirstRequest,
-} = useHttpRequests()
-const { clearSearch } = useHttpSearch()
+const { emptyTrash } = useHttpRequests()
 const route = useRoute()
 
 const libraryItems = [
@@ -55,40 +43,8 @@ function isItemSelected(item: (typeof libraryItems)[number]) {
 }
 
 async function onItemClick(item: (typeof libraryItems)[number]) {
-  if (!(await httpRuntimeNavigation.confirmLeave()))
-    return
-  const { id } = item
-  focusedItemId.value = id ?? 'collections'
-
-  if (route.name !== RouterName.httpSpace) {
-    await router.push({ name: RouterName.httpSpace })
-  }
-
-  isRestoreStateBlocked.value = true
-  clearSearch()
-
-  httpState.libraryFilter = id
-  clearFolderSelection()
-
-  if (id === undefined) {
-    await getHttpRequests({ isDeleted: 0 })
-    return
-  }
-
-  if (id === LibraryFilter.Favorites) {
-    await getHttpRequests({ isFavorites: 1 })
-  }
-  else if (id === LibraryFilter.Trash) {
-    await getHttpRequests({ isDeleted: 1 })
-  }
-  else if (id === LibraryFilter.All) {
-    await getHttpRequests({ isDeleted: 0 })
-  }
-  else if (id === LibraryFilter.Inbox) {
-    await getHttpRequests({ isInbox: 1 })
-  }
-
-  selectFirstRequest()
+  if (await useHttpWorkspaceNavigation().openHttpLibrary(item.id))
+    focusedItemId.value = item.id ?? 'collections'
 }
 
 onClickOutside(itemRef, () => {

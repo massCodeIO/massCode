@@ -12,6 +12,7 @@ export const RouterName = {
   preferencesMath: 'preferences/math',
   preferencesHttp: 'preferences/http',
   preferencesAPI: 'preferences/api',
+  preferencesAI: 'preferences/ai',
   preferencesUpdates: 'preferences/updates',
   preferencesSupporter: 'preferences/supporter',
   devtools: 'devtools',
@@ -97,6 +98,11 @@ const routes = [
         path: 'http',
         name: RouterName.preferencesHttp,
         component: () => import('@/components/preferences/Http.vue'),
+      },
+      {
+        path: 'ai',
+        name: RouterName.preferencesAI,
+        component: () => import('@/components/preferences/AI.vue'),
       },
       {
         path: 'api',

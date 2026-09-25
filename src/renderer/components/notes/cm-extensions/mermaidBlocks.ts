@@ -7,7 +7,7 @@ import {
   EditorView,
   WidgetType,
 } from '@codemirror/view'
-import mermaid from 'mermaid'
+import { renderMermaidSvg } from '../mermaidRenderer'
 import { editorFocusField, setEditorFocusEffect } from './editorFocus'
 import { getRevealSelection, revealSelectionChanged } from './revealSelection'
 import { isSelectionInsideRangeWithFocus } from './selectionRange'
@@ -17,8 +17,6 @@ interface MermaidBlocksOptions {
   isDark?: boolean
   showSourceWhenSelectionInside?: boolean
 }
-
-let mermaidRenderCounter = 0
 
 function extractMermaidCode(text: string): string | null {
   const lines = text.split('\n')
@@ -83,27 +81,6 @@ export function applyMermaidRenderFailure(
 // svgCache in drawingEmbed.ts).
 const svgCache = new Map<string, string>()
 const inFlightRenders = new Map<string, Promise<string>>()
-let initializedTheme: string | null = null
-
-async function renderMermaidSvg(
-  code: string,
-  theme: 'dark' | 'default',
-): Promise<string> {
-  const id = `notes-mermaid-${mermaidRenderCounter++}`
-
-  if (initializedTheme !== theme) {
-    mermaid.initialize({
-      startOnLoad: false,
-      securityLevel: 'strict',
-      theme,
-    })
-    initializedTheme = theme
-  }
-
-  const result = await mermaid.render(id, code)
-  return typeof result === 'string' ? result : result.svg
-}
-
 async function renderMermaid(
   container: HTMLElement,
   code: string,

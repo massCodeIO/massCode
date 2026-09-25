@@ -449,3 +449,39 @@ describe('snippet rename refresh', () => {
     expect(context.getSnippetsById).toHaveBeenCalledTimes(fullRecordCalls)
   })
 })
+
+it('keeps the mounted Code record when typing invalidates a guarded refresh during GET', async () => {
+  const { snippets, getSnippetsById } = await setup({ snippetId: 1 })
+  await snippets.refreshSelectedSnippet()
+  const before = snippets.selectedSnippet.value
+  expect(before?.contents[0]?.value).toBe('Content 1')
+  let accept = true
+  let finish!: (value: Awaited<ReturnType<typeof getSnippetsById>>) => void
+  getSnippetsById.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve
+      }),
+  )
+  const refreshing = snippets.refreshSelectedSnippet(() => accept)
+  expect(snippets.selectedSnippet.value).toEqual(before)
+  expect(snippets.selectedSnippetRecordStatus.value).toBe('ready')
+  accept = false
+  finish({
+    data: {
+      id: 1,
+      name: 'Stale GET',
+      tags: [],
+      contents: [
+        {
+          id: 10,
+          label: 'Fragment 1',
+          language: 'text',
+          value: 'stale persisted text',
+        },
+      ],
+    },
+  })
+  expect(await refreshing).toBe(false)
+  expect(snippets.selectedSnippet.value).toEqual(before)
+})

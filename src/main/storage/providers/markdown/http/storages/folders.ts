@@ -260,7 +260,7 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
       }
 
       const collectionConfig
-        = input.collectionConfig === undefined
+        = input.collectionConfig == null
           ? undefined
           : httpCollectionSchema.safeParse(input.collectionConfig)
       if (collectionConfig && !collectionConfig.success) {
@@ -406,12 +406,17 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
         }
       }
 
-      if (collectionConfig?.success) {
+      if (collectionConfig?.success || input.collectionConfig === null) {
         const nextState = {
           ...state,
           folders: state.folders.map(item =>
             item.id === id
-              ? { ...item, collectionConfig: collectionConfig.data }
+              ? {
+                  ...item,
+                  collectionConfig: collectionConfig?.success
+                    ? collectionConfig.data
+                    : undefined,
+                }
               : item,
           ),
         }
@@ -422,7 +427,9 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
           saveHttpState(paths, state)
           throw error
         }
-        folder.collectionConfig = collectionConfig.data
+        if (collectionConfig?.success)
+          folder.collectionConfig = collectionConfig.data
+        else delete folder.collectionConfig
       }
       else {
         saveHttpState(paths, state)

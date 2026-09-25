@@ -8,6 +8,7 @@ import type { SpaceId } from '@/spaceDefinitions'
 import type { MainMenuContext, MainMenuLayoutMode } from '~/main/types/menu'
 
 interface CodeMenuState {
+  canFormat: boolean
   layoutMode: LayoutMode
   canPreviewCode: boolean
   isCodePreviewShown: boolean
@@ -81,7 +82,7 @@ export function createMainMenuContext(
         kind: 'code',
         noteMode: null,
         canSendRequest: false,
-        canFormat: true,
+        canFormat: options.code.canFormat,
         canPreviewCode: options.code.canPreviewCode,
         isCodePreviewShown: options.code.isCodePreviewShown,
         canPreviewJson: options.code.canPreviewJson,

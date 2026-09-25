@@ -1,9 +1,10 @@
 import type { Event as ElectronEvent } from 'electron'
-/* eslint-disable node/prefer-global/process */
 import { createRequire } from 'node:module'
+/* eslint-disable node/prefer-global/process */
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { app, BrowserWindow, ipcMain, Menu, protocol, screen } from 'electron'
+import { registerAiHandlers } from './ai/ipc'
 import { initApi } from './api'
 import { registerApiRequestHandler } from './api/requestIpc'
 import { resolveApiSessionToken } from './api/sessionAuth'
@@ -176,6 +177,7 @@ function createWindow(sessionToken: string) {
         path.join(__dirname, '../../build/renderer/index.html'),
       ).toString()
 
+  registerAiHandlers(mainWindow.webContents, rendererUrl)
   registerBenchmark(mainWindow.webContents, rendererUrl)
   registerHttpCookieHandlers(mainWindow.webContents, rendererUrl)
   registerHttpScriptHandlers(mainWindow.webContents, rendererUrl)
@@ -190,8 +192,19 @@ function createWindow(sessionToken: string) {
   )
 
   if (isDev) {
+    mainWindow.webContents.on('devtools-opened', () => {
+      store.app.set('window.devToolsOpen', true)
+    })
+    mainWindow.webContents.on('devtools-closed', () => {
+      if (!isQuitting() && !mainWindow.isDestroyed()) {
+        store.app.set('window.devToolsOpen', false)
+      }
+    })
+
     mainWindow.loadURL(rendererUrl)
-    mainWindow.webContents.openDevTools()
+    if (store.app.get('window.devToolsOpen')) {
+      mainWindow.webContents.openDevTools()
+    }
   }
   else {
     mainWindow.loadFile(

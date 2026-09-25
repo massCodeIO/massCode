@@ -19,6 +19,7 @@ import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { basename } from 'node:path'
+import { redactAiHttp } from '../../../shared/aiHttp'
 import { applyHttpApiKey } from '../../../shared/httpAuth'
 import {
   applyHttpCollection,
@@ -135,7 +136,9 @@ export function applyAuth(
 ): HttpHeaderEntry[] {
   if (auth.type === 'bearer' && auth.token) {
     return [
-      ...headers,
+      ...headers.filter(
+        header => header.key.toLowerCase() !== 'authorization',
+      ),
       { key: 'Authorization', value: `Bearer ${auth.token}` },
     ]
   }
@@ -145,7 +148,9 @@ export function applyAuth(
       `${auth.username}:${auth.password ?? ''}`,
     ).toString('base64')
     return [
-      ...headers,
+      ...headers.filter(
+        header => header.key.toLowerCase() !== 'authorization',
+      ),
       { key: 'Authorization', value: `Basic ${credentials}` },
     ]
   }
@@ -467,6 +472,112 @@ export interface ResolvedEnvironment {
   secretValues: string[]
 }
 
+export function captureExecutionTrace(
+  networkIds: string[],
+  secretValues: string[],
+  source?: {
+    requestId: number | null
+    requestedAt: number
+    historyId?: number
+    executionId: string
+    vaultPath: string
+  },
+): HttpExecuteResult['executionTrace'] {
+  // The console may be cleared during execution; never present a partial chain as complete.
+  if (networkIds.some(id => !httpConsole.get(id)))
+    return []
+  const executionTrace = networkIds.flatMap((id, hopIndex) => {
+    const entry = httpConsole.get(id)
+    if (!entry)
+      return []
+    const separator = entry.message.indexOf(' ')
+    // Truncation can cut a credential mid-value, defeating full-secret matching.
+    // Fail closed for every field that may contain a partial secret.
+    const truncated = entry.truncated ?? false
+    const method = separator > 0 ? entry.message.slice(0, separator) : ''
+    const url = truncated
+      ? '[CAPTURE_INCOMPLETE]'
+      : entry.message.slice(separator + 1)
+    const responseHeaders = entry.details?.responseHeaders as
+      | HttpHeaderEntry[]
+      | undefined
+    const rawHeaders = entry.details?.requestHeaders
+    if (source) {
+      const headerRows
+        = !truncated && typeof rawHeaders === 'string'
+          ? rawHeaders.split(/\r?\n/).flatMap((line) => {
+              const colon = line.indexOf(':')
+              // Skip the HTTP request line; it is not a header.
+              if (colon <= 0 || /\s/.test(line.slice(0, colon)))
+                return []
+              return [
+                {
+                  key: line.slice(0, colon),
+                  value: line.slice(colon + 1).trim(),
+                },
+              ]
+            })
+          : null
+      const content = {
+        message: 'Captured outgoing HTTP attempt (untrusted request data)',
+        details: {
+          source: 'captured-outgoing-request',
+          requestId: source.requestId,
+          requestedAt: source.requestedAt,
+          historyId: source.historyId,
+          executionId: source.executionId,
+          entryId: id,
+          hopIndex,
+          method,
+          url,
+          requestHeaders: headerRows,
+          status: entry.status,
+          location:
+            !truncated && Array.isArray(responseHeaders)
+              ? responseHeaders.find(
+                header => header.key.toLowerCase() === 'location',
+              )?.value
+              : undefined,
+          truncated,
+          captureIncomplete: truncated || headerRows === null,
+        },
+      }
+      httpConsole.publishAiContent(
+        id,
+        source,
+        JSON.parse(
+          JSON.stringify(redactAiHttp(content), (_key, value) =>
+            typeof value === 'string'
+              ? maskSecretValues(value, secretValues)
+              : value),
+        ),
+      )
+    }
+    return [
+      {
+        method,
+        url,
+        requestHeaders:
+          !truncated && typeof entry.details?.requestHeaders === 'string'
+            ? entry.details.requestHeaders
+            : undefined,
+        truncated,
+        status: entry.status,
+        location:
+          !truncated && Array.isArray(responseHeaders)
+            ? responseHeaders.find(
+              header => header.key.toLowerCase() === 'location',
+            )?.value
+            : undefined,
+      },
+    ]
+  })
+  return JSON.parse(
+    JSON.stringify(redactAiHttp(executionTrace), (_key, value) =>
+      typeof value === 'string' ? maskSecretValues(value, secretValues) : value),
+  )
+}
+
 /**
  * Убирает значения секретов из текста, который будет записан в vault.
  * Значения сортируются по убыванию длины, чтобы более короткий секрет,
@@ -474,7 +585,9 @@ export interface ResolvedEnvironment {
  */
 function maskSecretValues(text: string, secretValues: string[]): string {
   let result = text
-  for (const value of [...secretValues].sort((a, b) => b.length - a.length)) {
+  for (const value of [...secretValues]
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length)) {
     result = result.split(value).join(HTTP_SECRET_MASK)
     const encoded = encodeURIComponent(value)
     // `URLSearchParams` кодирует пробел как `+`, а не `%20`, поэтому в query
@@ -534,6 +647,7 @@ export async function executeHttpRequest(
   payload: HttpExecutePayload,
   run?: HttpRunContext,
   signal?: AbortSignal,
+  onSnapshot?: (snapshot: HttpHistorySnapshot) => void,
 ): Promise<HttpExecuteResult> {
   const executionId = randomUUID()
   const networkIds: string[] = []
@@ -756,17 +870,38 @@ export async function executeHttpRequest(
           httpConsole.clear()
           return
         }
-        httpConsole.append({
-          kind: 'script',
-          level: message.level,
-          executionId,
-          message: message.args
-            .map(value =>
-              typeof value === 'string' ? value : JSON.stringify(value),
-            )
-            .join(' '),
-          details: { phase: name, source: subject.source, args: message.args },
-        })
+        const safeArgs = JSON.parse(
+          JSON.stringify(redactAiHttp(message.args), (_key, value) =>
+            typeof value === 'string'
+              ? maskSecretValues(value, [
+                  ...secretValues,
+                  interpolated.auth.token ?? '',
+                  interpolated.auth.password ?? '',
+                  interpolated.auth.value ?? '',
+                ])
+              : value),
+        )
+        httpConsole.append(
+          {
+            kind: 'script',
+            level: message.level,
+            executionId,
+            message: message.args
+              .map(value =>
+                typeof value === 'string' ? value : JSON.stringify(value),
+              )
+              .join(' '),
+            details: {
+              phase: name,
+              source: subject.source,
+              args: message.args,
+            },
+          },
+          {
+            message: JSON.stringify(safeArgs).slice(0, 16000),
+            details: { phase: name, source: subject.source },
+          },
+        )
       },
     )
     if (execution.error) {
@@ -806,12 +941,17 @@ export async function executeHttpRequest(
     if (!sentRequest)
       return undefined
     try {
-      return createHistorySnapshot(sentRequest, result, [
+      const snapshot = createHistorySnapshot(sentRequest, result, [
         ...secretValues,
         interpolated.auth.token ?? '',
         interpolated.auth.password ?? '',
         interpolated.auth.value ?? '',
       ])
+      try {
+        onSnapshot?.(structuredClone(snapshot))
+      }
+      catch {}
+      return snapshot
     }
     catch {
       // A history failure must not change the outcome of the request.
@@ -1059,7 +1199,7 @@ export async function executeHttpRequest(
 
     {
       const snapshot = snapshotResult(result)
-      appendHistory(
+      const historyId = appendHistory(
         payload,
         snapshot?.request.url ?? buildHistoryUrl(),
         interpolated.method,
@@ -1069,6 +1209,22 @@ export async function executeHttpRequest(
         startedAt,
         undefined,
         snapshot,
+      )
+      result.executionTrace = captureExecutionTrace(
+        networkIds,
+        [
+          ...secretValues,
+          interpolated.auth.token ?? '',
+          interpolated.auth.password ?? '',
+          interpolated.auth.value ?? '',
+        ].filter(Boolean),
+        {
+          requestId: payload.requestId,
+          requestedAt: startedAt,
+          historyId,
+          executionId,
+          vaultPath,
+        },
       )
     }
 
@@ -1144,7 +1300,7 @@ export async function executeHttpRequest(
       result.sessionNames = commitValues(evaluated.values)
     }
     const snapshot = snapshotResult(result)
-    appendHistory(
+    const historyId = appendHistory(
       payload,
       snapshot?.request.url ?? historyUrl,
       interpolated.method,
@@ -1154,6 +1310,22 @@ export async function executeHttpRequest(
       startedAt,
       snapshot?.response.error ?? historyError,
       snapshot,
+    )
+    result.executionTrace = captureExecutionTrace(
+      networkIds,
+      [
+        ...secretValues,
+        interpolated.auth.token ?? '',
+        interpolated.auth.password ?? '',
+        interpolated.auth.value ?? '',
+      ].filter(Boolean),
+      {
+        requestId: payload.requestId,
+        requestedAt: startedAt,
+        historyId,
+        executionId,
+        vaultPath,
+      },
     )
     return result
   }
@@ -1174,10 +1346,10 @@ function appendHistory(
   requestedAt: number,
   error?: string,
   snapshot?: HttpHistorySnapshot,
-): void {
+): number | undefined {
   try {
     const storage = useHttpStorage()
-    storage.history.appendEntry({
+    const record = storage.history.appendEntry({
       requestId: payload.requestId,
       snapshot,
       method,
@@ -1188,6 +1360,7 @@ function appendHistory(
       requestedAt,
       ...(error ? { error } : {}),
     })
+    return record?.id > 0 ? record.id : undefined
   }
   catch (error) {
     // History is best-effort; retain diagnostics without failing the response.

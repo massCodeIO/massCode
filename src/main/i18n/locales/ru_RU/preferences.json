@@ -275,7 +275,8 @@
       "HTTP2_HTTPS_REQUIRED": "Для HTTP/2 требуется URL с HTTPS.",
       "HTTP2_NOT_NEGOTIATED": "Сервер не согласовал HTTP/2. Выберите автоматический режим или HTTP/1.1.",
       "HTTP_URL_ENCODING_REQUIRED": "Кодирование URL выключено. Введите уже закодированные URL и параметры или включите автоматическое кодирование.",
-      "HTTP_REDIRECT_PROTOCOL": "URL перенаправления должен использовать HTTP или HTTPS."
+      "HTTP_REDIRECT_PROTOCOL": "URL перенаправления должен использовать HTTP или HTTPS.",
+      "HTTP_REDIRECT_LIMIT": "Превышен лимит перенаправлений"
     },
     "interface": "Интерфейс"
   },

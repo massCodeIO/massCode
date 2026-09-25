@@ -6,6 +6,8 @@ import {
   disposeHttpRun,
   getHttpRun,
   prepareHttpRun,
+  prepareHttpRunSnapshot,
+  registerHttpRun,
   startHttpRun,
 } from '../runner'
 import {
@@ -254,7 +256,18 @@ describe('folder runner', () => {
         operator: 'eq',
         expected: 201,
       })
-      const result = await start(prepareHttpRun(7, 1), continueOnFailure)
+      const prepared = prepareHttpRun(7, 1)
+      expect(prepared.continueOnFailure).toBeUndefined()
+      const pending = start(prepared, continueOnFailure)
+      expect(getHttpRun(7, prepared.runId)).toMatchObject({
+        state: 'running',
+        continueOnFailure,
+      })
+      const result = await pending
+      expect(result.continueOnFailure).toBe(continueOnFailure)
+      expect(getHttpRun(7, prepared.runId).continueOnFailure).toBe(
+        continueOnFailure,
+      )
       expect(result.state).toBe('failed')
       expect(result.steps.map(step => step.state)).toEqual([
         'failed',
@@ -275,6 +288,7 @@ describe('folder runner', () => {
     await expect(startHttpRun(7, options)).rejects.toThrow(
       'HTTP_RUN_INVALID_ORDER',
     )
+    expect(getHttpRun(7, view.runId).continueOnFailure).toBeUndefined()
     await expect(
       startHttpRun(8, { ...options, requestIds: [2, 1] }),
     ).rejects.toThrow('HTTP_RUN_NOT_FOUND')
@@ -436,4 +450,15 @@ it('fails cumulative Runner extraction without committing any writes from the fa
   )
   expect(result.state).toBe('failed')
   expect(getHttpSession('/vault', 1).variables).toEqual({})
+})
+
+it('keeps manual ready runs intact while independent AI previews are prepared or abandoned', async () => {
+  const manual = prepareHttpRun(7, 1)
+  const first = prepareHttpRunSnapshot(7, 1)
+  const second = prepareHttpRunSnapshot(7, 2)
+  expect(first.view.runId).not.toBe(second.view.runId)
+  expect(getHttpRun(7, manual.runId)).toEqual(manual)
+  expect((await start(manual)).state).toBe('passed')
+  registerHttpRun(7, first)
+  expect(getHttpRun(7, first.view.runId).state).toBe('ready')
 })

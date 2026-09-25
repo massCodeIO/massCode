@@ -93,6 +93,7 @@ export default defineConfig({
     strictPort: true,
     watch: {
       ignored: [
+        `${root}/playground/**`,
         `${root}/src/main/i18n/locales/**/*`,
         `${root}/scripts/**/*`,
         `${root}/build/**/*`,

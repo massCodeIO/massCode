@@ -31,6 +31,7 @@ const AUTO_SAVE_DEBOUNCE_MS = 500
 export function useHttpEnvironmentEditor(
   open: Ref<boolean>,
   environmentId?: number,
+  onSecretSaved?: (environmentId: number, key: string, saved: boolean) => void,
 ) {
   const {
     environments,
@@ -167,6 +168,7 @@ export function useHttpEnvironmentEditor(
       return
 
     let hasSavedSecret = false
+    const outcomes: { key: string, saved: boolean }[] = []
 
     for (const entry of localVariables.value) {
       const draft = secretDrafts.value[entry.uid]
@@ -175,6 +177,7 @@ export function useHttpEnvironmentEditor(
         continue
 
       const isSaved = await setSecret(env.id, key, draft)
+      outcomes.push({ key, saved: isSaved })
       if (isSaved) {
         delete secretDrafts.value[entry.uid]
         hasSavedSecret = true
@@ -184,6 +187,7 @@ export function useHttpEnvironmentEditor(
     if (hasSavedSecret) {
       await getHttpEnvironments()
     }
+    return outcomes.map(outcome => ({ ...outcome, environmentId: env.id }))
   }
 
   async function flushUpdate() {
@@ -210,12 +214,27 @@ export function useHttpEnvironmentEditor(
   // секрет под промежуточным именем.
   const debouncedUpdate = useDebounceFn(flushUpdate, AUTO_SAVE_DEBOUNCE_MS)
 
+  let pendingFlush: Promise<void> | undefined
   async function flushPendingUpdate() {
+    // Blur, dialog close and unmount may all request the same save. Keep its
+    // outcome alive until persistence and the completion callback have finished.
+    if (pendingFlush)
+      return pendingFlush
     if (!selectedEnv.value || !isDirty.value)
       return
 
-    await flushSecretDrafts()
-    await flushUpdate()
+    pendingFlush = (async () => {
+      const outcomes = await flushSecretDrafts()
+      await flushUpdate()
+      for (const outcome of outcomes ?? [])
+        onSecretSaved?.(outcome.environmentId, outcome.key, outcome.saved)
+    })()
+    try {
+      await pendingFlush
+    }
+    finally {
+      pendingFlush = undefined
+    }
   }
 
   watch(selectedEnv, (env, previous) => {
@@ -347,10 +366,10 @@ export function useHttpEnvironmentEditor(
    * переменной: иначе автосохранение успело бы записать значение в vault до
    * того, как пользователь отметит его секретным.
    */
-  function addSecretVariable() {
+  function addSecretVariable(key = '') {
     localVariables.value.push({
       isNew: true,
-      key: '',
+      key,
       secret: true,
       uid: nextUid(),
       value: '',

@@ -1,8 +1,8 @@
 import type { HttpRunView } from '~/shared/httpRunner'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
-Object.assign(globalThis, { ref })
+Object.assign(globalThis, { computed, ref })
 
 function deferred<T>() {
   let resolve!: (value: T) => void
@@ -16,6 +16,7 @@ async function setup() {
   vi.resetModules()
   const prepared: HttpRunView = {
     runId: 'test-run',
+    folderId: 1,
     folderName: 'API',
     environmentName: null,
     state: 'ready',
@@ -44,8 +45,13 @@ async function setup() {
       return status.promise
     return null
   })
+  vi.doMock('@/router', () => ({
+    router: { push: vi.fn(async () => {}) },
+    RouterName: { httpSpace: 'http' },
+  }))
   vi.doMock('@/electron', () => ({
     ipc: { invoke },
+    store: { preferences: { get: () => '/vault' } },
     i18n: { t: (key: string) => key },
   }))
   vi.doMock('@/composables/useSonner', () => ({
@@ -146,11 +152,16 @@ describe('hTTP folder runner UI state', () => {
     ).toHaveLength(1)
     runner.closeRunner()
     expect(invoke).toHaveBeenCalledWith('spaces:http:run-dispose', null)
-    result.resolve({ ...prepared, state: 'cancelled' })
+    result.resolve({
+      ...prepared,
+      state: 'cancelled',
+      continueOnFailure: true,
+    })
     await starting
-    status.resolve({ ...prepared, state: 'running' })
+    status.resolve({ ...prepared, state: 'running', continueOnFailure: true })
     await vi.advanceTimersByTimeAsync(200)
     expect(runner.view.value?.state).toBe('running')
+    expect(runner.continueOnFailure.value).toBe(false)
     runner.clearRunnerView()
     expect(runner.view.value).toBeNull()
     expect(runner.open.value).toBe(false)
@@ -219,3 +230,204 @@ describe('hTTP folder runner UI state', () => {
     expect(runner.folderId.value).toBe(2)
   })
 })
+
+it('adopts an existing run and polls without preparing or starting a second execution', async () => {
+  vi.useFakeTimers()
+  const { runner, status, prepared, invoke, httpState } = await setup()
+  const adopting = runner.adoptRunner('test-run', '/vault')
+  status.resolve({ ...prepared, state: 'running' })
+  await adopting
+  expect(runner.folderId.value).toBe(prepared.folderId)
+  expect(runner.view.value?.runId).toBe('test-run')
+  expect(httpState.activePanel).toBe('runner')
+  expect(runner.running.value).toBe(true)
+  expect(
+    invoke.mock.calls.every(
+      ([channel]) => channel === 'spaces:http:run-status',
+    ),
+  ).toBe(true)
+  runner.closeRunner()
+  const calls = invoke.mock.calls.length
+  await vi.advanceTimersByTimeAsync(1000)
+  expect(invoke).toHaveBeenCalledTimes(calls)
+})
+
+it('reopens a completed receipt after leaving HTTP without reading or disposing a runtime', async () => {
+  const { runner, prepared, invoke, httpState } = await setup()
+  const snapshot: HttpRunView = {
+    ...prepared,
+    state: 'failed',
+    steps: [{ ...prepared.steps[0], state: 'failed' }],
+  }
+  await runner.adoptRunner(snapshot.runId, '/vault', snapshot)
+  runner.closeRunner()
+  runner.clearRunnerView()
+  await runner.adoptRunner(snapshot.runId, '/vault', snapshot)
+  expect(httpState.activePanel).toBe('runner')
+  expect(runner.view.value).toEqual(snapshot)
+  expect(runner.running.value).toBe(false)
+  expect(invoke).not.toHaveBeenCalled()
+  runner.closeRunner()
+  expect(invoke).not.toHaveBeenCalled()
+})
+
+it('keeps an adopted live run visible and polling when an older receipt is opened', async () => {
+  vi.useFakeTimers()
+  const { runner, prepared, status, invoke, httpState } = await setup()
+  const first: HttpRunView = {
+    ...prepared,
+    runId: 'first',
+    state: 'passed',
+    continueOnFailure: true,
+  }
+  const adopting = runner.adoptRunner('second', '/vault')
+  status.resolve({ ...prepared, runId: 'second', state: 'running' })
+  await adopting
+  await runner.adoptRunner(first.runId, '/vault', first)
+  expect(httpState.activePanel).toBe('runner')
+  expect(runner.view.value?.runId).toBe('second')
+  expect(runner.running.value).toBe(true)
+  expect(runner.continueOnFailure.value).toBe(false)
+  const calls = invoke.mock.calls.length
+  await vi.advanceTimersByTimeAsync(200)
+  expect(invoke.mock.calls.length).toBeGreaterThan(calls)
+  await runner.cancelRunner()
+  expect(invoke).toHaveBeenCalledWith('spaces:http:run-cancel', 'second')
+  invoke.mockResolvedValueOnce({
+    ...prepared,
+    runId: 'second',
+    state: 'cancelled',
+  })
+  await vi.advanceTimersByTimeAsync(200)
+  expect(runner.running.value).toBe(false)
+  expect(runner.view.value?.state).toBe('cancelled')
+  await runner.adoptRunner(first.runId, '/vault', first)
+  expect(runner.view.value?.runId).toBe('first')
+  expect(runner.continueOnFailure.value).toBe(true)
+  runner.closeRunner()
+  expect(
+    invoke.mock.calls.some(
+      ([channel]) => channel === 'spaces:http:run-dispose',
+    ),
+  ).toBe(false)
+})
+
+it('preserves manual run progress, Stop and its final result when opening a historical receipt', async () => {
+  vi.useFakeTimers()
+  const { runner, prepared, status, result, invoke } = await setup()
+  await runner.openRunner(1)
+  const starting = runner.startRunner()
+  const first: HttpRunView = {
+    ...prepared,
+    runId: 'first',
+    state: 'passed',
+    continueOnFailure: true,
+  }
+  await runner.adoptRunner(first.runId, '/vault', first)
+  expect(runner.view.value?.runId).toBe(prepared.runId)
+  expect(runner.running.value).toBe(true)
+  status.resolve({
+    ...prepared,
+    state: 'running',
+    steps: [{ ...prepared.steps[0], state: 'passed' }],
+  })
+  await vi.advanceTimersByTimeAsync(200)
+  expect(runner.view.value?.steps[0].state).toBe('passed')
+  await runner.cancelRunner()
+  expect(invoke).toHaveBeenCalledWith('spaces:http:run-cancel', prepared.runId)
+  result.resolve({ ...prepared, state: 'cancelled' })
+  await starting
+  expect(runner.view.value?.runId).toBe(prepared.runId)
+  expect(runner.view.value?.state).toBe('cancelled')
+  expect(runner.running.value).toBe(false)
+  await runner.adoptRunner(first.runId, '/vault', first)
+  expect(runner.view.value?.runId).toBe('first')
+  expect(runner.continueOnFailure.value).toBe(true)
+  runner.closeRunner()
+})
+
+it.each([false, true])(
+  'shows actual adopted continueOnFailure=%s without changing the manual preference',
+  async (option) => {
+    vi.useFakeTimers()
+    const { runner, prepared, status, invoke } = await setup()
+    runner.continueOnFailure.value = !option
+    const adopting = runner.adoptRunner(prepared.runId, '/vault')
+    status.resolve({
+      ...prepared,
+      state: 'running',
+      continueOnFailure: option,
+    })
+    await adopting
+    expect(runner.continueOnFailure.value).toBe(option)
+    invoke.mockResolvedValueOnce({
+      ...prepared,
+      state: 'failed',
+      continueOnFailure: option,
+    })
+    await vi.advanceTimersByTimeAsync(200)
+    expect(runner.continueOnFailure.value).toBe(option)
+    expect(runner.running.value).toBe(false)
+    await runner.openRunner(1)
+    expect(runner.continueOnFailure.value).toBe(!option)
+    runner.closeRunner()
+  },
+)
+
+it('updates an adopted ready run option when its execution starts', async () => {
+  vi.useFakeTimers()
+  const { runner, prepared, status, invoke } = await setup()
+  const adopting = runner.adoptRunner(prepared.runId, '/vault')
+  status.resolve(prepared)
+  await adopting
+  expect(runner.continueOnFailure.value).toBe(false)
+  invoke.mockResolvedValueOnce({
+    ...prepared,
+    state: 'running',
+    continueOnFailure: true,
+  })
+  await vi.advanceTimersByTimeAsync(200)
+  expect(runner.continueOnFailure.value).toBe(true)
+  runner.closeRunner()
+})
+
+it('shows each reopened snapshot option and preserves the next ready run preference', async () => {
+  const { runner, prepared } = await setup()
+  runner.continueOnFailure.value = true
+  for (const option of [false, true, false]) {
+    const snapshot: HttpRunView = {
+      ...prepared,
+      state: 'failed',
+      continueOnFailure: option,
+    }
+    await runner.adoptRunner(snapshot.runId, '/vault', snapshot)
+    expect(runner.continueOnFailure.value).toBe(option)
+    runner.closeRunner()
+    runner.clearRunnerView()
+  }
+  await runner.openRunner(1)
+  expect(runner.continueOnFailure.value).toBe(true)
+  runner.closeRunner()
+})
+
+it.each(['wrong-run', 'wrong-vault', 'closed'])(
+  'ignores %s adopted status options',
+  async (reason) => {
+    const { runner, prepared, status } = await setup()
+    const adopting = runner.adoptRunner(
+      prepared.runId,
+      reason === 'wrong-vault' ? '/other' : '/vault',
+    )
+    if (reason === 'closed')
+      runner.closeRunner()
+    status.resolve({
+      ...prepared,
+      runId: reason === 'wrong-run' ? 'other' : prepared.runId,
+      state: 'running',
+      continueOnFailure: true,
+    })
+    await adopting
+    expect(runner.continueOnFailure.value).toBe(false)
+    expect(runner.open.value).toBe(false)
+  },
+)

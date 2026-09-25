@@ -3,10 +3,11 @@ import type {
   HttpExecuteRequest,
   HttpExecuteResult,
 } from '~/main/types/http'
+import type { AiHttpResultConsumer } from '~/shared/aiHttpActions'
 import { useDonations } from '@/composables/useDonations'
 import { useSonner } from '@/composables/useSonner'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
-import { i18n, ipc } from '@/electron'
+import { i18n, ipc, store } from '@/electron'
 import { useHttpApp } from './useHttpApp'
 import { useHttpEnvironments } from './useHttpEnvironments'
 import { useHttpRequests } from './useHttpRequests'
@@ -18,6 +19,7 @@ export type HttpResponse = HttpExecuteResult
 
 const isExecuting = ref(false)
 const lastResponse = shallowRef<HttpResponse | null>(null)
+const lastExecutionRequest = shallowRef<HttpExecuteRequest | null>(null)
 const lastError = ref<string | null>(null)
 
 const { currentDraft, currentRequest, isCurrentRequestLoading }
@@ -57,7 +59,9 @@ function buildExecuteRequest(): HttpExecuteRequest | null {
   }
 }
 
-async function executeCurrentRequest(): Promise<HttpResponse | null> {
+async function executeCurrentRequest(
+  execute?: (payload: HttpExecutePayload) => Promise<HttpResponse>,
+): Promise<HttpResponse | null> {
   // Переключение на другой запрос ещё грузит его полную запись:
   // currentRequest/draft в этот момент принадлежат предыдущему запросу
   // (в том числе бессрочно, если GET упал), и execute отправил бы не тот
@@ -105,14 +109,14 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
   const requestId = currentRequest.value?.id
   lastError.value = null
   lastResponse.value = null
+  lastExecutionRequest.value = null
 
   try {
     markPersistedStorageMutation()
     incrementSent('http')
-    const response = (await ipc.invoke(
-      'spaces:http:execute',
-      payload,
-    )) as HttpResponse
+    const response = execute
+      ? await execute(payload)
+      : ((await ipc.invoke('spaces:http:execute', payload)) as HttpResponse)
     if (
       token !== executionToken
       || response.discarded
@@ -120,25 +124,7 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
     ) {
       return null
     }
-    lastResponse.value = response
-    sessionNames.value = response.sessionNames ?? sessionNames.value
-    if (response.error) {
-      lastError.value
-        = response.error === 'HTTP_BODY_FILE_UNAVAILABLE'
-          ? i18n.t('spaces.http.editor.body.fileUnavailable')
-          : response.error === 'HTTP_SCRIPT_FAILED'
-            ? i18n.t('spaces.http.scripts.failed')
-            : [
-                'HTTP2_HTTPS_REQUIRED',
-                'HTTP2_NOT_NEGOTIATED',
-                'HTTP_URL_ENCODING_REQUIRED',
-                'HTTP_REDIRECT_PROTOCOL',
-              ].includes(response.error)
-                ? i18n.t(`preferences:http.transport.${response.error}`)
-                : response.error.startsWith('GRAPHQL_')
-                  ? i18n.t(`spaces.http.graphql.errors.${response.error}`)
-                  : response.error
-    }
+    acceptResponse(request, response)
     return response
   }
   catch (error) {
@@ -155,6 +141,59 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
   }
 }
 
+function acceptResponse(request: HttpExecuteRequest, response: HttpResponse) {
+  lastError.value = null
+  lastResponse.value = response
+  lastExecutionRequest.value = JSON.parse(JSON.stringify(request))
+  sessionNames.value = response.sessionNames ?? sessionNames.value
+  if (response.error) {
+    lastError.value
+      = response.error === 'HTTP_BODY_FILE_UNAVAILABLE'
+        ? i18n.t('spaces.http.editor.body.fileUnavailable')
+        : response.error === 'HTTP_SCRIPT_FAILED'
+          ? i18n.t('spaces.http.scripts.failed')
+          : [
+              'HTTP2_HTTPS_REQUIRED',
+              'HTTP2_NOT_NEGOTIATED',
+              'HTTP_URL_ENCODING_REQUIRED',
+              'HTTP_REDIRECT_PROTOCOL',
+              'HTTP_REDIRECT_LIMIT',
+            ].includes(response.error)
+              ? i18n.t(`preferences:http.transport.${response.error}`)
+              : response.error.startsWith('GRAPHQL_')
+                ? i18n.t(`spaces.http.graphql.errors.${response.error}`)
+                : response.error
+  }
+}
+
+function captureSavedExecutionResult(): AiHttpResultConsumer {
+  const token = executionToken
+  const requestId = currentRequest.value?.id
+  const createdAt = currentRequest.value?.createdAt
+  const vault = store.preferences.get('storage.vaultPath')
+  const environmentId = activeEnvironmentId.value
+  return (execution, response) => {
+    if (
+      response.discarded
+      || token !== executionToken
+      || execution.vault !== vault
+      || store.preferences.get('storage.vaultPath') !== vault
+      || execution.payload.requestId !== requestId
+      || currentRequest.value?.id !== requestId
+      || execution.requestCreatedAt !== createdAt
+      || currentRequest.value?.createdAt !== createdAt
+      || httpState.requestId !== requestId
+      || isCurrentRequestLoading.value
+      || execution.payload.environmentId !== environmentId
+      || activeEnvironmentId.value !== environmentId
+    ) {
+      return false
+    }
+    acceptResponse(execution.payload.request, response)
+    return true
+  }
+}
+
 function resetHttpExecuteState(resetSession = true) {
   executionToken += 1
   if (resetSession)
@@ -162,6 +201,7 @@ function resetHttpExecuteState(resetSession = true) {
   if (isExecuting.value)
     void ipc.invoke('spaces:http:cancel', undefined).catch(console.error)
   lastResponse.value = null
+  lastExecutionRequest.value = null
   lastError.value = null
 }
 
@@ -169,9 +209,11 @@ export function useHttpExecute() {
   return {
     cancelRequest: () => ipc.invoke('spaces:http:cancel', undefined),
     executeCurrentRequest,
+    captureSavedExecutionResult,
     isExecuting,
     lastError,
     lastResponse,
+    lastExecutionRequest,
     resetHttpExecuteState,
   }
 }

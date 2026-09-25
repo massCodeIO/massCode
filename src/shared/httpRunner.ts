@@ -44,8 +44,10 @@ export interface HttpRunStep {
 }
 export interface HttpRunView {
   runId: string
+  folderId: number
   folderName: string
   environmentName: string | null
   state: HttpRunStatus
+  continueOnFailure?: boolean
   steps: HttpRunStep[]
 }

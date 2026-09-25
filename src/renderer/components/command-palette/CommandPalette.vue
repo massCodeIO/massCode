@@ -442,7 +442,9 @@ function getActionPanelActions(result: CommandPaletteResult) {
       title: i18n.t('commandPalette.actionPanel.copyTitle'),
       subtitle: result.title,
       icon: Copy,
-      run: () => copyToClipboard(result.title),
+      run: async () => {
+        await copyToClipboard(result.title)
+      },
       closeOnRun: true,
     },
   ]
@@ -545,7 +547,9 @@ function getActionPanelActions(result: CommandPaletteResult) {
       title: i18n.t('commandPalette.actionPanel.copyHttpUrl'),
       subtitle: result.item.url,
       icon: Copy,
-      run: () => copyToClipboard(result.item.url),
+      run: async () => {
+        await copyToClipboard(result.item.url)
+      },
       closeOnRun: true,
     })
   }

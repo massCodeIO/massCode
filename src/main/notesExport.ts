@@ -1,8 +1,10 @@
 import type {
+  NoteExportDiagramPreview,
   NoteExportDrawingPreview,
   NoteExportFormat,
   NoteExportPayload,
   NoteExportResponse,
+  NoteExportWarnings,
 } from './types/ipc'
 import { Buffer } from 'node:buffer'
 import { randomBytes } from 'node:crypto'
@@ -30,6 +32,8 @@ type NoteAssetSourceBuilder = (
 
 export interface NoteHtmlBodyOptions {
   drawingPreviews?: NoteExportDrawingPreview[]
+  diagramPreviews?: NoteExportDiagramPreview[]
+  warnings?: NoteExportWarnings
   drawingSource?: (id: string, svg: string) => string | null
   internalLinkHref?: (target: string) => string | null
   resolveAsset?: NotesAssetResolver
@@ -44,6 +48,30 @@ const markdown = new MarkdownIt({
   linkify: true,
   typographer: false,
 })
+
+function warn(
+  warnings: NoteExportWarnings | undefined,
+  key: keyof NoteExportWarnings,
+) {
+  if (warnings)
+    warnings[key] = (warnings[key] ?? 0) + 1
+}
+
+const defaultFence = markdown.renderer.rules.fence!
+markdown.renderer.rules.fence = (tokens, index, options, env, renderer) => {
+  const token = tokens[index]!
+  if (token.info.trim().toLowerCase() === 'mermaid') {
+    const preview = (
+      env.diagramPreviews as NoteExportDiagramPreview[] | undefined
+    )?.find(preview => preview.code === token.content.trim())
+    if (preview && isSafeDrawingSvg(preview.svg)) {
+      const source = `data:image/svg+xml;base64,${Buffer.from(preview.svg).toString('base64')}`
+      return `<img class="diagram-preview" src="${source}" alt="${escapeHtml(token.content.trim())}">\n`
+    }
+    warn(env.warnings, 'mermaid')
+  }
+  return defaultFence(tokens, index, options, env, renderer)
+}
 
 markdown.inline.ruler.before(
   'emphasis',
@@ -82,10 +110,13 @@ markdown.renderer.rules.masscode_internal_link = (tokens, index, _, env) => {
   ).internalLinkHref
 
   if (!resolveHref) {
+    warn(env.warnings, 'internalLinks')
     return escapeHtml(token.content)
   }
 
   const href = resolveHref(meta.target)
+  if (!href)
+    warn(env.warnings, 'internalLinks')
   return href
     ? `<a href="${escapeHtml(href)}">${escapeHtml(meta.label)}</a>`
     : escapeHtml(meta.label)
@@ -221,8 +252,14 @@ function escapeHtml(value: string): string {
 function renderMarkdownContent(
   content: string,
   internalLinkHref?: (target: string) => string | null,
+  diagramPreviews?: NoteExportDiagramPreview[],
+  warnings?: NoteExportWarnings,
 ): string {
-  const env = { internalLinkHref }
+  const env = { internalLinkHref, diagramPreviews, warnings }
+  // Preserve these constructs as readable Markdown and disclose the loss of
+  // editor-specific styling. Never advertise visual parity for a fallback.
+  if (/^\s*>\s*\[!\w+\]|^\s*[-*+]\s+\[[ x]\]|==[^\n]+==/im.test(content))
+    warn(warnings, 'richFormatting')
   const frontmatterMatch = content.match(LEADING_FRONTMATTER_RE)
   if (!frontmatterMatch) {
     return markdown.render(content, env)
@@ -289,6 +326,10 @@ export function parseNoteExportPayload(
     return null
   }
 
+  const diagramPreviews = parseDiagramPreviews(candidate.diagramPreviews)
+  if (diagramPreviews === null)
+    return null
+
   let drawingPreviews: NoteExportDrawingPreview[] | undefined
   if (candidate.drawingPreviews !== undefined) {
     if (
@@ -327,12 +368,52 @@ export function parseNoteExportPayload(
     }
   }
 
+  const previewCount = (drawingPreviews?.length ?? 0) + diagramPreviews.length
+  const previewBytes = [
+    ...(drawingPreviews ?? []).map(
+      item => Buffer.byteLength(item.id) + Buffer.byteLength(item.svg),
+    ),
+    ...diagramPreviews.map(
+      item => Buffer.byteLength(item.code) + Buffer.byteLength(item.svg),
+    ),
+  ].reduce((sum, bytes) => sum + bytes, 0)
+  if (
+    previewCount > MAX_DRAWING_PREVIEWS
+    || previewBytes > MAX_DRAWING_PREVIEWS_TOTAL_BYTES
+  ) {
+    return null
+  }
+
   return {
     content: candidate.content,
     ...(drawingPreviews === undefined ? {} : { drawingPreviews }),
+    ...(candidate.diagramPreviews === undefined ? {} : { diagramPreviews }),
     format: candidate.format,
     name: candidate.name,
   }
+}
+
+export function parseDiagramPreviews(
+  value: unknown,
+  maxCount = 50,
+  maxBytes = 20 * 1024 * 1024,
+): NoteExportDiagramPreview[] | null {
+  if (value === undefined)
+    return []
+  if (!Array.isArray(value) || value.length > maxCount)
+    return null
+  let total = 0
+  const previews: NoteExportDiagramPreview[] = []
+  for (const item of value) {
+    if (!item || typeof item.code !== 'string' || typeof item.svg !== 'string')
+      return null
+    const bytes = Buffer.byteLength(item.code) + Buffer.byteLength(item.svg)
+    total += bytes
+    if (bytes > MAX_DRAWING_PREVIEW_BYTES || total > maxBytes)
+      return null
+    previews.push({ code: item.code, svg: item.svg })
+  }
+  return previews
 }
 
 async function defaultAssetResolver(fileName: string): Promise<Response> {
@@ -358,6 +439,7 @@ async function embedManagedAssets(
   resolveAsset: NotesAssetResolver,
   buildSource: NoteAssetSourceBuilder,
   strict: boolean,
+  warnings?: NoteExportWarnings,
 ): Promise<string> {
   const sourcePattern = /\bsrc="masscode:\/\/notes-asset\/([^"]+)"/g
   const matches = [
@@ -380,6 +462,7 @@ async function embedManagedAssets(
           if (strict) {
             throw new Error(`Notes asset is unavailable: ${fileName}`)
           }
+          warn(warnings, 'managedImages')
           return
         }
 
@@ -390,6 +473,7 @@ async function embedManagedAssets(
               `Notes asset is not a supported image: ${fileName}`,
             )
           }
+          warn(warnings, 'managedImages')
           return
         }
 
@@ -403,6 +487,7 @@ async function embedManagedAssets(
           throw error
         }
         // A missing or unavailable asset must not prevent exporting the note.
+        warn(warnings, 'managedImages')
       }
     }),
   )
@@ -428,6 +513,7 @@ function embedDrawingPreviews(
   html: string,
   drawingPreviews: NoteExportDrawingPreview[],
   buildSource: (id: string, svg: string) => string | null,
+  warnings?: NoteExportWarnings,
 ): string {
   const previewsById = new Map(
     drawingPreviews
@@ -448,11 +534,13 @@ function embedDrawingPreviews(
 
       const svg = previewsById.get(drawingId)
       if (svg === undefined) {
+        warn(warnings, 'drawings')
         return image
       }
 
       const source = buildSource(drawingId, svg)
       if (!source) {
+        warn(warnings, 'drawings')
         return image
       }
 
@@ -465,11 +553,24 @@ export async function renderNoteHtmlBody(
   content: string,
   options: NoteHtmlBodyOptions = {},
 ): Promise<string> {
+  const rendered = renderMarkdownContent(
+    content,
+    options.internalLinkHref,
+    options.diagramPreviews,
+    options.warnings,
+  )
+  const remoteCount = [...rendered.matchAll(/<img\s[^>]*\bsrc="https?:\/\//gi)]
+    .length
+  if (remoteCount && options.warnings) {
+    options.warnings.remoteImages
+      = (options.warnings.remoteImages ?? 0) + remoteCount
+  }
   const bodyWithAssets = await embedManagedAssets(
-    renderMarkdownContent(content, options.internalLinkHref),
+    rendered,
     options.resolveAsset ?? defaultAssetResolver,
     options.assetSource ?? defaultAssetSource,
     options.strictAssets === true,
+    options.warnings,
   )
 
   return embedDrawingPreviews(
@@ -478,6 +579,7 @@ export async function renderNoteHtmlBody(
     options.drawingSource
     ?? ((_id, svg) =>
       `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`),
+    options.warnings,
   )
 }
 
@@ -486,9 +588,13 @@ export async function renderNoteHtml(
   content: string,
   resolveAsset: NotesAssetResolver = defaultAssetResolver,
   drawingPreviews: NoteExportDrawingPreview[] = [],
+  diagramPreviews: NoteExportDiagramPreview[] = [],
+  warnings?: NoteExportWarnings,
 ): Promise<string> {
   const body = await renderNoteHtmlBody(content, {
     drawingPreviews,
+    diagramPreviews,
+    warnings,
     resolveAsset,
   })
   const title = escapeHtml(name)
@@ -592,16 +698,22 @@ export async function writeFileAtomically(
 export async function exportNote(
   payload: NoteExportPayload,
 ): Promise<NoteExportResponse> {
+  const vault = getVaultPath()
   const destinationPath = await chooseDestination(payload.format, payload.name)
   if (!destinationPath) {
     return { canceled: true }
   }
+  if (getVaultPath() !== vault)
+    throw new Error('VAULT_CHANGED')
 
+  const warnings: NoteExportWarnings = {}
   const html = await renderNoteHtml(
     payload.name,
     payload.content,
-    defaultAssetResolver,
+    fileName => resolveNotesAsset(fileName, getNotesPaths(vault)),
     payload.drawingPreviews,
+    payload.diagramPreviews,
+    warnings,
   )
   if (payload.format === 'html') {
     await writeFileAtomically(destinationPath, html)
@@ -610,5 +722,9 @@ export async function exportNote(
     await exportPdf(destinationPath, html)
   }
 
-  return { canceled: false, filePath: destinationPath }
+  return {
+    canceled: false,
+    filePath: destinationPath,
+    ...(Object.keys(warnings).length ? { warnings } : {}),
+  }
 }

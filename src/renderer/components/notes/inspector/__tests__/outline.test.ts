@@ -296,3 +296,40 @@ describe('outline editing regressions', () => {
     ]).toEqual([])
   })
 })
+
+it('moves the final section with its table, descendants, horizontal rule and trailing fenced code intact', () => {
+  const preamble = '# Guide\n\nIntroduction.\n\n'
+  const first = '## First\n\n- unchanged item\n\n'
+  const last
+    = '## Last\n\n| Key | Value |\n| --- | --- |\n| a | 1 |\n\n### Details\n\nKeep this child.\n\n---\n\n```js\n// ## Not a heading\nconst preserved = true\n```\n'
+  const content = preamble + first + last
+  const headings = getOutline(content)
+  const source = headings.find(heading => heading.title === 'Last')!
+  const target = headings.find(heading => heading.title === 'First')!
+  expect(source.end).toBe(content.length)
+  const transaction = createOutlineMove(content, {
+    content,
+    from: source.from,
+    target: target.from,
+    after: false,
+  })!
+  let state = EditorState.create({ doc: content, extensions: [history()] })
+  state = state.update(transaction).state
+  const result = state.doc.toString()
+  const moved = getOutline(result).find(heading => heading.title === 'Last')!
+  expect(result.slice(moved.from, moved.end).trimEnd()).toBe(last.trimEnd())
+  expect(result.indexOf('## Last')).toBeLessThan(result.indexOf('## First'))
+  expect(result.slice(result.indexOf('## First')).trimEnd()).toBe(
+    first.trimEnd(),
+  )
+  expect(result.startsWith(preamble)).toBe(true)
+  expect(
+    undo({
+      state,
+      dispatch: (transaction) => {
+        state = transaction.state
+      },
+    }),
+  ).toBe(true)
+  expect(state.doc.toString()).toBe(content)
+})

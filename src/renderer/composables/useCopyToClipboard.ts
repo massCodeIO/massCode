@@ -1,12 +1,12 @@
 import { useSonner } from '@/composables'
-import { i18n } from '@/electron'
+import { i18n, ipc } from '@/electron'
 
 export function useCopyToClipboard() {
   const { sonner } = useSonner()
 
   async function copy(value: string) {
     try {
-      await navigator.clipboard.writeText(value)
+      await ipc.invoke<string, void>('system:clipboard-write-text', value)
       sonner({
         id: 'clipboard',
         message: i18n.t('messages:success.copied'),

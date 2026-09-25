@@ -49,3 +49,61 @@ describe('hTTP console journal', () => {
     expect(events).toHaveLength(2)
   })
 })
+
+it('uses explicitly safe AI content and never falls back to raw diagnostics', () => {
+  const journal = new HttpConsoleJournal()
+  journal.append({
+    executionId: '1',
+    kind: 'script',
+    level: 'log',
+    message: 'ordinary-secret',
+  })
+  journal.append(
+    { executionId: '2', kind: 'script', level: 'log', message: 'other-secret' },
+    { message: '[REDACTED]' },
+  )
+  expect(JSON.stringify(journal.read())).toContain('ordinary-secret')
+  expect(JSON.stringify(journal.readForAi())).not.toContain('ordinary-secret')
+  expect(JSON.stringify(journal.readForAi())).not.toContain('other-secret')
+  expect(JSON.stringify(journal.readForAi())).toContain(
+    'CONTENT_UNAVAILABLE_FOR_AI',
+  )
+})
+
+it('publishes safe network content only for its existing execution and vault', () => {
+  const journal = new HttpConsoleJournal()
+  const id = journal.append({ ...entry, kind: 'network' })
+  const safe = { message: 'safe capture', details: { requestId: 1 } }
+  journal.publishAiContent(
+    id,
+    { executionId: 'other', vaultPath: '/vault' },
+    safe,
+  )
+  expect(journal.readForAi('/vault').entries[0].message).toBe(
+    '[CONTENT_UNAVAILABLE_FOR_AI]',
+  )
+  journal.publishAiContent(
+    id,
+    { executionId: 'test', vaultPath: '/vault' },
+    safe,
+  )
+  expect(journal.readForAi('/vault').entries[0].message).toBe('safe capture')
+  expect(journal.readForAi('/other-vault').entries).toEqual([])
+  journal.clear()
+  journal.publishAiContent(
+    id,
+    { executionId: 'test', vaultPath: '/vault' },
+    safe,
+  )
+  expect(journal.readForAi('/vault').entries).toEqual([])
+  const pruned = journal.append({
+    ...entry,
+    timestamp: Date.now() - CONSOLE_MAX_AGE - 1,
+  })
+  journal.publishAiContent(
+    pruned,
+    { executionId: 'test', vaultPath: '/vault' },
+    safe,
+  )
+  expect(journal.readForAi('/vault').entries).toEqual([])
+})

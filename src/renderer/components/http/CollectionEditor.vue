@@ -8,6 +8,7 @@ import { i18n } from '@/electron'
 import { emptyHttpScripts } from '~/shared/httpScripts'
 
 const {
+  activeTab,
   collection,
   draft,
   saving,
@@ -20,7 +21,6 @@ const {
   resolveNavigation,
   runtimeContext,
 } = useHttpCollection()
-const activeTab = ref('overview')
 const tabs = [
   'overview',
   'headers',
@@ -46,6 +46,7 @@ const trustContext = useHttpScriptTrust(
 watch(
   () => collection.value?.id,
   () => (activeTab.value = 'overview'),
+  { immediate: true },
 )
 </script>
 

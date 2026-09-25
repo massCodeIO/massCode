@@ -69,6 +69,7 @@ onBeforeUnmount(() => {
       </UiHelpButton>
     </div>
     <UiText
+      v-if="running"
       variant="xs"
       muted
     >

@@ -15,7 +15,10 @@ describe('useHttpSearch', () => {
     const selectHttpRequest = vi.fn()
 
     vi.doMock('../runtimeNavigation', () => ({
-      httpRuntimeNavigation: { confirmLeave: vi.fn(async () => true) },
+      httpRuntimeNavigation: {
+        confirmLeave: vi.fn(async () => true),
+        transitionToken: 0,
+      },
     }))
     vi.doMock('../useHttpApp', () => ({
       useHttpApp: () => ({
@@ -29,7 +32,7 @@ describe('useHttpSearch', () => {
       }),
     }))
     vi.doMock('../useHttpRequests', () => ({
-      getHttpRequests: vi.fn(),
+      getHttpRequests: vi.fn(async () => true),
       isRestoreStateBlocked,
       requests,
       selectFirstRequest: vi.fn(),
@@ -48,8 +51,7 @@ describe('useHttpSearch', () => {
     search.resetHttpSearchState()
     Object.assign(httpState, { requestId: 2, folderId: 20 })
     requests.value = [{ id: 2 }]
-    search.clearSearch(true)
-    await Promise.resolve()
+    await search.clearSearch(true)
 
     expect(search.searchQuery.value).toBe('')
     expect(search.isSearch.value).toBe(false)
@@ -64,8 +66,45 @@ describe('useHttpSearch', () => {
     search.searchQuery.value = 'new vault'
     await search.search()
     httpState.requestId = 3
-    search.clearSearch(true)
-    await Promise.resolve()
+    await search.clearSearch(true)
     expect(httpState.requestId).toBe(2)
   })
+})
+
+it('keeps search and selection intact while cancellation of restoration is pending', async () => {
+  vi.resetModules()
+  let resolve!: (value: boolean) => void
+  const pending = new Promise<boolean>((done) => {
+    resolve = done
+  })
+  const restore = vi.fn()
+  vi.doMock('../runtimeNavigation', () => ({
+    httpRuntimeNavigation: { transitionToken: 0, confirmLeave: () => pending },
+  }))
+  vi.doMock('../useHttpApp', () => ({
+    useHttpApp: () => ({
+      httpState: { requestId: 2 },
+      saveHttpStateSnapshot: vi.fn(),
+      restoreHttpStateSnapshot: restore,
+      stateSnapshots: { beforeSearch: {} },
+    }),
+  }))
+  vi.doMock('../useHttpRequests', () => ({
+    getHttpRequests: vi.fn(),
+    isRestoreStateBlocked: ref(false),
+    requests: ref([]),
+    selectFirstRequest: vi.fn(),
+    selectHttpRequest: vi.fn(),
+    useHttpRequests: vi.fn(),
+  }))
+  const search = (await import('../useHttpSearch')).useHttpSearch()
+  search.searchQuery.value = 'keep'
+  search.isSearch.value = true
+  const clearing = search.clearSearch(true)
+  expect(search.searchQuery.value).toBe('keep')
+  resolve(false)
+  expect(await clearing).toBe(false)
+  expect(search.searchQuery.value).toBe('keep')
+  expect(search.isSearch.value).toBe(true)
+  expect(restore).not.toHaveBeenCalled()
 })

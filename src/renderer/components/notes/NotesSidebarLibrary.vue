@@ -1,14 +1,10 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import {
-  useNoteFolders,
-  useNotes,
-  useNotesApp,
-  useNoteSearch,
-} from '@/composables'
+import { useNotes, useNotesApp } from '@/composables'
+import { useNotesWorkspaceNavigation } from '@/composables/spaces/notes/useNotesWorkspaceNavigation'
 import { LibraryFilter } from '@/composables/types'
 import { i18n } from '@/electron'
-import { router, RouterName } from '@/router'
+import { RouterName } from '@/router'
 import { onClickOutside } from '@vueuse/core'
 import {
   Archive,
@@ -23,16 +19,8 @@ import {
 import { useRoute } from 'vue-router'
 
 const { notesState } = useNotesApp()
-const { clearFolderSelection } = useNoteFolders()
-const {
-  getNotes,
-  selectFirstNote,
-  withNotesLoading,
-  isRestoreStateBlocked,
-  emptyTrash,
-  cleanupCompletedTasks,
-} = useNotes()
-const { clearSearch } = useNoteSearch()
+const { emptyTrash, cleanupCompletedTasks } = useNotes()
+const { openNotesLibrary } = useNotesWorkspaceNavigation()
 const route = useRoute()
 
 const libraryItems = [
@@ -83,59 +71,8 @@ function isItemSelected(item: (typeof libraryItems)[number]) {
 }
 
 async function onItemClick(item: (typeof libraryItems)[number]) {
-  const { id } = item
-  focusedItemId.value = id
-
-  if (route.name !== RouterName.notesSpace) {
-    await router.push({ name: RouterName.notesSpace })
-  }
-
-  await withNotesLoading(async () => {
-    isRestoreStateBlocked.value = true
-    clearSearch()
-
-    notesState.libraryFilter = id
-    clearFolderSelection()
-    notesState.tagId = undefined
-
-    if (id === LibraryFilter.Favorites) {
-      await getNotes({ isFavorites: 1 })
-    }
-    else if (id === LibraryFilter.Trash) {
-      await getNotes({ isDeleted: 1 })
-    }
-    else if (id === LibraryFilter.All) {
-      await getNotes({ isDeleted: 0 })
-    }
-    else if (id === LibraryFilter.Inbox) {
-      await getNotes({ isInbox: 1 })
-    }
-    else if (id === LibraryFilter.Tasks) {
-      await getNotes({ propertyType: 'task' })
-    }
-    else if (id === LibraryFilter.Today) {
-      await getNotes({
-        propertyDue: 'today',
-        propertyStatusNot: 'done',
-        propertyType: 'task',
-      })
-    }
-    else if (id === LibraryFilter.Upcoming) {
-      await getNotes({
-        propertyDue: 'upcoming',
-        propertyStatusNot: 'done',
-        propertyType: 'task',
-      })
-    }
-    else if (id === LibraryFilter.Completed) {
-      await getNotes({
-        propertyStatus: 'done',
-        propertyType: 'task',
-      })
-    }
-
-    selectFirstNote()
-  })
+  focusedItemId.value = item.id
+  await openNotesLibrary(item.id)
 }
 
 onClickOutside(itemRef, () => {

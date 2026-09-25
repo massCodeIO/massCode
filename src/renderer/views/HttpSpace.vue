@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { useApp, useHttpApp, useHttpSpaceInit } from '@/composables'
+import {
+  useApp,
+  useHttpApp,
+  useHttpRequests,
+  useHttpSpaceInit,
+} from '@/composables'
+import { useAi } from '@/composables/ai/useAi'
+import { useHttpAi } from '@/composables/ai/useHttpAi'
 import { useHttpPanels } from '@/composables/spaces/http/useHttpPanels'
 import { useHttpRunner } from '@/composables/spaces/http/useHttpRunner'
 import { useHttpUi } from '@/composables/spaces/http/useHttpUi'
@@ -8,8 +15,15 @@ import { useResizeHandle } from '@/composables/useResizeHandle'
 import { store } from '@/electron'
 import { useElementSize } from '@vueuse/core'
 
+useHttpAi()
+
 const { environmentsOpen } = useHttpUi()
+const { open: aiOpen, setOpen: setAiOpen, setVaultContext } = useAi()
 const { inspectorOpen, inspectorWidth } = useHttpPanels()
+function closeInspector() {
+  setAiOpen(false)
+  inspectorOpen.value = false
+}
 const workspace = ref<HTMLElement>()
 const inspectorHandle = ref<HTMLElement>()
 const { width: workspaceWidth } = useElementSize(workspace)
@@ -35,6 +49,22 @@ useResizeHandle(inspectorHandle, {
 const { isAppLoading } = useApp()
 const { initHttpSpace } = useHttpSpaceInit()
 const { httpState, isHttpSidebarHidden } = useHttpApp()
+const { currentRequest } = useHttpRequests()
+watch(
+  () => ({ request: currentRequest.value, panel: httpState.activePanel }),
+  ({ request, panel }) => {
+    setVaultContext(
+      request
+      && (!panel || panel === 'request')
+      && request.protocol !== 'websocket'
+        ? { type: 'http_request', id: request.id, name: request.name }
+        : undefined,
+    )
+  },
+  { immediate: true },
+)
+onBeforeUnmount(() => setVaultContext(undefined))
+
 if (httpState.activePanel === 'environments') {
   httpState.activePanel
     = httpState.folderId !== undefined ? 'folder' : 'request'
@@ -118,7 +148,7 @@ onMounted(() => {
             </div>
           </div>
         </HttpDevtoolsDock>
-        <template v-if="inspectorOpen">
+        <template v-if="inspectorOpen || aiOpen">
           <div
             ref="inspectorHandle"
             class="bg-border hover:bg-primary relative z-10 w-px shrink-0 cursor-col-resize after:absolute after:inset-y-0 after:-left-1 after:w-2"
@@ -127,7 +157,13 @@ onMounted(() => {
             :style="{ width: `${panelWidth}px` }"
             class="h-full min-h-0 shrink-0 overflow-hidden"
           >
-            <HttpVariablesInspector />
+            <AiInspectorTabs
+              class="[--inspector-header-height:40px]"
+              @close="closeInspector"
+              @inspector="inspectorOpen = true"
+            >
+              <HttpVariablesInspector embedded />
+            </AiInspectorTabs>
           </aside>
         </template>
       </div>

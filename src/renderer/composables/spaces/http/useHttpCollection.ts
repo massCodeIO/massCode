@@ -12,6 +12,7 @@ import { useHttpApp } from './useHttpApp'
 import { useHttpFolders } from './useHttpFolders'
 import { useHttpRuntime } from './useHttpRuntime'
 
+const activeTab = ref('overview')
 const { httpState } = useHttpApp()
 const { folders, getFolderByIdFromTree, updateHttpFolder } = useHttpFolders()
 // Install the shared navigation dispatcher even before opening a request.
@@ -239,6 +240,7 @@ const runtimeContext = {
 }
 export function useHttpCollection() {
   return {
+    activeTab,
     collection,
     draft,
     dirty,

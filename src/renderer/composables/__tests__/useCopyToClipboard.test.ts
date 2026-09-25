@@ -1,26 +1,34 @@
-import { beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useCopyToClipboard } from '../useCopyToClipboard'
 
-const { sonner, writeText } = vi.hoisted(() => ({
+const { sonner, invoke } = vi.hoisted(() => ({
   sonner: vi.fn(),
-  writeText: vi.fn(),
+  invoke: vi.fn(),
 }))
 vi.mock('@/composables', () => ({ useSonner: () => ({ sonner }) }))
-vi.mock('@/electron', () => ({ i18n: { t: (key: string) => key } }))
+vi.mock('@/electron', () => ({
+  i18n: { t: (key: string) => key },
+  ipc: { invoke },
+}))
 
 beforeEach(() => {
   vi.clearAllMocks()
-  vi.stubGlobal('navigator', { clipboard: { writeText } })
+  vi.stubGlobal('navigator', {})
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
 })
 
 it('does not report success until the clipboard write finishes', async () => {
   let finish!: () => void
-  writeText.mockReturnValueOnce(
+  invoke.mockReturnValueOnce(
     new Promise<void>((resolve) => {
       finish = resolve
     }),
   )
   const pending = useCopyToClipboard()('hello')
+  expect(invoke).toHaveBeenCalledWith('system:clipboard-write-text', 'hello')
   expect(sonner).not.toHaveBeenCalled()
   finish()
   expect(await pending).toBe(true)
@@ -30,7 +38,7 @@ it('does not report success until the clipboard write finishes', async () => {
 })
 
 it('reports a rejected clipboard write without an unhandled rejection or success', async () => {
-  writeText.mockRejectedValueOnce(new Error('Permission denied'))
+  invoke.mockRejectedValueOnce(new Error('Permission denied'))
   expect(await useCopyToClipboard()('hello')).toBe(false)
   expect(sonner).toHaveBeenCalledTimes(1)
   expect(sonner).toHaveBeenCalledWith(
@@ -38,10 +46,11 @@ it('reports a rejected clipboard write without an unhandled rejection or success
   )
 })
 
-it('reports an unavailable clipboard API as an error', async () => {
-  vi.stubGlobal('navigator', {})
-  expect(await useCopyToClipboard()('hello')).toBe(false)
+it('copies through main when the browser clipboard API is unavailable', async () => {
+  invoke.mockResolvedValueOnce(undefined)
+  expect(await useCopyToClipboard()('hello')).toBe(true)
+  expect(invoke).toHaveBeenCalledWith('system:clipboard-write-text', 'hello')
   expect(sonner).toHaveBeenCalledWith(
-    expect.objectContaining({ type: 'error' }),
+    expect.objectContaining({ type: 'success' }),
   )
 })

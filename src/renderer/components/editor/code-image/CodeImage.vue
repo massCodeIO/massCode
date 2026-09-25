@@ -2,6 +2,8 @@
 import type { Language } from '../types'
 import { Switch } from '@/components/ui/shadcn/switch'
 import { useEditor, useSnippets } from '@/composables'
+import { useNativeExportBridge } from '@/composables/ai/nativeBridges'
+import { saveRenderedArtifact } from '@/composables/useRenderedArtifactExport'
 import { i18n } from '@/electron'
 import { useCssVar } from '@vueuse/core'
 import CodeMirror from 'codemirror'
@@ -9,14 +11,21 @@ import domToImage from 'dom-to-image'
 import interact from 'interactjs'
 import { FileDown } from 'lucide-vue-next'
 
-const { displayedSnippet, displayedSnippetContent } = useSnippets()
+const {
+  displayedSnippet,
+  displayedSnippetContent,
+  selectedSnippet,
+  selectedSnippetRecordStatus,
+} = useSnippets()
 
 const MIN_WIDTH = 520
 const MAX_WIDTH = 920
 
 const { settings, cursorPosition: _cursorPosition } = useEditor()
 
-const activeBackground = ref('disco')
+const activeBackground = ref<
+  'disco' | 'aqua' | 'salad' | 'cucumber' | 'lovely'
+>('disco')
 
 const isDarkPreview = ref(true)
 const isBackground = ref(true)
@@ -42,7 +51,7 @@ let editor: CodeMirror.Editor | null = null
 
 function init() {
   editor = CodeMirror(editorRef.value!, {
-    value: displayedSnippetContent.value?.value || ' ',
+    value: displayedSnippetContent.value?.value ?? '',
     mode: displayedSnippetContent.value?.language || 'plain_text',
     theme: 'oceanic-next',
     lineWrapping: settings.wrap,
@@ -158,35 +167,107 @@ function setLanguage(language: Language) {
   editor?.setOption('mode', language)
 }
 
-async function onSave(format: 'png' | 'svg') {
-  let data = ''
-
-  const filter = (node: Node) => {
-    const el = node as HTMLElement
-    return (
-      el.dataset?.controls !== 'resize'
-      && el.dataset?.background !== 'transparent'
-    )
+async function onSave(
+  format: 'png' | 'svg',
+  current: () => boolean = () => true,
+) {
+  const snippet = displayedSnippet.value
+  const content = displayedSnippetContent.value
+  if (
+    !snippet
+    || !content
+    || typeof content.value !== 'string'
+    || selectedSnippetRecordStatus.value !== 'ready'
+    || selectedSnippet.value?.id !== snippet.id
+  ) {
+    return { status: 'stale' as const }
   }
+  const baseline = content.value
+  await nextTick()
+  if (!current() || editor?.getValue() !== baseline)
+    return { status: 'stale' as const }
+  return saveRenderedArtifact(
+    format,
+    snippet.name,
+    async () => {
+      let data = ''
 
-  if (format === 'png') {
-    data = await domToImage.toPng(backgroundRef.value!, { filter })
-  }
+      const filter = (node: Node) => {
+        const el = node as HTMLElement
+        return (
+          el.dataset?.controls !== 'resize'
+          && el.dataset?.background !== 'transparent'
+        )
+      }
 
-  if (format === 'svg') {
-    data = await domToImage.toSvg(backgroundRef.value!)
-  }
+      if (format === 'png') {
+        data = await domToImage.toPng(backgroundRef.value!, { filter })
+      }
 
-  const a = document.createElement('a')
+      if (format === 'svg') {
+        data = await domToImage.toSvg(backgroundRef.value!, { filter })
+      }
 
-  a.href = data
-  a.download = `${displayedSnippet.value?.name}.${format}`
-  a.click()
+      return data
+    },
+    () =>
+      current()
+      && selectedSnippetRecordStatus.value === 'ready'
+      && selectedSnippet.value?.id === snippet.id
+      && displayedSnippet.value?.id === snippet.id
+      && displayedSnippetContent.value?.id === content.id
+      && displayedSnippetContent.value?.value === baseline,
+  )
 }
 
 onMounted(() => {
   init()
 })
+useNativeExportBridge(
+  'codeImage',
+  (format, current) =>
+    format === 'html' ? Promise.resolve(undefined) : onSave(format, current),
+  async (action, current) => {
+    if (
+      action.action !== 'codeImageConfigure'
+      || !editor
+      || !containerRef.value
+    ) {
+      return { status: 'unavailable' }
+    }
+    if (
+      !current()
+      || selectedSnippetRecordStatus.value !== 'ready'
+      || displayedSnippet.value?.id !== action.target.id
+      || (action.target.contentId !== undefined
+        && displayedSnippetContent.value?.id !== action.target.contentId)
+    ) {
+      return { status: 'stale' }
+    }
+    if (action.theme !== undefined)
+      isDarkPreview.value = action.theme === 'dark'
+    if (action.background !== undefined)
+      isBackground.value = action.background
+    if (action.gradient !== undefined)
+      activeBackground.value = action.gradient
+    if (action.width !== undefined) {
+      width.value = Math.max(
+        MIN_WIDTH,
+        Math.min(action.width, MAX_WIDTH, containerRef.value.clientWidth - 56),
+      )
+    }
+    await nextTick()
+    return {
+      status: current() ? 'done' : 'stale',
+      visual: {
+        theme: isDarkPreview.value ? 'dark' : 'light',
+        background: isBackground.value,
+        gradient: activeBackground.value,
+        width: width.value,
+      },
+    }
+  },
+)
 </script>
 
 <template>

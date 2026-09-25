@@ -43,6 +43,10 @@ Use [Drawings](/documentation/drawings/) for diagrams, sketches, and whiteboard-
 
 Use [Clipper](/documentation/clipper) to save selected text, readable page content, and links from your browser into Code, Notes, or HTTP. Install the Chrome version from the [Chrome Web Store](https://chromewebstore.google.com/detail/masscode-clipper/fkaaogdifollkhjbfoabbiocecehaaii), or use a local build for other browsers.
 
+## AI Assistant
+
+Use [AI Assistant](/documentation/ai) with your own provider or local model to edit snippets, organize notes and tasks, run HTTP workflows, and find records across your vault. Ask for a preview before edits or let it apply them directly.
+
 ## MCP
 
 Connect a coding agent through [MCP](/documentation/mcp) to search, read, and save snippets and notes in your local vault.

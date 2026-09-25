@@ -11,7 +11,7 @@ export interface NotesDashboardWidgetsState {
   topLinked: boolean
 }
 
-const DEFAULT_WIDGETS: NotesDashboardWidgetsState = {
+export const DEFAULT_WIDGETS: NotesDashboardWidgetsState = {
   stats: true,
   activityHeatmap: true,
   recent: true,

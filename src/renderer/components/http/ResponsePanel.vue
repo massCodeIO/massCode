@@ -6,6 +6,7 @@ import {
   useHttpExecute,
   useHttpSettings,
 } from '@/composables'
+import { useNativeHttpPanelBridge } from '@/composables/ai/nativeBridges'
 import { i18n } from '@/electron'
 import { Copy, LoaderCircle } from 'lucide-vue-next'
 
@@ -91,6 +92,40 @@ function copyActiveTab() {
     incrementCopy('http')
   }
 }
+useNativeHttpPanelBridge('httpResponse', async (action, current) => {
+  if (!current())
+    return { status: 'stale' }
+  const panel = {
+    responseBody: 'body',
+    responseHeaders: 'headers',
+    responseTests: 'tests',
+  }[action.panel as 'responseBody' | 'responseHeaders' | 'responseTests']
+  if (
+    !panel
+    || !lastResponse.value
+    || (panel === 'tests' && !runtimeResults.value.length)
+  ) {
+    return { status: 'unavailable' }
+  }
+  activeTab.value = panel as typeof activeTab.value
+  await nextTick()
+  if (!current() || activeTab.value !== panel)
+    return { status: 'stale' }
+  if (action.action === 'httpView' && action.copy) {
+    const text = copyValue.value
+    if (!text)
+      return { status: 'unavailable' }
+    const copied = await copy(text)
+    if (copied)
+      incrementCopy('http')
+    return {
+      status: copied ? 'done' : 'failed',
+      panel: action.panel,
+      characters: copied ? text.length : undefined,
+    }
+  }
+  return { status: 'done', panel: action.panel }
+})
 </script>
 
 <template>

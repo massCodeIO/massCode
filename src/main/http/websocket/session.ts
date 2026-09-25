@@ -22,6 +22,7 @@ import {
 import { useHttpStorage } from '../../storage'
 import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
 import { resolveHttpCollection } from '../collection'
+import { createHistorySnapshot } from '../historySnapshot'
 import { applyAuth, resolveEnvironment } from '../runtime/execute'
 import { getHttpSession, isHttpSessionCurrent } from '../runtime/session'
 
@@ -30,6 +31,11 @@ interface Connection {
   view: WsView
   variables: Record<string, string>
   maskedVariables: Record<string, string>
+  aiRedaction: {
+    url: string
+    headers: { key: string, value: string }[]
+    secrets: string[]
+  }
   current: () => boolean
   timer?: ReturnType<typeof setInterval>
   closeTimer?: ReturnType<typeof setTimeout>
@@ -111,6 +117,13 @@ export function connectWebSocket(owner: number, input: WsConnect): WsView {
   }
   const interpolate = (value: string) =>
     interpolateHttpVariables(value, variables)
+  const aiSecrets = [
+    ...environment.secretValues,
+    ...Object.values(session.variables),
+    ...['token', 'password', 'value', 'username'].map(key =>
+      interpolate((input.auth as unknown as Record<string, string>)[key] ?? ''),
+    ),
+  ].filter(Boolean)
   input = applyHttpApiKey(input, variables)
   let url: URL
   let headers: Record<string, string>
@@ -187,6 +200,11 @@ export function connectWebSocket(owner: number, input: WsConnect): WsView {
     socket,
     variables,
     maskedVariables,
+    aiRedaction: {
+      url: url.toString(),
+      headers: Object.entries(headers).map(([key, value]) => ({ key, value })),
+      secrets: aiSecrets,
+    },
     view: {
       connectionId: input.connectionId,
       state: 'connecting',
@@ -267,6 +285,45 @@ export function readWebSocket(
   })
 }
 
+// Provider projection only; the normal UI log remains unchanged.
+export function readWebSocketForAi(
+  owner: number,
+  id: string,
+  after: number,
+): WsView {
+  const view = readWebSocket(owner, id, after)
+  const { url, headers, secrets } = owned(owner, id).aiRedaction
+  // Mask each bounded message separately so a full session log cannot exceed
+  // the history snapshot body limit and produce truncated JSON.
+  function mask<T>(value: T): T {
+    const snapshot = createHistorySnapshot(
+      { method: 'GET', url, headers, body: '' },
+      {
+        status: null,
+        statusText: '',
+        headers: [],
+        body: JSON.stringify(value),
+        bodyKind: 'json',
+        durationMs: 0,
+        sizeBytes: 0,
+        truncated: false,
+      },
+      secrets,
+    )
+    return JSON.parse(snapshot.response.body) as T
+  }
+  return {
+    ...mask({ ...view, messages: [] }),
+    messages: view.messages.map(message =>
+      mask(
+        message.kind === 'binary'
+          ? { ...message, text: '[BINARY]', truncated: true }
+          : message,
+      ),
+    ),
+  }
+}
+
 export async function sendWebSocket(owner: number, id: string, text: string) {
   const connection = owned(owner, id)
   if (!checkContext(connection))
@@ -317,4 +374,43 @@ export function disposeWebSocket(owner: number, id?: string) {
   connection.view.messages = []
   connection.socket.terminate()
   connections.delete(owner)
+}
+
+/** Wait for the existing socket lifecycle; never start another connection. */
+export function waitForWebSocket(
+  owner: number,
+  id: string,
+  until: 'connected' | 'closed',
+): Promise<void> {
+  const connection = owned(owner, id)
+  const ready = () =>
+    until === 'connected'
+      ? connection.view.state !== 'connecting'
+      : ['closed', 'error'].includes(connection.view.state)
+  if (ready())
+    return Promise.resolve()
+  return new Promise((resolve, reject) => {
+    const socket = connection.socket
+    const events = ['open', 'close', 'error', 'unexpected-response'] as const
+    let timer: ReturnType<typeof setTimeout>
+    function cleanup() {
+      clearTimeout(timer)
+      for (const event of events) socket.off(event, changed)
+    }
+    function changed() {
+      if (!ready())
+        return
+      cleanup()
+      resolve()
+    }
+    timer = setTimeout(
+      () => {
+        cleanup()
+        reject(new Error('WS_TIMEOUT'))
+      },
+      until === 'connected' ? 20000 : 5000,
+    )
+    for (const event of events) socket.on(event, changed)
+    changed()
+  })
 }

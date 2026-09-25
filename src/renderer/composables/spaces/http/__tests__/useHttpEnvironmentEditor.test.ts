@@ -17,6 +17,7 @@ interface SetupOptions {
   envs?: EnvFixture[]
   isConfirmed?: boolean
   revealValue?: string | null
+  onSecretSaved?: (id: number, key: string, saved: boolean) => void
   setSecretResult?: boolean
   unprotectSecretResult?: boolean
 }
@@ -114,7 +115,11 @@ async function setup(options: SetupOptions = {}) {
   )
 
   const open = ref(false)
-  const editor = useHttpEnvironmentEditor(open, options.environmentId)
+  const editor = useHttpEnvironmentEditor(
+    open,
+    options.environmentId,
+    options.onSecretSaved,
+  )
 
   editor.selectedEnvId.value
     = options.environmentId ?? environments.value[0]?.id ?? null
@@ -348,4 +353,63 @@ describe('useHttpEnvironmentEditor', () => {
     expect(editor.selectedEnvId.value).toBe(3)
     expect(editor.localName.value).toBe('Prod')
   })
+})
+
+it('reports local secret completion only after persistence and flush, with no value in the receipt', async () => {
+  for (const saved of [true, false]) {
+    const completed = vi.fn()
+    const test = await setup({
+      setSecretResult: saved,
+      onSecretSaved: completed,
+    })
+    await openDialog(test.open)
+    test.editor.addSecretVariable('API_TOKEN')
+    const entry = test.editor.localVariables.value.at(-1)!
+    test.editor.setSecretValue(entry, 'local-only-secret')
+    expect(completed).not.toHaveBeenCalled()
+    await test.editor.flushPendingUpdate()
+    expect(completed).toHaveBeenCalledWith(
+      test.editor.selectedEnvId.value,
+      'API_TOKEN',
+      saved,
+    )
+    expect(JSON.stringify(completed.mock.calls)).not.toContain(
+      'local-only-secret',
+    )
+    expect(test.setSecret).toHaveBeenCalledWith(
+      test.editor.selectedEnvId.value,
+      'API_TOKEN',
+      'local-only-secret',
+    )
+  }
+})
+
+it('shares an in-flight blur save with close flush and delivers one completion after persistence', async () => {
+  const completed = vi.fn()
+  const test = await setup({ onSecretSaved: completed })
+  await openDialog(test.open)
+  test.editor.addSecretVariable('TOKEN')
+  const entry = test.editor.localVariables.value.at(-1)!
+  test.editor.setSecretValue(entry, 'local-secret')
+  let finish!: (value: boolean) => void
+  test.setSecret.mockImplementationOnce(
+    () =>
+      new Promise<boolean>((resolve) => {
+        finish = resolve
+      }),
+  )
+  const blur = test.editor.onSecretValueBlur(entry)
+  test.open.value = false
+  await flush()
+  const closing = test.editor.flushPendingUpdate()
+  expect(test.setSecret).toHaveBeenCalledOnce()
+  expect(completed).not.toHaveBeenCalled()
+  finish(true)
+  await Promise.all([blur, closing])
+  expect(completed).toHaveBeenCalledOnce()
+  expect(completed).toHaveBeenCalledWith(
+    test.editor.selectedEnvId.value,
+    'TOKEN',
+    true,
+  )
 })

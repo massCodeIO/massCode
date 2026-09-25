@@ -13,7 +13,14 @@ import {
   watch,
 } from 'vue'
 
-Object.assign(globalThis, { computed, ref, watch, onMounted, onScopeDispose })
+Object.assign(globalThis, {
+  computed,
+  ref,
+  watch,
+  onMounted,
+  onScopeDispose,
+  nextTick,
+})
 const cleanup: Array<() => void> = []
 
 afterEach(() => cleanup.splice(0).forEach(dispose => dispose()))
@@ -38,6 +45,30 @@ async function setup() {
     resolve: (value: string) => void
     reject: (error: Error) => void
   }> = []
+  let native: (action: any, current: () => boolean) => Promise<any>
+  const copy = vi.fn(async (_value: string) => true)
+  vi.doMock('@/composables/ai/nativeBridges', () => ({
+    useNativeHttpPanelBridge: (_key: string, handler: typeof native) => {
+      native = handler
+    },
+    runHttpResponseBridge: vi.fn(),
+  }))
+  vi.doMock('@/composables/ai/nativePreferences', () => ({
+    setNativePreferences: async (change: any) => {
+      settings.defaultPreviewFormat = change.values.defaultPreviewFormat
+      await nextTick()
+      return {
+        status: 'done',
+        persisted: true,
+        mutation: {
+          kind: 'preferences',
+          group: 'http',
+          before: {},
+          after: change.values,
+        },
+      }
+    },
+  }))
   const invoke = vi.fn((channel: string) =>
     channel === 'spaces:http:cookies:preview'
       ? Promise.resolve('')
@@ -68,7 +99,7 @@ async function setup() {
       lastResponse: ref(null),
     }),
     useHttpSettings: () => ({ settings }),
-    useCopyToClipboard: () => vi.fn(),
+    useCopyToClipboard: () => copy,
     useDonations: () => ({ incrementCopy: vi.fn() }),
   }))
   vi.doMock('@/components/ui/shadcn/tabs', () => ({}))
@@ -90,6 +121,7 @@ async function setup() {
     previewContent: Ref<string>
     displayedFormat: Ref<string>
     previewPending: Ref<boolean>
+    interpolateVariables: Ref<boolean>
     previewError: Ref<boolean>
   }
   const app = renderer.createApp(
@@ -103,7 +135,7 @@ async function setup() {
   app.provide(ssrContextKey, {})
   app.mount({})
   cleanup.push(() => app.unmount())
-  return { state, settings, currentDraft, pending }
+  return { state, settings, currentDraft, pending, copy, native: native! }
 }
 
 describe('request preview transitions', () => {
@@ -152,4 +184,69 @@ describe('request preview transitions', () => {
     expect(state.previewError.value).toBe(false)
     expect(state.previewContent.value).toBe('')
   })
+})
+
+it('waits for actual native preview generation and clipboard completion, retaining format Undo', async () => {
+  const { native, pending, copy } = await setup()
+  const result = native(
+    {
+      action: 'httpView',
+      target: { space: 'http', id: 1 },
+      panel: 'preview',
+      format: 'shell:httpie',
+      copy: true,
+    },
+    () => true,
+  )
+  await vi.waitFor(() => expect(pending.length).toBe(1))
+  expect(copy).not.toHaveBeenCalled()
+  pending[0]!.resolve('generated HTTPie')
+  expect(await result).toMatchObject({
+    status: 'done',
+    characters: 16,
+    mutation: { kind: 'preferences' },
+  })
+  expect(copy).toHaveBeenCalledWith('generated HTTPie')
+})
+it('does not copy a previous preview after generation failure or loss of target', async () => {
+  const { native, pending, copy } = await setup()
+  let current = true
+  const result = native(
+    {
+      action: 'httpView',
+      target: { space: 'http', id: 1 },
+      panel: 'preview',
+      format: 'shell:httpie',
+      copy: true,
+    },
+    () => current,
+  )
+  await vi.waitFor(() => expect(pending.length).toBe(1))
+  current = false
+  pending[0]!.resolve('new preview')
+  expect(await result).toMatchObject({ status: 'stale' })
+  expect(copy).not.toHaveBeenCalled()
+})
+it('regenerates the native preview when interpolation changes without copying old output', async () => {
+  const { native, pending, copy, state, settings } = await setup()
+  settings.defaultPreviewFormat = 'shell:httpie'
+  await vi.waitFor(() => expect(pending.length).toBe(1))
+  pending[0]!.resolve('interpolated')
+  await nextTick()
+  const result = native(
+    {
+      action: 'httpView',
+      target: { space: 'http', id: 1 },
+      panel: 'preview',
+      interpolate: false,
+      copy: true,
+    },
+    () => true,
+  )
+  await vi.waitFor(() => expect(pending.length).toBe(2))
+  expect(copy).not.toHaveBeenCalled()
+  expect(state.interpolateVariables.value).toBe(false)
+  pending[1]!.resolve('without interpolation')
+  expect(await result).toMatchObject({ status: 'done' })
+  expect(copy).toHaveBeenCalledWith('without interpolation')
 })

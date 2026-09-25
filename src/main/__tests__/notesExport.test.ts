@@ -1,8 +1,10 @@
+import type { NoteExportWarnings } from '../types/ipc'
 import { Buffer } from 'node:buffer'
 import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
+import { getMermaidSources } from '../../shared/notes/exportDiagrams'
 import {
   parseNoteExportPayload,
   renderNoteHtml,
@@ -32,6 +34,116 @@ vi.mock('../storage/providers/markdown/runtime', () => ({
 }))
 
 describe('note export helpers', () => {
+  it('renders a matching portable Mermaid SVG and preserves source when a preview is absent or unsafe', async () => {
+    const code = 'graph TD\n A --> B'
+    const content = `~~~mermaid\n${code}\n~~~`
+    expect(getMermaidSources(content)).toEqual([code])
+    const safe
+      = '<svg xmlns="http://www.w3.org/2000/svg"><text>Client → API</text></svg>'
+    const warnings: NoteExportWarnings = {}
+    const html = await renderNoteHtmlBody(content, {
+      diagramPreviews: [{ code, svg: safe }],
+      warnings,
+    })
+    expect(html).toContain('class="diagram-preview"')
+    expect(html).toContain(Buffer.from(safe).toString('base64'))
+    expect(html).not.toContain('<pre>')
+    expect(warnings).toEqual({})
+
+    for (const diagramPreviews of [
+      [],
+      [{ code, svg: '<svg><script>alert(1)</script></svg>' }],
+      [{ code: 'graph LR; X-->Y', svg: safe }],
+    ]) {
+      const losses: NoteExportWarnings = {}
+      const fallback = await renderNoteHtmlBody(content, {
+        diagramPreviews,
+        warnings: losses,
+      })
+      expect(fallback).toContain('language-mermaid')
+      expect(fallback).not.toContain('diagram-preview')
+      expect(losses).toEqual({ mermaid: 1 })
+    }
+  })
+
+  it('reports actual asset and formatting losses while keeping readable content', async () => {
+    const warnings: NoteExportWarnings = {}
+    const html = await renderNoteHtmlBody(
+      [
+        '> [!WARNING]\n> Keep this warning',
+        '![local](masscode://notes-asset/missing.png)',
+        '![remote](https://example.com/image.png)',
+        '![drawing](masscode://drawing/missing)',
+      ].join('\n\n'),
+      {
+        warnings,
+        resolveAsset: async () => new Response(null, { status: 404 }),
+      },
+    )
+    expect(html).toContain('Keep this warning')
+    expect(warnings).toEqual({
+      richFormatting: 1,
+      managedImages: 1,
+      remoteImages: 1,
+      drawings: 1,
+    })
+  })
+
+  it('reports links outside the exported site while keeping planned labels intentional', async () => {
+    const warnings: NoteExportWarnings = {}
+    const html = await renderNoteHtmlBody(
+      '[[note:42|Outside]] [[masscode:planned:note|Future]]',
+      {
+        internalLinkHref: () => null,
+        warnings,
+      },
+    )
+    expect(html).toContain('Outside')
+    expect(html).toContain('Future')
+    expect(html).not.toContain('<a ')
+    expect(warnings).toEqual({ internalLinks: 1 })
+  })
+
+  it('validates bounded diagram payloads independently of drawing previews', () => {
+    const base = { name: 'Diagram', content: '', format: 'html' }
+    expect(
+      parseNoteExportPayload({
+        ...base,
+        diagramPreviews: [{ code: 'graph TD; A-->B', svg: '<svg/>' }],
+      })?.diagramPreviews,
+    ).toHaveLength(1)
+    expect(
+      parseNoteExportPayload({
+        ...base,
+        diagramPreviews: [{ code: 42, svg: '<svg/>' }],
+      }),
+    ).toBeNull()
+    expect(
+      parseNoteExportPayload({
+        ...base,
+        diagramPreviews: Array.from({ length: 51 }, () => ({
+          code: '',
+          svg: '<svg/>',
+        })),
+      }),
+    ).toBeNull()
+    expect(
+      parseNoteExportPayload({
+        ...base,
+        drawingPreviews: Array.from({ length: 50 }, () => ({
+          id: 'drawing',
+          svg: '<svg/>',
+        })),
+        diagramPreviews: [{ code: 'graph TD; A-->B', svg: '<svg/>' }],
+      }),
+    ).toBeNull()
+    expect(
+      parseNoteExportPayload({
+        ...base,
+        diagramPreviews: [{ code: '', svg: 'x'.repeat(5 * 1024 * 1024 + 1) }],
+      }),
+    ).toBeNull()
+  })
   it('renders common Markdown features into a complete document', async () => {
     const html = await renderNoteHtml(
       'Guide',

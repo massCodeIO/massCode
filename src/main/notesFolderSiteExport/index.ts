@@ -2,7 +2,9 @@ import type { OpenDialogOptions } from 'electron'
 import type { NoteRecord } from '../storage/contracts'
 import type { NotesFolderTreeRecord } from '../storage/providers/markdown/notes/runtime/types'
 import type {
+  NoteExportDiagramPreview,
   NoteExportDrawingPreview,
+  NoteExportWarnings,
   NoteFolderSiteExportPayload,
   NoteFolderSiteExportPreparePayload,
   NoteFolderSiteExportPrepareResponse,
@@ -14,12 +16,14 @@ import { mkdir, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 import { BrowserWindow, dialog } from 'electron'
 import { getDrawingUrlsFromMarkdown } from '../../shared/notes/drawingExport'
+import { getMermaidSources } from '../../shared/notes/exportDiagrams'
 import { buildNoteFolderPathMap } from '../../shared/notes/folderPath'
 import i18n from '../i18n'
 import {
   isSafeDrawingSvg,
   NOTE_DOCUMENT_STYLES,
   NotesAssetTemporarilyUnavailableError,
+  parseDiagramPreviews,
   renderNoteHtmlBody,
   sanitizeNoteExportFileName,
 } from '../notesExport'
@@ -230,8 +234,14 @@ export function parseNoteFolderSiteExportPayload(
   }
 
   const candidate = payload as Partial<NoteFolderSiteExportPayload>
+  const diagramPreviews = parseDiagramPreviews(
+    candidate.diagramPreviews,
+    500,
+    100 * 1024 * 1024,
+  )
   if (
-    !Number.isSafeInteger(candidate.folderId)
+    diagramPreviews === null
+    || !Number.isSafeInteger(candidate.folderId)
     || Number(candidate.folderId) <= 0
     || !['createdAt', 'updatedAt', 'name'].includes(candidate.sort ?? '')
     || !['ASC', 'DESC'].includes(candidate.order ?? '')
@@ -265,8 +275,20 @@ export function parseNoteFolderSiteExportPayload(
     drawingPreviews.push({ id: preview.id, svg: preview.svg })
   }
 
+  totalBytes += diagramPreviews.reduce(
+    (sum, item) =>
+      sum + Buffer.byteLength(item.code) + Buffer.byteLength(item.svg),
+    0,
+  )
+  if (
+    drawingPreviews.length + diagramPreviews.length > MAX_DRAWING_PREVIEWS
+    || totalBytes > MAX_DRAWING_PREVIEWS_TOTAL_BYTES
+  ) {
+    return null
+  }
   return {
     drawingPreviews,
+    ...(candidate.diagramPreviews === undefined ? {} : { diagramPreviews }),
     folderId: Number(candidate.folderId),
     order: candidate.order!,
     sort: candidate.sort!,
@@ -297,6 +319,11 @@ export function prepareNoteFolderSiteExport(
   }
   return {
     drawingIds,
+    mermaidSources: [
+      ...new Set(
+        scope.notes.flatMap(note => getMermaidSources(note.content)),
+      ),
+    ].slice(0, 500),
     status: 'ready',
   }
 }
@@ -776,6 +803,9 @@ async function writeSite(
   scope: FolderSiteScope,
   allActiveNotes: NoteRecord[],
   previews: NoteExportDrawingPreview[],
+  diagramPreviews: NoteExportDiagramPreview[],
+  warnings: NoteExportWarnings,
+  vault: string,
 ): Promise<void> {
   const assetsPath = join(stagingPath, 'assets')
   const notesPath = join(stagingPath, 'notes')
@@ -879,7 +909,7 @@ async function writeSite(
     })),
   ])
   const assetSourceByName = new Map<string, string>()
-  const paths = getNotesPaths(getVaultPath())
+  const paths = getNotesPaths(vault)
 
   for (const note of scope.notes) {
     const navigationFromNote = renderFolderNavigation(
@@ -925,6 +955,8 @@ async function writeSite(
         return source
       },
       drawingPreviews: previews,
+      diagramPreviews,
+      warnings,
       drawingSource: id => drawingSourceById.get(id) ?? null,
       internalLinkHref: (target) => {
         const legacyMatch = target.match(/^note:(\d+)$/)
@@ -986,6 +1018,7 @@ async function writeSite(
 export async function exportNoteFolderSite(
   payload: NoteFolderSiteExportPayload,
 ): Promise<NoteFolderSiteExportResponse> {
+  const vault = getVaultPath()
   const scope = loadScope(payload.folderId, payload.sort, payload.order)
   if (!scope) {
     throw new Error('Notes folder not found')
@@ -1012,6 +1045,8 @@ export async function exportNoteFolderSite(
   if (!parentPath) {
     return { canceled: true, status: 'canceled' }
   }
+  if (getVaultPath() !== vault)
+    throw new Error('VAULT_CHANGED')
 
   const destinationPath = await getAvailableDestination(
     parentPath,
@@ -1024,17 +1059,22 @@ export async function exportNoteFolderSite(
 
   try {
     await mkdir(stagingPath)
+    const warnings: NoteExportWarnings = {}
     await writeSite(
       stagingPath,
       scope,
       allActiveNotes,
       payload.drawingPreviews,
+      payload.diagramPreviews ?? [],
+      warnings,
+      vault,
     )
     await rename(stagingPath, destinationPath)
     return {
       canceled: false,
       directoryPath: destinationPath,
       status: 'exported',
+      ...(Object.keys(warnings).length ? { warnings } : {}),
     }
   }
   catch (error) {

@@ -18,6 +18,7 @@ import {
   useNotesEditor,
   useSnippets,
 } from '@/composables'
+import { useAi } from '@/composables/ai/useAi'
 import { useHttpPanels } from '@/composables/spaces/http/useHttpPanels'
 import { ipc } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
@@ -76,6 +77,15 @@ async function refreshActiveSortableList() {
 }
 
 export function registerMainMenuListeners() {
+  ipc.on('main-menu:open-ai', () => {
+    const space = getActiveSpaceId()
+    if (space && ['code', 'notes', 'http'].includes(space)) {
+      const ai = useAi()
+      if (ai.open.value)
+        ai.setOpen(false)
+      else void ai.openAndFocus()
+    }
+  })
   registerMainMenuContextSync()
 
   ipc.on('main-menu:goto-preferences', () => {

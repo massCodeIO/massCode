@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import { useSonner, useTheme } from '@/composables'
 import { useDateFormat } from '@/composables/useDateFormat'
-import { i18n, ipc, store } from '@/electron'
+import { useDockBadgePreference } from '@/composables/useDockBadgePreference'
+import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
 import { DATE_FORMATS } from '~/shared/dateFormat'
 
@@ -16,15 +17,8 @@ const { currentThemeId, customThemes, loadCustomThemes, setTheme } = useTheme()
 const { sonner } = useSonner()
 const isCreatingThemeTemplate = ref(false)
 
-interface DockBadgeRefreshResult {
-  applied: boolean
-  count: number
-}
-
-const dockBadgeSource = ref<DockBadgeSource>(
-  store.preferences.get<DockBadgeSource>('appearance.dockBadgeSource')
-  || 'none',
-)
+const { source: dockBadgeSource, setSource: setDockBadgeSource }
+  = useDockBadgePreference()
 
 const dockBadgeOptions: Array<{ id: DockBadgeSource, label: string }> = [
   {
@@ -86,12 +80,7 @@ async function onDockBadgeSourceChange(value: AcceptableValue) {
   }
 
   const source = value as DockBadgeSource
-  dockBadgeSource.value = source
-  store.preferences.set('appearance.dockBadgeSource', source)
-  const result = (await ipc.invoke(
-    'system:refresh-dock-badge',
-    null,
-  )) as DockBadgeRefreshResult
+  const result = await setDockBadgeSource(source)
 
   if (source !== 'none' && !result.applied) {
     sonner({

@@ -27,6 +27,29 @@ const response: HttpExecuteResult = {
 
 describe('hTTP declarative runtime', () => {
   it.each([
+    ['eq', 7, 7, true],
+    ['eq', 7, '7', false],
+    ['eq', 7, 8, false],
+    ['neq', 7, 8, true],
+    ['neq', 7, 7, false],
+    ['contains', 'alpha-beta', 'beta', true],
+    ['contains', 'alpha-beta', 'Beta', false],
+    ['contains', ['beta'], 'beta', false],
+    ['endsWith', 'alpha-beta', 'alpha', false],
+    ['notMatches', 'alpha-beta', '^alpha', false],
+    ['length', [1, 2], 3, false],
+    ['length', '😀', 2, true],
+    ['length', '😀', 1, false],
+    ['gt', 7, 6, true],
+    ['gt', 7, 7, false],
+    ['gt', '7', 6, false],
+    ['gte', 7, 7, true],
+    ['gte', 7, 8, false],
+    ['lt', 7, 8, true],
+    ['lt', 7, 7, false],
+    ['lte', 7, 7, true],
+    ['lte', 7, 6, false],
+    ['isNumber', 7.5, undefined, true],
     ['matches', 'hello', '^h.*o$', true],
     ['matches', 'hello', '^no$', false],
     ['notMatches', 'hello', '^no$', true],
@@ -81,52 +104,59 @@ describe('hTTP declarative runtime', () => {
     ).toBe(ok)
   })
 
-  it.each(['notMatches', 'notIn', 'isNull'] as const)(
-    'does not pass %s for missing data',
+  it.each([
+    'neq',
+    'notContains',
+    'in',
+    'notMatches',
+    'notIn',
+    'isNull',
+  ] as const)('does not pass %s for missing data', (operator) => {
+    const runtime: HttpRuntime = {
+      ...emptyHttpRuntime(),
+      assertions: [
+        {
+          name: 'missing',
+          source: 'json',
+          path: '/missing',
+          operator,
+          expected: operator === 'notIn' || operator === 'in' ? ['x'] : 'x',
+        },
+      ],
+    }
+    expect(
+      evaluateHttpRuntime(runtime, response).results.assertions[0],
+    ).toMatchObject({ ok: false, errorCode: 'missing' })
+    expect(
+      evaluateHttpRuntime(runtime, { ...response, body: '{' }).results
+        .assertions[0],
+    ).toMatchObject({ ok: false, errorCode: 'invalidJson' })
+  })
+
+  it.each(['matches', 'notMatches'] as const)(
+    'bounds pathological %s regex without turning execution failure into success',
     (operator) => {
       const runtime: HttpRuntime = {
         ...emptyHttpRuntime(),
         assertions: [
           {
-            name: 'missing',
+            name: 'regex',
             source: 'json',
-            path: '/missing',
             operator,
-            expected: operator === 'notIn' ? [] : 'x',
+            expected: '^(a+)+$',
           },
         ],
       }
+      const started = performance.now()
       expect(
-        evaluateHttpRuntime(runtime, response).results.assertions[0],
-      ).toMatchObject({ ok: false, errorCode: 'missing' })
-      expect(
-        evaluateHttpRuntime(runtime, { ...response, body: '{' }).results
-          .assertions[0],
-      ).toMatchObject({ ok: false, errorCode: 'invalidJson' })
+        evaluateHttpRuntime(runtime, {
+          ...response,
+          body: JSON.stringify(`${'a'.repeat(10000)}!`),
+        }).results.assertions[0],
+      ).toMatchObject({ ok: false, errorCode: 'regexLimit' })
+      expect(performance.now() - started).toBeLessThan(1000)
     },
   )
-
-  it('bounds pathological regex and never turns execution failure into a negative-match pass', () => {
-    const runtime: HttpRuntime = {
-      ...emptyHttpRuntime(),
-      assertions: [
-        {
-          name: 'regex',
-          source: 'json',
-          operator: 'notMatches',
-          expected: '^(a+)+$',
-        },
-      ],
-    }
-    const started = performance.now()
-    expect(
-      evaluateHttpRuntime(runtime, {
-        ...response,
-        body: JSON.stringify(`${'a'.repeat(10000)}!`),
-      }).results.assertions[0],
-    ).toMatchObject({ ok: false, errorCode: 'regexLimit' })
-    expect(performance.now() - started).toBeLessThan(1000)
-  })
 
   it('reads JSON Pointer own properties and distinguishes missing from null', () => {
     const runtime: HttpRuntime = {
@@ -366,3 +396,117 @@ it('bounds cumulative Session writes atomically, including removals', () => {
   ).toBeUndefined()
   expect(getHttpSession('/vault', null).variables.value0).toBeUndefined()
 })
+
+it.each(['matches', 'notMatches'] as const)(
+  'fails %s honestly for invalid or oversized regex',
+  (operator) => {
+    for (const expected of ['[', 'x'.repeat(1025)]) {
+      const result = evaluateHttpRuntime(
+        {
+          ...emptyHttpRuntime(),
+          assertions: [
+            { name: 'Bounded regex', source: 'json', operator, expected },
+          ],
+        },
+        { ...response, body: '"text"' },
+      )
+      expect(result.results.assertions[0]).toMatchObject({
+        ok: false,
+        errorCode: 'regexLimit',
+      })
+    }
+  },
+)
+it('rejects negative length expectations before execution', () => {
+  expect(
+    isHttpRuntime({
+      ...emptyHttpRuntime(),
+      assertions: [
+        { name: 'Length', source: 'json', operator: 'length', expected: -1 },
+      ],
+    }),
+  ).toBe(false)
+})
+it('serializes scalar extractions and removes null or missing session values with explicit failures', () => {
+  resetHttpSession()
+  const { generation } = getHttpSession('/matrix', null)
+  commitHttpSession(
+    generation,
+    new Map([
+      ['nil', 'old-null'],
+      ['absent', 'old-missing'],
+    ]),
+  )
+  const result = evaluateHttpRuntime(
+    {
+      ...emptyHttpRuntime(),
+      extractions: ['text', 'number', 'boolean', 'nil', 'absent'].map(
+        name => ({ name, source: 'json', path: `/${name}` }),
+      ),
+    },
+    {
+      ...response,
+      body: '{"text":"seven","number":7.5,"boolean":false,"nil":null}',
+    },
+  )
+  expect(Object.fromEntries(result.values)).toEqual({
+    text: 'seven',
+    number: '7.5',
+    boolean: 'false',
+    nil: null,
+    absent: null,
+  })
+  expect(
+    result.results.extractions.map(({ name, ok, errorCode }) => ({
+      name,
+      ok,
+      errorCode,
+    })),
+  ).toEqual([
+    { name: 'text', ok: true, errorCode: undefined },
+    { name: 'number', ok: true, errorCode: undefined },
+    { name: 'boolean', ok: true, errorCode: undefined },
+    { name: 'nil', ok: false, errorCode: 'missing' },
+    { name: 'absent', ok: false, errorCode: 'missing' },
+  ])
+  commitHttpSession(generation, result.values)
+  expect(getHttpSession('/matrix', null).variables).toEqual({
+    text: 'seven',
+    number: '7.5',
+    boolean: 'false',
+  })
+})
+it.each([
+  [{ truncated: true }, 'unavailableBody'],
+  [{ bodyKind: 'binary' }, 'unavailableBody'],
+  [{ body: '{' }, 'invalidJson'],
+] as const)(
+  'reports unavailable extraction for %j without inventing a value',
+  (override, errorCode) => {
+    const result = evaluateHttpRuntime(
+      {
+        ...emptyHttpRuntime(),
+        extractions: [{ name: 'token', source: 'json', path: '/token' }],
+        assertions: [
+          {
+            name: 'Token exists',
+            source: 'json',
+            path: '/token',
+            operator: 'exists',
+          },
+        ],
+      },
+      { ...response, ...override },
+    )
+    expect(result.results.extractions[0]).toMatchObject({
+      name: 'token',
+      ok: false,
+      errorCode,
+    })
+    expect(result.values.get('token')).toBeNull()
+    expect(result.results.assertions[0]).toMatchObject({
+      ok: false,
+      errorCode,
+    })
+  },
+)

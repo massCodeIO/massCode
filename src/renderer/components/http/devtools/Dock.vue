@@ -13,8 +13,11 @@ import {
   X,
 } from 'lucide-vue-next'
 
-const { dockOpen: open, dockTab: active } = useHttpUi()
-const maximized = ref(false)
+const {
+  dockOpen: open,
+  dockTab: active,
+  dockMaximized: maximized,
+} = useHttpUi()
 const height = ref(240)
 const root = ref<HTMLElement>()
 const handle = ref<HTMLElement>()
@@ -34,8 +37,6 @@ useResizeHandle(handle, {
 function toggle(tab: 'console' | 'terminal') {
   open.value = active.value === tab ? !open.value : true
   active.value = tab
-  if (!open.value)
-    maximized.value = false
 }
 </script>
 
@@ -88,10 +89,7 @@ function toggle(tab: 'console' | 'terminal') {
         </UiActionButton>
         <UiActionButton
           :tooltip="i18n.t('spaces.http.devtools.close')"
-          @click="
-            open = false;
-            maximized = false;
-          "
+          @click="open = false"
         >
           <X />
         </UiActionButton>

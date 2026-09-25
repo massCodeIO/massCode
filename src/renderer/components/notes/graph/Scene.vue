@@ -432,6 +432,19 @@ function openNode(nodeId: number) {
   emit('nodeClick', nodeId)
 }
 
+function setNodePosition(node: SceneNode, x: number, y: number) {
+  node.fx = x
+  node.fy = y
+  node.x = x
+  node.y = y
+  triggerRef(sceneNodes)
+}
+function releaseNodePosition(node: SceneNode) {
+  node.fx = null
+  node.fy = null
+  sceneSimulation?.alphaTarget(0)
+}
+
 function moveInteraction(event: PointerEvent) {
   if (nodeDragState.active) {
     const node = nodeDragState.nodeId
@@ -443,12 +456,8 @@ function moveInteraction(event: PointerEvent) {
       return
     }
 
-    node.fx = position.x
-    node.fy = position.y
-    node.x = position.x
-    node.y = position.y
+    setNodePosition(node, position.x, position.y)
     nodeDragState.moved = true
-    triggerRef(sceneNodes)
 
     return
   }
@@ -467,8 +476,7 @@ function stopInteraction(event?: PointerEvent) {
     const node = nodeMap.value.get(nodeDragState.nodeId)
 
     if (node) {
-      node.fx = null
-      node.fy = null
+      releaseNodePosition(node)
     }
 
     if (nodeDragState.moved) {
@@ -685,7 +693,46 @@ function initializeSimulation() {
   })
 }
 
+function focusNode(id: number) {
+  const node = sceneNodes.value.find(node => node.id === id)
+  if (!node)
+    return false
+  disableAutoResetViewport()
+  activeNodeId.value = id
+  pan.x = props.width / 2 - node.x * zoom.value
+  pan.y = props.height / 2 - node.y * zoom.value
+  return true
+}
+function moveNode(id: number, dx: number, dy: number) {
+  if (
+    !Number.isInteger(id)
+    || id <= 0
+    || !Number.isFinite(dx)
+    || !Number.isFinite(dy)
+    || Math.abs(dx) > 10000
+    || Math.abs(dy) > 10000
+    || nodeDragState.active
+  ) {
+    return false
+  }
+  const node = nodeMap.value.get(id)
+  if (!node)
+    return false
+  disableAutoResetViewport()
+  setNodePosition(node, node.x + dx, node.y + dy)
+  releaseNodePosition(node)
+  return true
+}
+function panViewport(x: number, y: number) {
+  disableAutoResetViewport()
+  pan.x += x
+  pan.y += y
+}
+
 defineExpose({
+  moveNode,
+  focusNode,
+  panViewport,
   resetViewport,
   zoomIn,
   zoomOut,

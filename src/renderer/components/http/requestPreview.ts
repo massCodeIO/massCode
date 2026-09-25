@@ -170,9 +170,15 @@ function getPreviewHeaders(
   draft: HttpRequestDraft,
   automaticCookie?: string,
 ): HttpHeaderEntry[] {
+  const generatedAuth = authHeaders(draft.auth)
   const headers = [
-    ...draft.headers.filter(entry => entry.enabled !== false && entry.key),
-    ...authHeaders(draft.auth),
+    ...draft.headers.filter(
+      entry =>
+        entry.enabled !== false
+        && entry.key
+        && (!generatedAuth.length || entry.key.toLowerCase() !== 'authorization'),
+    ),
+    ...generatedAuth,
   ]
 
   if (automaticCookie) {

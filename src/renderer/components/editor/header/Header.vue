@@ -6,6 +6,7 @@ import {
   useSnippets,
   useSnippetUpdate,
 } from '@/composables'
+import { useAi } from '@/composables/ai/useAi'
 import { i18n } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
 import { getEntryNameConflictMessage } from '@/utils'
@@ -26,6 +27,8 @@ import {
 const emit = defineEmits<{
   focusEditor: []
 }>()
+
+const { open: isAiOpen, setOpen: setAiOpen } = useAi()
 
 const {
   displayedSnippet,
@@ -324,6 +327,16 @@ function onAddFragment() {
           <UiPanelIcon
             side="left"
             :open="!isSidebarHidden"
+          />
+        </UiActionButton>
+        <UiActionButton
+          :tooltip="i18n.t('ai.ask')"
+          :active="isAiOpen"
+          @click="setAiOpen(!isAiOpen)"
+        >
+          <UiPanelIcon
+            side="right"
+            :open="isAiOpen"
           />
         </UiActionButton>
       </div>

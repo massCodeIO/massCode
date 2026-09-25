@@ -18,7 +18,7 @@ type PickerTab = 'emoji' | 'icons' | 'upload'
 interface Props {
   nodeId: number
   spaceId: FolderIconSpaceId
-  onIconChanged?: () => Promise<void>
+  onIconChanged?: () => Promise<unknown>
 }
 
 const props = defineProps<Props>()

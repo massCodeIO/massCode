@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { NativeBridgeResult } from '@/composables/ai/nativeBridges'
 import type { HttpRequestPreviewOptions } from './requestPreview'
 import type {
   HttpRequestPreviewFormat,
@@ -15,11 +16,16 @@ import {
   useHttpRequests,
   useHttpSettings,
 } from '@/composables'
+import {
+  runHttpResponseBridge,
+  useNativeHttpPanelBridge,
+} from '@/composables/ai/nativeBridges'
 import { useHttpCookieRevision } from '@/composables/spaces/http/devtools/useHttpCookieRevision'
 import { flattenFolderTree } from '@/composables/spaces/http/useHttpFolderTree'
 import { useHttpHistory } from '@/composables/spaces/http/useHttpHistory'
 import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
 import { i18n, ipc } from '@/electron'
+import { until } from '@vueuse/core'
 import { Copy } from 'lucide-vue-next'
 import { resolveHttpFolderConfig } from '~/shared/httpCollection'
 import {
@@ -224,6 +230,68 @@ function copyPreview() {
     incrementCopy('http')
   }
 }
+useNativeHttpPanelBridge('httpBottom', async (action, current) => {
+  if (!current())
+    return { status: 'stale' }
+  const response = action.panel.startsWith('response')
+  if (!['preview', 'history'].includes(action.panel) && !response)
+    return { status: 'unavailable' }
+  if (response && !lastResponse.value)
+    return { status: 'unavailable' }
+  const panel = response ? 'response' : (action.panel as 'preview' | 'history')
+  activeTab.value = panel
+  await nextTick()
+  if (!current() || activeTab.value !== panel)
+    return { status: 'stale' }
+  if (response && action.panel !== 'response')
+    return runHttpResponseBridge(action, current)
+  if (action.action === 'httpView') {
+    if (action.interpolate !== undefined)
+      interpolateVariables.value = action.interpolate
+    let changed: NativeBridgeResult | undefined
+    if (action.format && action.format !== previewFormat.value) {
+      const { setNativePreferences } = await import(
+        '@/composables/ai/nativePreferences'
+      )
+      changed = await setNativePreferences(
+        { group: 'http', values: { defaultPreviewFormat: action.format } },
+        current,
+      )
+      if (changed.status !== 'done')
+        return changed
+    }
+    try {
+      await nextTick()
+      await until(previewPending).toBe(false, {
+        timeout: 15000,
+        throwOnTimeout: true,
+      })
+      if (!current())
+        return { ...changed, status: 'stale' }
+      if (
+        previewError.value
+        || !previewContent.value
+        || (action.format && displayedFormat.value !== action.format)
+      ) {
+        return { ...changed, status: 'unavailable' }
+      }
+      const text = previewContent.value
+      const copied = !action.copy || (await copy(text))
+      if (action.copy && copied)
+        incrementCopy('http')
+      return {
+        ...changed,
+        status: copied ? 'done' : 'failed',
+        panel,
+        characters: action.copy && copied ? text.length : undefined,
+      }
+    }
+    catch {
+      return { ...changed, status: 'failed' }
+    }
+  }
+  return { status: 'done', panel }
+})
 </script>
 
 <template>

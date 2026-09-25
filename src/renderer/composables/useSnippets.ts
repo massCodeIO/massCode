@@ -156,7 +156,7 @@ const selectedSnippets = computed(() => {
   return source.filter(s => targetIds.has(s.id))
 })
 
-async function refreshSelectedSnippet() {
+async function refreshSelectedSnippet(canApply?: () => boolean) {
   const snippetId = state.snippetId
   const requestToken = ++selectedSnippetRequestToken
 
@@ -168,7 +168,13 @@ async function refreshSelectedSnippet() {
     return
   }
 
-  selectedSnippetRecordStatus.value = 'loading'
+  if (
+    !canApply
+    || selectedSnippetRecord.value?.id !== snippetId
+    || selectedSnippetRecordStatus.value !== 'ready'
+  ) {
+    selectedSnippetRecordStatus.value = 'loading'
+  }
 
   const finishBenchmark = benchmarkStart('code', 'open')
   try {
@@ -179,6 +185,11 @@ async function refreshSelectedSnippet() {
       && state.snippetId === snippetId
       && data.id === snippetId
     ) {
+      if (canApply && !canApply()) {
+        selectedSnippetRecordStatus.value = 'ready'
+        finishBenchmark('superseded')
+        return false
+      }
       const maxContentIndex = Math.max(0, data.contents.length - 1)
       const contentIndex = Math.min(
         Math.max(0, state.snippetContentIndex || 0),
@@ -190,6 +201,7 @@ async function refreshSelectedSnippet() {
       displayedSnippetContent.value = data.contents[contentIndex]
       selectedSnippetRecordStatus.value = 'ready'
       finishBenchmark()
+      return true
     }
     else {
       finishBenchmark('superseded')
@@ -329,7 +341,7 @@ async function getSnippets(query?: SnippetsQuery) {
 
     if (requestToken !== snippetsRequestToken) {
       finishBenchmark('superseded')
-      return
+      return false
     }
 
     if (forSearch) {
@@ -339,6 +351,7 @@ async function getSnippets(query?: SnippetsQuery) {
       snippets.value = data
     }
     finishBenchmark()
+    return true
   }
   catch (error) {
     finishBenchmark('error')
@@ -837,7 +850,7 @@ function clearSnippetsState() {
   state.snippetContentIndex = 0
 }
 
-async function search() {
+async function search(current: () => boolean = () => true) {
   if (searchQuery.value) {
     if (!isSearch.value) {
       saveStateSnapshot('beforeSearch')
@@ -847,14 +860,16 @@ async function search() {
     isSearch.value = true
     isRestoreStateBlocked.value = false
 
-    await getSnippets()
-    selectFirstSnippet()
+    if (!(await getSnippets()) || !current())
+      return false
+    await selectFirstSnippet()
     searchSelectedIndex.value = 0
     nextTick(() => scrollToSnippetIndex(0))
   }
   else {
     isSearch.value = false
   }
+  return true
 }
 
 async function selectSearchSnippet(index: number) {

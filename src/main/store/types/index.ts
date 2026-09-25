@@ -117,8 +117,10 @@ export interface DonationsState {
 }
 
 export interface AppStore {
+  aiPromptHistory: string[]
   window: {
     bounds: object
+    devToolsOpen: boolean
   }
   ui: {
     compactListMode: boolean
@@ -266,6 +268,7 @@ export interface TasksSettings {
 }
 
 export interface PreferencesStore {
+  aiPromptHistoryLimit: number
   appearance: {
     theme: string
     dockBadgeSource: DockBadgeSource

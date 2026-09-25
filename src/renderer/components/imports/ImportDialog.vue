@@ -5,6 +5,7 @@ import type {
   ImportPreviewResponse,
 } from '@/services/api/generated'
 import type { ImportMarkdownFolderResponse } from '~/main/types/ipc'
+import type { AiDataWarnings } from '~/shared/aiDataActions'
 import * as Alert from '@/components/ui/shadcn/alert'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Dialog from '@/components/ui/shadcn/dialog'
@@ -20,6 +21,7 @@ import {
   useSonner,
   useTags,
 } from '@/composables'
+import { importCounts } from '@/composables/importResult'
 import { i18n, ipc } from '@/electron'
 import { router, RouterName } from '@/router'
 import { api } from '@/services/api'
@@ -29,7 +31,16 @@ type ImportSource = ImportPreviewResponse['source']
 type ImportFile = NonNullable<ImportPreviewInput['files']>[number]
 type ImportSpace = NonNullable<ImportPreviewInput['space']>
 
-const { importDialogSpace, isImportDialogOpen } = useImportDialog()
+const {
+  importDialogSource,
+  importDialogSpace,
+  isImportDialogOpen,
+  captureImportResult,
+  beginImportApply,
+  importDialogOpening,
+  canContinueImport,
+  closeImportResult,
+} = useImportDialog()
 const { sonner } = useSonner()
 
 const fileInputRef = ref<HTMLInputElement>()
@@ -77,14 +88,19 @@ watch(isImportDialogOpen, (isOpen) => {
   if (isOpen)
     return
 
+  closeImportResult()
   resetDialog()
 })
+
+watch(importDialogOpening, () => resetDialog())
 
 watch(importDialogSpace, () => {
   resetDialog()
 })
 
 function resetDialog() {
+  isApplying.value = false
+  isPreviewing.value = false
   files.value = []
   fileReadWarnings.value = []
   gistUrl.value = ''
@@ -222,21 +238,31 @@ function getImportPayload(source?: ImportSource): ImportPreviewInput {
 }
 
 async function previewImport(source?: ImportSource) {
+  const report = captureImportResult()
   errorMessage.value = ''
   lastSummary.value = null
   isPreviewing.value = true
   try {
     const { data } = await api.imports.postImportsPreview(
-      getImportPayload(source),
+      getImportPayload(source ?? importDialogSource.value),
     )
+    if (!report.isCurrent())
+      return
     preview.value = data
+    report('previewed', importCounts(data))
   }
   catch (error) {
+    if (!report.isCurrent())
+      return
     preview.value = null
-    errorMessage.value = await getImportErrorMessage(error)
+    report('failed')
+    const message = await getImportErrorMessage(error)
+    if (report.isCurrent())
+      errorMessage.value = message
   }
   finally {
-    isPreviewing.value = false
+    if (report.isCurrent())
+      isPreviewing.value = false
   }
 }
 
@@ -247,11 +273,14 @@ async function previewGistImport() {
 }
 
 async function previewFiles(selectedFiles: File[]) {
+  const opening = captureImportResult()
   if (!selectedFiles.length)
     return
 
   errorMessage.value = ''
   const results = await Promise.allSettled(selectedFiles.map(readFile))
+  if (!opening.isCurrent())
+    return
   const readableFiles: ImportFile[] = []
   const warnings: ImportPreviewResponse['warnings'] = []
 
@@ -278,6 +307,7 @@ async function previewFiles(selectedFiles: File[]) {
 }
 
 async function openMarkdownFolderPicker() {
+  const opening = captureImportResult()
   errorMessage.value = ''
   gistUrl.value = ''
   const result = await ipc.invoke<null, ImportMarkdownFolderResponse>(
@@ -285,6 +315,8 @@ async function openMarkdownFolderPicker() {
     null,
   )
 
+  if (!opening.isCurrent())
+    return
   if (result.canceled) {
     return
   }
@@ -338,9 +370,18 @@ async function refreshImportedSpace(summary: ImportApplyResponse) {
 }
 
 async function applyImport() {
+  if (!canContinueImport())
+    return
   if (!preview.value || !hasImportableItems.value)
     return
 
+  const application = beginImportApply()
+  if (!application)
+    return
+  const readWarnings = fileReadWarnings.value.map(warning => ({
+    source: warning.source,
+    message: getImportWarningMessage(warning),
+  }))
   errorMessage.value = ''
   isApplying.value = true
   try {
@@ -348,8 +389,25 @@ async function applyImport() {
     const { data } = await api.imports.postImportsApply(
       getImportPayload(preview.value.source),
     )
+    const items = [
+      ...readWarnings,
+      ...data.warnings.map(warning => ({
+        source: warning.source,
+        message: getImportWarningMessage(warning),
+      })),
+    ]
+    const warnings: AiDataWarnings = {
+      items,
+      count: items.length,
+      truncated: false,
+    }
+    application.report('applied', importCounts(data), warnings)
+    if (!application.isCurrent())
+      return
     lastSummary.value = data
     await refreshImportedSpace(data)
+    if (!application.isCurrent())
+      return
     sonner({
       message: getImportSuccessMessage(data),
       type: 'success',
@@ -357,10 +415,16 @@ async function applyImport() {
     isImportDialogOpen.value = false
   }
   catch (error) {
-    errorMessage.value = await getImportErrorMessage(error)
+    application.report('failed')
+    if (!application.isCurrent())
+      return
+    const message = await getImportErrorMessage(error)
+    if (application.isCurrent())
+      errorMessage.value = message
   }
   finally {
-    isApplying.value = false
+    if (application.isCurrent())
+      isApplying.value = false
   }
 }
 </script>

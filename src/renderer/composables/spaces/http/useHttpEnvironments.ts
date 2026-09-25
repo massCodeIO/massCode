@@ -71,10 +71,12 @@ async function getHttpEnvironments() {
     const { data } = await api.httpEnvironments.getHttpEnvironments()
     environments.value = data.items
     activeEnvironmentId.value = data.activeId
+    return true
   }
   catch (error) {
     console.error(error)
     notifyEnvironmentError(error, 'load')
+    return false
   }
 }
 

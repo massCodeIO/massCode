@@ -67,9 +67,8 @@ function syncFoldersWithDisk(
     buildFolder: ({ base, metadata, previousFolder }) => {
       const defaultLanguage
         = typeof metadata.defaultLanguage === 'string'
-          && metadata.defaultLanguage.trim()
           ? metadata.defaultLanguage
-          : previousFolder?.defaultLanguage || 'plain_text'
+          : (previousFolder?.defaultLanguage ?? 'plain_text')
       const icon
         = metadata.icon === null
           ? null

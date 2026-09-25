@@ -16,6 +16,41 @@ async function start() {
 }
 const commerceHeaders = { 'authorization': 'Bearer demo-commerce-token', 'content-type': 'application/json' }
 
+it('observes every QA dispatch without counting inspections and isolates resets', async () => {
+  const { addresses: a } = await start()
+  const read = id => fetch(`${a.transport}/qa/${id}/state`).then(res => res.json())
+  expect(await read('task-a')).toEqual({ runId: 'task-a', requests: [] })
+  for (let index = 0; index < 2; index++) {
+    await fetch(`${a.transport}/qa/task-a/echo`, { method: 'POST', body: 'кофе' })
+  }
+  const state = await read('task-a')
+  expect(state.requests).toEqual([1, 2].map(sequence => ({ sequence, method: 'POST', path: '/qa/task-a/echo', body: 'кофе', state: 'received' })))
+  expect(await read('task-a')).toEqual(state)
+  expect(await read('task-b')).toEqual({ runId: 'task-b', requests: [] })
+  await fetch(`${a.transport}/qa/task-b/echo`)
+  await fetch(`${a.transport}/qa/task-a/reset`, { method: 'POST' })
+  expect((await read('task-a')).requests).toEqual([])
+  expect((await read('task-b')).requests).toHaveLength(1)
+  expect((await fetch(`${a.transport}/qa/task-b/echo`, { method: 'POST', body: 'x'.repeat(16385) })).status).toBe(413)
+  expect((await read('task-b')).requests.at(-1).state).toBe('rejected')
+})
+
+it('records a delayed dispatch before replying and does not replay it after reset', async () => {
+  const { addresses: a } = await start()
+  const pending = fetch(`${a.transport}/qa/delayed/echo?delay=1000`)
+  let state
+  for (let attempt = 0; attempt < 20; attempt++) {
+    state = await fetch(`${a.transport}/qa/delayed/state`).then(res => res.json())
+    if (state.requests.length)
+      break
+    await new Promise(resolve => setTimeout(resolve, 5))
+  }
+  expect(state.requests).toHaveLength(1)
+  await fetch(`${a.transport}/qa/delayed/reset`, { method: 'POST' })
+  await pending
+  expect(await fetch(`${a.transport}/qa/delayed/state`).then(res => res.json())).toEqual({ runId: 'delayed', requests: [] })
+})
+
 it('preserves legacy scripts, commerce and GraphQL responses and resets instance state', async () => {
   const { addresses: a } = await start()
   expect(await (await fetch(`${a.scripts}/health`)).json()).toEqual({ demo: 'masscode-http-scripts' })

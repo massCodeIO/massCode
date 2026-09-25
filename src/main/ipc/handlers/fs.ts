@@ -18,11 +18,14 @@ import {
 } from 'fs-extra'
 import slash from 'slash'
 import {
+  changeFolderIconWithUndo,
   parseFolderIconSetPayload,
   parseFolderIconWritePayload,
   setFolderIcon,
+  undoFolderIconChange,
   writeFolderIcon,
 } from '../../folderIcons'
+import { pickNoteImage, writeCapturedNoteImage } from '../../noteImagePicker'
 import { exportNote, parseNoteExportPayload } from '../../notesExport'
 import {
   exportNoteFolderSite,
@@ -30,12 +33,8 @@ import {
   parseNoteFolderSiteExportPreparePayload,
   prepareNoteFolderSiteExport,
 } from '../../notesFolderSiteExport'
-import {
-  getNotesPaths,
-  parseNotesAssetWritePayload,
-  writeNotesAsset,
-} from '../../storage/providers/markdown/notes/runtime'
-import { ensureFlatSpacesLayout } from '../../storage/providers/markdown/runtime/spaces'
+import { exportRenderedArtifact } from '../../renderedArtifactExport'
+import { parseNotesAssetWritePayload } from '../../storage/providers/markdown/notes/runtime'
 import { store } from '../../store'
 
 const ASSETS_DIR = 'assets'
@@ -119,6 +118,8 @@ async function readMarkdownFolder(
 }
 
 export function registerFsHandlers() {
+  ipcMain.handle('fs:export-rendered-artifact', (_, payload: unknown) =>
+    exportRenderedArtifact(payload))
   ipcMain.handle('fs:export-note', async (_, payload: unknown) => {
     const parsedPayload = parseNoteExportPayload(payload)
     if (!parsedPayload) {
@@ -160,6 +161,13 @@ export function registerFsHandlers() {
 
     return writeFolderIcon(parsedPayload)
   })
+  ipcMain.handle('fs:folder-icon:change', (event, payload: unknown) =>
+    changeFolderIconWithUndo(
+      payload,
+      BrowserWindow.fromWebContents(event.sender) ?? undefined,
+    ))
+  ipcMain.handle('fs:folder-icon:undo', (_, payload: { id?: unknown }) =>
+    undoFolderIconChange(payload?.id))
 
   ipcMain.handle('fs:folder-icon:set', async (_, payload: unknown) => {
     const parsedPayload = parseFolderIconSetPayload(payload)
@@ -191,22 +199,20 @@ export function registerFsHandlers() {
     })
   })
 
+  ipcMain.handle('fs:pick-note-image', (event, payload: unknown) =>
+    pickNoteImage(
+      payload,
+      BrowserWindow.fromWebContents(event.sender) ?? undefined,
+    ))
+
   ipcMain.handle('fs:notes-asset', async (event, payload: unknown) => {
     const parsedPayload = parseNotesAssetWritePayload(payload)
     if (!parsedPayload) {
       throw new TypeError('Invalid Notes asset payload')
     }
 
-    const vaultPath
-      = (store.preferences.get('storage.vaultPath') as string | null)
-        || join(
-          store.preferences.get('storage.rootPath') as string,
-          'markdown-vault',
-        )
-
-    ensureFlatSpacesLayout(vaultPath)
-    return writeNotesAsset(
-      getNotesPaths(vaultPath),
+    return writeCapturedNoteImage(
+      (payload as { vault?: unknown }).vault,
       parsedPayload.buffer,
       parsedPayload.ext,
     )

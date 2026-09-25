@@ -97,6 +97,14 @@ export interface HttpSecretMutationResult {
 export type HttpResponseBodyKind = 'text' | 'json' | 'binary'
 
 export interface HttpExecuteResult {
+  executionTrace?: {
+    method: string
+    url: string
+    requestHeaders?: string
+    truncated?: boolean
+    status?: number
+    location?: string
+  }[]
   graphql?: import('../../shared/httpGraphql').GraphqlResponseState
   scriptResults?: HttpScriptResult[]
   runtimeResults?: {

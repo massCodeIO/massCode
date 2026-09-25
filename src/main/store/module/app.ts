@@ -29,8 +29,10 @@ import {
 } from '../sanitize'
 
 const APP_STORE_DEFAULTS: AppStore = {
+  aiPromptHistory: [],
   window: {
     bounds: {},
+    devToolsOpen: true,
   },
   ui: {
     compactListMode: false,
@@ -43,6 +45,8 @@ const APP_STORE_DEFAULTS: AppStore = {
     },
     layout: {
       mode: 'all-panels',
+      inspectorOpen: false,
+      inspectorWidth: 340,
       tagsListHeight: LAYOUT_DEFAULTS.tags.height,
     },
   },
@@ -520,7 +524,19 @@ function sanitizeAppStore(value: unknown): AppStore {
   const notesLayoutSource = asRecord(notesSource.layout)
 
   return {
+    aiPromptHistory: Array.isArray(source.aiPromptHistory)
+      ? source.aiPromptHistory
+          .filter(
+            (value): value is string =>
+              typeof value === 'string' && Boolean(value.trim()),
+          )
+          .slice(-100)
+      : [],
     window: {
+      devToolsOpen:
+        typeof windowSource.devToolsOpen === 'boolean'
+          ? windowSource.devToolsOpen
+          : APP_STORE_DEFAULTS.window.devToolsOpen,
       bounds: isRecord(windowSource.bounds)
         ? windowSource.bounds
         : isRecord(source.bounds)
@@ -548,6 +564,11 @@ function sanitizeAppStore(value: unknown): AppStore {
           'mode',
           ['all-panels', 'list-editor', 'editor-only'] as const,
           getLegacyCodeLayoutMode(asRecord(source.state)),
+        ),
+        inspectorOpen: codeLayoutSource.inspectorOpen === true,
+        inspectorWidth: Math.max(
+          240,
+          readNumber(codeLayoutSource, 'inspectorWidth', 340),
         ),
         tagsListHeight: (() => {
           const raw = readNumber(

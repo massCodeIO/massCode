@@ -19,11 +19,11 @@ import HomeCard from './HomeCard.vue'
   >
     <header>
       <h2 id="mcp-title">
-        A direct line to your AI agent.
+        Connect your external AI agent.
       </h2>
       <p>
-        Let your agent find saved snippets, read project notes, and run HTTP
-        requests through MCP.
+        Already working in an AI client? Let it find saved snippets, read
+        project notes, and run HTTP requests through MCP.
       </p>
     </header>
     <HomeCard

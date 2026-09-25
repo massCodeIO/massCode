@@ -2,6 +2,9 @@
 import type { Edge, Node } from '@vue-flow/core'
 import type { NodeData } from './types'
 import { useDialog, useSnippets } from '@/composables'
+import { useNativeExportBridge } from '@/composables/ai/nativeBridges'
+import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
+import { saveRenderedArtifact } from '@/composables/useRenderedArtifactExport'
 import { i18n } from '@/electron'
 import { Background } from '@vue-flow/background'
 import { useVueFlow, VueFlow } from '@vue-flow/core'
@@ -23,7 +26,12 @@ import { parseJsonToGraph } from './utils'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 
-const { displayedSnippet, displayedSnippetContent } = useSnippets()
+const {
+  displayedSnippet,
+  displayedSnippetContent,
+  selectedSnippet,
+  selectedSnippetRecordStatus,
+} = useSnippets()
 const isDark = useDark()
 const {
   zoomIn,
@@ -41,7 +49,9 @@ const vueFlowRef = useTemplateRef('vueFlowRef')
 
 const { layout } = useLayout()
 
+let renderedContent: string | undefined
 function updateGraph() {
+  renderedContent = undefined
   // Тело фрагмента ещё загружается — оставляем предыдущий граф без мигания.
   if (
     displayedSnippetContent.value
@@ -57,9 +67,10 @@ function updateGraph() {
   edges.value = graph.edges
 
   nodes.value = layout(nodes.value, edges.value, 'LR')
+  renderedContent = displayedSnippetContent.value?.value ?? undefined
 
-  nextTick(() => {
-    fitView()
+  nextTick(async () => {
+    await fitView()
   })
 }
 
@@ -97,7 +108,7 @@ function onNodeClick(event: { node: Node<NodeData> }) {
   const { showDialog } = useDialog()
 
   showDialog({
-    title: 'Node Content',
+    title: i18n.t('ai.native.nodeContent'),
     content: h(DialogInfo, { node }),
   })
 
@@ -110,46 +121,136 @@ function onLockToggle() {
   setInteractive(!isInteractive.value)
 }
 
-function onZoom(type: 'zoomIn' | 'zoomOut' | 'fit') {
+async function onZoom(type: 'zoomIn' | 'zoomOut' | 'fit') {
   if (type === 'zoomIn') {
-    zoomIn()
+    await zoomIn()
   }
   else if (type === 'zoomOut') {
-    zoomOut()
+    await zoomOut()
   }
   else if (type === 'fit') {
-    fitView()
+    await fitView()
   }
 }
 
-async function onSave(format: 'png' | 'svg') {
-  let data = ''
-
-  const node = vueFlowRef.value!
-
-  if (format === 'png') {
-    data = await domToImage.toPng(vueFlowRef.value!, {
-      width: node.offsetWidth * 2,
-      height: node.offsetHeight * 2,
-      style: {
-        transform: 'scale(2)',
-        transformOrigin: 'top left',
-      },
-    })
+async function onSave(
+  format: 'png' | 'svg',
+  current: () => boolean = () => true,
+) {
+  const snippet = displayedSnippet.value
+  const content = displayedSnippetContent.value
+  if (
+    !snippet
+    || !content
+    || typeof content.value !== 'string'
+    || selectedSnippetRecordStatus.value !== 'ready'
+    || selectedSnippet.value?.id !== snippet.id
+  ) {
+    return { status: 'stale' as const }
   }
+  const baseline = content.value
+  await nextTick()
+  await fitView()
+  if (!current() || renderedContent !== baseline)
+    return { status: 'stale' as const }
+  return saveRenderedArtifact(
+    format,
+    snippet.name,
+    async () => {
+      let data = ''
 
-  if (format === 'svg') {
-    data = await domToImage.toSvg(vueFlowRef.value!)
-  }
+      const node = vueFlowRef.value!
 
-  const a = document.createElement('a')
+      if (format === 'png') {
+        data = await domToImage.toPng(vueFlowRef.value!, {
+          width: node.offsetWidth * 2,
+          height: node.offsetHeight * 2,
+          style: {
+            transform: 'scale(2)',
+            transformOrigin: 'top left',
+          },
+        })
+      }
 
-  a.href = data
-  a.download = `${displayedSnippet.value?.name}.${format}`
-  a.click()
+      if (format === 'svg') {
+        data = await domToImage.toSvg(vueFlowRef.value!)
+      }
+
+      return data
+    },
+    () =>
+      current()
+      && selectedSnippetRecordStatus.value === 'ready'
+      && selectedSnippet.value?.id === snippet.id
+      && displayedSnippet.value?.id === snippet.id
+      && displayedSnippetContent.value?.id === content.id
+      && displayedSnippetContent.value?.value === baseline
+      && renderedContent === baseline,
+  )
 }
 
 setInteractive(false)
+useNativeExportBridge(
+  'jsonVisualizer',
+  (format, current) =>
+    format === 'html' ? Promise.resolve(undefined) : onSave(format, current),
+  async (action, current) => {
+    if (action.action !== 'jsonVisualizer' || !vueFlowRef.value)
+      return { status: 'unavailable' }
+    if (
+      !current()
+      || selectedSnippetRecordStatus.value !== 'ready'
+      || displayedSnippet.value?.id !== action.target.id
+      || renderedContent !== displayedSnippetContent.value?.value
+    ) {
+      return { status: 'stale' }
+    }
+    if (action.command === 'showNode' || action.command === 'copyNode') {
+      if (
+        action.pointer === undefined
+        || (action.pointer !== '' && !action.pointer.startsWith('/'))
+      ) {
+        return { status: 'unavailable' }
+      }
+      let value: unknown = nodes.value[0]?.data?.value
+      for (const encoded of action.pointer === ''
+        ? []
+        : action.pointer.slice(1).split('/')) {
+        if (/~(?![01])/u.test(encoded))
+          return { status: 'unavailable' }
+        const key = encoded.replace(/~1/g, '/').replace(/~0/g, '~')
+        if (
+          !value
+          || typeof value !== 'object'
+          || !Object.prototype.hasOwnProperty.call(value, key)
+        ) {
+          return { status: 'unavailable' }
+        }
+        value = (value as Record<string, unknown>)[key]
+      }
+      const node = nodes.value.find(node => node.data?.value === value)
+      if (!node)
+        return { status: 'unavailable' }
+      if (action.command === 'showNode') {
+        onNodeClick({ node })
+        return { status: 'done' }
+      }
+      const text = JSON.stringify(node.data?.value, null, 2) || '{}'
+      const copied = await useCopyToClipboard()(text)
+      return {
+        status: copied ? 'done' : 'failed',
+        characters: copied ? text.length : undefined,
+      }
+    }
+    if (action.command === 'lock' || action.command === 'unlock')
+      setInteractive(action.command === 'unlock')
+    else await onZoom(action.command)
+    return {
+      status: current() ? 'done' : 'stale',
+      visual: { locked: !isInteractive.value },
+    }
+  },
+)
 </script>
 
 <template>

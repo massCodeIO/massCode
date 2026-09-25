@@ -165,3 +165,93 @@ describe('webSocket UI lifecycle', () => {
     ctx.ws.dispose()
   })
 })
+
+it('adopts an approved connection for normal polling, send and disconnect without reconnecting', async () => {
+  const ctx = await setup()
+  const receipt = { connectionId: 'approved', requestId: 1, environmentId: 1 }
+  ctx.read.resolve(snapshot(receipt.connectionId))
+  expect(await ctx.ws.adopt(receipt)).toBe(true)
+  expect(ctx.ws.active.value).toBe(true)
+  expect(ctx.invoke).not.toHaveBeenCalledWith(
+    'spaces:http:ws-connect',
+    expect.anything(),
+  )
+  const send = ctx.ws.send()
+  ctx.sent.resolve()
+  await send
+  expect(ctx.invoke).toHaveBeenCalledWith('spaces:http:ws-send', {
+    connectionId: 'approved',
+    text: 'hello',
+  })
+  await ctx.ws.disconnect()
+  expect(ctx.invoke).toHaveBeenCalledWith('spaces:http:ws-disconnect', {
+    connectionId: 'approved',
+  })
+  await ctx.ws.adopt(receipt)
+  expect(vi.getTimerCount()).toBe(1)
+  expect(ctx.invoke).not.toHaveBeenCalledWith('spaces:http:ws-dispose', {
+    connectionId: 'approved',
+  })
+  ctx.ws.dispose()
+  expect(vi.getTimerCount()).toBe(0)
+})
+
+it.each(['selection', 'environment', 'protocol', 'loading', 'pending'])(
+  'disposes only a mismatched receipt on %s change',
+  async (change) => {
+    const ctx = await setup()
+    if (change === 'selection')
+      ctx.httpState.requestId = 2
+    if (change === 'environment')
+      ctx.env.value = 2
+    if (change === 'protocol')
+      ctx.draft.value.protocol = 'http'
+    if (change === 'loading')
+      ctx.loading.value = true
+    if (change === 'pending')
+      ctx.request.value.pendingCloudDownload = true
+    expect(
+      await ctx.ws.adopt({
+        connectionId: 'late',
+        requestId: 1,
+        environmentId: 1,
+      }),
+    ).toBe(false)
+    expect(ctx.invoke).toHaveBeenCalledWith('spaces:http:ws-dispose', {
+      connectionId: 'late',
+    })
+    expect(ctx.ws.view.value).toBeNull()
+    expect(vi.getTimerCount()).toBe(0)
+  },
+)
+
+it('rejects a receipt after navigating away and back during approval', async () => {
+  const ctx = await setup()
+  const consume = ctx.ws.captureAdoption()
+  ctx.httpState.requestId = 2
+  ctx.httpState.requestId = 1
+  expect(
+    await consume({ connectionId: 'late', requestId: 1, environmentId: 1 }),
+  ).toBe(false)
+  expect(ctx.invoke).toHaveBeenCalledWith('spaces:http:ws-dispose', {
+    connectionId: 'late',
+  })
+  expect(vi.getTimerCount()).toBe(0)
+})
+
+it('ignores an adoption read completed after selection changed', async () => {
+  const ctx = await setup()
+  const adopting = ctx.ws.adopt({
+    connectionId: 'late-read',
+    requestId: 1,
+    environmentId: 1,
+  })
+  ctx.httpState.requestId = 2
+  ctx.read.resolve(snapshot('late-read'))
+  expect(await adopting).toBe(false)
+  expect(ctx.ws.view.value).toBeNull()
+  expect(ctx.invoke).toHaveBeenCalledWith('spaces:http:ws-dispose', {
+    connectionId: 'late-read',
+  })
+  expect(vi.getTimerCount()).toBe(0)
+})

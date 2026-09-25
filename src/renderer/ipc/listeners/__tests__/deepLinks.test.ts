@@ -42,7 +42,17 @@ async function setup(options: SetupOptions = {}) {
     requestId?: number
   }>({})
   const currentRequest = ref({ id: 7, name: 'Cached A' })
-  const selectHttpRequest = vi.fn()
+  const selectHttpRequest = vi.fn(
+    async (
+      id: number,
+      _shift?: boolean,
+      _options?: { preservePanel?: boolean, current?: () => boolean },
+    ) => {
+      currentRequest.value = { id, name: `Request ${id}` }
+      httpState.requestId = id
+      return true
+    },
+  )
 
   const getNoteFolders = vi.fn(async () => undefined)
   const selectNoteFolder = vi.fn(async () => undefined)
@@ -290,6 +300,7 @@ async function setup(options: SetupOptions = {}) {
     clearNotesState,
     clearNoteSearch,
     getFolders,
+    getNoteFolders,
     getNotesById,
     getSnippetsById,
     getHttpFolders,
@@ -402,7 +413,9 @@ describe('deepLinks', () => {
     expect(context.getHttpRequests).toHaveBeenCalledTimes(1)
     expect(context.getHttpFolders).toHaveBeenCalledTimes(1)
     expect(context.selectHttpFolder).toHaveBeenCalledWith(4)
-    expect(context.selectHttpRequest).toHaveBeenCalledWith(8)
+    expect(context.selectHttpRequest).toHaveBeenCalledWith(8, false, {
+      current: expect.any(Function),
+    })
     expect(context.isHttpSpaceInitialized.value).toBe(true)
   })
 
@@ -426,7 +439,9 @@ describe('deepLinks', () => {
     finishInit()
     await navigation
     expect(context.router.push).toHaveBeenCalledWith({ name: 'http-space' })
-    expect(context.selectHttpRequest).toHaveBeenLastCalledWith(8)
+    expect(context.selectHttpRequest).toHaveBeenLastCalledWith(8, false, {
+      current: expect.any(Function),
+    })
   })
 
   it('opens root HTTP request links without a folder selection', async () => {
@@ -444,7 +459,9 @@ describe('deepLinks', () => {
 
     expect(context.clearHttpFolderSelection).toHaveBeenCalledTimes(1)
     expect(context.selectHttpFolder).not.toHaveBeenCalled()
-    expect(context.selectHttpRequest).toHaveBeenCalledWith(8)
+    expect(context.selectHttpRequest).toHaveBeenCalledWith(8, false, {
+      current: expect.any(Function),
+    })
   })
 
   it('falls back to legacy folderId for old snippet deeplinks', async () => {
@@ -480,7 +497,9 @@ describe('deepLinks', () => {
     await context.module.openInternalTarget({ id: 8, type: 'http-request' })
 
     expect(context.recordNavigation).toHaveBeenCalledTimes(1)
-    expect(context.selectHttpRequest).toHaveBeenCalledWith(8)
+    expect(context.selectHttpRequest).toHaveBeenCalledWith(8, false, {
+      current: expect.any(Function),
+    })
   })
 
   it('restores target from history on back navigation', async () => {
@@ -567,10 +586,12 @@ describe('deepLinks', () => {
     context.selectHttpRequest.mockImplementation(async () => {
       expect(context.getHttpRequests).toHaveBeenCalledOnce()
       expect(context.router.currentRoute.value.name).toBe('notes-space')
+      return false
     })
     await context.module.navigateBack()
     expect(context.selectHttpRequest).toHaveBeenCalledWith(8, false, {
       preservePanel: true,
+      current: expect.any(Function),
     })
     expect(context.currentRequest.value.id).toBe(7)
     expect(context.router.push).not.toHaveBeenCalled()
@@ -589,8 +610,9 @@ describe('deepLinks', () => {
     context.goBack.mockReturnValue({ id: 8, name: 'B', type: 'http-request' })
     context.selectHttpRequest.mockImplementation(
       async (_id, _shift, options) => {
-        expect(options).toEqual({ preservePanel: true })
+        expect(options).toMatchObject({ preservePanel: true })
         context.httpState.requestId = 8
+        return false
       },
     )
     await context.module.navigateBack()
@@ -675,4 +697,28 @@ describe('deepLinks', () => {
     expect(context.initNotesSpace).toHaveBeenCalledTimes(1)
     expect(context.pendingNotesNavigation.value).toBe(false)
   })
+})
+
+it('loads folder trees when entering Code and Notes through Inbox links', async () => {
+  const context = await setup({
+    snippetResponse: { id: 42, folder: null, isDeleted: 0 },
+    noteResponse: { id: 15, folder: null, isDeleted: 0 },
+  })
+  await context.module.openSnippetDeepLink(42)
+  expect(context.getFolders).toHaveBeenCalledWith(false)
+  await context.module.openNoteDeepLink(15)
+  expect(context.getNoteFolders).toHaveBeenCalledOnce()
+})
+
+it('does not navigate or select a saved HTTP target after its task becomes stale during initialization', async () => {
+  const context = await setup({ snippetRouteName: 'notes-space' })
+  let current = true
+  context.initHttpSpace.mockImplementationOnce(async () => {
+    current = false
+  })
+  expect(
+    await context.module.openHttpRequestDeepLink(8, false, () => current),
+  ).toBe(false)
+  expect(context.router.push).not.toHaveBeenCalled()
+  expect(context.selectHttpRequest).not.toHaveBeenCalled()
 })

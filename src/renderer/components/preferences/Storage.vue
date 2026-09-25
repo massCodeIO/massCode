@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { NativeBridgeResult } from '@/composables/ai/nativeBridges'
 import type { ComponentPublicInstance } from 'vue'
 import type { DialogOptions } from '~/main/types/ipc'
 import type { SnippetsCountsResponse } from '~/renderer/services/api/generated'
@@ -25,6 +26,14 @@ import {
   useVaultDoctor,
   VAULT_DOCTOR_NOTICE_ID,
 } from '@/composables'
+import {
+  cancelPreferenceHandoff,
+  claimPreferenceHandoff,
+  finishPreferenceHandoff,
+  preferenceHandoff,
+  registerPreferenceFlow,
+  waitForPreferenceUser,
+} from '@/composables/ai/nativePreferenceFlows'
 import { httpRuntimeNavigation } from '@/composables/spaces/http/runtimeNavigation'
 import { i18n, ipc, store } from '@/electron'
 import { AlertTriangle, Check, LoaderCircle } from 'lucide-vue-next'
@@ -188,9 +197,11 @@ async function getSnippetsCounts() {
 
     counts.total = data.total
     counts.trash = data.trash
+    return true
   }
   catch (err) {
     console.error(err)
+    return false
   }
   finally {
     hideLoadingCounts()
@@ -211,7 +222,7 @@ async function resetAndReloadVaultData() {
 
   await nextTick()
 
-  await Promise.allSettled([
+  const results = await Promise.allSettled([
     getFolders(false),
     getSnippets(),
     getNotes(),
@@ -220,7 +231,36 @@ async function resetAndReloadVaultData() {
     getHttpEnvironments(),
     getHttpHistory(),
   ])
-  await getSnippetsCounts()
+  const countsLoaded = await getSnippetsCounts()
+  return (
+    countsLoaded
+    && results.every(
+      result => result.status === 'fulfilled' && result.value === true,
+    )
+  )
+}
+
+function storageOutcome(
+  status: NativeBridgeResult['status'],
+  source: string,
+  operationCompleted = false,
+  refreshCompleted = false,
+  extra: Partial<NonNullable<NativeBridgeResult['storage']>> = {},
+): NativeBridgeResult {
+  const actual
+    = store.preferences.get<string>('storage.vaultPath')
+      || effectiveVaultPath.value
+  return {
+    status,
+    persisted: operationCompleted,
+    filePath: actual,
+    storage: {
+      operationCompleted,
+      activeVaultChanged: source !== actual,
+      refreshCompleted,
+      ...extra,
+    },
+  }
 }
 
 async function syncVaultPathAfterFailedChange() {
@@ -236,9 +276,12 @@ async function syncVaultPathAfterFailedChange() {
   }
 }
 
-async function openVaultStorage() {
+async function openVaultStorage(
+  current: () => boolean = () => true,
+): Promise<NativeBridgeResult> {
+  const source = effectiveVaultPath.value
   if (isMovingVault.value) {
-    return
+    return { status: 'unavailable' }
   }
 
   const selectedPath = await ipc.invoke<DialogOptions, string>(
@@ -249,17 +292,24 @@ async function openVaultStorage() {
   )
 
   if (!selectedPath || !(await httpRuntimeNavigation.confirmLeave())) {
-    return
+    return { status: 'cancelled' }
   }
+  if (!current() || source !== effectiveVaultPath.value)
+    return { status: 'stale' }
 
+  let operationCompleted = false
   try {
-    const result = await ipc.invoke<{ vaultPath: string }, VaultPathResponse>(
-      'system:set-vault-path',
-      { vaultPath: selectedPath },
-    )
+    const result = await ipc.invoke<
+      { vaultPath: string, expectedVault: string },
+      VaultPathResponse
+    >('system:set-vault-path', {
+      vaultPath: selectedPath,
+      expectedVault: source,
+    })
 
+    operationCompleted = true
     vaultPath.value = result.vaultPath
-    await resetAndReloadVaultData()
+    const refreshed = await resetAndReloadVaultData()
 
     sonner({
       message: i18n.t('messages:success.vaultLoaded'),
@@ -267,17 +317,29 @@ async function openVaultStorage() {
     })
 
     await refreshVaultDoctorAfterVaultChange()
+    return storageOutcome(
+      refreshed ? 'done' : 'failed',
+      source,
+      true,
+      refreshed,
+    )
   }
   catch (err) {
     await syncVaultPathAfterFailedChange()
     const error = err as Error
     sonner({ message: error.message, type: 'error' })
+    return storageOutcome('failed', source, operationCompleted, false, {
+      changesMayHaveOccurred: true,
+    })
   }
 }
 
-async function moveVaultStorage() {
+async function moveVaultStorage(
+  current: () => boolean = () => true,
+): Promise<NativeBridgeResult> {
+  const source = effectiveVaultPath.value
   if (isMovingVault.value) {
-    return
+    return { status: 'unavailable' }
   }
 
   const targetPath = await ipc.invoke<DialogOptions, string>(
@@ -288,7 +350,7 @@ async function moveVaultStorage() {
   )
 
   if (!targetPath || !(await httpRuntimeNavigation.confirmLeave())) {
-    return
+    return { status: 'cancelled' }
   }
 
   const directoryState = await ipc.invoke<
@@ -305,20 +367,24 @@ async function moveVaultStorage() {
     })
 
     if (!isConfirmed) {
-      return
+      return { status: 'cancelled' }
     }
   }
 
+  if (!current() || source !== effectiveVaultPath.value)
+    return { status: 'stale' }
   isMovingVault.value = true
 
+  let operationCompleted = false
   try {
-    const result = await ipc.invoke<{ targetPath: string }, VaultPathResponse>(
-      'system:move-vault',
-      { targetPath },
-    )
+    const result = await ipc.invoke<
+      { targetPath: string, expectedVault: string },
+      VaultPathResponse
+    >('system:move-vault', { targetPath, expectedVault: source })
 
+    operationCompleted = true
     vaultPath.value = result.vaultPath
-    await resetAndReloadVaultData()
+    const refreshed = await resetAndReloadVaultData()
 
     // Контент тот же, но путь сменился — прежний отчёт по старым путям неактуален.
     dismiss(VAULT_DOCTOR_NOTICE_ID)
@@ -328,20 +394,32 @@ async function moveVaultStorage() {
       message: i18n.t('messages:success.vaultMoved'),
       type: 'success',
     })
+    return storageOutcome(
+      refreshed ? 'done' : 'failed',
+      source,
+      true,
+      refreshed,
+    )
   }
   catch (err) {
     await syncVaultPathAfterFailedChange()
     const error = err as Error
     sonner({ message: error.message, type: 'error' })
+    return storageOutcome('failed', source, operationCompleted, false, {
+      changesMayHaveOccurred: true,
+    })
   }
   finally {
     isMovingVault.value = false
   }
 }
 
-async function migrateSqliteToMarkdown() {
+async function migrateSqliteToMarkdown(
+  current: () => boolean = () => true,
+): Promise<NativeBridgeResult> {
+  const source = effectiveVaultPath.value
   if (isMovingVault.value) {
-    return
+    return { status: 'unavailable' }
   }
 
   const sqliteDbPath = await ipc.invoke<DialogOptions, string>(
@@ -353,7 +431,7 @@ async function migrateSqliteToMarkdown() {
   )
 
   if (!sqliteDbPath) {
-    return
+    return { status: 'cancelled' }
   }
 
   const isConfirmed = await confirm({
@@ -362,18 +440,20 @@ async function migrateSqliteToMarkdown() {
   })
 
   if (!isConfirmed) {
-    return
+    return { status: 'cancelled' }
   }
+  if (!current() || source !== effectiveVaultPath.value)
+    return { status: 'stale' }
 
+  let operationCompleted = false
   try {
     const result = await ipc.invoke<
-      string,
+      { path: string, expectedVault: string },
       { folders: number, snippets: number, tags: number }
-    >('db:migrate-to-markdown', sqliteDbPath)
+    >('db:migrate-to-markdown', { path: sqliteDbPath, expectedVault: source })
 
-    await getFolders(false)
-    await getSnippets()
-    await getSnippetsCounts()
+    operationCompleted = true
+    const refreshed = await resetAndReloadVaultData()
 
     sonner({
       message: i18n.t('messages:success.migrateToMarkdown', {
@@ -383,14 +463,25 @@ async function migrateSqliteToMarkdown() {
       }),
       type: 'success',
     })
+    return storageOutcome(
+      refreshed ? 'done' : 'failed',
+      source,
+      true,
+      refreshed,
+      result,
+    )
   }
   catch (err) {
     const error = err as Error
     sonner({ message: error.message, type: 'error' })
+    return storageOutcome('failed', source, operationCompleted, false, {
+      changesMayHaveOccurred: true,
+    })
   }
 }
 
-async function scanVaultDoctor() {
+async function scanVaultDoctor(): Promise<NativeBridgeResult> {
+  const source = effectiveVaultPath.value
   showVaultDoctorScanLoader()
 
   try {
@@ -403,7 +494,7 @@ async function scanVaultDoctor() {
         message: i18n.t('messages:warning.vaultDoctorNotReady'),
         type: 'warning',
       })
-      return
+      return { status: 'unavailable' }
     }
 
     if (
@@ -417,10 +508,21 @@ async function scanVaultDoctor() {
         type: 'success',
       })
     }
+    return data
+      ? storageOutcome('done', source, false, true, {
+          affectedFiles: data.summary.affectedFiles,
+          blocked: data.summary.blocked,
+          conflicts: data.summary.conflicts,
+          warnings: data.summary.warnings,
+          applied: data.items.filter(item => item.status === 'applied')
+            .length,
+        })
+      : { status: 'unavailable' }
   }
   catch (err) {
     const error = err as Error
     sonner({ message: error.message, type: 'error' })
+    return storageOutcome('failed', source)
   }
   finally {
     hideVaultDoctorScanLoader()
@@ -435,6 +537,10 @@ async function applyVaultDoctorSafeFixes() {
   ) {
     return
   }
+  const handoffId = claimPreferenceHandoff('doctorApply')
+  if (preferenceHandoff.value?.kind === 'doctorApply' && !handoffId)
+    return
+  const source = effectiveVaultPath.value
 
   const isConfirmed = await confirm({
     title: i18n.t('messages:confirm.vaultDoctorApply.0'),
@@ -442,6 +548,14 @@ async function applyVaultDoctorSafeFixes() {
   })
 
   if (!isConfirmed) {
+    finishPreferenceHandoff(handoffId, { status: 'cancelled' })
+    return
+  }
+  if (
+    source !== effectiveVaultPath.value
+    || (handoffId && !preferenceHandoff.value?.current())
+  ) {
+    finishPreferenceHandoff(handoffId, { status: 'stale' })
     return
   }
 
@@ -453,7 +567,7 @@ async function applyVaultDoctorSafeFixes() {
       item => item.status === 'applied',
     ).length
 
-    await resetAndReloadVaultData()
+    const refreshed = await resetAndReloadVaultData()
 
     sonner({
       message: i18n.t('messages:success.vaultDoctorApplied', {
@@ -461,15 +575,61 @@ async function applyVaultDoctorSafeFixes() {
       }),
       type: 'success',
     })
+    finishPreferenceHandoff(
+      handoffId,
+      storageOutcome(refreshed ? 'done' : 'failed', source, true, refreshed, {
+        affectedFiles: data.summary.affectedFiles,
+        blocked: data.summary.blocked,
+        conflicts: data.summary.conflicts,
+        warnings: data.summary.warnings,
+        applied: appliedCount,
+      }),
+    )
   }
   catch (err) {
     const error = err as Error
     sonner({ message: error.message, type: 'error' })
+    finishPreferenceHandoff(
+      handoffId,
+      storageOutcome('failed', source, false, false, {
+        changesMayHaveOccurred: true,
+      }),
+    )
   }
   finally {
     hideVaultDoctorApplyLoader()
   }
 }
+
+const unregisterNative = registerPreferenceFlow(
+  'storage',
+  async (action, id, current) => {
+    if (action.action !== 'storage' || !current())
+      return { status: 'stale' }
+    if (action.command === 'select')
+      return openVaultStorage(current)
+    if (action.command === 'move')
+      return moveVaultStorage(current)
+    if (action.command === 'migrateSqlite')
+      return migrateSqliteToMarkdown(current)
+    if (isVaultDoctorScanning.value || isVaultDoctorApplying.value)
+      return { status: 'unavailable' }
+    const scanned = await scanVaultDoctor()
+    if (!current())
+      return { status: 'stale' }
+    if (scanned.status !== 'done' || action.command === 'doctorScan')
+      return scanned
+    scrollToVaultDoctorSection()
+    if (!vaultDoctorCanApply.value)
+      return { ...scanned, status: 'unavailable' }
+    return waitForPreferenceUser('doctorApply', id, current)
+  },
+)
+onBeforeUnmount(() => {
+  unregisterNative()
+  if (preferenceHandoff.value?.kind === 'doctorApply')
+    cancelPreferenceHandoff()
+})
 
 function scrollToVaultDoctorSection() {
   nextTick(() => {
@@ -538,7 +698,7 @@ onMounted(() => {
             <Button
               variant="outline"
               :disabled="isMovingVault"
-              @click="openVaultStorage"
+              @click="openVaultStorage()"
             >
               {{ i18n.t("action.select.directory") }}
             </Button>
@@ -546,7 +706,7 @@ onMounted(() => {
             <Button
               variant="outline"
               :disabled="isMovingVault"
-              @click="moveVaultStorage"
+              @click="moveVaultStorage()"
             >
               <LoaderCircle
                 v-if="isMovingVault"
@@ -594,7 +754,7 @@ onMounted(() => {
         <Button
           variant="outline"
           :disabled="isMovingVault"
-          @click="migrateSqliteToMarkdown"
+          @click="migrateSqliteToMarkdown()"
         >
           {{ i18n.t("preferences:storage.migrateSqliteToMarkdown") }}
         </Button>

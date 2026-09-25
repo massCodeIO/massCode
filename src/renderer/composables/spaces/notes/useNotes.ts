@@ -1,9 +1,10 @@
+import type { TaskCleanupResult } from '~/main/types/ipc'
 import { useContentSort } from '@/composables/useContentSort'
 import { useDialog } from '@/composables/useDialog'
 import { useDonations } from '@/composables/useDonations'
 import { useSonner } from '@/composables/useSonner'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
-import { i18n } from '@/electron'
+import { i18n, ipc, store } from '@/electron'
 import { getContiguousSelection } from '@/utils'
 import { benchmarkStart } from '@/utils/benchmark'
 import { api } from '~/renderer/services/api'
@@ -141,7 +142,7 @@ const selectedNotes = computed(() => {
   return source.filter(n => targetIds.has(n.id))
 })
 
-export async function refreshSelectedNote() {
+export async function refreshSelectedNote(canApply?: () => boolean) {
   const noteId = notesState.noteId
   const requestToken = ++selectedNoteRequestToken
 
@@ -152,7 +153,15 @@ export async function refreshSelectedNote() {
     return
   }
 
-  selectedNoteRecordStatus.value = 'loading'
+  // A guarded refresh compares the already mounted editor after the GET.
+  // Keep that editor readable while checking whether its content is still current.
+  if (
+    !canApply
+    || selectedNoteRecord.value?.id !== noteId
+    || selectedNoteRecordStatus.value !== 'ready'
+  ) {
+    selectedNoteRecordStatus.value = 'loading'
+  }
 
   const finishBenchmark = benchmarkStart('notes', 'open')
   try {
@@ -163,11 +172,17 @@ export async function refreshSelectedNote() {
       && notesState.noteId === noteId
       && data.id === noteId
     ) {
+      if (canApply && !canApply()) {
+        selectedNoteRecordStatus.value = 'ready'
+        finishBenchmark('superseded')
+        return false
+      }
       const record = data as NoteFullRecord
       selectedNoteRecord.value = record
       displayedNoteRecord.value = record
       selectedNoteRecordStatus.value = 'ready'
       finishBenchmark()
+      return true
     }
     else {
       finishBenchmark('superseded')
@@ -442,7 +457,7 @@ export async function getNotes(query?: NotesQuery) {
 
       if (requestToken !== notesRequestToken) {
         finishBenchmark('superseded')
-        return
+        return false
       }
 
       const data = responseData as NotesResponse
@@ -454,6 +469,7 @@ export async function getNotes(query?: NotesQuery) {
         notes.value = data
       }
       finishBenchmark()
+      return true
     }
     catch (error) {
       finishBenchmark('error')
@@ -820,10 +836,21 @@ async function emptyTrash() {
   }
 }
 
-async function cleanupCompletedTasks(options?: { skipConfirm?: boolean }) {
+async function cleanupCompletedTasks(options?: {
+  skipConfirm?: boolean
+  current?: () => boolean
+  captureUndo?: boolean
+}): Promise<{
+    status: 'done' | 'failed' | 'stale' | 'cancelled'
+    count?: number
+    receiptId?: string
+    persisted?: boolean
+  }> {
   const { confirm } = useDialog()
   const { sonner } = useSonner()
   const previousNoteId = notesState.noteId
+  const vault = store.preferences.get<string>('storage.vaultPath') ?? ''
+  let cleanup: TaskCleanupResult | undefined
 
   if (!options?.skipConfirm) {
     const isConfirmed = await confirm({
@@ -832,18 +859,42 @@ async function cleanupCompletedTasks(options?: { skipConfirm?: boolean }) {
     })
 
     if (!isConfirmed) {
-      return
+      return { status: 'cancelled' as const }
     }
   }
 
+  if (
+    (options?.current && !options.current())
+    || vault !== (store.preferences.get<string>('storage.vaultPath') ?? '')
+  ) {
+    return { status: 'stale' as const }
+  }
   try {
     markPersistedStorageMutation()
-    const { data } = await api.notes.postNotesTasksCleanup()
-    const count = data.count
+    cleanup = options?.captureUndo
+      ? await ipc.invoke<{ vault: string }, TaskCleanupResult>(
+        'system:tasks-cleanup',
+        { vault },
+      )
+      : {
+          status: 'done',
+          count: (await api.notes.postNotesTasksCleanup()).data.count,
+        }
+    const count = cleanup.count
+    if (cleanup.status === 'stale')
+      return cleanup
 
-    await getNotes(queryByLibraryOrFolderOrSearch.value)
+    const loaded = await getNotes(queryByLibraryOrFolderOrSearch.value)
     await refreshSelectedNote()
+    if (!loaded || selectedNoteRecordStatus.value === 'error')
+      return { ...cleanup, status: 'failed', persisted: count > 0 }
+    if (options?.current && !options.current())
+      return { ...cleanup, status: 'stale', persisted: count > 0 }
     selectFirstNoteIfCurrentSelectionIsMissing(previousNoteId)
+    if (cleanup.status === 'failed') {
+      sonner({ message: i18n.t('notes.tasks.cleanupError'), type: 'error' })
+      return { ...cleanup, persisted: count > 0 }
+    }
 
     sonner({
       message:
@@ -852,10 +903,16 @@ async function cleanupCompletedTasks(options?: { skipConfirm?: boolean }) {
           : i18n.t('notes.tasks.cleanupEmpty'),
       type: 'success',
     })
+    return { ...cleanup, status: 'done', persisted: count > 0 }
   }
   catch (error) {
     console.error(error)
     sonner({ message: i18n.t('notes.tasks.cleanupError'), type: 'error' })
+    return {
+      ...cleanup,
+      status: 'failed',
+      persisted: (cleanup?.count ?? 0) > 0,
+    }
   }
 }
 

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { EditSnapshot } from '@/composables/ai/edit'
 import * as Select from '@/components/ui/shadcn/select'
 import {
   useDonations,
@@ -8,6 +9,10 @@ import {
   useNotesApp,
   useNoteUpdate,
 } from '@/composables'
+import { registerNativeBridge } from '@/composables/ai/nativeBridges'
+import { nativeEditorMutation } from '@/composables/ai/taskUndo'
+import { useAi } from '@/composables/ai/useAi'
+import { useNoteContent } from '@/composables/spaces/notes/useNoteContent'
 import { useResizeHandle } from '@/composables/useResizeHandle'
 import { i18n, ipc, store } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
@@ -40,6 +45,7 @@ const {
   notes,
   displayedNoteRecord,
   selectedNote,
+  selectedNoteIds,
   selectedNoteRecordStatus,
   retrySelectedNote,
   updateNoteContent,
@@ -78,6 +84,28 @@ const {
   toggleNotesSidebar,
 } = useNotesApp()
 
+const { open: aiOpen, setOpen: setAiOpen, setVaultContext } = useAi()
+watch(
+  selectedNote,
+  (note) => {
+    setVaultContext(
+      note ? { type: 'note', id: note.id, name: note.name } : undefined,
+    )
+  },
+  { immediate: true },
+)
+onBeforeUnmount(() => setVaultContext(undefined))
+const unregisterAiWorkspace = useAi().registerWorkspace(() => ({
+  space: 'notes',
+  selectedIds: [...selectedNoteIds.value],
+  folderId: notesState.folderId ?? null,
+  library: notesState.libraryFilter,
+}))
+onBeforeUnmount(unregisterAiWorkspace)
+function closeInspector() {
+  setAiOpen(false)
+  isNotesInspectorOpen.value = false
+}
 const workspace = ref<HTMLElement>()
 const inspectorHandle = ref<HTMLElement>()
 const { width: workspaceWidth } = useElementSize(workspace)
@@ -89,10 +117,16 @@ const panelWidth = computed(() =>
 )
 const showInspector = computed(
   () =>
-    isNotesInspectorOpen.value
-    && !isNotesMindmapShown.value
-    && !isNotesPresentationShown.value,
+    aiOpen.value
+    || (isNotesInspectorOpen.value
+      && !isNotesMindmapShown.value
+      && !isNotesPresentationShown.value),
 )
+function toggleInspector() {
+  if (showInspector.value)
+    closeInspector()
+  else isNotesInspectorOpen.value = true
+}
 useResizeHandle(inspectorHandle, {
   direction: 'horizontal',
   onMove: (delta) => {
@@ -129,7 +163,7 @@ const isSelectedNoteContentReady = computed(
   () =>
     selectedNoteRecordStatus.value === 'ready'
     && selectedNote.value?.id === notesState.noteId
-    && selectedNote.value.content !== undefined,
+    && selectedNote.value?.content !== undefined,
 )
 
 function onSidebarToggle() {
@@ -178,6 +212,7 @@ const {
 
     if (
       !isSelectedNoteContentReady.value
+      || selectedNoteIds.value.length !== 1
       || !selectedNote.value
       || selectedNote.value.id !== displayedNote.value?.id
     ) {
@@ -381,7 +416,7 @@ watch(
     editorNoteId.value = nextNote?.id
     statsContent.value = nextContent
 
-    if (nextNote?.id === pendingContentSearchNoteId) {
+    if (nextNote && nextNote.id === pendingContentSearchNoteId) {
       const revision = ++searchShortcutRevision
       pendingContentSearchNoteId = undefined
       nextTick(() => {
@@ -409,12 +444,106 @@ const content = computed({
     // с текстом старой.
     if (
       isSelectedNoteContentReady.value
-      && selectedNote.value?.id === editorNoteId.value
+      && selectedNote.value
+      && selectedNote.value.id === editorNoteId.value
     ) {
       updateNoteContent(selectedNote.value.id, value)
     }
   },
 })
+
+function readAiEditor() {
+  if (
+    !isSelectedNoteContentReady.value
+    || selectedNoteIds.value.length !== 1
+    || selectedNote.value?.id !== editorNoteId.value
+  ) {
+    return undefined
+  }
+  const snapshot = notesEditorRef.value?.readAiContext()
+  return snapshot ? { ...snapshot, name: selectedNote.value?.name } : undefined
+}
+let unregisterAiEditor: (() => void) | undefined
+onMounted(() => {
+  unregisterAiEditor = useAi().registerEditor(
+    readAiEditor,
+    async (snapshot: EditSnapshot, replacement: string) => {
+      if (
+        snapshot.space !== 'notes'
+        || !readAiEditor()
+        || !notesEditorRef.value?.applyAiEdit(
+          snapshot,
+          replacement,
+          store.preferences.get<string>('storage.vaultPath') ?? '',
+        )
+      ) {
+        return false
+      }
+      await nextTick()
+      await useNoteContent().flushNoteContent(snapshot.noteId)
+      return true
+    },
+  )
+})
+onBeforeUnmount(() => unregisterAiEditor?.())
+let unregisterNativeEditor: (() => void) | undefined
+onMounted(() => {
+  unregisterNativeEditor = registerNativeBridge(
+    'notesEditor',
+    async (action, current) => {
+      if (!current() || !readAiEditor())
+        return { status: 'stale' }
+      if (action.action === 'findInContent') {
+        const search = notesEditorRef.value?.findNativeContent(action)
+        return { status: search ? 'done' : 'unavailable', search }
+      }
+      if (action.action === 'notesReveal') {
+        return {
+          status: notesEditorRef.value?.nativeReveal(action)
+            ? 'done'
+            : 'unavailable',
+        }
+      }
+      if (action.action !== 'editorCommand' && action.action !== 'notesSection')
+        return { status: 'unavailable' }
+      const before = readAiEditor()!
+      if (
+        !(action.action === 'notesSection'
+          ? notesEditorRef.value?.nativeSection(action)
+          : notesEditorRef.value?.nativeCommand(action))
+      ) {
+        return { status: 'unavailable' }
+      }
+      const after = readAiEditor()
+      if (!after)
+        return { status: 'stale' }
+      const mutation = nativeEditorMutation(
+        before,
+        after.text,
+        store.preferences.get<string>('storage.vaultPath') ?? '',
+      )
+      try {
+        await nextTick()
+        await useNoteContent().flushNoteContent(before.noteId)
+        return { status: 'done', persisted: true, mutation }
+      }
+      catch {
+        return { status: 'failed', persisted: false, mutation }
+      }
+    },
+  )
+})
+onBeforeUnmount(() => unregisterNativeEditor?.())
+watch(
+  () => [
+    editorCursor.value,
+    editorContent.value,
+    selectedNoteRecordStatus.value,
+    notesEditorRef.value,
+  ],
+  () => useAi().setContext(readAiEditor()),
+  { flush: 'post' },
+)
 
 // При переключении заметки статистика обновляется сразу вместе с контентом,
 // а во время набора остаётся debounced для больших документов.
@@ -467,183 +596,226 @@ onBeforeUnmount(() => {
 
 <template>
   <div
-    v-if="displayedNote"
     ref="workspace"
-    class="relative flex h-full min-w-0"
+    class="flex h-full min-w-0 overflow-hidden"
   >
-    <div
-      class="relative flex h-full min-w-0 flex-1 flex-col pt-[var(--content-top-offset)]"
-    >
-      <UiLoadingOverlay
-        v-if="selectedNoteRecordStatus === 'loading'"
-        :silent="!isSelectedNoteLoadingVisible"
-      />
-      <UiLoadingOverlay
-        v-else-if="selectedNoteRecordStatus === 'error'"
-        error
-        :label="i18n.t('contentLoad.failed')"
-        :action-label="i18n.t('contentLoad.retry')"
-        @retry="retrySelectedNote"
-      />
-      <UiLoadingOverlay
-        v-else-if="displayedNote.pendingCloudDownload"
-        :label="i18n.t('cloudDownloads.itemPending')"
-      />
+    <div class="min-w-0 flex-1 overflow-hidden">
       <div
-        data-notes-editor-header
-        :inert="!isSelectedNoteContentReady"
+        v-if="displayedNote"
+        class="relative flex h-full min-w-0"
       >
         <div
-          class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
+          class="relative flex h-full min-w-0 flex-1 flex-col pt-[var(--content-top-offset)]"
         >
-          <div class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
-            <div
-              v-if="isHistoryVisible"
-              class="flex shrink-0 items-center gap-0.5"
-            >
-              <UiActionButton
-                :disabled="!canGoBack"
-                :tooltip="i18n.t('menu:history.back')"
-                @click="onBackClick"
-              >
-                <ChevronLeft class="h-3 w-3" />
-              </UiActionButton>
-              <UiActionButton
-                :disabled="!canGoForward"
-                :tooltip="i18n.t('menu:history.forward')"
-                @click="onForwardClick"
-              >
-                <ChevronRight class="h-3 w-3" />
-              </UiActionButton>
-            </div>
-            <div class="min-w-0 flex-1">
-              <UiInputValidationTooltip
-                :open="isNameValidationTooltipOpen"
-                :message="nameValidationMessage"
-              >
-                <UiInput
-                  v-model="name"
-                  variant="ghost"
-                  class="w-full truncate px-0"
-                  :data-planned-title="`note:${displayedNote?.id}`"
-                  :select="isFocusedNoteName"
-                  @focus="onNoteNameFocus"
-                  @blur="onNameBlur"
-                  @keydown="onNameKeydown"
-                />
-              </UiInputValidationTooltip>
-            </div>
-          </div>
-          <div class="ml-2 flex h-7 items-center">
-            <UiActionButton
-              :tooltip="mindmapActionTooltip"
-              :active="isNotesMindmapShown"
-              @click="onMindmapToggle"
-            >
-              <Network class="h-3 w-3 -rotate-90" />
-            </UiActionButton>
-            <UiActionButton
-              :tooltip="presentationActionTooltip"
-              :active="isNotesPresentationShown"
-              @click="onPresentationToggle"
-            >
-              <Presentation class="h-3 w-3" />
-            </UiActionButton>
-            <UiActionButton
-              :tooltip="sidebarActionTooltip"
-              :active="isNotesSidebarHidden"
-              @click="onSidebarToggle"
-            >
-              <UiPanelIcon
-                side="left"
-                :open="!isNotesSidebarHidden"
-              />
-            </UiActionButton>
-            <UiActionButton
-              v-if="!isNotesMindmapShown && !isNotesPresentationShown"
-              :tooltip="i18n.t('notes.inspector.title')"
-              :active="isNotesInspectorOpen"
-              @click="isNotesInspectorOpen = !isNotesInspectorOpen"
-            >
-              <UiPanelIcon
-                side="right"
-                :open="isNotesInspectorOpen"
-              />
-            </UiActionButton>
-          </div>
-        </div>
-        <div
-          v-if="!isNotesMindmapShown && !isNotesPresentationShown"
-          class="pt-1"
-        >
-          <NotesTaskMetadataBar :note="displayedNote" />
-          <NotesEditorTags
-            :note="displayedNote"
-            :disabled="!isSelectedNoteContentReady"
+          <UiLoadingOverlay
+            v-if="selectedNoteRecordStatus === 'loading'"
+            :silent="!isSelectedNoteLoadingVisible"
           />
+          <UiLoadingOverlay
+            v-else-if="selectedNoteRecordStatus === 'error'"
+            error
+            :label="i18n.t('contentLoad.failed')"
+            :action-label="i18n.t('contentLoad.retry')"
+            @retry="retrySelectedNote"
+          />
+          <UiLoadingOverlay
+            v-else-if="displayedNote.pendingCloudDownload"
+            :label="i18n.t('cloudDownloads.itemPending')"
+          />
+          <div
+            data-notes-editor-header
+            :inert="!isSelectedNoteContentReady"
+          >
+            <div
+              class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
+            >
+              <div
+                class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden"
+              >
+                <div
+                  v-if="isHistoryVisible"
+                  class="flex shrink-0 items-center gap-0.5"
+                >
+                  <UiActionButton
+                    :disabled="!canGoBack"
+                    :tooltip="i18n.t('menu:history.back')"
+                    @click="onBackClick"
+                  >
+                    <ChevronLeft class="h-3 w-3" />
+                  </UiActionButton>
+                  <UiActionButton
+                    :disabled="!canGoForward"
+                    :tooltip="i18n.t('menu:history.forward')"
+                    @click="onForwardClick"
+                  >
+                    <ChevronRight class="h-3 w-3" />
+                  </UiActionButton>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <UiInputValidationTooltip
+                    :open="isNameValidationTooltipOpen"
+                    :message="nameValidationMessage"
+                  >
+                    <UiInput
+                      v-model="name"
+                      variant="ghost"
+                      class="w-full truncate px-0"
+                      :data-planned-title="`note:${displayedNote?.id}`"
+                      :select="isFocusedNoteName"
+                      @focus="onNoteNameFocus"
+                      @blur="onNameBlur"
+                      @keydown="onNameKeydown"
+                    />
+                  </UiInputValidationTooltip>
+                </div>
+              </div>
+              <div class="ml-2 flex h-7 items-center">
+                <UiActionButton
+                  :tooltip="mindmapActionTooltip"
+                  :active="isNotesMindmapShown"
+                  @click="onMindmapToggle"
+                >
+                  <Network class="h-3 w-3 -rotate-90" />
+                </UiActionButton>
+                <UiActionButton
+                  :tooltip="presentationActionTooltip"
+                  :active="isNotesPresentationShown"
+                  @click="onPresentationToggle"
+                >
+                  <Presentation class="h-3 w-3" />
+                </UiActionButton>
+                <UiActionButton
+                  :tooltip="sidebarActionTooltip"
+                  :active="isNotesSidebarHidden"
+                  @click="onSidebarToggle"
+                >
+                  <UiPanelIcon
+                    side="left"
+                    :open="!isNotesSidebarHidden"
+                  />
+                </UiActionButton>
+                <UiActionButton
+                  v-if="!isNotesMindmapShown && !isNotesPresentationShown"
+                  :tooltip="i18n.t('notes.inspector.title')"
+                  :active="showInspector"
+                  @click="toggleInspector"
+                >
+                  <UiPanelIcon
+                    side="right"
+                    :open="showInspector"
+                  />
+                </UiActionButton>
+              </div>
+            </div>
+            <div
+              v-if="!isNotesMindmapShown && !isNotesPresentationShown"
+              class="pt-1"
+            >
+              <NotesTaskMetadataBar :note="displayedNote" />
+              <NotesEditorTags
+                :note="displayedNote"
+                :disabled="!isSelectedNoteContentReady"
+              />
+            </div>
+          </div>
+          <div
+            class="min-h-0 flex-1"
+            :inert="!isSelectedNoteContentReady"
+          >
+            <NotesMindmap v-if="isNotesMindmapShown" />
+            <div
+              v-else
+              class="grid h-full grid-rows-[1fr_auto] overflow-hidden"
+            >
+              <div class="min-h-0">
+                <NotesEditor
+                  ref="notesEditorRef"
+                  v-model:content="content"
+                  :disabled="!isSelectedNoteContentReady"
+                  :mode="notesEditorMode"
+                  :note-id="editorNoteId"
+                  @cursor="
+                    editorCursor = $event;
+                    useAi().setContext(readAiEditor());
+                  "
+                />
+              </div>
+              <div
+                data-notes-editor-footer
+                class="border-border flex items-center justify-between border-t px-2 py-1 text-xs tabular-nums"
+              >
+                <Select.Select v-model="notesEditorMode">
+                  <Select.SelectTrigger variant="ghost">
+                    <Select.SelectValue>
+                      <Code
+                        v-if="notesEditorMode === 'raw'"
+                        class="size-3.5"
+                      />
+                      <Pencil
+                        v-else-if="notesEditorMode === 'livePreview'"
+                        class="size-3.5"
+                      />
+                      <BookOpen
+                        v-else
+                        class="size-3.5"
+                      />
+                    </Select.SelectValue>
+                  </Select.SelectTrigger>
+                  <Select.SelectContent align="start">
+                    <Select.SelectItem value="raw">
+                      <Code class="size-3.5" />
+                      Raw
+                    </Select.SelectItem>
+                    <Select.SelectItem value="livePreview">
+                      <Pencil class="size-3.5" />
+                      Live Preview
+                    </Select.SelectItem>
+                    <Select.SelectItem value="preview">
+                      <BookOpen class="size-3.5" />
+                      Preview
+                    </Select.SelectItem>
+                  </Select.SelectContent>
+                </Select.Select>
+                <div class="mr-1">
+                  {{ i18n.t("notes.words") }} {{ textStats.words }},
+                  {{ i18n.t("notes.symbols") }} {{ textStats.symbols }}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div
-        class="min-h-0 flex-1"
-        :inert="!isSelectedNoteContentReady"
+        v-else-if="notesState.noteId !== undefined"
+        class="relative h-full"
       >
-        <NotesMindmap v-if="isNotesMindmapShown" />
-        <div
-          v-else
-          class="grid h-full grid-rows-[1fr_auto] overflow-hidden"
-        >
-          <div class="min-h-0">
-            <NotesEditor
-              ref="notesEditorRef"
-              v-model:content="content"
-              :disabled="!isSelectedNoteContentReady"
-              :mode="notesEditorMode"
-              :note-id="editorNoteId"
-              @cursor="editorCursor = $event"
-            />
-          </div>
-          <div
-            data-notes-editor-footer
-            class="border-border flex items-center justify-between border-t px-2 py-1 text-xs tabular-nums"
-          >
-            <Select.Select v-model="notesEditorMode">
-              <Select.SelectTrigger variant="ghost">
-                <Select.SelectValue>
-                  <Code
-                    v-if="notesEditorMode === 'raw'"
-                    class="size-3.5"
-                  />
-                  <Pencil
-                    v-else-if="notesEditorMode === 'livePreview'"
-                    class="size-3.5"
-                  />
-                  <BookOpen
-                    v-else
-                    class="size-3.5"
-                  />
-                </Select.SelectValue>
-              </Select.SelectTrigger>
-              <Select.SelectContent align="start">
-                <Select.SelectItem value="raw">
-                  <Code class="size-3.5" />
-                  Raw
-                </Select.SelectItem>
-                <Select.SelectItem value="livePreview">
-                  <Pencil class="size-3.5" />
-                  Live Preview
-                </Select.SelectItem>
-                <Select.SelectItem value="preview">
-                  <BookOpen class="size-3.5" />
-                  Preview
-                </Select.SelectItem>
-              </Select.SelectContent>
-            </Select.Select>
-            <div class="mr-1">
-              {{ i18n.t("notes.words") }} {{ textStats.words }},
-              {{ i18n.t("notes.symbols") }} {{ textStats.symbols }}
-            </div>
-          </div>
-        </div>
+        <UiLoadingOverlay
+          v-if="selectedNoteRecordStatus === 'loading'"
+          :silent="!isSelectedNoteLoadingVisible"
+        />
+        <UiLoadingOverlay
+          v-else-if="selectedNoteRecordStatus === 'error'"
+          error
+          :label="i18n.t('contentLoad.failed')"
+          :action-label="i18n.t('contentLoad.retry')"
+          @retry="retrySelectedNote"
+        />
+      </div>
+      <div
+        v-else-if="isNotesLoadingVisible"
+        class="text-muted-foreground flex h-full items-center justify-center"
+      >
+        <LoaderCircle class="h-4 w-4 animate-spin" />
+      </div>
+      <div
+        v-else-if="isNotesLoading"
+        class="h-full"
+      />
+      <div
+        v-else
+        class="text-muted-foreground flex h-full items-center justify-center"
+      >
+        {{ i18n.t("notes.noSelected") }}
       </div>
     </div>
     <template v-if="showInspector">
@@ -655,52 +827,29 @@ onBeforeUnmount(() => {
         :style="{ width: `${panelWidth}px` }"
         class="h-full min-h-0 shrink-0 overflow-hidden"
       >
-        <NotesInspector
-          :note-id="editorNoteId ?? displayedNote.id"
-          :content="content"
-          :disabled="!isSelectedNoteContentReady"
-          :can-create="notesEditorMode !== 'preview'"
-          :cursor="editorCursor"
-          @heading="notesEditorRef?.revealHeading($event)"
-          @annotation="notesEditorRef?.revealAnnotation($event)"
-          @move="notesEditorRef?.moveSection($event)"
-          @close="isNotesInspectorOpen = false"
-          @reveal="notesEditorRef?.revealLink($event)"
-          @activate="notesEditorRef?.activateLink($event)"
-        />
+        <AiPanel v-if="isNotesMindmapShown || isNotesPresentationShown" />
+        <AiInspectorTabs
+          v-else
+          @close="closeInspector"
+          @inspector="isNotesInspectorOpen = true"
+        >
+          <NotesInspector
+            v-if="displayedNote"
+            embedded
+            :note-id="editorNoteId ?? displayedNote.id"
+            :content="content"
+            :disabled="!isSelectedNoteContentReady"
+            :can-create="notesEditorMode !== 'preview'"
+            :cursor="editorCursor"
+            @heading="notesEditorRef?.revealHeading($event)"
+            @annotation="notesEditorRef?.revealAnnotation($event)"
+            @move="notesEditorRef?.moveSection($event)"
+            @close="isNotesInspectorOpen = false"
+            @reveal="notesEditorRef?.revealLink($event)"
+            @activate="notesEditorRef?.activateLink($event)"
+          />
+        </AiInspectorTabs>
       </aside>
     </template>
-  </div>
-  <div
-    v-else-if="notesState.noteId !== undefined"
-    class="relative h-full"
-  >
-    <UiLoadingOverlay
-      v-if="selectedNoteRecordStatus === 'loading'"
-      :silent="!isSelectedNoteLoadingVisible"
-    />
-    <UiLoadingOverlay
-      v-else-if="selectedNoteRecordStatus === 'error'"
-      error
-      :label="i18n.t('contentLoad.failed')"
-      :action-label="i18n.t('contentLoad.retry')"
-      @retry="retrySelectedNote"
-    />
-  </div>
-  <div
-    v-else-if="isNotesLoadingVisible"
-    class="text-muted-foreground flex h-full items-center justify-center"
-  >
-    <LoaderCircle class="h-4 w-4 animate-spin" />
-  </div>
-  <div
-    v-else-if="isNotesLoading"
-    class="h-full"
-  />
-  <div
-    v-else
-    class="text-muted-foreground flex h-full items-center justify-center"
-  >
-    {{ i18n.t("notes.noSelected") }}
   </div>
 </template>

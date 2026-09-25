@@ -55,9 +55,15 @@
     "prepare": "simple-git-hooks && npm run rebuild",
     "bench:prepare": "node scripts/benchmark/cli.cjs prepare",
     "bench:start": "node scripts/benchmark/cli.cjs start",
-    "bench:report": "node scripts/benchmark/cli.cjs report"
+    "bench:report": "node scripts/benchmark/cli.cjs report",
+    "dev:playground": "vite --config playground/vite.config.mjs"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.118",
+    "@ai-sdk/deepseek": "^2.0.64",
+    "@ai-sdk/google": "^3.0.124",
+    "@ai-sdk/mistral": "^3.0.64",
+    "@ai-sdk/xai": "^3.0.133",
     "@codemirror/autocomplete": "^6.20.1",
     "@codemirror/commands": "^6.10.3",
     "@codemirror/lang-json": "^6.0.2",
@@ -65,6 +71,7 @@
     "@codemirror/language": "^6.12.2",
     "@codemirror/language-data": "^6.5.2",
     "@codemirror/legacy-modes": "^6.5.2",
+    "@codemirror/merge": "^6.12.2",
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.40.0",
     "@dagrejs/dagre": "^1.1.5",
@@ -88,6 +95,7 @@
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
     "acorn": "8.15.0",
+    "ai": "^6.0.286",
     "better-sqlite3": "^12.4.1",
     "change-case": "^5.4.4",
     "chokidar": "^4.0.3",
@@ -218,6 +226,7 @@
   },
   "electronmon": {
     "patterns": [
+      "!playground/**/*",
       "!scripts/**/*",
       "!src/renderer/**/*",
       "!src/main/**/*"

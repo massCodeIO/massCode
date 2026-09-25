@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { Language } from '@/components/editor/types'
+import type { EditSnapshot } from '@/composables/ai/edit'
+import type { NativeBridgeResult } from '@/composables/ai/nativeBridges'
 import {
   useApp,
   useDonations,
@@ -7,9 +9,13 @@ import {
   useResizeHandle,
   useSnippets,
   useSnippetUpdate,
+  useSonner,
   useTheme,
 } from '@/composables'
-import { i18n, ipc } from '@/electron'
+import { matchesSnapshot } from '@/composables/ai/edit'
+import { registerNativeBridge } from '@/composables/ai/nativeBridges'
+import { useAi } from '@/composables/ai/useAi'
+import { i18n, ipc, store } from '@/electron'
 import { getContentSearchMatches } from '@/utils/contentSearch'
 import {
   mapNormalizedCursorIndex,
@@ -20,8 +26,10 @@ import {
   useCssVar,
   useDebounceFn,
   useEventListener,
+  useResizeObserver,
 } from '@vueuse/core'
 import CodeMirror from 'codemirror'
+import { getCodeFormatterParser } from '~/shared/codeFormatter'
 import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/addon/edit/matchbrackets'
 import 'codemirror/addon/selection/active-line'
@@ -31,7 +39,9 @@ import 'codemirror/lib/codemirror.css'
 import 'codemirror/theme/neo.css'
 import 'codemirror/theme/oceanic-next.css'
 
+const { setContext: setAiContext, registerEditor: registerAiEditor } = useAi()
 const { settings, cursorPosition } = useEditor()
+const { sonner } = useSonner()
 const {
   displayedSnippet,
   displayedSnippetContent,
@@ -58,6 +68,7 @@ const {
   addToUpdateContentQueue,
   getPendingContentUpdate,
   isContentUpdateBusy,
+  flushSnippetContent,
 } = useSnippetUpdate()
 
 let editor: CodeMirror.Editor | null = null
@@ -72,6 +83,8 @@ let contentSearchScrollFrame: number | undefined
 let contentSearchFocusRevision = 0
 let isContentSearchFocusPending = false
 
+const editorMountRef = useTemplateRef('editorMountRef')
+useResizeObserver(editorMountRef, () => editor?.refresh())
 const previewHandleRef = ref<HTMLElement>()
 const contentSearchPanelRef = useTemplateRef('contentSearchPanelRef')
 const isContentSearchOpen = ref(false)
@@ -133,6 +146,82 @@ const isSelectedSnippetContentReady = computed(
     && selectedSnippet.value?.id === state.snippetId
     && selectedSnippetContent.value?.value !== undefined,
 )
+const unregisterAiWorkspace = useAi().registerWorkspace(() => ({
+  space: 'code',
+  selectedIds: [...selectedSnippetIds.value],
+  folderId: state.folderId ?? null,
+  library: state.libraryFilter,
+}))
+onBeforeUnmount(unregisterAiWorkspace)
+function readAiContext() {
+  const content = selectedSnippetContent.value
+  const snippet = selectedSnippet.value
+  if (
+    !editor
+    || !content
+    || !snippet
+    || !isSelectedSnippetContentReady.value
+    || selectedSnippetIds.value.length !== 1
+    || content.id !== lastAppliedContentId
+  ) {
+    return undefined
+  }
+  return {
+    space: 'code' as const,
+    snippetId: snippet.id,
+    name: snippet.name,
+    contentId: content.id,
+    text: editor.getValue(),
+    selection: editor.getSelection(),
+    selectionFrom:
+      editor.listSelections().length === 1
+        ? editor.indexFromPos(editor.getCursor('from'))
+        : undefined,
+    selectionTo:
+      editor.listSelections().length === 1
+        ? editor.indexFromPos(editor.getCursor('to'))
+        : undefined,
+    language: content.language || 'plain_text',
+  }
+}
+async function applyAiEdit(snapshot: EditSnapshot, replacement: string) {
+  if (
+    !editor
+    || !matchesSnapshot(
+      snapshot,
+      readAiContext(),
+      store.preferences.get<string>('storage.vaultPath') ?? '',
+    )
+  ) {
+    return false
+  }
+  editor.operation(() => {
+    editor!.getDoc().changeGeneration(true)
+    editor!.replaceRange(
+      replacement,
+      editor!.posFromIndex(snapshot.from),
+      editor!.posFromIndex(snapshot.to),
+      'ai-edit',
+    )
+    editor!.getDoc().changeGeneration(true)
+  })
+  if (snapshot.space !== 'code')
+    return false
+  await nextTick()
+  await flushSnippetContent(snapshot.snippetId, snapshot.contentId)
+  return true
+}
+
+function updateAiContext() {
+  setAiContext(readAiContext())
+}
+watch(
+  [isSelectedSnippetContentReady, selectedSnippetContent, selectedSnippetIds],
+  updateAiContext,
+  { flush: 'sync' },
+)
+let unregisterAiEditor: (() => void) | undefined
+
 const isSelectedSnippetLoadingVisible = ref(false)
 let selectedSnippetLoadingTimer: ReturnType<typeof setTimeout> | undefined
 
@@ -244,6 +333,9 @@ async function init() {
   })
 
   editor.on('cursorActivity', getCursorPosition)
+  editor.on('cursorActivity', updateAiContext)
+  editor.on('change', updateAiContext)
+  unregisterAiEditor = registerAiEditor(readAiContext, applyAiEdit)
 
   editor.on('scroll', () => {
     scrollBarOpacity.value = '1'
@@ -334,6 +426,7 @@ async function init() {
       // Не сохраняем вьюпорт при смене фрагмента/сниппета
       setValue(nextValue, true, !isNewValue)
       lastAppliedContentId = contentId
+      updateAiContext()
       if (contentSearchQuery.value)
         refreshContentSearch()
       focusPendingContentSearch()
@@ -582,80 +675,136 @@ watch(spaceSearchQuery, () => {
   }
 })
 
-async function format() {
+async function formatCurrent(
+  current: () => boolean = () => true,
+): Promise<NativeBridgeResult | undefined> {
   if (!isSelectedSnippetContentReady.value)
     return
 
-  const availableLang: Language[] = [
-    'css',
-    'dockerfile',
-    'gitignore',
-    'graphqlschema',
-    'html',
-    'ini',
-    'jade',
-    'java',
-    'javascript',
-    'json',
-    'json5',
-    'less',
-    'markdown',
-    'php',
-    'properties',
-    'sass',
-    'scss',
-    'sh',
-    'toml',
-    'typescript',
-    'xml',
-    'yaml',
-  ]
-
-  if (
-    selectedSnippetContent.value?.value
-    && !selectedSnippetContent.value?.language
-  ) {
+  const lang = selectedSnippetContent.value?.language
+  const parser = getCodeFormatterParser(lang)
+  if (!parser)
+    return { status: 'unavailable' }
+  const vault = store.preferences.get<string>('storage.vaultPath') ?? ''
+  const before = readAiContext()
+  const value = before?.text
+  if (!before)
     return
-  }
-
-  if (
-    !availableLang.includes(selectedSnippetContent.value?.language as Language)
-  )
-    return
-
-  const lang = selectedSnippetContent.value?.language as Language
-  const value = selectedSnippetContent.value?.value
+  let mutation: NativeBridgeResult['mutation']
   const snippetId = state.snippetId
   const contentId = selectedSnippetContent.value?.id
-  let parser = lang as string
-
-  const shellLike = ['dockerfile', 'gitignore', 'properties', 'ini']
-
-  if (lang === 'javascript')
-    parser = 'babel'
-  if (lang === 'graphqlschema')
-    parser = 'graphql'
-  if (shellLike.includes(lang))
-    parser = 'sh'
-
   try {
     const formatted = await ipc.invoke('prettier:format', {
       text: value,
       parser,
     })
     if (
-      !isSelectedSnippetContentReady.value
+      !current()
+      || !isSelectedSnippetContentReady.value
+      || editor?.getValue() !== value
       || state.snippetId !== snippetId
       || selectedSnippetContent.value?.id !== contentId
+      || selectedSnippetContent.value?.language !== lang
+      || (store.preferences.get<string>('storage.vaultPath') ?? '') !== vault
     ) {
       return
     }
+    if (
+      typeof formatted !== 'string'
+      || snippetId === undefined
+      || contentId === undefined
+    ) {
+      return { status: 'failed' }
+    }
     setValue(formatted, false)
+    if (before.text && before.text !== formatted) {
+      const contextId = crypto.randomUUID()
+      mutation = {
+        kind: 'editor',
+        snapshot: {
+          ...before,
+          contextId,
+          from: 0,
+          to: before.text.length,
+          vault,
+        },
+        calls: [
+          {
+            id: contextId,
+            type: 'function',
+            function: {
+              name: 'propose_edit',
+              arguments: JSON.stringify({
+                context_id: contextId,
+                summary: 'Native formatting',
+                edits: [{ old_text: before.text, new_text: formatted }],
+              }),
+            },
+          },
+        ],
+      }
+    }
+    await nextTick()
+    await flushSnippetContent(snippetId, contentId)
+    return { status: 'done', persisted: true, mutation }
   }
   catch (err) {
     console.error(err)
+    return { status: 'failed', mutation }
   }
 }
+async function format() {
+  const result = await formatCurrent()
+  if (result?.status === 'failed')
+    sonner({ type: 'error', message: i18n.t('messages:error.formatFailed') })
+  return result
+}
+let unregisterNativeEditor: (() => void) | undefined
+onMounted(() => {
+  unregisterNativeEditor = registerNativeBridge(
+    'codeEditor',
+    async (action, current) => {
+      if (!current() || !readAiContext())
+        return { status: 'stale' }
+      if (action.action === 'format') {
+        const result = await formatCurrent(current)
+        return result ?? { status: 'unavailable' }
+      }
+      if (action.action === 'findInContent') {
+        if (!action.command || action.command === 'search') {
+          if (!action.query)
+            return { status: 'unavailable' }
+          openContentSearch()
+          contentSearchQuery.value = action.query
+          await nextTick()
+          refreshContentSearch()
+        }
+        else if (action.command === 'close') {
+          closeContentSearch(false)
+        }
+        else {
+          if (!isContentSearchOpen.value)
+            return { status: 'unavailable' }
+          selectContentSearchMatch(
+            contentSearchIndex.value + (action.command === 'next' ? 1 : -1),
+          )
+        }
+        return {
+          status: current() ? 'done' : 'stale',
+          search: {
+            open: isContentSearchOpen.value,
+            index: isContentSearchOpen.value ? contentSearchIndex.value : -1,
+            count: isContentSearchOpen.value
+              ? contentSearchMatches.value.length
+              : 0,
+          },
+        }
+      }
+      return { status: 'unavailable' }
+    },
+  )
+})
+onBeforeUnmount(() => unregisterNativeEditor?.())
 
 function onCopySnippetMenu() {
   if (!isSelectedSnippetContentReady.value)
@@ -702,6 +851,7 @@ ipc.on('main-menu:normalize-code-line-breaks', normalizeTerminalOutput)
 // прокси и removeListener по ссылке не срабатывает; владелец каналов — только
 // этот компонент.
 onBeforeUnmount(() => {
+  unregisterAiEditor?.()
   contentSearchRevision += 1
   if (contentSearchScrollFrame !== undefined)
     cancelAnimationFrame(contentSearchScrollFrame)
@@ -829,6 +979,7 @@ onMounted(() => {
         />
         <div
           id="editor"
+          ref="editorMountRef"
           data-editor-mount
           class="min-h-0 flex-1"
         />

@@ -36,7 +36,7 @@ const displayedRequests = computed(() => {
 
 // --- Search ---
 
-async function search() {
+async function search(current: () => boolean = () => true) {
   if (searchQuery.value) {
     if (!isSearch.value) {
       saveHttpStateSnapshot('beforeSearch')
@@ -45,13 +45,16 @@ async function search() {
     isSearch.value = true
     isRestoreStateBlocked.value = false
 
-    await getHttpRequests()
-    selectFirstRequest()
+    if (!(await getHttpRequests()) || !current())
+      return false
+    if (!(await selectFirstRequest({ current })))
+      return false
     searchSelectedIndex.value = 0
   }
   else {
     isSearch.value = false
   }
+  return true
 }
 
 async function selectSearchRequest(index: number) {
@@ -74,30 +77,30 @@ async function selectSearchRequest(index: number) {
   })
 }
 
-function clearSearch(restoreState = false) {
+async function clearSearch(restoreState = false) {
   const shouldRestore = restoreState && !isRestoreStateBlocked.value
-
+  const token = shouldRestore
+    ? ++httpRuntimeNavigation.transitionToken
+    : httpRuntimeNavigation.transitionToken
+  if (
+    shouldRestore
+    && (!(await httpRuntimeNavigation.confirmLeave())
+      || token !== httpRuntimeNavigation.transitionToken)
+  ) {
+    return false
+  }
   searchQuery.value = ''
   isSearch.value = false
   searchSelectedIndex.value = -1
-
-  if (!shouldRestore) {
-    return
-  }
-
-  // Resolve unsaved edits before restoring the selection snapshot.
-  void (async () => {
-    if (!(await httpRuntimeNavigation.confirmLeave())) {
-      return
-    }
-
+  if (shouldRestore) {
     restoreHttpStateSnapshot('beforeSearch')
     if (!httpState.activePanel || httpState.activePanel === 'request') {
-      await selectHttpRequest(httpState.requestId, false, {
+      return selectHttpRequest(httpState.requestId, false, {
         preservePanel: true,
       })
     }
-  })()
+  }
+  return true
 }
 
 function resetHttpSearchState() {

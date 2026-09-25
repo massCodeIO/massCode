@@ -2,6 +2,7 @@ import type { HttpExecutePayload } from '../../../types/http'
 import { Readable } from 'node:stream'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { emptyHttpCollection } from '../../../../shared/httpCollection'
+import { httpConsole } from '../../devtools/console'
 import { executeHttpRequest } from '../../runtime/execute'
 import {
   commitHttpSession,
@@ -455,5 +456,87 @@ it.each(['pre', 'post', 'extraction'] as const)(
     if (phase === 'pre')
       expect(mocks.request).not.toHaveBeenCalled()
     else expect(result.status).toBe(200)
+  },
+)
+
+it.each(['', 'secret"with\\slashes'])(
+  'preserves raw console and safely masks literal auth %j',
+  async (secret) => {
+    httpConsole.clear()
+    const p = payload(`console.log(${JSON.stringify(secret || 'plain log')});`)
+    if (secret)
+      p.request.auth = { type: 'bearer', token: secret }
+    allow(p)
+    await executeHttpRequest(p)
+    const raw = httpConsole
+      .read()
+      .entries
+      .filter(entry => entry.kind === 'script')
+    expect(
+      raw.some(entry => entry.message.includes(secret || 'plain log')),
+    ).toBe(true)
+    const safe = JSON.stringify(httpConsole.readForAi())
+    if (secret)
+      expect(safe).not.toContain(JSON.stringify(secret).slice(1, -1))
+    else expect(safe).toContain('plain log')
+  },
+)
+
+it('inspecting a proposed script does not revoke the saved script grant', () => {
+  const scripts = { preRequest: 'mc.assert(true)', postResponse: '' }
+  mocks.saved.runtime.scripts = scripts
+  setScriptTrust(1, scripts, true)
+  const before = structuredClone(mocks.grants)
+  expect(
+    scriptsTrusted(
+      1,
+      { preRequest: 'different draft', postResponse: '' },
+      'request',
+      true,
+    ),
+  ).toBe(false)
+  expect(mocks.grants).toEqual(before)
+  expect(scriptsTrusted(1, scripts, 'request', true)).toBe(true)
+})
+
+it.each(['', 'throw new Error("post failed")'])(
+  'commits extraction despite a declarative assertion failure unless post script fails: %s',
+  async (post) => {
+    const p = payload('mc.variables.set("path", "demo")', post)
+    p.runtime!.assertions = [
+      {
+        name: 'Expected created',
+        source: 'status',
+        operator: 'eq',
+        expected: 201,
+      },
+    ]
+    allow(p)
+    const { generation } = getHttpSession('/vault', null)
+    commitHttpSession(
+      generation,
+      new Map([
+        ['extracted', 'previous-token'],
+        ['untouched', 'keep'],
+      ]),
+    )
+    const result = await executeHttpRequest(p)
+    expect(mocks.request).toHaveBeenCalledTimes(1)
+    expect(result.status).toBe(200)
+    expect(result.runtimeResults?.assertions[0]).toMatchObject({
+      name: 'Expected created',
+      ok: false,
+    })
+    expect(result.runtimeResults?.extractions[0]).toMatchObject({
+      name: 'extracted',
+      ok: true,
+    })
+    expect(session().extracted).toBe(
+      post ? 'previous-token' : 'response-secret',
+    )
+    expect(session().untouched).toBe('keep')
+    if (post)
+      expect(result.scriptResults?.some(script => script.error)).toBe(true)
+    else expect(result.error).toBeUndefined()
   },
 )

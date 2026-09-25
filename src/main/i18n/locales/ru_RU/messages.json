@@ -10,7 +10,7 @@
     "convertTaskToNote": "Преобразовать \"{{name}}\" обратно в заметку?",
     "migrateToMarkdown": [
       "Мигрировать в Markdown Vault?",
-      "Выбранный vault будет перезаписан текущей библиотекой SQLite."
+      "Всё содержимое текущего vault (включая Notes, HTTP, Math и Drawings) будет заменено выбранной библиотекой SQLite. Здесь это нельзя отменить. Сначала сохраните резервную копию текущего vault."
     ],
     "vaultDoctorApply": [
       "Применить исправления vault?",
@@ -25,7 +25,8 @@
     "noteExported": "Заметка успешно экспортирована.",
     "noteFolderSiteExported": "Папка заметок экспортирована как HTML-сайт.",
     "vaultDoctorApplied": "Vault Doctor применил {{count}} исправлений.",
-    "vaultDoctorClean": "Vault Doctor не нашёл проблем."
+    "vaultDoctorClean": "Vault Doctor не нашёл проблем.",
+    "artifactExported": "Файл сохранён"
   },
   "warning": {
     "noUndo": "Это действие нельзя отменить.",
@@ -42,9 +43,19 @@
     "vaultDoctorConflicts": "Vault: {{count}} конфликтов требуют внимания",
     "vaultDoctorReview": "Разобрать",
     "vaultDoctorNotReady": "Vault ещё синхронизируется с облачным хранилищем. Повторите сканирование чуть позже.",
-    "cloudFileNotReady": "Элемент ещё синхронизируется с облачным хранилищем. Попробуйте чуть позже."
+    "cloudFileNotReady": "Элемент ещё синхронизируется с облачным хранилищем. Попробуйте чуть позже.",
+    "noteExportIncomplete": "Экспорт сохранён с ограничениями: {{details}}",
+    "noteExportLoss": {
+      "mermaid": "Диаграммы оставлены исходным текстом",
+      "drawings": "Отсутствующие превью рисунков",
+      "managedImages": "Недоступные локальные изображения",
+      "remoteImages": "Заблокированные внешние изображения",
+      "richFormatting": "Оформление оставлено как Markdown",
+      "internalLinks": "Внутренние ссылки оставлены текстом"
+    }
   },
   "error": {
+    "formatFailed": "Не удалось отформатировать или сохранить фрагмент.",
     "migration": "Автомиграция из SQLite завершилась ошибкой: {{error}}",
     "secretNameRequired": "Укажите имя секрета, прежде чем сохранять значение.",
     "secretEnvironmentMissing": "Это окружение больше не существует.",
@@ -71,7 +82,8 @@
       "update": "Не удалось сохранить окружение. Изменения не сохранены.",
       "delete": "Не удалось удалить окружение.",
       "activate": "Не удалось переключить окружение."
-    }
+    },
+    "artifactExportFailed": "Не удалось сохранить файл"
   },
   "description": {
     "storageVault": "Выберите директорию для хранилища. Для синхронизации между устройствами выберите папку в iCloud Drive, Google Drive или Dropbox.",

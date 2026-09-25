@@ -10,7 +10,7 @@ A free, open-source developer workspace.
 <p align="center">
   <strong>Snippets, notes, HTTP requests, calculations, drawings, and dev tools in one local-first app.</strong>
   <br>
-  Your data stays on your machine as plain Markdown files.
+  Your workspace is stored locally as plain Markdown files.
 </p>
 
 <p align="center">
@@ -176,6 +176,17 @@ Save web content from Chrome, Firefox, or Safari into the local massCode app.
 - Save selected text or readable page content as notes
 - Save pages or links as HTTP `GET` requests
 - Connect through the local Integration API with an API token
+
+### AI Assistant
+
+Ask the built-in assistant to carry out tasks across Code, Notes, and HTTP using your own AI provider account or a local model.
+
+- Edit and format snippets, organize notes, and update tasks
+- Find records across your vault and use them in a conversation
+- Run HTTP collections with confirmation, explain failed checks, and save reports in Notes
+- Request a preview before edits, adjust a task while it runs, and undo changes that support Undo
+
+Cloud providers receive the context used for the task; use a model running on your computer for local processing. See the [AI Assistant guide](https://masscode.io/documentation/ai/) for setup and examples.
 
 ### MCP Integration
 

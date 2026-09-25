@@ -153,6 +153,7 @@ async function getAllHttpRequests() {
     allRequests.value = active.data
     trashRequests.value = deleted.data
   }
+  return token === treeLoadToken
 }
 
 function getActionTargetIds(fallbackRequestId?: number) {
@@ -322,10 +323,12 @@ export async function getHttpRequests(query?: HttpRequestsQuery) {
       requests.value = data
     }
     finishBenchmark()
+    return true
   }
   catch (error) {
     finishBenchmark('error')
     console.error(error)
+    return false
   }
 }
 
@@ -391,7 +394,11 @@ async function fetchHttpRequestById(
   }
 }
 
-async function loadCurrentRequest(requestId: number, transitionToken: number) {
+async function loadCurrentRequest(
+  requestId: number,
+  transitionToken: number,
+  current: () => boolean = () => true,
+) {
   const requestToken = ++selectionRequestToken
   isCurrentRequestLoading.value = true
 
@@ -401,15 +408,16 @@ async function loadCurrentRequest(requestId: number, transitionToken: number) {
 
     if (
       requestToken !== selectionRequestToken
+      || !current()
       || transitionToken !== httpRuntimeNavigation.transitionToken
     ) {
       finishBenchmark('superseded')
-      return
+      return false
     }
 
     if (httpState.requestId !== requestId) {
       finishBenchmark('superseded')
-      return
+      return false
     }
 
     // Транзиентный сбой загрузки: выбор откатывается на запись, которая
@@ -426,11 +434,12 @@ async function loadCurrentRequest(requestId: number, transitionToken: number) {
         selectedRequestIds.value = [previousId]
         lastSelectedRequestId.value = previousId
       }
-      return
+      return false
     }
 
     assignDraft(record)
     finishBenchmark()
+    return true
   }
   catch (error) {
     finishBenchmark('error')
@@ -806,23 +815,28 @@ async function emptyTrash() {
   }
 }
 
-export function selectFirstRequest(options?: { folderId?: number | null }) {
+export async function selectFirstRequest(options?: {
+  folderId?: number | null
+  current?: () => boolean
+}) {
   const source = isSearch.value ? requestsBySearch.value || [] : requests.value
-  const filteredSource = options
-    ? source.filter(
-        request => (request.folderId ?? null) === (options.folderId ?? null),
-      )
-    : source
+  const filteredSource
+    = options && 'folderId' in options
+      ? source.filter(
+          request =>
+            (request.folderId ?? null) === (options.folderId ?? null),
+        )
+      : source
   const first = filteredSource?.[0]
 
   if (first) {
-    selectHttpRequest(first.id)
+    return selectHttpRequest(first.id, false, { current: options?.current })
   }
   else {
     // Сброс идёт через общий поток выбора: правки draft'а сохраняются до
     // assignDraft(null), а при неудачном PATCH сброс отменяется (запись
     // могла просто уйти из текущего фильтра списка).
-    selectHttpRequest(undefined)
+    return selectHttpRequest(undefined, false, { current: options?.current })
   }
 }
 
@@ -832,8 +846,8 @@ export function selectFirstRequest(options?: { folderId?: number | null }) {
 export function selectHttpRequest(
   requestId: number | undefined,
   withShift = false,
-  options: { preservePanel?: boolean } = {},
-): Promise<void> {
+  options: { preservePanel?: boolean, current?: () => boolean } = {},
+): Promise<boolean> {
   // Расширение выделения shift'ом не меняет открытый draft — выполняется
   // синхронно и без сохранения.
   if (
@@ -852,7 +866,7 @@ export function selectHttpRequest(
     if (rangeSelection.length) {
       selectedRequestIds.value = rangeSelection
       lastSelectedRequestId.value = requestId
-      return Promise.resolve()
+      return Promise.resolve(true)
     }
   }
 
@@ -865,14 +879,18 @@ export function selectHttpRequest(
 
 async function applyHttpRequestSelection(
   requestId: number | undefined,
-  options: { preservePanel?: boolean },
+  options: { preservePanel?: boolean, current?: () => boolean },
 ) {
   const transitionToken = ++httpRuntimeNavigation.transitionToken
 
   if (!(await httpRuntimeNavigation.confirmLeave()))
-    return
-  if (transitionToken !== httpRuntimeNavigation.transitionToken)
-    return
+    return false
+  if (
+    options.current?.() === false
+    || transitionToken !== httpRuntimeNavigation.transitionToken
+  ) {
+    return false
+  }
 
   if (!options.preservePanel)
     httpState.activePanel = 'request'
@@ -882,14 +900,14 @@ async function applyHttpRequestSelection(
     selectedRequestIds.value = []
     lastSelectedRequestId.value = undefined
     assignDraft(null)
-    return
+    return true
   }
 
   selectedRequestIds.value = [requestId]
   lastSelectedRequestId.value = requestId
   httpState.requestId = requestId
 
-  await loadCurrentRequest(requestId, transitionToken)
+  return loadCurrentRequest(requestId, transitionToken, options.current)
 }
 
 function hasSiblingRequestNameConflict(

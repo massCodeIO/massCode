@@ -500,6 +500,12 @@ function createViewMenuItems(context: MainMenuContext): MenuConfig[] {
       },
     )
   }
+  items.push({
+    label: i18n.t('ui:ai.title'),
+    accelerator: 'CommandOrControl+L',
+    enabled: context.editor.kind !== null,
+    click: () => send('main-menu:open-ai'),
+  })
   const sortItems = createSortMenuItems(context)
 
   if (sortItems.length) {
@@ -620,6 +626,7 @@ function createEditorMenuItems(context: MainMenuContext): MenuConfig[] {
     })
     items.push({
       label: i18n.t('menu:editor.format'),
+      enabled: context.editor.canFormat,
       accelerator: 'Shift+Alt+F',
       click: () => send('main-menu:format'),
     })

@@ -372,7 +372,7 @@ export interface HttpFolderCreateInput {
 }
 
 export interface HttpFolderUpdateInput {
-  collectionConfig?: HttpCollectionConfig
+  collectionConfig?: HttpCollectionConfig | null
   name?: string
   icon?: string | null
   parentId?: number | null

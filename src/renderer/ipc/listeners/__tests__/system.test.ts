@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 
-async function setup(activeSpace: 'code' | 'notes' | 'http' | 'tools' | null) {
+async function setup(
+  activeSpace: 'code' | 'notes' | 'http' | 'tools' | null,
+  routeName = 'main',
+) {
   vi.resetModules()
   vi.useFakeTimers()
 
@@ -18,6 +21,7 @@ async function setup(activeSpace: 'code' | 'notes' | 'http' | 'tools' | null) {
   const getFolders = vi.fn(async () => undefined)
   const getSnippets = vi.fn(async () => undefined)
   const reloadMathFromDisk = vi.fn(async () => undefined)
+  const getNotesGraph = vi.fn(async () => undefined)
   const getNoteFolders = vi.fn(async () => undefined)
   const getNotes = vi.fn(async () => undefined)
   const getNoteTags = vi.fn(async () => undefined)
@@ -94,7 +98,7 @@ async function setup(activeSpace: 'code' | 'notes' | 'http' | 'tools' | null) {
       getNotesDashboard: vi.fn(async () => undefined),
     }),
     useNotesGraph: () => ({
-      getNotesGraph: vi.fn(async () => undefined),
+      getNotesGraph,
     }),
     normalizeNotesSelectionState,
     useNoteTags: () => ({
@@ -139,11 +143,12 @@ async function setup(activeSpace: 'code' | 'notes' | 'http' | 'tools' | null) {
   vi.doMock('@/router', () => ({
     RouterName: {
       main: 'main',
+      notesGraph: 'notes-graph',
       notesSpace: 'notes-space',
       notesPresentation: 'notes-space/presentation',
     },
     router: {
-      currentRoute: ref({ name: 'main' }),
+      currentRoute: ref({ name: routeName }),
       push: vi.fn(async () => undefined),
     },
   }))
@@ -161,6 +166,7 @@ async function setup(activeSpace: 'code' | 'notes' | 'http' | 'tools' | null) {
   registerSystemListeners()
 
   return {
+    getNotesGraph,
     getFolders,
     getTags,
     getNoteFolders,
@@ -258,5 +264,14 @@ describe('registerSystemListeners', () => {
     expect(context.isHttpSpaceInitialized.value).toBe(false)
     expect(context.getFolders).not.toHaveBeenCalled()
     expect(context.getNoteFolders).not.toHaveBeenCalled()
+  })
+})
+
+it('requests a post-sync graph refresh instead of joining a pre-sync read', async () => {
+  const context = await setup('notes', 'notes-graph')
+  context.ipcHandlers.get('system:storage-synced')?.(undefined)
+  await vi.advanceTimersByTimeAsync(300)
+  expect(context.getNotesGraph).toHaveBeenCalledExactlyOnceWith({
+    fresh: true,
   })
 })

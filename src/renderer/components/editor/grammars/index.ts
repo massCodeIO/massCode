@@ -1,9 +1,21 @@
 import type { GrammarOption, Language } from '../types'
 import { activateLanguage, addGrammar } from 'codemirror-textmate'
+import { loadWASM } from 'onigasm'
+import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
 import { auxGrammars } from './auxiliary-grammars'
 import { languages } from './languages'
 
-export async function loadGrammars() {
+let ready: Promise<void> | undefined
+
+export function loadGrammars() {
+  return (ready ??= initializeGrammars())
+}
+
+async function initializeGrammars() {
+  await loadWASM(onigasmFile)
+  // RST references these optional embedded languages; keep their bodies plain.
+  for (const scopeName of ['source.cmake', 'source.kconfig', 'source.dts'])
+    addGrammar(scopeName, { scopeName, patterns: [] })
   const grammars: Record<string, GrammarOption> = {}
 
   languages

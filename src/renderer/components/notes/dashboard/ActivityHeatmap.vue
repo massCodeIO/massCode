@@ -8,8 +8,11 @@ import { i18n } from '@/electron'
 import { useElementSize } from '@vueuse/core'
 import { getNotesHeatmapPalette } from '../shared/heatmapPalette'
 import {
+  getNotesHeatmapCells,
   getNotesHeatmapColor,
   getNotesHeatmapTooltipLines,
+  NOTES_HEATMAP_DAYS as GRID_DAYS,
+  NOTES_HEATMAP_WEEKS as GRID_WEEKS,
 } from './activityHeatmap'
 
 const props = defineProps<{
@@ -20,9 +23,6 @@ const { formatDate, locale } = useDateFormat()
 
 const { isDark } = useTheme()
 
-const DAY_MS = 24 * 60 * 60 * 1000
-const GRID_WEEKS = 53
-const GRID_DAYS = 7
 const DAY_LABELS = ['', 'Mon', '', 'Wed', '', 'Fri', '']
 const heatmapPalette = computed(() => getNotesHeatmapPalette(isDark.value))
 
@@ -33,34 +33,12 @@ const formatters = {
 const heatmapRef = ref<HTMLElement>()
 const { width: heatmapWidth } = useElementSize(heatmapRef)
 
-function getDayKey(date: Date) {
-  return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, '0'),
-    String(date.getDate()).padStart(2, '0'),
-  ].join('-')
-}
-
-const cells = computed(() => {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const start = new Date(
-    today.getTime() - (GRID_WEEKS * GRID_DAYS - 1) * DAY_MS,
-  )
-
-  return Array.from({ length: GRID_WEEKS * GRID_DAYS }, (_, index) => {
-    const timestamp = start.getTime() + index * DAY_MS
-    const date = new Date(timestamp)
-    const key = getDayKey(date)
-
-    return {
-      count: props.activity.days[key] ?? 0,
-      date,
-      key,
-      label: formatDate(date),
-    }
-  })
-})
+const cells = computed(() =>
+  getNotesHeatmapCells(props.activity.days).map(cell => ({
+    ...cell,
+    label: formatDate(cell.date),
+  })),
+)
 
 const weeks = computed(() =>
   Array.from({ length: GRID_WEEKS }, (_, weekIndex) =>

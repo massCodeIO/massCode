@@ -161,6 +161,7 @@ describe('createMainMenu', () => {
       'menu:view.layout.allPanels',
       'menu:view.layout.listEditor',
       'menu:view.layout.editorOnly',
+      'ui:ai.title',
       undefined,
       'menu:view.sortBy.label',
       'menu:view.sortBy.dateModified',
@@ -569,3 +570,50 @@ it('renders and dispatches the Notes inspector checkbox', async () => {
   item.click!()
   expect(send).toHaveBeenLastCalledWith('main-menu:toggle-notes-inspector')
 })
+
+it.each(['code', 'notes', 'http', null] as const)(
+  'exposes the AI accelerator for %s',
+  async (kind) => {
+    const { createMainMenu } = await import('../main')
+    const context = createNotesContext()
+    context.editor.kind = kind
+    createMainMenu(context)
+    const template = buildFromTemplate.mock.calls.at(-1)![0] as Array<{
+      label?: string
+      submenu?: unknown
+    }>
+    const view = template.find(item => item.label === 'menu:view.label')!
+    const items = view.submenu as Array<{
+      label?: string
+      enabled?: boolean
+      accelerator?: string
+      click?: () => void
+    }>
+    const assistant = items.find(item => item.label === 'ui:ai.title')!
+    expect(assistant.accelerator).toBe('CommandOrControl+L')
+    expect(assistant.enabled).toBe(kind !== null)
+    if (kind) {
+      assistant.click!()
+      expect(send).toHaveBeenLastCalledWith('main-menu:open-ai')
+    }
+  },
+)
+
+it.each([false, true])(
+  'enables Code Format only when renderer reports canFormat=%s',
+  async (canFormat) => {
+    const { createMainMenu } = await import('../main')
+    const context = createNotesContext()
+    context.editor.kind = 'code'
+    context.editor.canFormat = canFormat
+    buildFromTemplate.mockClear()
+    createMainMenu(context)
+    const template = buildFromTemplate.mock.calls[0]![0] as Array<{
+      submenu?: Array<{ label?: string, enabled?: boolean }>
+    }>
+    const format = template
+      .flatMap(item => item.submenu ?? [])
+      .find(item => item.label === 'menu:editor.format')
+    expect(format?.enabled).toBe(canFormat)
+  },
+)

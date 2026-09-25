@@ -18,7 +18,6 @@ import { LoaderCircle } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 import { Toaster } from 'vue-sonner'
 import { repository, version } from '../../package.json'
-import { loadGrammars } from './components/editor/grammars'
 import { registerIPCListeners } from './ipc'
 
 const { isAppLoading, isSponsored } = useApp()
@@ -215,7 +214,6 @@ async function init() {
   registerIPCListeners()
   ipc.send('system:renderer-ready', null, () => {})
   restoreSavedSpace()
-  await loadGrammars()
   useActivityTracker()
   useCopyTracker()
   if (!isSponsored.value) {

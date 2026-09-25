@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import type { Language } from '../types'
+import { escapeCode, highlightCode } from '@/components/ai/highlight'
 import { Switch } from '@/components/ui/shadcn/switch'
 import { useEditor, useSnippets } from '@/composables'
 import { useNativeExportBridge } from '@/composables/ai/nativeBridges'
 import { saveRenderedArtifact } from '@/composables/useRenderedArtifactExport'
 import { i18n } from '@/electron'
 import { useCssVar } from '@vueuse/core'
-import CodeMirror from 'codemirror'
 import domToImage from 'dom-to-image'
 import interact from 'interactjs'
 import { FileDown } from 'lucide-vue-next'
+import '@/components/cm-extensions/codeTokens.css'
 
 const {
   displayedSnippet,
@@ -47,64 +47,45 @@ const colorBorder = useCssVar('--color-code-bg-border', backgroundRef.value, {
   initialValue: 'oklch(30% 0 0)',
 })
 
-let editor: CodeMirror.Editor | null = null
-
+const highlighted = ref('')
+const renderedValue = ref('')
+let highlightPending: Promise<void> = Promise.resolve()
+let highlightRevision = 0
+watch(
+  displayedSnippetContent,
+  (content, _previous, onCleanup) => {
+    if (content && content.value === undefined)
+      return
+    highlightRevision++
+    let stale = false
+    onCleanup(() => {
+      stale = true
+    })
+    const value = content?.value ?? ''
+    renderedValue.value = value
+    highlighted.value = escapeCode(value)
+    highlightPending = highlightCode(
+      value,
+      content?.language ?? 'plain_text',
+    ).then((html) => {
+      if (!stale)
+        highlighted.value = html
+    })
+  },
+  { immediate: true },
+)
+const highlightedLines = computed(() => highlighted.value.split(/\r\n|\r|\n/))
+watch(isDarkPreview, () => {
+  colorBg.value = isDarkPreview.value ? 'oklch(24.78% 0 0)' : 'oklch(100% 0 0)'
+  colorBorder.value = isDarkPreview.value ? 'oklch(30% 0 0)' : 'oklch(90% 0 0)'
+})
 function init() {
-  editor = CodeMirror(editorRef.value!, {
-    value: displayedSnippetContent.value?.value ?? '',
-    mode: displayedSnippetContent.value?.language || 'plain_text',
-    theme: 'oceanic-next',
-    lineWrapping: settings.wrap,
-    lineNumbers: true,
-    matchBrackets: settings.matchBrackets,
-    scrollbarStyle: 'null',
-    readOnly: true,
-  })
-
-  // Отключаем выделение текста
-  editor.on('mousedown', (e) => {
-    // @ts-expect-error some
-    e.preventDefault()
-  })
-
-  watch(displayedSnippetContent, (v) => {
-    nextTick(() => {
-      // Тело фрагмента ещё загружается — не мигаем пустым изображением.
-      if (v && v.value === undefined) {
-        return
-      }
-
-      setValue(v?.value || '')
-    })
-  })
-
-  watch(displayedSnippetContent, (v) => {
-    nextTick(() => {
-      if (!v)
-        return
-      setLanguage(v.language as Language)
-    })
-  })
-
-  watch(isDarkPreview, (v) => {
-    if (v) {
-      editor?.setOption('theme', 'oceanic-next')
-    }
-    else {
-      editor?.setOption('theme', 'neo')
-    }
-    colorBg.value = isDarkPreview.value
-      ? 'oklch(24.78% 0 0)'
-      : 'oklch(100% 0 0)'
-    colorBorder.value = isDarkPreview.value
-      ? 'oklch(30% 0 0)'
-      : 'oklch(90% 0 0)'
-  })
-
-  nextTick(() => {
-    initInteract()
-  })
+  initInteract()
 }
+onBeforeUnmount(() => {
+  if (backgroundRef.value)
+    interact(backgroundRef.value).unset()
+})
 
 function initInteract() {
   if (!backgroundRef.value)
@@ -151,22 +132,6 @@ function initInteract() {
   })
 }
 
-function setValue(value: string) {
-  if (!editor)
-    return
-
-  const cursor = editor.getCursor()
-
-  editor?.setValue(value)
-
-  if (cursor)
-    editor.setCursor(cursor)
-}
-
-function setLanguage(language: Language) {
-  editor?.setOption('mode', language)
-}
-
 async function onSave(
   format: 'png' | 'svg',
   current: () => boolean = () => true,
@@ -183,8 +148,20 @@ async function onSave(
     return { status: 'stale' as const }
   }
   const baseline = content.value
+  const language = content.language
+  const revision = highlightRevision
+  const isCurrent = () =>
+    current()
+    && revision === highlightRevision
+    && selectedSnippetRecordStatus.value === 'ready'
+    && selectedSnippet.value?.id === snippet.id
+    && displayedSnippet.value?.id === snippet.id
+    && displayedSnippetContent.value?.id === content.id
+    && displayedSnippetContent.value?.language === language
+    && displayedSnippetContent.value?.value === baseline
+  await highlightPending
   await nextTick()
-  if (!current() || editor?.getValue() !== baseline)
+  if (!isCurrent() || renderedValue.value !== baseline)
     return { status: 'stale' as const }
   return saveRenderedArtifact(
     format,
@@ -210,13 +187,7 @@ async function onSave(
 
       return data
     },
-    () =>
-      current()
-      && selectedSnippetRecordStatus.value === 'ready'
-      && selectedSnippet.value?.id === snippet.id
-      && displayedSnippet.value?.id === snippet.id
-      && displayedSnippetContent.value?.id === content.id
-      && displayedSnippetContent.value?.value === baseline,
+    isCurrent,
   )
 }
 
@@ -230,7 +201,7 @@ useNativeExportBridge(
   async (action, current) => {
     if (
       action.action !== 'codeImageConfigure'
-      || !editor
+      || !editorRef.value
       || !containerRef.value
     ) {
       return { status: 'unavailable' }
@@ -393,8 +364,28 @@ useNativeExportBridge(
             </div>
             <div
               ref="editorRef"
-              class="p-2 select-none"
-            />
+              class="code-image-source p-2 select-none"
+              :class="isDarkPreview ? 'cm-s-oceanic-next' : 'cm-s-neo'"
+              :style="{
+                fontFamily: settings.fontFamily,
+                fontSize: `${settings.fontSize}px`,
+                tabSize: settings.tabSize,
+              }"
+            >
+              <div
+                v-for="(line, index) in highlightedLines"
+                :key="index"
+                class="code-image-line"
+              >
+                <span class="code-image-number">{{ index + 1 }}</span>
+                <pre
+                  :style="{
+                    whiteSpace: settings.wrap ? 'pre-wrap' : 'pre',
+                    overflowWrap: settings.wrap ? 'anywhere' : undefined,
+                  }"
+                ><code v-html="line || '&#8203;'" /></pre>
+              </div>
+            </div>
           </div>
           <div
             data-controls="resize"
@@ -440,9 +431,25 @@ useNativeExportBridge(
 [data-editor-code-image] {
   --color-bg-transparent: oklch(50% 0 0);
 
-  .CodeMirror,
-  .CodeMirror-gutters {
-    background-color: var(--color-code-bg-preview) !important;
+  .code-image-source {
+    line-height: 1.5;
+  }
+  .code-image-line {
+    display: flex;
+    align-items: baseline;
+  }
+  .code-image-number {
+    min-width: 3em;
+    padding-right: 1em;
+    opacity: 0.5;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .code-image-line pre {
+    margin: 0;
+    min-width: 0;
+    font: inherit;
+    flex: 1;
   }
 
   .transparent {

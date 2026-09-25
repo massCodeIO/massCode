@@ -418,7 +418,7 @@
           "name": "markup.underline.link",
           "match": "(?:http(s)?:\\/\\/)?[\\w.-]+(?:\\.[\\w\\.-]+)+[\\w\\-\\._~:\\/?#\\[\\]@!\\$&'\\(\\)\\*\\+,;=.]+"
         },
-        { "name": "invalid.illegal.characters-not-allowed-here", "match": ".*" }
+        { "name": "invalid.illegal.characters-not-allowed-here", "match": ".+" }
       ]
     }
   }

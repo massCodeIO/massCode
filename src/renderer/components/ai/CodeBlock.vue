@@ -4,8 +4,7 @@ import { useTheme } from '@/composables/useTheme'
 import { i18n } from '@/electron'
 import { Copy } from 'lucide-vue-next'
 import { escapeCode, highlightCode } from './highlight'
-import 'codemirror/theme/neo.css'
-import 'codemirror/theme/oceanic-next.css'
+import '@/components/cm-extensions/codeTokens.css'
 
 const props = defineProps<{ code: string, language: string }>()
 const copy = useCopyToClipboard()

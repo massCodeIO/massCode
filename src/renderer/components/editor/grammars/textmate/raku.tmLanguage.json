@@ -9,6 +9,10 @@
   "scopeName": "source.perl.6",
   "patterns": [
     {
+      "match": "(?<![$@%])\\b(?:0[xX][0-9a-fA-F](?:_?[0-9a-fA-F])*|0[oO][0-7](?:_?[0-7])*|0[bB][01](?:_?[01])*|[0-9](?:_?[0-9])*(?:\\.[0-9](?:_?[0-9])*)?(?:[eE][+-]?[0-9](?:_?[0-9])*)?)\\b",
+      "name": "constant.numeric.raku"
+    },
+    {
       "begin": "^=begin",
       "end": "^=end",
       "name": "comment.block.perl"
@@ -47,7 +51,7 @@
       "name": "meta.class.perl.6"
     },
     {
-      "begin": "(?<=\\s)'",
+      "begin": "(?<!\\w)'",
       "beginCaptures": {
         "0": {
           "name": "punctuation.definition.string.begin.perl"
@@ -184,7 +188,7 @@
       ]
     },
     {
-      "match": "\\b\\$\\w+\\b",
+      "match": "\\$[0-9]+\\b",
       "name": "variable.other.perl"
     },
     {

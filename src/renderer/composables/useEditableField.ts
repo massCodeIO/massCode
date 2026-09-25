@@ -3,9 +3,11 @@ type SourceFn = () => string | undefined
 export function useEditableField(
   source: SourceFn,
   onUpdate: (value: string) => void,
+  updateOnBlur = false,
 ) {
   const localValue = ref('')
   const isFocused = ref(false)
+  let sourceAtFocus: string | undefined
 
   watch(
     source,
@@ -21,16 +23,29 @@ export function useEditableField(
     get: () => localValue.value,
     set: (v: string) => {
       localValue.value = v
-      onUpdate(v)
+      if (!updateOnBlur) {
+        onUpdate(v)
+      }
     },
   })
 
   function onFocus() {
     isFocused.value = true
+    sourceAtFocus = source()
   }
 
   function onBlur() {
     isFocused.value = false
+    if (updateOnBlur && source() !== sourceAtFocus) {
+      reset()
+      return
+    }
+    if (
+      updateOnBlur
+      && localValue.value !== (sourceAtFocus ?? '')
+    ) {
+      onUpdate(localValue.value)
+    }
   }
 
   function reset() {

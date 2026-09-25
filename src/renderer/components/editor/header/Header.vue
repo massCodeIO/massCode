@@ -67,6 +67,7 @@ function hasSiblingSnippetNameConflict(value: string, excludeId: number) {
 
 const isShowDescription = ref(false)
 const isNameFocused = ref(false)
+let editingSnippetId: number | undefined
 
 const {
   model: name,
@@ -84,6 +85,7 @@ const {
       selectedSnippetRecordStatus.value !== 'ready'
       || !selectedSnippet.value
       || selectedSnippet.value.id !== displayedSnippet.value?.id
+      || selectedSnippet.value.id !== editingSnippetId
     ) {
       return
     }
@@ -96,6 +98,7 @@ const {
       name: v.trim(),
     })
   },
+  true,
 )
 
 const nameValidationIssue = computed(() =>
@@ -153,11 +156,16 @@ const isNameValidationTooltipOpen = computed(() => {
 
 function onSnippetNameFocus() {
   isNameFocused.value = true
+  editingSnippetId = displayedSnippet.value?.id
   onNameFocus()
 }
 
 function onNameBlur() {
-  if (nameValidationIssue.value || hasNameConflict.value) {
+  if (
+    editingSnippetId !== displayedSnippet.value?.id
+    || nameValidationIssue.value
+    || hasNameConflict.value
+  ) {
     resetName()
   }
 

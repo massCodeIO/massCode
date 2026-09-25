@@ -172,15 +172,12 @@ onMounted(() => {
           </UiActionButton>
         </div>
       </div>
-      <UiText
+      <UiAlert
         v-if="!ready"
-        as="p"
-        variant="sm"
-        muted
-        class="break-words"
+        variant="warning"
       >
         {{ i18n.t("ai.setupHint") }}
-      </UiText>
+      </UiAlert>
     </div>
     <div
       ref="scroll"

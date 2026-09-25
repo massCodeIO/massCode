@@ -45,7 +45,7 @@ Use [Clipper](/documentation/clipper) to save selected text, readable page conte
 
 ## AI Assistant
 
-Use [AI Assistant](/documentation/ai) across Code, Notes and HTTP with your own cloud provider or local model. Ask about attached content, find records in your vault, review code edits, or analyze HTTP responses and add checks.
+Use [AI Assistant](/documentation/ai) with your own provider or local model to edit snippets, organize notes and tasks, run HTTP workflows, and find records across your vault. Ask for a preview before edits or let it apply them directly.
 
 ## MCP
 

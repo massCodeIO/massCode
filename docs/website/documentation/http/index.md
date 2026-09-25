@@ -76,7 +76,7 @@ Requests live as Markdown files under `http` in your vault. Saved collection con
 
 ## AI Assistant
 
-Use [AI Assistant](/documentation/ai#analyze-an-http-response-and-add-checks) to analyze the current request and latest response, assess existing checks and review proposed assertions before adding them to the draft.
+Use [AI Assistant](/documentation/ai#run-http-workflows) to create and edit requests, add response checks, run collections with confirmation, and save reports in Notes. Changes to the open draft still need Save; adding checks alone does not send the request.
 
 <script setup>
 import { withBase } from 'vitepress'

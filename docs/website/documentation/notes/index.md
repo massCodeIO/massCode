@@ -131,7 +131,7 @@ Customize the editor appearance and behavior in preferences:
 
 ## AI Assistant
 
-Use [AI Assistant](/documentation/ai) to summarize notes, compare saved records and find related content across Code, Notes and HTTP. Open the AI assistant tab in the inspector to get started.
+Use [AI Assistant](/documentation/ai) to write and organize notes, update task status and due dates, or find related records. Open the AI assistant tab in the inspector and describe the task. Ask for a preview if you want to review edits before applying them.
 
 <script setup>
 import { withBase } from 'vitepress'

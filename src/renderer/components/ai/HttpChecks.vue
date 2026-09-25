@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { AiHttpProposal } from '~/shared/aiHttp'
 import { i18n } from '@/electron'
-import { ChevronRight } from 'lucide-vue-next'
 
 defineProps<{ proposal: AiHttpProposal, showEvidence?: boolean }>()
 </script>
@@ -32,28 +31,15 @@ defineProps<{ proposal: AiHttpProposal, showEvidence?: boolean }>()
       show-evidence
     />
   </div>
-  <details
+  <UiDisclosure
     v-else
-    class="group min-w-0 rounded-md border"
+    content-class="p-0"
   >
-    <summary
-      class="focus-visible:outline-ring flex cursor-pointer list-none items-center gap-2 rounded-md px-3 py-2 focus-visible:outline-2 [&::-webkit-details-marker]:hidden"
-    >
-      <ChevronRight
-        class="text-muted-foreground size-3.5 shrink-0 group-open:rotate-90"
-        aria-hidden="true"
-      />
-      <UiText
-        variant="sm"
-        weight="medium"
-      >
-        {{
-          i18n.t("ai.http.proposedCount", { count: proposal.assertions.length })
-        }}
-      </UiText>
-    </summary>
-    <div class="border-t">
-      <AiHttpChecksTable :proposal="proposal" />
-    </div>
-  </details>
+    <template #title>
+      {{
+        i18n.t("ai.http.proposedCount", { count: proposal.assertions.length })
+      }}
+    </template>
+    <AiHttpChecksTable :proposal="proposal" />
+  </UiDisclosure>
 </template>

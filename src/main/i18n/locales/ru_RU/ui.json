@@ -1745,6 +1745,31 @@
         "expires": "Срок действия",
         "secure": "Только HTTPS",
         "httpOnly": "HttpOnly"
+      },
+      "titles": {
+        "send": "отправка запроса",
+        "patchDraft": "изменение черновика",
+        "saveDraft": "сохранение черновика",
+        "discardDraft": "сброс черновика",
+        "runCollection": "запуск коллекции",
+        "connectWebSocket": "подключение WebSocket",
+        "sendWebSocket": "отправка WebSocket-сообщения",
+        "clearWebSocket": "очистка журнала WebSocket",
+        "clearHistory": "очистка истории HTTP",
+        "clearConsole": "очистка консоли HTTP",
+        "clearSession": "очистка переменных сессии",
+        "clearCookies": "очистка cookies",
+        "cookieCreate": "создание cookie",
+        "cookieMetadata": "изменение cookie",
+        "cookieDelete": "удаление cookie",
+        "cookieDomainAdd": "добавление домена cookie",
+        "cookieDomainDelete": "удаление домена cookie",
+        "cookiesEnabled": "изменение использования cookies",
+        "scriptTrust": "изменение доверия скриптам",
+        "protectVariable": "защита переменной",
+        "unprotectVariable": "снятие защиты переменной",
+        "patchAndSend": "изменение и отправка запроса",
+        "saveAndSend": "сохранение и отправка запроса"
       }
     },
     "workspaceContext": "{{space}}: выбрано {{count}}",
@@ -1787,7 +1812,7 @@
       "irreversible": "Эта задача включает действия, которые нельзя отменить."
     },
     "native": {
-      "previewExecution": "Открытие preview запускает код сниппета в его песочнице.",
+      "previewExecution": "Код сниппета будет выполнен в изолированной среде.",
       "pending": "Ожидает подтверждения",
       "running": "Выполняется",
       "done": "Выполнено",
@@ -1888,7 +1913,95 @@
       "createKinds": {
         "note": "Заметка",
         "task": "Задача"
-      }
-    }
+      },
+      "titles": {
+        "navigate": "открытие записи",
+        "history": "переход по истории",
+        "openSpace": "открытие пространства",
+        "copy": "копирование",
+        "setView": "смена представления",
+        "findInContent": "поиск в тексте",
+        "format": "форматирование",
+        "exportView": "экспорт",
+        "readPreferences": "чтение настроек",
+        "setPreferences": "изменение настроек",
+        "httpPanel": "открытие панели HTTP",
+        "editorCommand": "форматирование текста",
+        "notesInspector": "открытие инспектора",
+        "notesPage": "открытие страницы заметок",
+        "listView": "изменение вида списка",
+        "insertNoteImage": "вставка изображения",
+        "readDrawings": "поиск рисунков",
+        "insertDrawing": "вставка рисунка",
+        "notesSection": "переход или перенос раздела",
+        "presentation": "управление презентацией",
+        "storage": "операция с хранилищем",
+        "configureAi": "настройка ИИ",
+        "readFolderIcons": "поиск иконок папок",
+        "folderIcon": "изменение иконки папки",
+        "codeImageConfigure": "настройка изображения кода",
+        "jsonVisualizer": "настройка JSON-графа",
+        "mindmap": "настройка интеллект-карты",
+        "notesGraph": "настройка графа заметок",
+        "httpView": "просмотр или копирование HTTP-данных",
+        "httpDevtools": "управление HTTP-инструментами",
+        "reveal": "открытие в файловом менеджере",
+        "themeAction": "управление темами",
+        "reload": "перезагрузка приложения",
+        "cleanupCompletedTasks": "очистка завершённых задач",
+        "openDrawingEmbed": "открытие рисунка",
+        "codePreview": "управление предпросмотром",
+        "chooseHttpFile": "выбор файла запроса",
+        "enterHttpSecret": "ввод секретного значения",
+        "notesLibrary": "открытие списка задач",
+        "notesReveal": "переход к элементу заметки",
+        "httpDock": "изменение размера HTTP-панели",
+        "readNotesDashboard": "чтение статистики заметок",
+        "listQuery": "фильтрация списка",
+        "listSelection": "выбор записей",
+        "httpOverview": "обзор HTTP-коллекции",
+        "httpRunner": "управление запуском коллекции"
+      },
+      "openPreview": "Открыть предпросмотр"
+    },
+    "actionTitle": {
+      "pending": "{{action}}",
+      "running": "Выполняется: {{action}}",
+      "done": "Завершено: {{action}}",
+      "cancelled": "Отменено: {{action}}",
+      "failed": "Не удалось выполнить: {{action}}",
+      "stale": "Цель изменилась: {{action}}",
+      "unavailable": "Недоступно: {{action}}"
+    },
+    "previewTitle": {
+      "pending": "Открыть предпросмотр?",
+      "running": "Открываю предпросмотр…",
+      "done": "Предпросмотр открыт",
+      "cancelled": "Открытие предпросмотра отменено",
+      "failed": "Не удалось открыть предпросмотр",
+      "stale": "Цель предпросмотра изменилась",
+      "unavailable": "Предпросмотр недоступен"
+    },
+    "recordTitle": {
+      "pending": "Открыть запись?",
+      "running": "Открываю запись…",
+      "done": "Запись открыта",
+      "cancelled": "Открытие записи отменено",
+      "failed": "Не удалось открыть запись",
+      "stale": "Цель перехода изменилась",
+      "unavailable": "Запись недоступна"
+    },
+    "sendTitle": {
+      "pending": "Отправить запрос?",
+      "running": "Отправляю запрос…",
+      "done": "Запрос выполнен",
+      "cancelled": "Отправка запроса отменена",
+      "failed": "Не удалось выполнить запрос",
+      "stale": "Запрос изменился",
+      "unavailable": "Запрос недоступен"
+    },
+    "sentSelection": "Выбрано записей: {{count}}",
+    "sentFragment": "Выделенный фрагмент",
+    "sentWholeContent": "Всё содержимое редактора"
   }
 }

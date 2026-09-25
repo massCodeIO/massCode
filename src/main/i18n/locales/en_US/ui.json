@@ -1740,6 +1740,31 @@
         "expires": "Expires",
         "secure": "HTTPS only",
         "httpOnly": "HttpOnly"
+      },
+      "titles": {
+        "send": "sending a request",
+        "patchDraft": "changing the draft",
+        "saveDraft": "saving the draft",
+        "discardDraft": "discarding the draft",
+        "runCollection": "running a collection",
+        "connectWebSocket": "connecting a WebSocket",
+        "sendWebSocket": "sending a WebSocket message",
+        "clearWebSocket": "clearing the WebSocket log",
+        "clearHistory": "clearing HTTP history",
+        "clearConsole": "clearing the HTTP console",
+        "clearSession": "clearing session variables",
+        "clearCookies": "clearing cookies",
+        "cookieCreate": "creating a cookie",
+        "cookieMetadata": "changing a cookie",
+        "cookieDelete": "deleting a cookie",
+        "cookieDomainAdd": "adding a cookie domain",
+        "cookieDomainDelete": "deleting a cookie domain",
+        "cookiesEnabled": "changing cookie usage",
+        "scriptTrust": "changing script trust",
+        "protectVariable": "protecting a variable",
+        "unprotectVariable": "unprotecting a variable",
+        "patchAndSend": "changing and sending a request",
+        "saveAndSend": "saving and sending a request"
       }
     },
     "workspaceContext": "{{space}}: {{count}} selected",
@@ -1782,7 +1807,7 @@
       "irreversible": "This task includes actions that cannot be undone."
     },
     "native": {
-      "previewExecution": "Opening this preview runs the snippet’s code in its sandbox.",
+      "previewExecution": "The snippet’s code will run in an isolated environment.",
       "pending": "Waiting for confirmation",
       "running": "In progress",
       "done": "Completed",
@@ -1883,7 +1908,95 @@
       "createKinds": {
         "note": "Note",
         "task": "Task"
-      }
-    }
+      },
+      "titles": {
+        "navigate": "opening a record",
+        "history": "history navigation",
+        "openSpace": "opening a workspace",
+        "copy": "copying",
+        "setView": "changing the view",
+        "findInContent": "finding text",
+        "format": "formatting",
+        "exportView": "exporting",
+        "readPreferences": "reading settings",
+        "setPreferences": "changing settings",
+        "httpPanel": "opening the HTTP panel",
+        "editorCommand": "formatting text",
+        "notesInspector": "opening the inspector",
+        "notesPage": "opening a notes page",
+        "listView": "changing the list view",
+        "insertNoteImage": "inserting an image",
+        "readDrawings": "finding drawings",
+        "insertDrawing": "inserting a drawing",
+        "notesSection": "opening or moving a section",
+        "presentation": "controlling the presentation",
+        "storage": "a storage operation",
+        "configureAi": "configuring AI",
+        "readFolderIcons": "finding folder icons",
+        "folderIcon": "changing a folder icon",
+        "codeImageConfigure": "configuring a code image",
+        "jsonVisualizer": "adjusting the JSON graph",
+        "mindmap": "adjusting the mind map",
+        "notesGraph": "adjusting the notes graph",
+        "httpView": "viewing or copying HTTP data",
+        "httpDevtools": "managing HTTP tools",
+        "reveal": "revealing a file",
+        "themeAction": "managing themes",
+        "reload": "reloading the application",
+        "cleanupCompletedTasks": "cleaning up completed tasks",
+        "openDrawingEmbed": "opening a drawing",
+        "codePreview": "controlling the preview",
+        "chooseHttpFile": "choosing a request file",
+        "enterHttpSecret": "entering a secret value",
+        "notesLibrary": "opening a task list",
+        "notesReveal": "revealing a note element",
+        "httpDock": "resizing the HTTP panel",
+        "readNotesDashboard": "reading notes statistics",
+        "listQuery": "filtering the list",
+        "listSelection": "selecting records",
+        "httpOverview": "reviewing an HTTP collection",
+        "httpRunner": "controlling a collection run"
+      },
+      "openPreview": "Open preview"
+    },
+    "actionTitle": {
+      "pending": "{{action}}",
+      "running": "In progress: {{action}}",
+      "done": "Completed: {{action}}",
+      "cancelled": "Cancelled: {{action}}",
+      "failed": "Failed: {{action}}",
+      "stale": "Target changed: {{action}}",
+      "unavailable": "Unavailable: {{action}}"
+    },
+    "previewTitle": {
+      "pending": "Open preview?",
+      "running": "Opening preview…",
+      "done": "Preview opened",
+      "cancelled": "Opening preview cancelled",
+      "failed": "Could not open preview",
+      "stale": "Preview target changed",
+      "unavailable": "Preview unavailable"
+    },
+    "recordTitle": {
+      "pending": "Open record?",
+      "running": "Opening record…",
+      "done": "Record opened",
+      "cancelled": "Opening record cancelled",
+      "failed": "Could not open record",
+      "stale": "Navigation target changed",
+      "unavailable": "Record unavailable"
+    },
+    "sendTitle": {
+      "pending": "Send request?",
+      "running": "Sending request…",
+      "done": "Request completed",
+      "cancelled": "Request cancelled",
+      "failed": "Request failed",
+      "stale": "Request changed",
+      "unavailable": "Request unavailable"
+    },
+    "sentSelection": "Selected records: {{count}}",
+    "sentFragment": "Selected text",
+    "sentWholeContent": "Entire editor content"
   }
 }

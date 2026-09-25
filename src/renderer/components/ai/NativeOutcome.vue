@@ -10,12 +10,9 @@ defineProps<{ result: Omit<AiNativeResult, 'id'> }>()
     class="space-y-1"
     role="status"
   >
-    <UiText
-      as="p"
-      variant="caption"
-    >
+    <UiStatus :state="result.status">
       {{ i18n.t(`ai.native.${result.status}`) }}
-    </UiText>
+    </UiStatus>
     <UiText
       v-if="result.reloadRequested"
       as="p"

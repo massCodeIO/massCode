@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/shadcn/button'
 import { useAi } from '@/composables/ai/useAi'
 import { useHttpRunner } from '@/composables/spaces/http/useHttpRunner'
 import { i18n, store } from '@/electron'
+import { actionTitle } from './actionTitle'
 
 const props = defineProps<{ message: ChatMessage, action: AiHttpActionView }>()
 const { applyHttpAction, cancelHttpAction, canPerformHttpAction } = useAi()
@@ -105,17 +106,19 @@ async function cancel() {
       as="p"
       variant="sm"
     >
-      {{ action.summary }}
+      {{ actionTitle("httpActions", action.action, action.state) }}
     </UiText>
-    <UiText
-      as="p"
-      variant="caption"
-      muted
-      role="status"
-    >
-      {{ i18n.t(`ai.httpActions.states.${action.state}`) }} ·
-      {{ i18n.t(`ai.httpActions.sources.${action.source}`) }}
-    </UiText>
+    <div class="flex flex-wrap items-start gap-x-2 gap-y-1">
+      <UiStatus :state="action.state">
+        {{ i18n.t(`ai.httpActions.states.${action.state}`) }}
+      </UiStatus>
+      <UiText
+        variant="caption"
+        muted
+      >
+        {{ i18n.t(`ai.httpActions.sources.${action.source}`) }}
+      </UiText>
+    </div>
     <template v-if="action.state === 'pending'">
       <AiHttpRequestPreview
         v-if="action.request"
@@ -322,13 +325,16 @@ async function cancel() {
       v-if="showDiagnostics"
       class="scrollbar max-h-64 space-y-2 overflow-auto"
     >
-      <pre class="text-xs break-all whitespace-pre-wrap">{{ previewText }}</pre>
-      <pre
+      <AiCodeBlock
+        v-if="previewText"
+        :code="previewText"
+        language="json"
+      />
+      <AiCodeBlock
         v-if="action.result"
-        class="text-xs break-all whitespace-pre-wrap"
-      >{{
-        resultText
-      }}</pre>
+        :code="resultText ?? ''"
+        language="json"
+      />
     </div>
   </div>
 </template>

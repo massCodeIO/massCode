@@ -152,24 +152,22 @@ async function undo(index: number) {
   >
     {{ i18n.t("ai.workspace.review") }}
   </Button>
-  <UiText
+  <UiStatus
     v-if="message.applied"
-    variant="caption"
-    muted
+    state="applied"
   >
     {{ i18n.t("ai.workspace.applied") }}
-  </UiText>
-  <UiText
+  </UiStatus>
+  <UiStatus
     v-else-if="message.rejected"
-    variant="caption"
-    muted
+    state="rejected"
   >
     {{
       i18n.t(
         applied.length ? "ai.workspace.remainingRejected" : "ai.edit.rejected",
       )
     }}
-  </UiText>
+  </UiStatus>
   <Dialog.Dialog v-model:open="open">
     <Dialog.DialogContent
       :zoom="false"

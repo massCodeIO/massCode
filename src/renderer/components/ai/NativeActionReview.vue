@@ -6,12 +6,36 @@ import { preferenceReview } from '@/composables/ai/preferenceReview'
 import { useAi } from '@/composables/ai/useAi'
 import { i18n } from '@/electron'
 import { isBoundaryNativeAction } from '~/shared/aiNativeActions'
+import { nativeActionTitle } from './actionTitle'
 
 const props = defineProps<{
   message: ChatMessage
   action: AiNativeActionView
 }>()
 const { applyNativeAction, cancelNativeAction, isStreaming } = useAi()
+const targetItem = computed(() => {
+  const operation = props.action.operation
+  if (!operation || !('target' in operation))
+    return undefined
+  const target = operation.target
+  const type
+    = target.space === 'code'
+      ? 'snippet'
+      : target.space === 'notes'
+        ? 'note'
+        : 'http_request'
+  const items = [
+    ...(props.message.attachments ?? []),
+    ...(props.message.searchResults ?? []).flatMap(result => result.items),
+    ...(props.message.workspaceItems ?? []),
+    ...(props.message.workspaceCreations ?? []).flatMap(creation =>
+      creation.items.filter(
+        item => !creation.undone.includes(item.operationIndex),
+      ),
+    ),
+  ]
+  return items.find(item => item.type === type && item.id === target.id)
+})
 const preference = computed(() =>
   props.action.operation?.action === 'setPreferences'
     ? preferenceReview(props.action.operation.change)
@@ -47,10 +71,14 @@ async function perform(accept: boolean) {
       as="p"
       variant="sm"
     >
-      {{ action.summary }}
+      {{ nativeActionTitle(action.operation, action.status) }}
     </UiText>
+    <AiVaultLink
+      v-if="targetItem"
+      :item="targetItem"
+    />
     <UiText
-      v-if="'target' in action.operation"
+      v-else-if="'target' in action.operation"
       as="p"
       variant="caption"
       muted
@@ -118,14 +146,9 @@ async function perform(accept: boolean) {
     >
       {{ i18n.t("ai.native.reloadRequired") }}
     </UiText>
-    <UiText
-      as="p"
-      variant="caption"
-      muted
-      role="status"
-    >
+    <UiStatus :state="action.status">
       {{ i18n.t(`ai.native.${action.status}`) }}
-    </UiText>
+    </UiStatus>
     <UiText
       v-if="action.result?.filePath"
       as="p"
@@ -147,7 +170,14 @@ async function perform(accept: boolean) {
         :disabled="busy"
         @click="perform(true)"
       >
-        {{ i18n.t(`ai.native.actions.${action.operation.action}`) }}
+        {{
+          i18n.t(
+            action.operation.action === "setView"
+              && action.operation.view === "codePreview"
+              ? "ai.native.openPreview"
+              : `ai.native.actions.${action.operation.action}`,
+          )
+        }}
       </Button>
       <Button
         size="sm"

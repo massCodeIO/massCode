@@ -30,6 +30,13 @@ const rows = computed(() =>
       index,
       name: change.name,
       applied,
+      state: undone
+        ? 'cancelled'
+        : applied
+          ? 'done'
+          : props.creation.failedOperationIndex === index
+            ? 'failed'
+            : 'pending',
       label: i18n.t(
         `ai.workspace.${undone ? 'creationUndone' : applied ? createdKey : props.creation.failedOperationIndex === index ? 'creationFailed' : 'creationNotAttempted'}`,
       ),
@@ -69,12 +76,9 @@ async function undo(index: number) {
       :key="row.index"
       class="space-y-1"
     >
-      <UiText
-        as="p"
-        variant="sm"
-      >
+      <UiStatus :state="row.state">
         {{ row.label }}
-      </UiText>
+      </UiStatus>
       <div class="flex flex-wrap items-baseline gap-2">
         <AiVaultLink
           v-if="row.item"

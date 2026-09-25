@@ -22,20 +22,18 @@ function reject() {
 </script>
 
 <template>
-  <UiText
+  <UiStatus
     v-if="message.applied"
-    variant="caption"
-    muted
+    state="applied"
   >
     {{ i18n.t("ai.http.applied") }}
-  </UiText>
-  <UiText
+  </UiStatus>
+  <UiStatus
     v-else-if="message.rejected"
-    variant="caption"
-    muted
+    state="rejected"
   >
     {{ i18n.t("ai.edit.rejected") }}
-  </UiText>
+  </UiStatus>
   <template v-else-if="message.mutationId || message.status === 'done'">
     <Button
       variant="outline"

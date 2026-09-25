@@ -131,20 +131,12 @@ onMounted(() => {
       >
         {{ i18n.t("ai.title") }}
       </UiText>
-      <div class="flex gap-1">
-        <UiActionButton
-          :tooltip="i18n.t('ai.settings')"
-          @click="router.push({ name: RouterName.preferencesAI })"
-        >
-          <Settings class="size-4" />
-        </UiActionButton>
-        <UiActionButton
-          :tooltip="i18n.t('action.close')"
-          @click="setOpen(false)"
-        >
-          <X class="size-4" />
-        </UiActionButton>
-      </div>
+      <UiActionButton
+        :tooltip="i18n.t('action.close')"
+        @click="setOpen(false)"
+      >
+        <X class="size-4" />
+      </UiActionButton>
     </div>
     <div class="shrink-0 space-y-2 px-3 py-2">
       <div class="flex items-center justify-between gap-2">
@@ -164,7 +156,6 @@ onMounted(() => {
             <SquarePen class="size-4" />
           </UiActionButton>
           <UiActionButton
-            v-if="embedded"
             :tooltip="i18n.t('ai.settings')"
             @click="router.push({ name: RouterName.preferencesAI })"
           >

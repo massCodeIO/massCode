@@ -46,7 +46,9 @@ async function submit(value: string) {
       {{ i18n.t("ai.task.stopped") }}
     </UiText>
     <div
-      v-for="(text, index) in message.steering"
+      v-for="(text, index) in message.status === 'streaming'
+        ? []
+        : message.steering"
       :key="index"
       class="bg-muted rounded-md px-3 py-2"
     >

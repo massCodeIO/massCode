@@ -32,6 +32,11 @@ function queueDraft() {
   if (enqueue(prompt))
     history.remember(prompt)
 }
+const steering = computed(() =>
+  isStreaming.value
+    ? (conversation.value?.messages.at(-1)?.steering ?? [])
+    : [],
+)
 const busy = ref(false)
 const failed = ref(false)
 const canSend = computed(
@@ -96,70 +101,95 @@ function onKeydown(event: KeyboardEvent) {
         {{ i18n.t("ai.task.removeQueue") }}
       </Button>
     </div>
-    <UiText
-      v-if="failed"
-      as="p"
-      variant="caption"
-      class="text-destructive"
-      role="alert"
-    >
-      {{ i18n.t("ai.task.messageFailed") }}
-    </UiText>
-    <div
-      class="border-input bg-background focus-within:border-ring overflow-hidden rounded-lg border shadow-xs"
-    >
-      <Textarea
-        v-model="draft"
-        data-ai-prompt
-        variant="ghost"
-        :rows="1"
-        class="scrollbar max-h-48 min-h-10 resize-none rounded-none px-3 py-2 text-sm"
-        :placeholder="i18n.t('ai.placeholder')"
-        :aria-label="i18n.t('ai.placeholder')"
-        @keydown="onKeydown"
-        @input="history.onInput()"
-      />
-      <div class="bg-muted/40 flex items-end gap-2 border-t px-2 py-1.5">
-        <AiContextPicker class="min-w-0 flex-1" />
-        <Button
-          v-if="isStreaming"
-          size="icon"
-          variant="secondary"
-          class="size-7 shrink-0"
-          :aria-label="i18n.t('ai.stop')"
-          :title="i18n.t('ai.stop')"
-          @click="cancel"
+    <div>
+      <div
+        v-if="steering.length"
+        class="border-input bg-muted/40 scrollbar mx-2 max-h-32 overflow-y-auto rounded-t-lg border border-b-0"
+        role="status"
+        :aria-label="i18n.t('ai.task.steering')"
+      >
+        <div
+          v-for="(text, index) in steering"
+          :key="index"
+          class="border-input border-b px-3 py-2 last:border-b-0"
         >
-          <Square class="size-3 fill-current" />
-        </Button>
-        <Button
-          v-if="isStreaming && draft.trim()"
-          variant="outline"
-          size="sm"
-          :disabled="busy || (conversation?.queue?.length ?? 0) >= 8"
-          @click="queueDraft"
+          <UiText
+            as="p"
+            variant="caption"
+            muted
+          >
+            {{ i18n.t("ai.task.steering") }}
+          </UiText>
+          <UiText
+            as="p"
+            variant="sm"
+            class="break-words whitespace-pre-wrap"
+          >
+            {{ text }}
+          </UiText>
+        </div>
+      </div>
+      <div
+        v-if="failed"
+        class="border-input bg-muted/40 mx-2 rounded-t-lg border border-b-0 px-3 py-1.5"
+        role="alert"
+      >
+        <UiText
+          as="p"
+          variant="caption"
+          class="text-destructive"
         >
-          {{ i18n.t("ai.task.queue") }}
-        </Button>
-        <Button
-          size="icon"
-          class="size-7 shrink-0"
-          :disabled="!canSend"
-          :aria-label="i18n.t(isStreaming ? 'ai.task.steer' : 'ai.send')"
-          :title="i18n.t(isStreaming ? 'ai.task.steer' : 'ai.send')"
-          @click="submit"
-        >
-          <ArrowUp class="size-4" />
-        </Button>
+          {{ i18n.t("ai.task.messageFailed") }}
+        </UiText>
+      </div>
+      <div
+        class="border-input bg-background focus-within:border-ring overflow-hidden rounded-lg border shadow-xs"
+      >
+        <Textarea
+          v-model="draft"
+          data-ai-prompt
+          variant="ghost"
+          :rows="1"
+          class="scrollbar max-h-48 min-h-10 resize-none rounded-none px-3 py-2 text-sm"
+          :placeholder="i18n.t('ai.placeholder')"
+          :aria-label="i18n.t('ai.placeholder')"
+          @keydown="onKeydown"
+          @input="history.onInput()"
+        />
+        <div class="bg-muted/40 flex items-end gap-2 border-t px-2 py-1.5">
+          <AiContextPicker class="min-w-0 flex-1" />
+          <Button
+            v-if="isStreaming"
+            size="icon"
+            variant="secondary"
+            class="size-7 shrink-0"
+            :aria-label="i18n.t('ai.stop')"
+            :title="i18n.t('ai.stop')"
+            @click="cancel"
+          >
+            <Square class="size-3 fill-current" />
+          </Button>
+          <Button
+            v-if="isStreaming && draft.trim()"
+            variant="outline"
+            size="sm"
+            :disabled="busy || (conversation?.queue?.length ?? 0) >= 8"
+            @click="queueDraft"
+          >
+            {{ i18n.t("ai.task.queue") }}
+          </Button>
+          <Button
+            size="icon"
+            class="size-7 shrink-0"
+            :disabled="!canSend"
+            :aria-label="i18n.t(isStreaming ? 'ai.task.steer' : 'ai.send')"
+            :title="i18n.t(isStreaming ? 'ai.task.steer' : 'ai.send')"
+            @click="submit"
+          >
+            <ArrowUp class="size-4" />
+          </Button>
+        </div>
       </div>
     </div>
-    <UiText
-      v-if="isStreaming"
-      as="p"
-      variant="caption"
-      muted
-    >
-      {{ i18n.t("ai.task.controlHint") }}
-    </UiText>
   </div>
 </template>

@@ -1437,7 +1437,6 @@
         "activeEnvironmentId": "Active environment",
         "activate": "Activate after creation"
       },
-      "controlHint": "Send updates the current task. Next task queues a separate task. Stop ends assistant work; Undo and native Stop are separate.",
       "undo": "Undo this change",
       "review": "Review vault changes",
       "description": "Choose changes to apply to saved records in your vault.",
@@ -1812,7 +1811,6 @@
       "removeQueue": "Remove",
       "messageFailed": "Could not send the message. Your draft is retained.",
       "steer": "Update current task",
-      "controlHint": "Send updates the current task. Next task queues a separate task. Stop ends assistant work; Undo and native Stop are separate.",
       "undo": "Undo task changes",
       "undoConflicts": "Some changes could not be undone",
       "irreversible": "This task includes actions that cannot be undone."

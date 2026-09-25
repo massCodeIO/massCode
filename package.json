@@ -55,7 +55,8 @@
     "prepare": "simple-git-hooks && npm run rebuild",
     "bench:prepare": "node scripts/benchmark/cli.cjs prepare",
     "bench:start": "node scripts/benchmark/cli.cjs start",
-    "bench:report": "node scripts/benchmark/cli.cjs report"
+    "bench:report": "node scripts/benchmark/cli.cjs report",
+    "dev:playground": "vite --config playground/vite.config.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.118",
@@ -225,6 +226,7 @@
   },
   "electronmon": {
     "patterns": [
+      "!playground/**/*",
       "!scripts/**/*",
       "!src/renderer/**/*",
       "!src/main/**/*"

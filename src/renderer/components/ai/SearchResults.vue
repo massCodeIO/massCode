@@ -6,18 +6,10 @@ defineProps<{ result: AiSearchResults }>()
 </script>
 
 <template>
-  <details
-    v-if="result.items.length"
-    class="bg-muted/40 space-y-2 rounded-lg border p-3"
-  >
-    <summary class="cursor-pointer">
-      <UiText
-        variant="xs"
-        weight="medium"
-      >
-        {{ i18n.t("ai.searchResults.title") }} · {{ result.items.length }}
-      </UiText>
-    </summary>
+  <UiDisclosure v-if="result.items.length">
+    <template #title>
+      {{ i18n.t("ai.searchResults.title") }} · {{ result.items.length }}
+    </template>
     <ol
       v-if="result.items.length"
       class="space-y-2"
@@ -26,23 +18,7 @@ defineProps<{ result: AiSearchResults }>()
         v-for="item in result.items"
         :key="`${item.type}:${item.id}`"
       >
-        <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <AiVaultLink :item="item" />
-          <UiText
-            variant="caption"
-            muted
-          >
-            {{ i18n.t(`ai.itemTypes.${item.type}`) }}
-          </UiText>
-        </div>
-        <UiText
-          v-if="item.url"
-          variant="caption"
-          as="p"
-          class="mt-1 font-mono break-all select-text"
-        >
-          {{ item.method }} {{ item.url }}
-        </UiText>
+        <AiVaultLink :item="item" />
       </li>
     </ol>
     <UiText
@@ -74,5 +50,5 @@ defineProps<{ result: AiSearchResults }>()
     >
       {{ i18n.t("ai.searchResults.unexpanded") }}
     </UiText>
-  </details>
+  </UiDisclosure>
 </template>

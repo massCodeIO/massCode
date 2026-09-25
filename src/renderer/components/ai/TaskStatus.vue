@@ -38,74 +38,13 @@ async function submit(value: string) {
 <template>
   <div class="space-y-2">
     <UiText
-      v-if="message.status === 'streaming'"
-      variant="caption"
-      muted
-      role="status"
-    >
-      {{ i18n.t(`ai.task.${message.taskState ?? "working"}`) }}
-    </UiText>
-    <UiText
       v-if="message.status === 'cancelled'"
+      as="p"
       variant="caption"
       muted
     >
       {{ i18n.t("ai.task.stopped") }}
     </UiText>
-    <details
-      v-if="
-        message.editorSnapshot
-          || message.workspaceContext
-          || message.attachments?.length
-      "
-      class="rounded-md border px-3 py-2"
-    >
-      <summary>
-        <UiText variant="caption">
-          {{ i18n.t("ai.task.context") }}
-        </UiText>
-      </summary>
-      <UiText
-        v-if="message.editorSnapshot"
-        as="p"
-        variant="caption"
-        class="mt-2"
-      >
-        {{ message.editorSnapshot.name }} · {{ message.editorSnapshot.space }} ·
-        {{
-          message.editorSnapshot.space === "code"
-            ? `${message.editorSnapshot.snippetId}/${message.editorSnapshot.contentId}`
-            : message.editorSnapshot.noteId
-        }}
-      </UiText>
-      <UiText
-        v-if="message.workspaceContext"
-        as="p"
-        variant="caption"
-      >
-        {{ message.workspaceContext.space }} ·
-        {{
-          i18n.t("ai.task.selection", {
-            ids: message.workspaceContext.selectedIds.join(", ") || "—",
-          })
-        }}
-      </UiText>
-      <UiText
-        v-for="item in message.attachments"
-        :key="`${item.type}:${item.id}`"
-        as="p"
-        variant="caption"
-      >
-        {{ item.name }}
-      </UiText>
-      <UiText
-        as="p"
-        variant="caption"
-        muted
-      >
-        {{ i18n.t("ai.task.capturedHint") }}
-      </UiText>
-    </details>
     <div
       v-for="(text, index) in message.steering"
       :key="index"

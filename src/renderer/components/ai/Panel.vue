@@ -21,6 +21,12 @@ const {
   canRetry,
   refreshSettings,
 } = useAi()
+const taskState = computed(
+  () => conversation.value?.messages.at(-1)?.taskState,
+)
+const isGenerating = computed(
+  () => !taskState.value || taskState.value === 'working',
+)
 const messageReferences = computed(() => {
   const items: AiVaultItem[] = []
   const undoneKeys = new Set(
@@ -140,34 +146,38 @@ onMounted(() => {
         </UiActionButton>
       </div>
     </div>
-    <div class="flex shrink-0 items-center justify-between gap-2 px-3 py-2">
-      <UiText
-        variant="caption"
-        muted
-        class="block break-all"
-      >
-        {{ settings ? i18n.t(`ai.providers.${settings.provider}`) : "" }} ·
-        {{ profile?.model || i18n.t("ai.notConfigured") }}
-      </UiText>
-      <div class="flex shrink-0 gap-1">
-        <UiActionButton
-          :tooltip="i18n.t('ai.newChat')"
-          @click="clearConversation"
+    <div class="shrink-0 space-y-2 px-3 py-2">
+      <div class="flex items-center justify-between gap-2">
+        <UiText
+          variant="caption"
+          muted
+          class="block min-w-0 flex-1 break-words"
         >
-          <SquarePen class="size-4" />
-        </UiActionButton>
-        <UiActionButton
-          v-if="embedded"
-          :tooltip="i18n.t('ai.settings')"
-          @click="router.push({ name: RouterName.preferencesAI })"
-        >
-          <Settings class="size-4" />
-        </UiActionButton>
+          {{ settings ? i18n.t(`ai.providers.${settings.provider}`) : "" }} ·
+          {{ profile?.model || i18n.t("ai.notConfigured") }}
+        </UiText>
+        <div class="flex shrink-0 gap-1">
+          <UiActionButton
+            :tooltip="i18n.t('ai.newChat')"
+            @click="clearConversation"
+          >
+            <SquarePen class="size-4" />
+          </UiActionButton>
+          <UiActionButton
+            v-if="embedded"
+            :tooltip="i18n.t('ai.settings')"
+            @click="router.push({ name: RouterName.preferencesAI })"
+          >
+            <Settings class="size-4" />
+          </UiActionButton>
+        </div>
       </div>
       <UiText
         v-if="!ready"
+        as="p"
         variant="sm"
-        class="block"
+        muted
+        class="break-words"
       >
         {{ i18n.t("ai.setupHint") }}
       </UiText>
@@ -231,10 +241,16 @@ onMounted(() => {
             v-else
             as="div"
             variant="sm"
-            class="bg-muted rounded-lg px-3 py-2 break-words whitespace-pre-wrap select-text"
+            class="bg-muted ml-auto w-fit max-w-full rounded-lg px-3 py-2 break-words whitespace-pre-wrap select-text"
           >
             {{ message.content }}
           </UiText>
+          <AiHttpActionReview
+            v-for="action in message.httpActions"
+            :key="action.id"
+            :message="message"
+            :action="action"
+          />
           <UiText
             v-if="message.proposalSummary && !message.content"
             as="p"
@@ -242,38 +258,10 @@ onMounted(() => {
           >
             {{ message.proposalSummary }}
           </UiText>
-          <div
-            v-if="message.attachments?.length"
-            class="flex flex-wrap justify-end gap-1"
-          >
-            <UiText
-              v-for="item in message.attachments"
-              :key="`${item.type}:${item.id}`"
-              variant="xs"
-              muted
-              class="bg-muted rounded-md px-2 py-1"
-            >
-              {{ item.name }}
-            </UiText>
-          </div>
-          <details v-if="message.context">
-            <summary class="cursor-pointer text-right">
-              <UiText
-                variant="xs"
-                muted
-              >
-                {{ i18n.t("ai.sentContext") }}
-              </UiText>
-            </summary>
-            <UiText
-              as="pre"
-              variant="xs"
-              mono
-              class="scrollbar max-h-40 overflow-auto break-words whitespace-pre-wrap"
-            >
-              {{ message.context }}
-            </UiText>
-          </details>
+          <AiUserContext
+            v-if="message.role === 'user'"
+            :message="message"
+          />
           <UiText
             v-if="message.status === 'cancelled'"
             variant="caption"
@@ -309,21 +297,14 @@ onMounted(() => {
               v-if="message.workspaceProposal"
               :message="message"
             />
-            <UiText
+            <UiStatus
               v-for="action in message.dataActions"
               :key="action.id"
-              variant="caption"
-              class="text-muted-foreground"
+              :state="action.status"
             >
               {{ i18n.t(`ai.dataActions.${action.kind}`) }}:
               {{ i18n.t(`ai.dataActions.${action.status}`) }}
-            </UiText>
-            <AiHttpActionReview
-              v-for="action in message.httpActions"
-              :key="action.id"
-              :message="message"
-              :action="action"
-            />
+            </UiStatus>
             <AiHttpReview
               v-if="message.httpProposal"
               :message="message"
@@ -368,26 +349,28 @@ onMounted(() => {
           v-if="isStreaming"
           as="p"
           variant="caption"
+          :shimmer="isGenerating"
           muted
           role="status"
         >
-          {{ i18n.t("ai.generating") }}
+          {{ i18n.t(isGenerating ? "ai.generating" : `ai.task.${taskState}`) }}
         </UiText>
-        <UiText
+        <UiAlert
           v-if="conversation?.error"
-          as="p"
-          variant="sm"
-          class="text-destructive"
-          role="alert"
+          variant="error"
         >
           {{ i18n.t(`ai.errors.${conversation.error}`) }}
-          <span
+          <UiText
             v-if="conversation.diagnostic"
-            class="block font-mono"
-          >{{
-            conversation.diagnostic
-          }}</span>
-        </UiText>
+            as="pre"
+            variant="caption"
+            mono
+            muted
+            class="border-destructive/15 mt-2 border-t pt-2 break-words whitespace-pre-wrap"
+          >
+            {{ conversation.diagnostic }}
+          </UiText>
+        </UiAlert>
       </div>
     </div>
     <AiComposer

@@ -139,7 +139,7 @@ provide(preferencesKeys, {
     <template #right>
       <div
         ref="scrollRef"
-        class="scrollbar h-full min-h-0 overflow-y-auto px-5 pt-3 pb-5"
+        class="preferences-form scrollbar h-full min-h-0 overflow-y-auto px-5 pt-3 pb-5"
       >
         <AiPreferenceHandoff />
         <RouterView />
@@ -147,3 +147,20 @@ provide(preferencesKeys, {
     </template>
   </LayoutTwoColumn>
 </template>
+
+<style scoped>
+@reference "../styles.css";
+
+/* Shared dimensions for single-line controls across all preference pages. */
+.preferences-form :deep(input:not([type])),
+.preferences-form :deep(input[type="text"]),
+.preferences-form :deep(input[type="password"]),
+.preferences-form :deep(input[type="number"]),
+.preferences-form :deep(input[type="url"]),
+.preferences-form :deep(input[type="email"]),
+.preferences-form :deep(input[type="search"]),
+.preferences-form :deep([data-slot="button"]),
+.preferences-form :deep([data-slot="select-trigger"]) {
+  @apply box-border h-7 text-sm;
+}
+</style>

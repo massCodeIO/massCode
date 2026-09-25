@@ -81,7 +81,7 @@ export function usePromptHistory(draft?: Ref<string>) {
     if (index === history.value.length)
       reset()
     void nextTick(() => {
-      const caret = up ? 0 : input.value.length
+      const caret = input.value.length
       input.setSelectionRange(caret, caret)
     })
   }

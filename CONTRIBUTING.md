@@ -1,34 +1,26 @@
-Hey there! We are really excited that you are interested in contributing. Before submitting your contribution, please make sure to take a moment and read through the following guide:
-## Sending Pull Request
+# Contributing
 
-### Discuss First
+Thank you for your interest in massCode. The project accepts external pull requests only for localizations and new syntax highlighting languages. Development is maintained by the project author.
 
-Before you start to work on a feature pull request, it's always better to open a feature request issue first to [discuss](https://github.com/massCodeIO/massCode/discussions) with the maintainers whether the feature is desired and the design of those features. This would help save time for both the maintainers and the contributors and help features to be shipped faster.
+You can help by reporting bugs and sharing ideas through the channels below.
 
-For typo fixes, it's recommended to batch multiple typo fixes into one pull request to maintain a cleaner commit history.
+## Bug Reports
 
-### Commit Convention
+Please [open an issue](https://github.com/massCodeIO/massCode/issues/new/choose) for bugs. Search existing issues first to avoid duplicates, and include steps to reproduce the problem, your massCode version, and system information.
 
-We use [Conventional Commits](https://www.conventionalcommits.org/) for commit messages, which allows the changelog to be auto-generated based on the commits. Please read the guide through if you aren't familiar with it already.
+## Feature Requests and Ideas
 
-Only `fix:` and `feat:` will be presented in the changelog.
+Please use [GitHub Discussions](https://github.com/massCodeIO/massCode/discussions) for feature requests, ideas, and questions. Search existing discussions before starting a new one.
 
-Note that `fix:` and `feat:` are for actual code changes (that might affect logic). For typo or document changes, use docs: or chore: instead:
+## Pull Requests
 
-- ~~`fix: typo`~~ -> `docs: fix typo`
+External pull requests are welcome for:
 
-### Pull Request
+- Adding or improving localizations.
+- Adding support for new syntax highlighting languages.
 
-If you don't know how to send a Pull Request, we recommend reading the [guide](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request).
+Please keep your pull request focused on one of these areas. Use [Conventional Commits](https://www.conventionalcommits.org/) for commit messages and the pull request title.
 
-When sending a pull request, make sure your PR's title also follows the Commit Convention.
+All other external pull requests will be closed. Please report bugs in Issues or share feature requests and ideas in Discussions instead.
 
-If your PR fixes or resolves an existing issue, please add the following line in your PR description (replace 123 with a real issue number):
-
-```
-fix #123
-```
-
-It's ok to have multiple commits in a single PR, you don't need to rebase or force push for your changes as we will use Squash and Merge to squash the commits into one commit when merging.
-
-And of course please test your code before PR.
+Please follow our [Code of Conduct](CODE_OF_CONDUCT.md) when participating in issues, discussions, and pull requests.

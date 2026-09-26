@@ -211,6 +211,12 @@ Your snippets, notes, and HTTP requests live as plain `.md` files on disk with f
 
 Customize the app UI and editor syntax highlighting with JSON theme files. Supports light and dark themes with live reload. See the [theme docs](https://masscode.io/documentation/themes.html).
 
+## Contributions
+
+massCode accepts external pull requests only for localizations and new syntax highlighting languages. To report a bug, please [open an issue](https://github.com/massCodeIO/massCode/issues/new/choose). For feature requests and ideas, start a discussion in [GitHub Discussions](https://github.com/massCodeIO/massCode/discussions).
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
 ## Build Locally
 
 <details>

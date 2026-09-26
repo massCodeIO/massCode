@@ -42,7 +42,7 @@ function mapStorageError(status: unknown, error: unknown): never {
     return setStatus(500, { message: 'Internal storage error' })
   }
 
-  if (parsedError.code === 'NAME_CONFLICT') {
+  if (parsedError.code === 'NAME_CONFLICT' || parsedError.code === 'CONFLICT') {
     return setStatus(409, { message: parsedError.message })
   }
 
@@ -172,10 +172,8 @@ app
     ({ params, body, status }) => {
       const storage = useHttpStorage()
       try {
-        const { invalidInput, notFound } = storage.requests.updateRequest(
-          Number(params.id),
-          body,
-        )
+        const { invalidInput, notFound, contentRevision }
+          = storage.requests.updateRequest(Number(params.id), body)
 
         if (invalidInput) {
           return status(400, { message: 'Need at least one field to update' })
@@ -185,7 +183,10 @@ app
           return status(404, { message: 'Request not found' })
         }
 
-        return { message: 'Request updated' }
+        return {
+          message: 'Request updated',
+          contentRevision: contentRevision!,
+        }
       }
       catch (error) {
         return mapStorageError(status, error)
@@ -193,6 +194,14 @@ app
     },
     {
       body: 'httpRequestsUpdate',
+      response: {
+        200: 'httpRequestsUpdateResponse',
+        400: commonMessageResponse,
+        404: commonMessageResponse,
+        409: commonMessageResponse,
+        500: commonMessageResponse,
+        503: commonMessageResponse,
+      },
       detail: {
         tags: ['HTTP Requests'],
       },

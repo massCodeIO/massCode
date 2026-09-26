@@ -47,6 +47,26 @@ export function storageFailure(error: unknown): CallToolResult {
         'Content is not locally available yet. Retry after download completes.',
         true,
       )
+    case 'HISTORY_SNAPSHOT_UNAVAILABLE':
+      return failure(
+        code,
+        'The saved history snapshot is unavailable. Inspect history in massCode.',
+      )
+    case 'UNSUPPORTED_BODY_TYPE':
+      return failure(
+        code,
+        'Set a supported text bodyType before changing this request body.',
+      )
+    case 'HTTP_RUNTIME_UNAVAILABLE':
+      return failure(
+        code,
+        'Resolve the saved runtime configuration in massCode before previewing.',
+      )
+    case 'CONFLICT':
+      return failure(
+        code,
+        'The request changed. Read it again and reconcile your changes before retrying.',
+      )
     case 'NAME_CONFLICT':
       return failure(code, 'An item with this name already exists.')
     case 'INVALID_NAME':

@@ -70,6 +70,7 @@ const httpRequestsAdd = t.Object({
 })
 
 const httpRequestsUpdate = t.Object({
+  expectedRevision: t.Optional(t.String()),
   name: t.Optional(t.String()),
   folderId: t.Optional(t.Union([t.Number(), t.Null()])),
   isDeleted: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
@@ -180,6 +181,7 @@ export const httpRuntime = t.Object({
 })
 
 const httpRequestItem = t.Object({
+  contentRevision: t.Union([t.String(), t.Null()]),
   runtimeRevision: t.Union([t.String(), t.Null()]),
   runtime: t.Union([httpRuntime, t.Null()]),
   runtimeState: t.Union([
@@ -257,6 +259,10 @@ export const httpRequestsDTO = new Elysia().model({
   httpRequestsQuery,
   httpRequestsResponse,
   httpRequestsUpdate,
+  httpRequestsUpdateResponse: t.Object({
+    message: t.String(),
+    contentRevision: t.String(),
+  }),
 })
 
 export type HttpRequestsAdd = typeof httpRequestsAdd.static

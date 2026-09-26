@@ -38,6 +38,10 @@ async function setup(options: SetupOptions = {}) {
   const putHttpRequestsByIdRuntime = vi.fn(async () => ({
     data: { runtimeRevision: 'saved' },
   }))
+  const sonner = vi.fn()
+  vi.doMock('@/composables/useSonner', () => ({
+    useSonner: () => ({ sonner }),
+  }))
   const confirm = vi.fn(async () => true)
   const deleteHttpRequestsById = vi.fn(async () => ({}))
   const highlightedRequestIds = ref<Set<number>>(new Set())
@@ -48,7 +52,7 @@ async function setup(options: SetupOptions = {}) {
   const postHttpRequests = vi.fn(async () => ({ data: { id: 2 } }))
   const patchHttpRequestsById = vi.fn<
     (id: string, data: unknown) => Promise<object>
-  >(async () => ({}))
+  >(async () => ({ data: { contentRevision: 'saved' } }))
 
   // useContentSort читает store.app при импорте модуля: мокается целиком,
   // чтобы не тянуть electron store в тест.
@@ -123,6 +127,7 @@ async function setup(options: SetupOptions = {}) {
 
   return {
     httpState,
+    sonner,
     settings,
     putHttpRequestsByIdRuntime,
     confirm,
@@ -137,6 +142,7 @@ async function setup(options: SetupOptions = {}) {
 function buildFullRequest(id: number, name: string) {
   return {
     id,
+    contentRevision: 'baseline',
     name,
     folderId: null,
     method: 'GET',
@@ -252,18 +258,34 @@ describe('useHttpRequests', () => {
     context.getHttpRequestsById.mockResolvedValueOnce({ data: record })
     await requests.selectHttpRequest(1)
     requests.currentDraft.value!.body = 'Unsaved body'
+    let revision = 'baseline'
+    context.patchHttpRequestsById.mockImplementation(async (_id, payload) => {
+      if (
+        (payload as { expectedRevision?: string }).expectedRevision !== revision
+      ) {
+        throw Object.assign(new Error('Conflict'), {
+          response: { status: 409 },
+        })
+      }
+      revision = revision === 'baseline' ? 'renamed' : 'content-saved'
+      return { data: { contentRevision: revision } }
+    })
     context.getHttpRequestsById.mockResolvedValueOnce({
-      data: { ...record, name: 'Renamed' },
+      data: { ...record, name: 'Renamed', contentRevision: 'renamed' },
     })
     await requests.updateHttpRequest(1, { name: 'Renamed' })
     expect(context.patchHttpRequestsById).toHaveBeenLastCalledWith('1', {
       name: 'Renamed',
+      expectedRevision: 'baseline',
     })
     expect(requests.currentDraft.value!.body).toBe('Unsaved body')
     expect(requests.currentRequest.value!.name).toBe('Renamed')
     expect(requests.isCurrentRequestDirty.value).toBe(true)
 
-    await requests.saveCurrentRequest()
+    expect(await requests.saveCurrentRequest()).toBe(true)
+    expect(context.patchHttpRequestsById.mock.lastCall![1]).toMatchObject({
+      expectedRevision: 'renamed',
+    })
     expect(context.patchHttpRequestsById.mock.lastCall![1]).not.toHaveProperty(
       'name',
     )
@@ -292,6 +314,7 @@ describe('useHttpRequests', () => {
     await Promise.resolve()
 
     expect(context.patchHttpRequestsById).toHaveBeenCalledWith('1', {
+      expectedRevision: 'baseline',
       folderId: null,
       isDeleted: 1,
     })
@@ -391,7 +414,7 @@ describe('useHttpRequests', () => {
     context.patchHttpRequestsById.mockImplementationOnce(
       () =>
         new Promise((resolve) => {
-          finish = () => resolve({})
+          finish = () => resolve({ data: { contentRevision: 'saved' } })
         }),
     )
     const pending = saveCurrentRequest()
@@ -745,4 +768,207 @@ describe('useHttpRequests', () => {
     expect(requests.currentDraft.value!.url).toBe('https://api.test/?q=a&b+c%')
     expect(requests.isCurrentRequestDirty.value).toBe(false)
   })
+})
+
+it('keeps the draft baseline on dirty refresh and reports a conflict without retrying', async () => {
+  const ctx = await setup()
+  const data = ctx.useHttpRequests()
+  const initial = buildFullRequest(1, 'Request')
+  ctx.getHttpRequestsById.mockResolvedValue({ data: initial })
+  await data.selectHttpRequest(1)
+  data.currentDraft.value!.body = 'local draft'
+  ctx.getHttpRequestsById.mockResolvedValue({
+    data: { ...initial, body: 'MCP edit', contentRevision: 'external' },
+  })
+  await data.updateHttpRequest(1, { isFavorites: 1 })
+  ctx.patchHttpRequestsById.mockClear()
+  ctx.patchHttpRequestsById.mockRejectedValueOnce({
+    response: { status: 409 },
+  })
+  expect(await data.saveCurrentRequest()).toBe(false)
+  expect(ctx.patchHttpRequestsById).toHaveBeenCalledWith(
+    '1',
+    expect.objectContaining({
+      body: 'local draft',
+      expectedRevision: 'baseline',
+    }),
+  )
+  expect(ctx.patchHttpRequestsById).toHaveBeenCalledTimes(1)
+  expect(data.currentDraft.value!.body).toBe('local draft')
+  expect(data.isCurrentRequestDirty.value).toBe(true)
+  expect(ctx.sonner).toHaveBeenCalledWith(
+    expect.objectContaining({ message: 'spaces.http.requestConflict' }),
+  )
+})
+
+it('uses the PATCH revision for sequential saves even if a newer MCP row arrives before its response', async () => {
+  const ctx = await setup()
+  const data = ctx.useHttpRequests()
+  const initial = buildFullRequest(1, 'Request')
+  ctx.getHttpRequestsById.mockResolvedValue({ data: initial })
+  await data.selectHttpRequest(1)
+  data.currentDraft.value!.body = 'saved locally'
+  let finish!: (value: object) => void
+  ctx.patchHttpRequestsById.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve
+      }),
+  )
+  const pending = data.saveCurrentRequest()
+  await vi.waitFor(() => expect(finish).toBeTypeOf('function'))
+  ctx.getHttpRequestsById.mockResolvedValue({
+    data: { ...initial, body: 'MCP edit', contentRevision: 'external' },
+  })
+  await data.updateHttpRequest(1, { isFavorites: 1 })
+  finish({ data: { contentRevision: 'acknowledged' } })
+  expect(await pending).toBe(true)
+  expect(data.currentRequest.value!.contentRevision).toBe('external')
+  data.currentDraft.value!.body = 'next local edit'
+  ctx.patchHttpRequestsById.mockRejectedValueOnce({
+    response: { status: 409 },
+  })
+  expect(await data.saveCurrentRequest()).toBe(false)
+  expect(ctx.patchHttpRequestsById).toHaveBeenLastCalledWith(
+    '1',
+    expect.objectContaining({
+      expectedRevision: 'acknowledged',
+      body: 'next local edit',
+    }),
+  )
+  expect(data.isCurrentRequestDirty.value).toBe(true)
+})
+
+it('advances the acknowledged revision for a second successful save', async () => {
+  const ctx = await setup()
+  const data = ctx.useHttpRequests()
+  ctx.getHttpRequestsById.mockResolvedValue({
+    data: buildFullRequest(1, 'Request'),
+  })
+  await data.selectHttpRequest(1)
+  data.currentDraft.value!.description = 'first'
+  expect(await data.saveCurrentRequest()).toBe(true)
+  data.currentDraft.value!.description = 'second'
+  expect(await data.saveCurrentRequest()).toBe(true)
+  expect(ctx.patchHttpRequestsById).toHaveBeenLastCalledWith(
+    '1',
+    expect.objectContaining({
+      expectedRevision: 'saved',
+      description: 'second',
+    }),
+  )
+  expect(data.isCurrentRequestDirty.value).toBe(false)
+})
+
+it('does not adopt an external revision that arrives after its own rename write', async () => {
+  const ctx = await setup()
+  const data = ctx.useHttpRequests()
+  const initial = buildFullRequest(1, 'Request')
+  ctx.getHttpRequestsById.mockResolvedValueOnce({ data: initial })
+  await data.selectHttpRequest(1)
+  data.currentDraft.value!.body = 'local draft'
+  let finish!: (value: object) => void
+  ctx.patchHttpRequestsById.mockImplementationOnce((_id, payload) => {
+    expect(payload).toMatchObject({
+      name: 'Renamed',
+      expectedRevision: 'baseline',
+    })
+    return new Promise((resolve) => {
+      finish = resolve
+    })
+  })
+  const rename = data.updateHttpRequest(1, { name: 'Renamed' })
+  await vi.waitFor(() => expect(finish).toBeTypeOf('function'))
+  ctx.getHttpRequestsById.mockResolvedValue({
+    data: {
+      ...initial,
+      name: 'Renamed',
+      body: 'external MCP body',
+      contentRevision: 'external',
+    },
+  })
+  // Favorite refresh models the external row arriving while rename's response is in flight.
+  await data.updateHttpRequest(1, { isFavorites: 1 })
+  finish({ data: { contentRevision: 'renamed' } })
+  expect(await rename).toBe(true)
+  expect(data.currentRequest.value!.contentRevision).toBe('external')
+  ctx.patchHttpRequestsById.mockImplementationOnce(async (_id, payload) => {
+    expect(payload).toMatchObject({
+      expectedRevision: 'renamed',
+      body: 'local draft',
+    })
+    throw Object.assign(new Error('Conflict'), { response: { status: 409 } })
+  })
+  expect(await data.saveCurrentRequest()).toBe(false)
+  expect(data.currentDraft.value!.body).toBe('local draft')
+  expect(data.isCurrentRequestDirty.value).toBe(true)
+})
+
+it.each(['rename-first', 'save-first'])(
+  'serializes renaming and content Save against acknowledged revisions: %s',
+  async (order) => {
+    const ctx = await setup()
+    const data = ctx.useHttpRequests()
+    ctx.getHttpRequestsById.mockResolvedValueOnce({
+      data: buildFullRequest(1, 'Request'),
+    })
+    await data.selectHttpRequest(1)
+    data.currentDraft.value!.body = 'local body'
+    let finish!: (value: object) => void
+    ctx.patchHttpRequestsById.mockImplementationOnce((_id, payload) => {
+      expect(payload).toMatchObject({ expectedRevision: 'baseline' })
+      return new Promise((resolve) => {
+        finish = resolve
+      })
+    })
+    const rename = () => data.updateHttpRequest(1, { name: 'Renamed' })
+    const save = () => data.saveCurrentRequest()
+    const first = order === 'rename-first' ? rename() : save()
+    await vi.waitFor(() => expect(finish).toBeTypeOf('function'))
+    const second = order === 'rename-first' ? save() : rename()
+    await Promise.resolve()
+    expect(ctx.patchHttpRequestsById).toHaveBeenCalledTimes(1)
+    ctx.getHttpRequestsById.mockResolvedValue({
+      data: {
+        ...buildFullRequest(1, 'Renamed'),
+        body: order === 'save-first' ? 'local body' : null,
+        contentRevision: 'first-ack',
+      },
+    })
+    ctx.patchHttpRequestsById.mockImplementationOnce(async (_id, payload) => {
+      expect(payload).toMatchObject({ expectedRevision: 'first-ack' })
+      return { data: { contentRevision: 'second-ack' } }
+    })
+    finish({ data: { contentRevision: 'first-ack' } })
+    expect(await first).toBe(true)
+    expect(await second).toBe(true)
+    expect(ctx.patchHttpRequestsById).toHaveBeenCalledTimes(2)
+    expect(data.currentDraft.value!.body).toBe('local body')
+  },
+)
+
+it('keeps an acknowledged bulk move when saving a dirty content draft', async () => {
+  const ctx = await setup()
+  const data = ctx.useHttpRequests()
+  const initial = buildFullRequest(1, 'Request')
+  ctx.getHttpRequestsById.mockResolvedValueOnce({ data: initial })
+  await data.selectHttpRequest(1)
+  data.currentDraft.value!.body = 'local body'
+  ctx.patchHttpRequestsById.mockResolvedValueOnce({
+    data: { contentRevision: 'moved' },
+  })
+  ctx.getHttpRequestsById.mockResolvedValue({
+    data: { ...initial, folderId: 7, contentRevision: 'moved' },
+  })
+  await data.updateHttpRequests([1], [{ folderId: 7 }])
+  expect(data.currentDraft.value!.folderId).toBe(7)
+  ctx.patchHttpRequestsById.mockImplementationOnce(async (_id, payload) => {
+    expect(payload).toMatchObject({
+      expectedRevision: 'moved',
+      folderId: 7,
+      body: 'local body',
+    })
+    return { data: { contentRevision: 'saved' } }
+  })
+  expect(await data.saveCurrentRequest()).toBe(true)
 })

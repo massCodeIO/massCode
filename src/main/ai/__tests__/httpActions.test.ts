@@ -32,7 +32,10 @@ vi.mock('../vault', () => ({ vaultIdentity: () => fixture.vault }))
 vi.mock('../../store', () => ({
   store: {
     preferences: {
-      get: () => ({ transport: {}, skipCertificateVerification: false }),
+      get: (key: string) =>
+        key === 'storage.vaultPath'
+          ? fixture.vault
+          : { transport: {}, skipCertificateVerification: false },
     },
   },
 }))

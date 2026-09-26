@@ -12,6 +12,7 @@ import type {
 } from '../runtime/types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { httpRequestRevision } from '../../../../../http/requestRevision'
 import { PartialCreateError } from '../../../../partialCreateError'
 import { prioritizeCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
@@ -234,7 +235,13 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       }
 
       return request
-        ? { ...request, ...readRequestRuntime(paths.httpRoot, request) }
+        ? {
+            ...request,
+            ...readRequestRuntime(paths.httpRoot, request),
+            contentRevision: request.pendingCloudDownload
+              ? null
+              : httpRequestRevision(request),
+          }
         : null
     },
 
@@ -343,6 +350,13 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       )
       if (!ensureRequestDetailsLoaded(paths.httpRoot, record)) {
         throwCloudContentUnavailable()
+      }
+
+      if (
+        input.expectedRevision !== undefined
+        && input.expectedRevision !== httpRequestRevision(record)
+      ) {
+        throwStorageError('CONFLICT', 'Request changed since it was read')
       }
 
       const updatableFields = [
@@ -509,7 +523,11 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       }
       saveHttpState(paths, state)
 
-      return { invalidInput: false, notFound: false }
+      return {
+        invalidInput: false,
+        notFound: false,
+        contentRevision: httpRequestRevision(record),
+      }
     },
 
     emptyTrash() {

@@ -97,6 +97,7 @@ export interface HttpSecretMutationResult {
 export type HttpResponseBodyKind = 'text' | 'json' | 'binary'
 
 export interface HttpExecuteResult {
+  historyId?: number | null
   executionTrace?: {
     method: string
     url: string

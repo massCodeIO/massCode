@@ -100,7 +100,7 @@ describe('sidebar sections', () => {
     const result = sidebarNodes(nodes, {
       trash: false,
       favorites: false,
-      unfiledLabel: 'Unfiled',
+      unfiledLabel: 'Inbox',
     })
     expect(result.find(node => node.id === 'loose')?.parentId).toBe(
       UNFILED_ID,
@@ -110,7 +110,7 @@ describe('sidebar sections', () => {
     expect(
       sidebarNodes(
         nodes.filter(node => node.id !== 'loose'),
-        { trash: false, favorites: false, unfiledLabel: 'Unfiled' },
+        { trash: false, favorites: false, unfiledLabel: 'Inbox' },
       ).some(node => node.id === UNFILED_ID),
     ).toBe(false)
   })
@@ -119,7 +119,7 @@ describe('sidebar sections', () => {
       sidebarNodes(nodes, {
         trash: false,
         favorites: true,
-        unfiledLabel: 'Unfiled',
+        unfiledLabel: 'Inbox',
       }).map(node => node.id),
     ).toEqual(['collection', 'folder', 'starred'])
   })
@@ -128,7 +128,7 @@ describe('sidebar sections', () => {
       sidebarNodes(nodes, {
         trash: true,
         favorites: false,
-        unfiledLabel: 'Unfiled',
+        unfiledLabel: 'Inbox',
       }),
     ).toEqual([{ ...nodes[5], parentId: null }])
   })

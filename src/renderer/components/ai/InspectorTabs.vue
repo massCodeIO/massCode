@@ -3,7 +3,7 @@ import * as Tabs from '@/components/ui/shadcn/tabs'
 import * as Tooltip from '@/components/ui/shadcn/tooltip'
 import { useAi } from '@/composables/ai/useAi'
 import { i18n } from '@/electron'
-import { ScanSearch, Sparkles, X } from 'lucide-vue-next'
+import { MessageSquare, ScanSearch, X } from 'lucide-vue-next'
 
 const emit = defineEmits<{ close: [], inspector: [] }>()
 const { open, setOpen } = useAi()
@@ -50,7 +50,7 @@ const tab = computed({
               class="min-w-0"
               :aria-label="i18n.t('ai.title')"
             >
-              <Sparkles
+              <MessageSquare
                 class="size-4"
                 aria-hidden="true"
               />

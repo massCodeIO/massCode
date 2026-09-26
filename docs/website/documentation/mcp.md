@@ -1,29 +1,29 @@
 ---
 title: MCP
-description: "Connect Codex, Claude Code, Cursor, or VS Code Copilot to your local massCode vault to find, read, and save snippets, notes, and HTTP requests, and send saved requests."
+description: "Connect your coding agent to massCode to work with snippets, notes, HTTP collections and requests, preview and send requests, and inspect execution history."
 ---
 
 # MCP
 
-<AppVersion text=">=5.13" />
+<AppVersion text=">=6.0" />
 
-Connect your coding agent to massCode through Model Context Protocol (MCP). The agent can search snippets, notes, and HTTP requests, read matching items, save new items to Inbox, and send saved HTTP requests.
+Connect your coding agent to massCode through Model Context Protocol (MCP) to work with snippets, notes, and saved HTTP requests.
 
-Try asking: "Find my existing retry helper in massCode and use it here," or "Save this solution as a TypeScript snippet in massCode."
+Try asking: "Find my retry helper and use it here," or "Save this solution as a TypeScript snippet."
 
 ## Enable Access
 
 1. Open **Preferences → API** in massCode.
 2. Enable **API integrations**.
-3. Click **Generate token** and copy the token. The full token is shown only after generation. If you already saved your token for the Clipper, you can reuse it.
+3. Reuse a saved [Clipper](/documentation/clipper) token, or click **Generate token** and save it. The full token is shown only once.
 4. Enable **MCP access**.
 5. Copy the **Server URL**. With the default API port, it is `http://127.0.0.1:4321/mcp`.
 
-Keep massCode running while using the integration. Changing the API port requires an app restart and an updated URL in your client. Enabling or disabling MCP takes effect without restarting.
+Keep massCode running. Changing the API port requires an app restart and an updated client URL; toggling MCP access takes effect immediately.
 
-MCP is off by default. Enabling it lets clients holding your Integration API token read all non-trashed snippets, notes, and HTTP requests in the active vault, create new ones, and send saved HTTP requests. The same token still works with the [Clipper](/documentation/clipper). Generating a replacement token invalidates the old token in every client.
+MCP is off by default. Clients with your token can access the active vault and use all tools listed below. Generating a replacement token invalidates the old one in every client, including the Clipper.
 
-The server listens only on your computer. Content returned to an agent becomes part of that agent's context and may be sent to its model provider.
+The server listens only on your computer. Returned content, including HTTP responses that may contain sensitive data, becomes part of the agent's context and may be sent to its model provider.
 
 ## Codex
 
@@ -101,29 +101,83 @@ Start the server and enter your token when prompted. Use the tools from Copilot'
 
 | Tool | What it does |
 | --- | --- |
-| `search` | Searches snippet and note names, descriptions, and content, plus HTTP request names and URLs. Returns compact metadata and item IDs. |
-| `get_item` | Reads a note, snippet, or saved HTTP request using its type and ID. |
-| `create_snippet` | Saves a named snippet with one code fragment and an optional language to Code Inbox. |
-| `create_note` | Saves a named Markdown note to Notes Inbox. |
-| `create_http_request` | Saves a request to HTTP Inbox with a method, URL, headers, query parameters, and optional text body. Does not send it. |
-| `execute_http_request` | Sends a saved request by ID using the active HTTP environment. Returns status, headers, body, and runtime results. |
+| `search` | Searches snippets and notes by name and content, and HTTP requests by name or URL. |
+| `get_item` | Reads an item by type and ID. |
+| `create_snippet` | Saves a snippet with one code fragment to Code Inbox. |
+| `create_note` | Saves a Markdown note to Notes Inbox. |
+| `list_http_collections` | Lists collection and folder IDs, names, and hierarchy. |
+| `list_http_requests` | Lists request metadata across collections, in Inbox, or in a folder. |
+| `create_http_collection` | Creates a root HTTP collection. |
+| `create_http_request` | Saves an HTTP request without sending it. |
+| `update_http_request` | Edits or moves a saved request with revision checking. |
+| `preview_http_request` | Shows masked request settings without sending it. |
+| `execute_http_request` | Sends a saved request using the active environment. |
+| `list_http_history` | Lists saved execution metadata. |
+| `get_http_history` | Reads a saved, redacted history snapshot. |
 
-Search supports a `type` filter (`snippet`, `note`, `http_request`, or `all`), `offset`, and `limit`. It returns 20 results by default, up to 100 per call. Use `get_item` to retrieve the content of a result. Items of different types can have the same ID, so pass both the item type and ID.
+`search`, `list_http_requests`, and `list_http_history` support `offset` and `limit`: 20 results by default, up to 100. Follow `nextOffset` while `hasMore` is true. Search also accepts a `type` filter: `snippet`, `note`, `http_request`, or `all`. Use `get_item` with both type and ID to read an item; IDs can overlap between types.
 
-New snippets use `plain_text` unless the agent specifies a language. Existing items are not overwritten when a name conflicts. Tools do not update or delete existing items or edit HTTP environments.
+New snippets default to `plain_text`. Creating an item never overwrites an existing item with the same name. MCP can update saved HTTP requests but cannot delete items or edit environments.
+
+## Organizing HTTP Requests
+
+Use `list_http_collections` to find a collection or nested folder. Create a root collection with `create_http_collection`, then pass its ID as `folderId` to `create_http_request`. Omit `folderId` or pass `null` to save in **Inbox**. New requests in a collection inherit its authorization.
+
+For `list_http_requests`, `folderId` selects what to list:
+
+| Value | Requests returned |
+| --- | --- |
+| Omitted | All HTTP requests, including those in nested folders. |
+| `null` | Inbox. |
+| Collection or folder ID | Direct requests only. |
+
+All modes exclude trash and WebSocket requests. Results are ordered by most recently updated first, then ascending ID.
+
+For example: "Find my Example API collection, create it if needed, and save a GET request for https://example.com/users there."
+
+## Updating Saved HTTP Requests
+
+Read a request with `get_item`, then pass its `contentRevision` as `expectedRevision` to `update_http_request`, together with its `id` and a nonempty `patch`.
+
+You can change `name`, `folderId`, `method`, `url`, `headers`, `query`, text `bodyType`, `body`, `description`, and `auth`. Omitted fields stay unchanged; arrays replace the existing arrays. The response returns the saved name, folder, and new revision.
+
+Moving a request preserves its auth setting. Set `auth` to `{ "type": "inherit" }` to inherit the destination's authorization, or `{ "type": "none" }` to disable it. Bearer, basic, and API-key auth are also supported.
+
+A stale revision returns `CONFLICT` without applying the patch. Read the latest version and reconcile changes before retrying. The app likewise preserves an unsaved draft and reports a conflict if MCP changed its saved version.
+
+For example: "Move List users from HTTP Inbox to Example API and inherit the collection authorization."
 
 ## Sending HTTP Requests
 
-Ask the agent to find a saved request and send it through the massCode MCP server. Execution uses the active environment, collection settings, cookies, protected secrets, and session variables, and records HTTP history. Responses become part of the agent's context and may contain sensitive data. Review the request before allowing the agent to send it, especially for operations that change server data.
+Inspect a saved request with `preview_http_request`, then use `execute_http_request` to send it. Preview shows a masked URL, active environment, effective auth type, body length, script trust, and transport limits. It describes settings before scripts and transport processing; it does not send traffic or run scripts.
 
-Scripts follow the trust settings in massCode; MCP cannot grant trust. Resolve unavailable or invalid runtime settings in the app. WebSocket connections and uploads from local files are not supported through MCP. New requests support `none`, `json`, `graphql`, `text`, and `form-urlencoded` bodies; configure other request settings in the app.
+Execution uses the active environment, inherited collection settings, cookies, protected secrets, and Session variables. Scripts must already be trusted in massCode; MCP cannot grant trust. Review requests that change server data before sending them.
 
-Only one HTTP execution can run at a time, shared with the app and collection runner. MCP execution is limited to 60 seconds and 256 KiB of response body; a capped body is marked `truncated`. Binary response bodies are omitted. If execution fails or the result is too large, inspect HTTP history before retrying: the server may already have processed the request.
+Only one request or collection run can execute at a time. If execution fails or its result is unavailable, inspect history before retrying: the server may already have processed the request.
+
+## Reading HTTP History
+
+Use the returned `historyId` with `get_http_history`, or find an entry with `list_http_history`, optionally filtered by `requestId`. Entries are ordered by execution time, then ID, both descending.
+
+Snapshots are redacted and do not contain a complete network capture. Missing or expired snapshots return `HISTORY_SNAPSHOT_UNAVAILABLE`. A `null` history ID means history was disabled, unavailable, or could not be saved; it does not change the execution outcome or prove that the server never received the request.
+
+For example: "Show the latest saved response for List users without sending it again."
+
+## Limits
+
+| Operation | Limit |
+| --- | --- |
+| Create, read, or update content | 256 KiB in UTF-8. Reading a snippet counts all fragments; HTTP requests count body plus description. |
+| MCP request payload or tool result | 2 MiB, including metadata in results. |
+| HTTP execution | 60 seconds and 256 KiB of response body. Capped bodies are marked `truncated`; binary bodies are omitted. |
+
+Oversized saved content and tool results are rejected. Reduce the page size for oversized lists; inspect oversized history snapshots in the app.
+
+MCP supports `none`, `json`, `graphql`, `text`, and `form-urlencoded` request bodies. It cannot edit runtime rules or trashed requests, connect WebSockets, or upload local files. Configure unsupported settings in massCode.
 
 ## Troubleshooting
 
-- **Cannot connect:** keep massCode running, verify the port, and use a client running on the same computer. A client in a remote container or remote workspace cannot reach your desktop through its own loopback address.
-- **Access denied:** enable both API integrations and MCP access, and check that the client uses the latest token. To stop MCP access while keeping the Clipper working, turn off only **MCP access**.
-- **Cloud file unavailable:** download the item through your sync provider and retry. massCode reports unavailable content rather than returning an empty document.
-- **Content too large:** Creating and reading an item supports up to 256 KiB of UTF-8 content, counted before JSON escaping. For snippets, reading counts the combined content of all fragments. For saved HTTP requests, the limit counts body plus description. Separately, the HTTP request body and the JSON text of a tool result (including metadata) each have a 2 MiB limit. The result limit excludes the MCP response envelope. Oversized saved content or metadata is rejected rather than silently shortened. HTTP execution responses use the explicit truncation described above. If a search result is too large, reduce its `limit`; a single oversized result still returns an error.
-- **Partial creation:** if a tool reports `PARTIAL_CREATE`, check the returned item ID in massCode before trying again. The item was created, but a later save step failed; retrying may create a duplicate.
+- **Cannot connect:** keep massCode running and verify the port. The client must run on the same computer; a remote container cannot reach your desktop through its own loopback address.
+- **Access denied:** enable both API integrations and MCP access, and check that the client uses the latest token.
+- **Cloud file unavailable:** download the item through your sync provider and retry.
+- **Partial creation:** `PARTIAL_CREATE` includes the created item's ID. Inspect it before retrying; another creation may produce a duplicate.

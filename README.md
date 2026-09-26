@@ -193,8 +193,9 @@ Cloud providers receive the context used for the task; use a model running on yo
 Connect Codex, Claude Code, Cursor, or VS Code Copilot to your massCode vault through the built-in MCP server.
 
 - Find and read snippets, notes, and saved HTTP requests from your coding agent
-- Save code, Markdown notes, and HTTP requests directly to Inbox
-- Send saved HTTP requests using the active massCode environment
+- Save code and Markdown notes to Inbox; organize HTTP requests in Inbox or collections
+- Edit and move saved HTTP requests with protection against overwriting newer changes
+- Preview and send requests using the active massCode environment, then inspect saved execution history
 
 See the [MCP setup guide](https://masscode.io/documentation/mcp/) to connect your agent.
 

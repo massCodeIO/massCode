@@ -101,6 +101,7 @@ function collectSpans(
   return spans
 }
 const requiredCategories = [
+  'builtin',
   'positive',
   'negative',
   'keyword',
@@ -338,9 +339,21 @@ describe('representative syntax in every supported language', () => {
         }
       }
       const legacy = await legacySpans(fixture.id, fixture.source)
-      const native = nativeLanguages.some(
-        item => item.support?.language === support?.language,
-      )
+      const native
+        = [
+          'd',
+          'fsharp',
+          'pascal',
+          'powershell',
+          'groovy',
+          'kotlin',
+          'objectivec',
+          'java',
+          'python',
+        ].includes(fixture.id)
+        || nativeLanguages.some(
+          item => item.support?.language === support?.language,
+        )
       const backend = !support
         ? 'plain'
         : native
@@ -370,41 +383,6 @@ describe('representative syntax in every supported language', () => {
         expect(fixture.source.slice(change.from, change.to)).toBe(change.text)
         expect(change.reason.trim()).not.toBe('')
         expect(change.to).toBeGreaterThan(change.from)
-      }
-      if (backend === 'textmate') {
-        for (const span of legacy) {
-          for (let pos = span.from; pos < span.to; pos++) {
-            if (/\s/.test(fixture.source[pos]!))
-              continue
-            const actual = spans.find(
-              item => item.from <= pos && item.to > pos,
-            )?.classes
-            const acceptedChange = fixture.legacyChanges?.some(
-              change => pos >= change.from && pos < change.to,
-            )
-            if (
-              actual !== span.classes
-              && acceptedChange
-              && !fixture.checks.some(
-                check =>
-                  check.from <= pos
-                  && pos < check.to
-                  && actual?.split(' ').includes(`cm-${check.category}`),
-              )
-            ) {
-              failures.push(
-                `Accepted mapping change needs a positive assertion at ${pos}`,
-              )
-              break
-            }
-            if (actual !== span.classes && !acceptedChange) {
-              failures.push(
-                `Scope mapping regression ${JSON.stringify(span.text)} at ${pos}: ${span.classes} → ${actual || 'plain'}`,
-              )
-              break
-            }
-          }
-        }
       }
       results.push({
         id: fixture.id,

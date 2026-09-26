@@ -31,3 +31,6 @@
 .cm-s-neo .cm-variable { color: #047d65; }
 .cm-s-oceanic-next .cm-bracket { color: #5fb3b3; }
 .cm-s-oceanic-next .cm-header, .cm-s-oceanic-next .cm-link { color: #c594c5; }
+
+.cm-s-oceanic-next .cm-builtin, .cm-s-oceanic-next .cm-variable-2 { color: oklch(75% 0.16 240); }
+.cm-s-neo .cm-builtin, .cm-s-neo .cm-variable-2 { color: #00f; }

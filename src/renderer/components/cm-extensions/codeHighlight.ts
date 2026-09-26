@@ -12,6 +12,15 @@ import {
 } from './textMateTags'
 
 const darkHighlightStyle = HighlightStyle.define([
+  {
+    tag: [
+      tags.standard(tags.name),
+      tags.standard(tags.variableName),
+      tags.special(tags.variableName),
+    ],
+    color: 'oklch(75% 0.16 240)',
+  },
+  { tag: tags.annotation, color: 'oklch(75% 0.16 55)' },
   { tag: tags.inserted, color: 'oklch(72% 0.15 150)' },
   { tag: tags.deleted, color: 'oklch(72% 0.18 25)' },
   { tag: tags.keyword, color: 'oklch(72% 0.17 290)' },
@@ -74,6 +83,12 @@ export const codeHighlighter = tagHighlighter([
   },
   { tag: [tags.typeName, tags.className, tags.namespace], class: 'cm-type' },
   { tag: tags.variableName, class: 'cm-variable' },
+  {
+    tag: [tags.standard(tags.name), tags.standard(tags.variableName)],
+    class: 'cm-builtin',
+  },
+  { tag: tags.special(tags.variableName), class: 'cm-variable-2' },
+  { tag: tags.annotation, class: 'cm-meta' },
   { tag: textMateVariable2, class: 'cm-variable-2' },
   { tag: textMateVariable3, class: 'cm-variable-3' },
   { tag: textMateBracket, class: 'cm-bracket' },

@@ -811,6 +811,20 @@
           "comment",
           "string"
         ]
+      },
+      {
+        "to": 242,
+        "text": "const",
+        "category": "keyword",
+        "construct": "Rendered keyword token",
+        "from": 237
+      },
+      {
+        "to": 261,
+        "text": "inventory",
+        "category": "string",
+        "construct": "Rendered string token",
+        "from": 252
       }
     ],
     "requiredCategories": [
@@ -818,9 +832,11 @@
       "def",
       "em",
       "header",
+      "keyword",
       "link",
       "number",
       "operator",
+      "string",
       "strong",
       "variable-2"
     ],
@@ -1319,21 +1335,21 @@
       {
         "to": 388,
         "text": "sort",
-        "category": "variable",
+        "category": "builtin",
         "construct": "variable-reference",
         "from": 384
       }
     ],
     "requiredCategories": [
       "attribute",
+      "builtin",
       "comment",
       "def",
       "keyword",
       "meta",
       "number",
       "operator",
-      "string",
-      "variable"
+      "string"
     ],
     "knownGaps": []
   },
@@ -1815,23 +1831,37 @@
       {
         "to": 111,
         "text": "Inventory",
-        "category": "def",
+        "category": "type",
         "construct": "definition-or-call-name",
         "from": 102
       },
       {
         "to": 166,
         "text": "int",
-        "category": "type",
+        "category": "keyword",
         "construct": "type-name",
         "from": 163
       },
       {
         "to": 56,
         "text": "System",
-        "category": "variable",
+        "category": "type",
         "construct": "variable-reference",
         "from": 50
+      },
+      {
+        "to": 315,
+        "text": "Total",
+        "category": "def",
+        "construct": "Rendered def token",
+        "from": 310
+      },
+      {
+        "to": 138,
+        "text": "Catalog",
+        "category": "variable",
+        "construct": "Rendered variable token",
+        "from": 131
       }
     ],
     "requiredCategories": [
@@ -2013,10 +2043,18 @@
         "category": "variable",
         "construct": "variable-reference",
         "from": 35
+      },
+      {
+        "to": 464,
+        "text": "str/upper-case",
+        "category": "builtin",
+        "construct": "Rendered builtin token",
+        "from": 450
       }
     ],
     "requiredCategories": [
       "atom",
+      "builtin",
       "comment",
       "keyword",
       "number",
@@ -3059,14 +3097,30 @@
         "category": "variable",
         "construct": "variable-reference",
         "from": 63
+      },
+      {
+        "to": 100,
+        "text": "double",
+        "category": "builtin",
+        "construct": "Rendered builtin token",
+        "from": 94
+      },
+      {
+        "to": 83,
+        "text": "string",
+        "category": "type",
+        "construct": "Rendered type token",
+        "from": 77
       }
     ],
     "requiredCategories": [
+      "builtin",
       "comment",
       "keyword",
       "number",
       "operator",
       "string",
+      "type",
       "variable"
     ],
     "knownGaps": []
@@ -3175,13 +3229,21 @@
       {
         "to": 67,
         "text": "String",
-        "category": "variable",
+        "category": "builtin",
         "construct": "variable-reference",
         "from": 61
+      },
+      {
+        "to": 72,
+        "text": "name",
+        "category": "variable",
+        "construct": "Rendered variable token",
+        "from": 68
       }
     ],
     "requiredCategories": [
       "atom",
+      "builtin",
       "comment",
       "keyword",
       "number",
@@ -4146,9 +4208,17 @@
         "text": "products",
         "category": "variable",
         "construct": "function-parameter"
+      },
+      {
+        "to": 67,
+        "text": "(",
+        "category": "builtin",
+        "construct": "Rendered builtin token",
+        "from": 66
       }
     ],
     "requiredCategories": [
+      "builtin",
       "comment",
       "def",
       "keyword",
@@ -4324,7 +4394,7 @@
       {
         "to": 92,
         "text": "dup",
-        "category": "variable",
+        "category": "builtin",
         "construct": "variable-reference",
         "from": 89
       },
@@ -4342,12 +4412,20 @@
       {
         "to": 128,
         "text": "drop",
-        "category": "variable",
+        "category": "builtin",
         "construct": "builtin-stack-word",
         "from": 124
+      },
+      {
+        "to": 64,
+        "text": "total ",
+        "category": "variable",
+        "construct": "Rendered variable token",
+        "from": 58
       }
     ],
     "requiredCategories": [
+      "builtin",
       "comment",
       "def",
       "keyword",
@@ -4443,9 +4521,17 @@
           "comment",
           "string"
         ]
+      },
+      {
+        "to": 119,
+        "text": "real",
+        "category": "builtin",
+        "construct": "Rendered builtin token",
+        "from": 115
       }
     ],
     "requiredCategories": [
+      "builtin",
       "comment",
       "keyword",
       "number",
@@ -4519,15 +4605,31 @@
         "category": "variable",
         "construct": "variable-reference",
         "from": 34
+      },
+      {
+        "to": 78,
+        "text": "string",
+        "category": "builtin",
+        "construct": "Rendered builtin token",
+        "from": 72
+      },
+      {
+        "from": 90,
+        "to": 95,
+        "text": "float",
+        "category": "type",
+        "construct": "primitive-type"
       }
     ],
     "requiredCategories": [
+      "builtin",
       "comment",
       "keyword",
       "number",
       "operator",
       "string",
-      "variable"
+      "variable",
+      "type"
     ],
     "knownGaps": []
   },
@@ -5138,6 +5240,13 @@
         "category": "variable",
         "construct": "variable-reference",
         "from": 50
+      },
+      {
+        "to": 70,
+        "text": "String",
+        "category": "type",
+        "construct": "Rendered type token",
+        "from": 64
       }
     ],
     "requiredCategories": [
@@ -5148,6 +5257,7 @@
       "operator",
       "property",
       "string",
+      "type",
       "variable"
     ],
     "knownGaps": []
@@ -5477,9 +5587,17 @@
         "category": "variable",
         "construct": "variable-reference",
         "from": 96
+      },
+      {
+        "to": 110,
+        "text": "String",
+        "category": "builtin",
+        "construct": "Rendered builtin token",
+        "from": 104
       }
     ],
     "requiredCategories": [
+      "builtin",
       "comment",
       "keyword",
       "number",
@@ -5554,7 +5672,7 @@
       {
         "to": 93,
         "text": "public",
-        "category": "attribute",
+        "category": "keyword",
         "construct": "attribute",
         "from": 87
       },
@@ -5575,20 +5693,26 @@
       {
         "to": 55,
         "text": "package",
-        "category": "variable",
+        "category": "keyword",
         "construct": "variable-reference",
         "from": 48
+      },
+      {
+        "to": 66,
+        "text": ";",
+        "category": "operator",
+        "construct": "Rendered operator token",
+        "from": 65
       }
     ],
     "requiredCategories": [
-      "attribute",
       "comment",
       "def",
       "keyword",
       "number",
+      "operator",
       "string",
-      "type",
-      "variable"
+      "type"
     ],
     "knownGaps": []
   },
@@ -6295,6 +6419,13 @@
         "category": "variable",
         "construct": "variable-reference",
         "from": 38
+      },
+      {
+        "to": 479,
+        "text": "Override",
+        "category": "meta",
+        "construct": "Rendered meta token",
+        "from": 471
       }
     ],
     "requiredCategories": [
@@ -6302,6 +6433,7 @@
       "comment",
       "def",
       "keyword",
+      "meta",
       "number",
       "operator",
       "punctuation",
@@ -7110,7 +7242,7 @@
       {
         "to": 61,
         "text": "Product",
-        "category": "def",
+        "category": "type",
         "construct": "definition-or-call-name",
         "from": 54
       },
@@ -7133,21 +7265,29 @@
         "from": 131
       },
       {
-        "to": 70,
-        "text": "name",
-        "category": "variable",
-        "construct": "variable-reference",
-        "from": 66
+        "to": 359,
+        "text": "true",
+        "category": "atom",
+        "construct": "Rendered atom token",
+        "from": 355
+      },
+      {
+        "to": 150,
+        "text": "total",
+        "category": "def",
+        "construct": "Rendered def token",
+        "from": 145
       }
     ],
     "requiredCategories": [
+      "atom",
       "comment",
       "def",
       "keyword",
       "number",
       "operator",
       "string",
-      "variable"
+      "type"
     ],
     "knownGaps": []
   },
@@ -7421,7 +7561,7 @@
       {
         "to": 305,
         "text": "T",
-        "category": "variable",
+        "category": "variable-2",
         "construct": "variable-reference",
         "from": 304
       }
@@ -7433,7 +7573,7 @@
       "number",
       "punctuation",
       "tag",
-      "variable"
+      "variable-2"
     ],
     "knownGaps": []
   },
@@ -7649,7 +7789,7 @@
       {
         "to": 551,
         "text": "@brand",
-        "category": "variable",
+        "category": "variable-2",
         "construct": "variable-reference",
         "from": 545
       }
@@ -7666,7 +7806,7 @@
       "string",
       "tag",
       "type",
-      "variable"
+      "variable-2"
     ],
     "knownGaps": []
   },
@@ -7931,7 +8071,7 @@
       {
         "to": 54,
         "text": "=",
-        "category": "keyword",
+        "category": "operator",
         "construct": "declaration-or-directive-keyword",
         "from": 53,
         "notCategories": [
@@ -7940,28 +8080,36 @@
         ]
       },
       {
-        "to": 90,
-        "text": "[",
-        "category": "punctuation",
-        "construct": "punctuation",
-        "from": 89
-      },
-      {
         "to": 52,
         "text": "label",
-        "category": "variable",
+        "category": "def",
         "construct": "variable-reference",
         "from": 47
+      },
+      {
+        "to": 201,
+        "text": "->",
+        "category": "keyword",
+        "construct": "Rendered keyword token",
+        "from": 199
+      },
+      {
+        "to": 336,
+        "text": "console",
+        "category": "type",
+        "construct": "Rendered type token",
+        "from": 329
       }
     ],
     "requiredCategories": [
       "atom",
       "comment",
+      "def",
       "keyword",
       "number",
-      "punctuation",
+      "operator",
       "string",
-      "variable"
+      "type"
     ],
     "knownGaps": []
   },
@@ -9491,7 +9639,7 @@
       {
         "to": 159,
         "text": "admin",
-        "category": "variable",
+        "category": "builtin",
         "construct": "variable-reference",
         "from": 154
       },
@@ -9522,10 +9670,10 @@
       }
     ],
     "requiredCategories": [
+      "builtin",
       "comment",
       "keyword",
-      "string",
-      "variable"
+      "string"
     ],
     "knownGaps": []
   },
@@ -9677,9 +9825,16 @@
       {
         "to": 112,
         "text": "NSObject",
-        "category": "variable",
+        "category": "type",
         "construct": "variable-reference",
         "from": 104
+      },
+      {
+        "to": 155,
+        "text": "label",
+        "category": "variable",
+        "construct": "Rendered variable token",
+        "from": 150
       }
     ],
     "requiredCategories": [
@@ -9766,9 +9921,17 @@
         "category": "variable",
         "construct": "variable-reference",
         "from": 63
+      },
+      {
+        "to": 403,
+        "text": "true",
+        "category": "builtin",
+        "construct": "Rendered builtin token",
+        "from": 399
       }
     ],
     "requiredCategories": [
+      "builtin",
       "comment",
       "keyword",
       "number",
@@ -9941,6 +10104,13 @@
         "category": "variable",
         "construct": "variable-reference",
         "from": 49
+      },
+      {
+        "to": 93,
+        "text": "Real",
+        "category": "type",
+        "construct": "Rendered type token",
+        "from": 89
       }
     ],
     "requiredCategories": [
@@ -9949,6 +10119,7 @@
       "number",
       "operator",
       "string",
+      "type",
       "variable"
     ],
     "knownGaps": []
@@ -10018,7 +10189,7 @@
       {
         "to": 51,
         "text": "my",
-        "category": "def",
+        "category": "keyword",
         "construct": "definition-or-call-name",
         "from": 49
       },
@@ -10036,7 +10207,7 @@
       {
         "to": 212,
         "text": "describe",
-        "category": "meta",
+        "category": "def",
         "construct": "meta",
         "from": 204
       },
@@ -10049,21 +10220,27 @@
       },
       {
         "to": 58,
-        "text": "$label",
-        "category": "variable",
+        "text": "label",
+        "category": "def",
         "construct": "variable-reference",
-        "from": 52
+        "from": 53
+      },
+      {
+        "to": 308,
+        "text": "^[a-z]+",
+        "category": "string-2",
+        "construct": "Rendered string-2 token",
+        "from": 301
       }
     ],
     "requiredCategories": [
       "comment",
       "def",
       "keyword",
-      "meta",
       "number",
       "operator",
       "string",
-      "variable"
+      "string-2"
     ],
     "knownGaps": []
   },
@@ -10633,14 +10810,14 @@
         "from": 101,
         "to": 106,
         "text": "$true",
-        "category": "variable",
+        "category": "builtin",
         "construct": "variable-reference"
       },
       {
         "from": 118,
         "to": 123,
         "text": "$null",
-        "category": "variable",
+        "category": "builtin",
         "construct": "variable-reference"
       },
       {
@@ -10714,15 +10891,24 @@
         "category": "variable",
         "construct": "variable-reference",
         "from": 78
+      },
+      {
+        "to": 51,
+        "text": "string",
+        "category": "type",
+        "construct": "Rendered type token",
+        "from": 45
       }
     ],
     "requiredCategories": [
+      "builtin",
       "comment",
       "keyword",
       "number",
       "operator",
       "punctuation",
       "string",
+      "type",
       "variable"
     ],
     "knownGaps": []
@@ -11433,10 +11619,25 @@
         "category": "variable",
         "construct": "variable-reference",
         "from": 80
+      },
+      {
+        "to": 164,
+        "text": "package",
+        "category": "builtin",
+        "construct": "Rendered builtin token",
+        "from": 157
+      },
+      {
+        "to": 288,
+        "text": "${port}",
+        "category": "variable-2",
+        "construct": "Rendered variable-2 token",
+        "from": 281
       }
     ],
     "requiredCategories": [
       "atom",
+      "builtin",
       "comment",
       "def",
       "keyword",
@@ -11445,7 +11646,8 @@
       "punctuation",
       "string",
       "tag",
-      "variable"
+      "variable",
+      "variable-2"
     ],
     "knownGaps": []
   },
@@ -11857,10 +12059,18 @@
         "category": "variable",
         "construct": "variable-reference",
         "from": 47
+      },
+      {
+        "to": 299,
+        "text": "return",
+        "category": "builtin",
+        "construct": "Rendered builtin token",
+        "from": 293
       }
     ],
     "requiredCategories": [
       "atom",
+      "builtin",
       "comment",
       "keyword",
       "number",
@@ -12654,18 +12864,26 @@
       {
         "to": 48,
         "text": "data",
-        "category": "variable",
+        "category": "builtin",
         "construct": "variable-reference",
         "from": 44
+      },
+      {
+        "to": 58,
+        "text": "products;",
+        "category": "variable-2",
+        "construct": "Rendered variable-2 token",
+        "from": 49
       }
     ],
     "requiredCategories": [
+      "builtin",
       "comment",
       "def",
       "number",
       "operator",
       "string",
-      "variable"
+      "variable-2"
     ],
     "knownGaps": []
   },
@@ -12779,7 +12997,7 @@
       {
         "to": 350,
         "text": "$brand",
-        "category": "variable",
+        "category": "variable-2",
         "construct": "variable-reference",
         "from": 344
       }
@@ -12795,7 +13013,7 @@
       "string",
       "tag",
       "type",
-      "variable"
+      "variable-2"
     ],
     "knownGaps": []
   },
@@ -13065,7 +13283,7 @@
       {
         "to": 58,
         "text": "define",
-        "category": "variable",
+        "category": "builtin",
         "construct": "variable-reference",
         "from": 52
       },
@@ -13075,10 +13293,18 @@
         "text": "12.5",
         "category": "atom",
         "construct": "quoted-list-literal"
+      },
+      {
+        "to": 65,
+        "text": "prices",
+        "category": "variable",
+        "construct": "Rendered variable token",
+        "from": 59
       }
     ],
     "requiredCategories": [
       "atom",
+      "builtin",
       "comment",
       "number",
       "punctuation",
@@ -13313,7 +13539,7 @@
       {
         "to": 552,
         "text": "$brand",
-        "category": "variable",
+        "category": "variable-2",
         "construct": "variable-reference",
         "from": 546
       }
@@ -13331,7 +13557,7 @@
       "string",
       "tag",
       "type",
-      "variable"
+      "variable-2"
     ],
     "knownGaps": []
   },
@@ -13580,21 +13806,14 @@
       {
         "to": 65,
         "text": ":",
-        "category": "operator",
+        "category": "keyword",
         "construct": "operator",
         "from": 64
       },
       {
-        "to": 302,
-        "text": "[",
-        "category": "punctuation",
-        "construct": "punctuation",
-        "from": 301
-      },
-      {
         "to": 55,
         "text": "Object",
-        "category": "variable",
+        "category": "def",
         "construct": "variable-reference",
         "from": 49
       },
@@ -13619,16 +13838,22 @@
           "comment",
           "string"
         ]
+      },
+      {
+        "to": 67,
+        "text": "#",
+        "category": "operator",
+        "construct": "Rendered operator token",
+        "from": 66
       }
     ],
     "requiredCategories": [
       "comment",
+      "def",
       "keyword",
       "number",
       "operator",
-      "punctuation",
-      "string",
-      "variable"
+      "string"
     ],
     "knownGaps": []
   },
@@ -14468,6 +14693,13 @@
         "category": "variable",
         "construct": "variable-reference",
         "from": 342
+      },
+      {
+        "to": 226,
+        "text": "&",
+        "category": "variable-2",
+        "construct": "Rendered variable-2 token",
+        "from": 225
       }
     ],
     "requiredCategories": [
@@ -14480,7 +14712,8 @@
       "property",
       "string",
       "tag",
-      "variable"
+      "variable",
+      "variable-2"
     ],
     "knownGaps": []
   },
@@ -14922,7 +15155,7 @@
       {
         "to": 305,
         "text": "T",
-        "category": "variable",
+        "category": "variable-2",
         "construct": "variable-reference",
         "from": 304
       }
@@ -14934,7 +15167,7 @@
       "number",
       "punctuation",
       "tag",
-      "variable"
+      "variable-2"
     ],
     "knownGaps": []
   },
@@ -14980,7 +15213,7 @@
       {
         "to": 503,
         "text": "|Apple|12.50|",
-        "category": "variable",
+        "category": "variable-2",
         "construct": "variable-reference",
         "from": 490
       },
@@ -14999,7 +15232,7 @@
       "operator",
       "punctuation",
       "strong",
-      "variable"
+      "variable-2"
     ],
     "knownGaps": []
   },
@@ -15690,7 +15923,7 @@
       {
         "to": 52,
         "text": "$currency",
-        "category": "variable",
+        "category": "builtin",
         "construct": "variable-reference",
         "from": 43
       },
@@ -15707,12 +15940,12 @@
       }
     ],
     "requiredCategories": [
+      "builtin",
       "comment",
       "keyword",
       "number",
       "operator",
-      "string",
-      "variable"
+      "string"
     ],
     "knownGaps": [
       {

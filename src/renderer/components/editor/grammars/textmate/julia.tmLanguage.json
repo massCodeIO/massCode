@@ -9,6 +9,7 @@
   "scopeName": "source.julia",
   "comment": "This grammar is used by Atom (Oniguruma), GitHub (PCRE), and VSCode (Oniguruma),\nso all regexps must be compatible with both engines.\n\nSpecs:\n- https://github.com/kkos/oniguruma/blob/master/doc/RE\n- https://www.pcre.org/current/doc/html/",
   "patterns": [
+    { "match": "\\b(struct|abstract\\s+type|primitive\\s+type)\\s+([A-Za-z_][A-Za-z_0-9]*)", "captures": { "1": { "name": "keyword.other.julia" }, "2": { "name": "entity.name.type.julia" } } },
     {
       "include": "#operator"
     },

@@ -2,6 +2,10 @@ import type { LanguageSupport } from '@codemirror/language'
 import { LanguageDescription } from '@codemirror/language'
 import { languages as nativeLanguages } from '@codemirror/language-data'
 import { languages } from './languages'
+import {
+  correctNativeHighlight,
+  loadCorrectedStreamLanguage,
+} from './nativeHighlight'
 
 const aliases: Record<string, string> = {
   'js': 'javascript',
@@ -45,6 +49,9 @@ export function loadLanguageSupport(
   let pending = cache.get(id)
   if (!pending) {
     pending = (async () => {
+      const corrected = await loadCorrectedStreamLanguage(id)
+      if (corrected)
+        return corrected
       const native = LanguageDescription.matchLanguageName(
         nativeLanguages,
         nativeAliases[id] ?? id,
@@ -55,6 +62,13 @@ export function loadLanguageSupport(
       if (
         native
         && ![
+          // These stream modes consume interpolated expressions as string text.
+          'csharp',
+          'haxe',
+          'julia',
+          'livescript',
+          'perl',
+          'smalltalk',
           'django',
           'razor',
           'php_laravel_blade',
@@ -71,7 +85,7 @@ export function loadLanguageSupport(
           'lua',
         ].includes(id)
       ) {
-        return native.load()
+        return correctNativeHighlight(id, await native.load())
       }
       const entry = languages.find(
         item => item.value === id || item.name.toLowerCase() === id,

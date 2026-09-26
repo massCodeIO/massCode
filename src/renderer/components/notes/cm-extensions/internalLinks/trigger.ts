@@ -217,6 +217,17 @@ export function pickShortestUniqueInsertTarget(
   }
 
   const selectedKey = normalizeInternalLinkLookupKey(selected.name)
+  if (
+    selected.type === 'note'
+    && items.some(
+      candidate =>
+        candidate.type !== selected.type
+        && normalizeInternalLinkLookupKey(candidate.name) === selectedKey,
+    )
+  ) {
+    return `${selected.type}:${selected.id}`
+  }
+
   const hasNameCollision = items.some(
     candidate =>
       candidate !== selected
@@ -472,7 +483,7 @@ export function selectInternalLinksPickerItem(index?: number) {
     internalLinksPickerState.items,
   )
   const change
-    = item.type === 'http-request' || getPlannedLinkTarget(item.name)
+    = item.type === 'http-request' || target === `${item.type}:${item.id}`
       ? {
           from: range.from,
           insert: buildLinkMarkdown(`${item.type}:${item.id}`, item.name),

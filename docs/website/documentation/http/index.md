@@ -56,7 +56,7 @@ Already using another client? Start with [Moving from Postman or Bruno](./import
 
 ## Find your way around
 
-The sidebar has collapsible **Collections**, **Environments**, and **Trash** sections. Use search at the top to find items and the star button to filter favorite requests. In Collections, expand the tree to open a request or select the collection/folder itself to edit its shared configuration. The editor shows the selected item's tabs; request previews and responses occupy the lower panel. The editor header has controls to show/hide the sidebar, lower panel, and Variables inspector. Console and Terminal are available in the debugging dock.
+The sidebar has collapsible **Collections**, **Environments**, and **Trash** sections. Use search at the top to find items and the star button to filter favorite requests. In Collections, expand the tree to open a request or select the collection/folder itself to edit its shared configuration. The editor shows the selected item's tabs; request previews and responses occupy the lower panel. The editor header has controls to show/hide the primary sidebar, lower panel, and secondary sidebar containing the Variables inspector or AI chat. Use **View → Primary Side Bar** (<kbd>Cmd+B</kbd> / <kbd>Ctrl+B</kbd>) and **View → Secondary Side Bar** (<kbd>Cmd+Option+B</kbd> / <kbd>Ctrl+Alt+B</kbd>) to toggle the sidebars. Console and Terminal are available in the debugging dock.
 
 The HTTP command palette actions can create a request, collection, folder, or WebSocket request; import collections; and open environments, settings, Console, Terminal, Cookies, or the runner when applicable.
 

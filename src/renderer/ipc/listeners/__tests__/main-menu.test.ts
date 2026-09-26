@@ -16,6 +16,18 @@ async function setup() {
   vi.doMock('@/composables/spaces/http/useHttpPanels', () => ({
     useHttpPanels: () => ({ bottomOpen, inspectorOpen }),
   }))
+  vi.doMock('@/composables/ai/useAi', () => ({
+    useAi: () => ({ openAndFocus: vi.fn() }),
+  }))
+  const toggleSecondary = vi.fn(() => {
+    inspectorOpen.value = !inspectorOpen.value
+  })
+  vi.doMock('@/composables/useSpacePanels', () => ({
+    useSpacePanels: () => ({
+      togglePrimary: toggleHttpSidebar,
+      toggleSecondary,
+    }),
+  }))
   const ipcHandlers = new Map<string, (...args: any[]) => void>()
   const navigateBack = vi.fn(async () => undefined)
   const navigateForward = vi.fn(async () => undefined)
@@ -302,22 +314,10 @@ it('toggles HTTP panels and ignores unavailable panels and other spaces', async 
   expect(state.bottomOpen.value).toBe(false)
 })
 
-it('toggles the Notes inspector only for a selected note in its editor', async () => {
+it('dispatches both sidebar shortcuts through the shared controller', async () => {
   const state = await setup()
-  const toggle = state.ipcHandlers.get('main-menu:toggle-notes-inspector')!
-  state.getActiveSpaceId.mockReturnValue('notes')
-  toggle()
-  expect(state.isNotesInspectorOpen.value).toBe(false)
-  state.selectedNote.value = { id: 1 }
-  toggle()
-  expect(state.isNotesInspectorOpen.value).toBe(true)
-  toggle()
-  expect(state.isNotesInspectorOpen.value).toBe(false)
-  state.isNotesMindmapShown.value = true
-  toggle()
-  expect(state.isNotesInspectorOpen.value).toBe(false)
-  state.isNotesMindmapShown.value = false
-  state.getActiveSpaceId.mockReturnValue('http')
-  toggle()
-  expect(state.isNotesInspectorOpen.value).toBe(false)
+  state.ipcHandlers.get('main-menu:toggle-sidebar')!()
+  expect(state.toggleHttpSidebar).toHaveBeenCalledOnce()
+  state.ipcHandlers.get('main-menu:toggle-secondary-sidebar')!()
+  expect(state.inspectorOpen.value).toBe(true)
 })

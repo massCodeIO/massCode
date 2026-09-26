@@ -9,6 +9,7 @@ import {
   useSnippets,
 } from '@/composables'
 import { useHttpPanels } from '@/composables/spaces/http/useHttpPanels'
+import { useSpacePanels } from '@/composables/useSpacePanels'
 import { ipc } from '@/electron'
 import { getActiveSpaceId } from '@/spaceDefinitions'
 import { getCodeFormatterParser } from '~/shared/codeFormatter'
@@ -43,12 +44,18 @@ const {
   selectedSnippetRecordStatus,
 } = useSnippets()
 const { contentSortState } = useContentSort()
+const { primaryAvailable, primaryOpen, secondaryOpen, secondaryAvailable }
+  = useSpacePanels()
 
 export function registerMainMenuContextSync() {
   watch(
     () =>
       [
         getActiveSpaceId(),
+        primaryAvailable.value,
+        primaryOpen.value,
+        secondaryOpen.value,
+        secondaryAvailable.value,
         codeLayoutMode.value,
         isCompactListMode.value,
         isAvailableToCodePreview.value,
@@ -93,6 +100,14 @@ export function registerMainMenuContextSync() {
         'main-menu:update-context',
         createMainMenuContext({
           activeSpaceId: getActiveSpaceId(),
+          sidebars: getActiveSpaceId()
+            ? {
+                primaryAvailable: primaryAvailable.value,
+                primary: primaryOpen.value,
+                secondary: secondaryOpen.value,
+                secondaryAvailable: secondaryAvailable.value,
+              }
+            : undefined,
           compactListMode: isCompactListMode.value,
           hideCompletedTasksInFolders: hideCompletedTasksInFolders.value,
           contentSort: {

@@ -16,7 +16,7 @@ Dashboard is the home screen for Notes. Use it to get an overview of your note b
 - Open the **Notes** space.
 - Click the **Dashboard** button with the grid icon in the Notes sidebar header.
 
-Dashboard replaces the note list and editor area, while the Notes sidebar stays visible.
+Dashboard replaces the note list and editor area, while keeping the Notes sidebar available. Toggle it with **View → Primary Side Bar** or <kbd>Cmd+B</kbd> / <kbd>Ctrl+B</kbd>.
 
 ## What Dashboard Shows
 

@@ -77,6 +77,7 @@ defineExpose({ focusInput })
     <UiActionButton
       :disabled="!count"
       :tooltip="i18n.t('contentSearch.previous')"
+      shortcut="Shift+Enter"
       @click="emit('previous')"
     >
       <ChevronUp class="size-3.5" />
@@ -84,12 +85,14 @@ defineExpose({ focusInput })
     <UiActionButton
       :disabled="!count"
       :tooltip="i18n.t('contentSearch.next')"
+      shortcut="Enter"
       @click="emit('next')"
     >
       <ChevronDown class="size-3.5" />
     </UiActionButton>
     <UiActionButton
       :tooltip="i18n.t('action.close')"
+      shortcut="Escape"
       @click="emit('close')"
     >
       <X class="size-3.5" />

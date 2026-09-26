@@ -1280,6 +1280,8 @@
     "hide": "Скрыть",
     "showSidebar": "Показать боковую панель",
     "hideSidebar": "Скрыть боковую панель",
+    "showSecondarySidebar": "Показать дополнительную боковую панель",
+    "hideSecondarySidebar": "Скрыть дополнительную боковую панель",
     "showSidebarAndList": "Показать боковую панель и список",
     "hideSidebarAndList": "Скрыть боковую панель и список",
     "new": {

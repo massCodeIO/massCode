@@ -53,11 +53,17 @@ Connect a coding agent through [MCP](/documentation/mcp) to search, read, and sa
 
 ## General Settings
 
-### Sidebar Toggle
+### Sidebars
 
-Hide or show the Library sidebar in Code and Notes:
+Use the **View** menu or the panel buttons to show and hide sidebars. A checkmark means the panel is visible, including when it contains AI chat.
 
-- Select **"View"** > **"Toggle Sidebar"** from the menu bar or press <kbd>Alt+Cmd+B</kbd> on macOS or <kbd>Alt+Ctrl+B</kbd> on Windows or Linux.
+| Action | macOS | Windows / Linux |
+| --- | --- | --- |
+| Toggle **Primary Side Bar** | <kbd>Cmd+B</kbd> | <kbd>Ctrl+B</kbd> |
+| Toggle **Secondary Side Bar** | <kbd>Cmd+Option+B</kbd> | <kbd>Ctrl+Alt+B</kbd> |
+| Open, focus, or close **AI assistant** | <kbd>Cmd+L</kbd> | <kbd>Ctrl+L</kbd> |
+
+The primary sidebar contains navigation in Code, Notes, HTTP, Math, Drawings, and Tools. In Code and Notes, hiding it leaves the record list visible. The secondary sidebar is available in Code, Notes, and HTTP and contains AI chat or the space's inspector. Its shortcut closes the whole panel regardless of the selected tab. **AI assistant** opens the chat or focuses it when focus is elsewhere. Press its shortcut while focus is inside AI chat to close the whole secondary sidebar and return focus to the editor.
 
 ### Font Size
 

@@ -7,7 +7,7 @@ description: "Navigate and reorder note sections, inspect links and planned item
 
 <AppVersion text=">=5.12" />
 
-The Note inspector keeps a note’s structure, linked items, and callouts within reach while you write. Open **View → Note inspector** or click the right-panel button at the end of the editor toolbar.
+The Note inspector keeps a note’s structure, linked items, and callouts within reach while you write. Open **View → Secondary Side Bar** or click the right-panel button at the end of the editor toolbar, then select the inspector tab. You can toggle the panel with <kbd>Cmd+Option+B</kbd> on macOS or <kbd>Ctrl+Alt+B</kbd> on Windows and Linux.
 
 <img :src="withBase('/notes-inspector.png')" alt="Note inspector showing linked notes, snippets, HTTP requests, external links, and planned items beside an API integration checklist">
 

@@ -1277,6 +1277,8 @@
     "hide": "Hide",
     "showSidebar": "Show Sidebar",
     "hideSidebar": "Hide Sidebar",
+    "showSecondarySidebar": "Show Secondary Side Bar",
+    "hideSecondarySidebar": "Hide Secondary Side Bar",
     "showSidebarAndList": "Show Sidebar and List",
     "hideSidebarAndList": "Hide Sidebar and List",
     "new": {

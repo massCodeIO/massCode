@@ -110,6 +110,7 @@ function onKeydown(event: KeyboardEvent) {
       <UiActionButton
         v-else-if="!isSearch"
         :tooltip="i18n.t('action.new.snippet')"
+        shortcut="CommandOrControl+N"
         @click="createSnippetAndSelect"
       >
         <Plus class="h-4 w-4" />

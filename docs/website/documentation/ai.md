@@ -36,7 +36,7 @@ Click **Save and check connection** to save. Instructions apply across chats and
 ## Your First Task
 
 1. Open a note you want to edit.
-2. Open **AI assistant** from the space rail or **View → AI assistant**. You can also press <kbd>Cmd+L</kbd> on macOS / <kbd>Ctrl+L</kbd> on Windows and Linux. In Notes and HTTP, the chat appears in the inspector panel.
+2. Open **AI assistant** from the space rail or **View → AI assistant**. You can also press <kbd>Cmd+L</kbd> on macOS / <kbd>Ctrl+L</kbd> on Windows and Linux. The chat appears in the secondary sidebar. This shortcut opens chat or focuses it when focus is elsewhere. When focus is already inside AI chat, it closes the whole secondary sidebar and returns focus to the editor. To toggle the whole sidebar, use <kbd>Cmd+Option+B</kbd> on macOS / <kbd>Ctrl+Alt+B</kbd> on Windows and Linux.
 3. Check the attached note below the message box, then send: “Rewrite the opening paragraph to be shorter. Show me the diff first.”
 4. Open the review card, inspect the proposed changes, then apply or reject them.
 

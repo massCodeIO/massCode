@@ -73,6 +73,7 @@ function onForwardClick() {
       <UiActionButton
         :disabled="!canGoBack"
         :tooltip="i18n.t('menu:history.back')"
+        shortcut="CommandOrControl+["
         @click="onBackClick"
       >
         <ChevronLeft class="h-3 w-3" />
@@ -80,6 +81,7 @@ function onForwardClick() {
       <UiActionButton
         :disabled="!canGoForward"
         :tooltip="i18n.t('menu:history.forward')"
+        shortcut="CommandOrControl+]"
         @click="onForwardClick"
       >
         <ChevronRight class="h-3 w-3" />

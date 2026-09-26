@@ -2,29 +2,6 @@ import { describe, expect, it, vi } from 'vitest'
 import { highlightCode } from '../highlight'
 import { renderMarkdownBlocks } from '../markdown'
 
-// Real TextMate grammars and WASM, using the official DOM-free CM stream.
-vi.mock('codemirror', async () => {
-  const { createRequire } = await import('node:module')
-  const require = createRequire(import.meta.url)
-  return { default: require('codemirror/addon/runmode/runmode.node.js') }
-})
-vi.mock('codemirror-textmate', async () => {
-  const { createRequire } = await import('node:module')
-  const require = createRequire(import.meta.url)
-  const cm = require('codemirror/addon/runmode/runmode.node.js')
-  cm.defineInitHook = () => {}
-  const id = require.resolve('codemirror')
-  const previous = require.cache[id]
-  require.cache[id] = { exports: cm } as never
-  try {
-    return require('codemirror-textmate')
-  }
-  finally {
-    if (previous)
-      require.cache[id] = previous
-    else delete require.cache[id]
-  }
-})
 vi.mock('onigasm', async () => {
   const { createRequire } = await import('node:module')
   const { readFileSync } = await import('node:fs')
@@ -80,4 +57,41 @@ describe('chat code blocks', () => {
     expect(html).toContain('&lt;script&gt;')
     expect(html).not.toContain('<script>')
   })
+})
+
+it('preserves CRLF and escapes multiline tokens without leaking state between blocks', async () => {
+  const source = '/* <unsafe>\r\n\r\nend */\r\nconst x = 1'
+  const html = await highlightCode(source, 'js')
+  expect(html.match(/\r\n/g)).toHaveLength(3)
+  expect(html).not.toContain('<unsafe>')
+  expect(html).toContain('cm-comment')
+  expect(await highlightCode('const x = 1', 'js')).toContain('cm-keyword')
+  expect(await highlightCode('const x = 1', 'js')).not.toContain('cm-comment')
+})
+
+it('keeps each highlighted line balanced for static image rendering', async () => {
+  for (const source of [
+    '/* first\nsecond\nlast */',
+    'const s = `first\nsecond`',
+  ]) {
+    const html = await highlightCode(source, 'javascript')
+    for (const line of html.split('\n')) {
+      expect(line.match(/<span /g)?.length ?? 0).toBe(
+        line.match(/<\/span>/g)?.length ?? 0,
+      )
+    }
+    expect(html.split('\n')[1]).toContain('cm-')
+  }
+})
+
+it('highlights PHP snippets without opening tags', async () => {
+  const html = await highlightCode('function hello() { return "yes"; }', 'php')
+  expect(html).toMatch(/class="cm-keyword">function<\/span>/)
+  expect(html).toMatch(/class="cm-keyword">return<\/span>/)
+  expect(html).toContain('cm-string')
+})
+it('highlights JavaScript keywords and numbers inside Markdown fences', async () => {
+  const html = await highlightCode('```js\nconst x=1\n```', 'markdown')
+  expect(html).toMatch(/class="cm-keyword">const<\/span>/)
+  expect(html).toMatch(/class="cm-number">1<\/span>/)
 })

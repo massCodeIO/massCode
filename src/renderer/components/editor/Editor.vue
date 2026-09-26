@@ -1,7 +1,12 @@
 <script setup lang="ts">
-import type { Language } from '@/components/editor/types'
 import type { EditSnapshot } from '@/composables/ai/edit'
 import type { NativeBridgeResult } from '@/composables/ai/nativeBridges'
+import type { Extension } from '@codemirror/state'
+import { createCodeHighlight } from '@/components/cm-extensions/codeHighlight'
+import {
+  createContentSearch,
+  setContentSearchMatches,
+} from '@/components/cm-extensions/contentSearch'
 import {
   useApp,
   useDonations,
@@ -21,6 +26,28 @@ import {
   mapNormalizedCursorIndex,
   normalizeTerminalText,
 } from '@/utils/normalizeTerminalText'
+import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete'
+import {
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentWithTab,
+  isolateHistory,
+} from '@codemirror/commands'
+import { bracketMatching, indentUnit } from '@codemirror/language'
+import {
+  Compartment,
+  EditorSelection,
+  EditorState,
+  Transaction,
+} from '@codemirror/state'
+import {
+  drawSelection,
+  EditorView,
+  highlightActiveLine,
+  keymap,
+  lineNumbers,
+} from '@codemirror/view'
 import {
   useClipboard,
   useCssVar,
@@ -28,16 +55,8 @@ import {
   useEventListener,
   useResizeObserver,
 } from '@vueuse/core'
-import CodeMirror from 'codemirror'
 import { getCodeFormatterParser } from '~/shared/codeFormatter'
-import 'codemirror/addon/edit/closebrackets'
-import 'codemirror/addon/edit/matchbrackets'
-import 'codemirror/addon/selection/active-line'
-import 'codemirror/addon/scroll/simplescrollbars'
-import 'codemirror/addon/scroll/simplescrollbars.css'
-import 'codemirror/lib/codemirror.css'
-import 'codemirror/theme/neo.css'
-import 'codemirror/theme/oceanic-next.css'
+import { loadLanguageSupport } from './grammars'
 
 const { setContext: setAiContext, registerEditor: registerAiEditor } = useAi()
 const { settings, cursorPosition } = useEditor()
@@ -62,7 +81,7 @@ const {
   isShowJsonVisualizer,
   state,
 } = useApp()
-const { editorThemeName } = useTheme()
+const { editorThemeName, isDark } = useTheme()
 
 const {
   addToUpdateContentQueue,
@@ -71,9 +90,76 @@ const {
   flushSnippetContent,
 } = useSnippetUpdate()
 
-let editor: CodeMirror.Editor | null = null
-let currentSearchOverlay: any = null
-let currentSearchMarker: CodeMirror.TextMarker | null = null
+let editor: EditorView | null = null
+const languageCompartment = new Compartment()
+const settingsCompartment = new Compartment()
+const themeCompartment = new Compartment()
+let appliedLanguage: string | undefined
+let appliedLanguageSupport: Extension = []
+let isUnmounted = false
+const isApplyingContent = ref(false)
+function editorSettings() {
+  return [
+    settings.wrap ? EditorView.lineWrapping : [],
+    settings.matchBrackets ? bracketMatching() : [],
+    settings.highlightLine ? highlightActiveLine() : [],
+    EditorState.tabSize.of(Math.max(1, Number(settings.tabSize) || 1)),
+    indentUnit.of('\t'),
+  ]
+}
+function editorTheme() {
+  return [
+    createCodeHighlight(isDark.value),
+    EditorView.editorAttributes.of({
+      class: editorThemeName.value
+        .split(/\s+/)
+        .map(name => `cm-s-${name}`)
+        .join(' '),
+    }),
+  ]
+}
+function createState(doc: string, support: Extension) {
+  return EditorState.create({
+    doc,
+    extensions: [
+      history(),
+      EditorState.allowMultipleSelections.of(true),
+      lineNumbers(),
+      drawSelection(),
+      closeBrackets(),
+      keymap.of([
+        ...closeBracketsKeymap,
+        ...defaultKeymap,
+        ...historyKeymap,
+        indentWithTab,
+      ]),
+      languageCompartment.of(support),
+      EditorState.changeFilter.of(canChangeContent),
+      settingsCompartment.of(editorSettings()),
+      themeCompartment.of(editorTheme()),
+      createContentSearch(),
+      EditorView.updateListener.of((update) => {
+        if (update.docChanged) {
+          saveEditorContent()
+          queueMicrotask(() => {
+            if (editor === update.view)
+              refreshContentSearch(false)
+          })
+        }
+        if (update.docChanged || update.selectionSet) {
+          getCursorPosition()
+          updateAiContext()
+        }
+      }),
+      EditorView.domEventHandlers({
+        scroll: onEditorScroll,
+        drop(event) {
+          return onImageDrop(event)
+        },
+      }),
+    ],
+  })
+}
 // id фрагмента, чьё тело сейчас отображается в редакторе: пока полная запись
 // сниппета загружается, selectedSnippetContent содержит только метаданные.
 let lastAppliedContentId: number | undefined
@@ -84,7 +170,7 @@ let contentSearchFocusRevision = 0
 let isContentSearchFocusPending = false
 
 const editorMountRef = useTemplateRef('editorMountRef')
-useResizeObserver(editorMountRef, () => editor?.refresh())
+useResizeObserver(editorMountRef, () => editor?.requestMeasure())
 const previewHandleRef = ref<HTMLElement>()
 const contentSearchPanelRef = useTemplateRef('contentSearchPanelRef')
 const isContentSearchOpen = ref(false)
@@ -97,17 +183,17 @@ useResizeHandle(previewHandleRef, {
   direction: 'vertical',
   onMove(dy) {
     previewHeight.value = Math.max(100, previewHeight.value - dy)
-    editor?.refresh()
+    editor?.requestMeasure()
   },
 })
 
 const isProgrammaticChange = ref(false)
 
-useCssVar('--editor-font-size', document.body, {
+const fontSize = useCssVar('--editor-font-size', document.body, {
   initialValue: `${settings.fontSize}px`,
 })
 
-useCssVar('--editor-font-family', document.body, {
+const fontFamily = useCssVar('--editor-font-family', document.body, {
   initialValue: settings.fontFamily,
 })
 
@@ -143,6 +229,8 @@ const isSelectedSnippetContentLoading = computed(
 const isSelectedSnippetContentReady = computed(
   () =>
     selectedSnippetRecordStatus.value === 'ready'
+    && !isApplyingContent.value
+    && selectedSnippetContent.value?.id === lastAppliedContentId
     && selectedSnippet.value?.id === state.snippetId
     && selectedSnippetContent.value?.value !== undefined,
 )
@@ -171,15 +259,18 @@ function readAiContext() {
     snippetId: snippet.id,
     name: snippet.name,
     contentId: content.id,
-    text: editor.getValue(),
-    selection: editor.getSelection(),
+    text: editor.state.doc.toString(),
+    selection: editor.state.sliceDoc(
+      editor.state.selection.main.from,
+      editor.state.selection.main.to,
+    ),
     selectionFrom:
-      editor.listSelections().length === 1
-        ? editor.indexFromPos(editor.getCursor('from'))
+      editor.state.selection.ranges.length === 1
+        ? editor.state.selection.main.from
         : undefined,
     selectionTo:
-      editor.listSelections().length === 1
-        ? editor.indexFromPos(editor.getCursor('to'))
+      editor.state.selection.ranges.length === 1
+        ? editor.state.selection.main.to
         : undefined,
     language: content.language || 'plain_text',
   }
@@ -195,15 +286,9 @@ async function applyAiEdit(snapshot: EditSnapshot, replacement: string) {
   ) {
     return false
   }
-  editor.operation(() => {
-    editor!.getDoc().changeGeneration(true)
-    editor!.replaceRange(
-      replacement,
-      editor!.posFromIndex(snapshot.from),
-      editor!.posFromIndex(snapshot.to),
-      'ai-edit',
-    )
-    editor!.getDoc().changeGeneration(true)
+  editor.dispatch({
+    changes: { from: snapshot.from, to: snapshot.to, insert: replacement },
+    annotations: isolateHistory.of('full'),
   })
   if (snapshot.space !== 'code')
     return false
@@ -217,7 +302,10 @@ function updateAiContext() {
 }
 watch(
   [isSelectedSnippetContentReady, selectedSnippetContent, selectedSnippetIds],
-  updateAiContext,
+  () => {
+    updateAiContext()
+    focusPendingContentSearch()
+  },
   { flush: 'sync' },
 )
 let unregisterAiEditor: (() => void) | undefined
@@ -264,14 +352,20 @@ watch(displayedSnippetContent, () => {
 function getCursorPosition() {
   if (!editor)
     return
-  const { line, ch } = editor.getCursor()
-  cursorPosition.row = line
-  cursorPosition.column = ch
+  const position = editor.state.selection.main.head
+  const line = editor.state.doc.lineAt(position)
+  cursorPosition.row = line.number - 1
+  cursorPosition.column = position - line.from
 }
 
 const hideScrollbar = useDebounceFn(() => {
   scrollBarOpacity.value = '0'
 }, 1000)
+
+function onEditorScroll() {
+  scrollBarOpacity.value = '1'
+  hideScrollbar()
+}
 
 async function init() {
   const el = document.getElementById('editor')
@@ -279,185 +373,40 @@ async function init() {
   if (!el)
     return
 
-  editor = CodeMirror(el, {
-    value: displayedSnippetContent.value?.value || ' ',
-    mode: displayedSnippetContent.value?.language || 'plain_text',
-    theme: editorThemeName.value,
-    lineWrapping: settings.wrap,
-    lineNumbers: true,
-    tabSize: settings.tabSize,
-    indentUnit: settings.tabSize,
-    indentWithTabs: true,
-    autoCloseBrackets: true,
-    matchBrackets: settings.matchBrackets,
-    styleActiveLine: settings.highlightLine,
-    scrollbarStyle: 'null',
-  })
-
-  if (displayedSnippetContent.value?.value !== undefined) {
-    lastAppliedContentId = displayedSnippetContent.value.id
-  }
-
-  editor.on('change', (e) => {
-    if (
-      isProgrammaticChange.value
-      || !selectedSnippet.value?.id
-      || !isSelectedSnippetContentReady.value
-    ) {
-      return
-    }
-
-    const content = selectedSnippetContent.value
-    // Сохраняем только когда тело загружено и редактор отображает именно
-    // этот фрагмент — иначе в момент переключения можно перезаписать
-    // сниппет чужим текстом.
-    if (
-      !content
-      || content.value === undefined
-      || content.id !== lastAppliedContentId
-    ) {
-      return
-    }
-
-    const updatedValue = e.getValue()
-
-    if (content.value !== updatedValue) {
-      addToUpdateContentQueue(selectedSnippet.value.id, content.id, {
-        label: content.label,
-        value: updatedValue,
-        language: content.language,
-      })
-    }
-
-    refreshContentSearch(false)
-  })
-
-  editor.on('cursorActivity', getCursorPosition)
-  editor.on('cursorActivity', updateAiContext)
-  editor.on('change', updateAiContext)
   unregisterAiEditor = registerAiEditor(readAiContext, applyAiEdit)
-
-  editor.on('scroll', () => {
-    scrollBarOpacity.value = '1'
-    editor?.setOption('scrollbarStyle', 'overlay')
-  })
-
-  editor.on('scroll', hideScrollbar)
-
-  editor.on('drop', async (cm, e) => {
-    if (
-      isSelectedSnippetContentReady.value
-      && displayedSnippetContent.value?.language === 'markdown'
-    ) {
-      const file = e.dataTransfer?.files[0]
-
-      if (!file)
-        return
-
-      if (!file.type.startsWith('image/'))
-        return
-
-      try {
-        const arrayBuffer = await file.arrayBuffer()
-        const buffer = Array.from(new Uint8Array(arrayBuffer))
-
-        // Вызываем IPC хендлер для сохранения файла из буфера
-        const relativePath = await ipc.invoke('fs:assets', {
-          buffer,
-          fileName: file.name,
-        })
-
-        cm.replaceSelection(`![${file.name}](./${relativePath})`)
-      }
-      catch (error) {
-        console.error('Ошибка при добавлении изображения:', error)
-      }
-    }
-  })
-
   ipc.on('main-menu:copy-snippet', onCopySnippetMenu)
   ipc.on('main-menu:find', onFindMenu)
 
-  watch(displayedSnippetContent, (v) => {
-    const revision = ++contentApplyRevision
-    const scheduledSnippetId = displayedSnippet.value?.id
-    const scheduledContentId = v?.id
-
-    nextTick(() => {
-      if (
-        revision !== contentApplyRevision
-        || displayedSnippet.value?.id !== scheduledSnippetId
-        || displayedSnippetContent.value?.id !== scheduledContentId
-      ) {
-        return
-      }
-
-      // Полная запись выбранного сниппета ещё загружается — не очищаем
-      // редактор промежуточным состоянием (метаданные без value).
-      if (displayedSnippet.value && (!v || v.value === undefined)) {
-        return
-      }
-
-      // Сравниваем с последним реально отображённым фрагментом, а не с
-      // предыдущим значением computed: между сниппетами проскакивает
-      // metadata-only состояние с тем же id.
-      const isNewValue = v?.id !== lastAppliedContentId
-      const isSameContent = v?.id === lastAppliedContentId
-      const snippetId = displayedSnippet.value?.id
-      const contentId = v?.id
-      let nextValue = v?.value || ''
-
-      if (snippetId && contentId) {
-        const pendingUpdate = getPendingContentUpdate(snippetId, contentId)
-        if (pendingUpdate) {
-          nextValue = pendingUpdate.value || ''
-        }
-
-        if (
-          isSameContent
-          && isContentUpdateBusy(snippetId, contentId)
-          && editor
-          && editor.getValue() !== nextValue
-        ) {
-          return
-        }
-      }
-
-      // Не сохраняем вьюпорт при смене фрагмента/сниппета
-      setValue(nextValue, true, !isNewValue)
-      lastAppliedContentId = contentId
-      updateAiContext()
-      if (contentSearchQuery.value)
-        refreshContentSearch()
-      focusPendingContentSearch()
-    })
-  })
-
-  watch(displayedSnippetContent, (v) => {
-    if (v)
-      setLanguage(v.language as Language)
-  })
-
-  watch(editorThemeName, (themeName) => {
-    editor?.setOption('theme', themeName)
-  })
-
   watch(
-    () => settings.fontSize,
+    displayedSnippetContent,
     () => {
-      nextTick(() => {
-        editor?.refresh()
+      void applyDisplayedContent()
+    },
+    { flush: 'sync' },
+  )
+
+  watch([editorThemeName, isDark], () => {
+    editor?.dispatch({ effects: themeCompartment.reconfigure(editorTheme()) })
+  })
+  watch(
+    () => [
+      settings.tabSize,
+      settings.wrap,
+      settings.matchBrackets,
+      settings.highlightLine,
+    ],
+    () => {
+      editor?.dispatch({
+        effects: settingsCompartment.reconfigure(editorSettings()),
       })
     },
   )
-
   watch(
-    () => settings.tabSize,
-    (tabSize) => {
-      const normalizedTabSize = Math.max(1, Number(tabSize) || 1)
-
-      editor?.setOption('tabSize', normalizedTabSize)
-      editor?.setOption('indentUnit', normalizedTabSize)
+    () => [settings.fontSize, settings.fontFamily],
+    () => {
+      fontSize.value = `${settings.fontSize}px`
+      fontFamily.value = settings.fontFamily
+      editor?.requestMeasure()
     },
   )
 
@@ -469,48 +418,199 @@ async function init() {
 
       nextTick(() => {
         requestAnimationFrame(() => {
-          editor?.refresh()
+          editor?.requestMeasure()
         })
       })
     },
     { flush: 'post' },
   )
+  await applyDisplayedContent()
 }
 
-function setValue(value: string, programmatic = true, preserveViewport = true) {
-  if (!editor)
+async function applyDisplayedContent() {
+  const revision = ++contentApplyRevision
+  const content = displayedSnippetContent.value
+  const snippetId = displayedSnippet.value?.id
+  const contentId = content?.id
+  const languageId = content?.language ?? 'plain_text'
+  const isSameContent = !!editor && contentId === lastAppliedContentId
+  const previousDocument = editor?.state.doc.toString()
+  isApplyingContent.value = !isSameContent
+
+  // Keep the previous highlighted document while the selected record loads.
+  if (
+    displayedSnippet.value
+    && (content?.value === undefined || snippetId !== state.snippetId)
+  ) {
     return
-
-  const current = editor.getValue()
-  if (current === value)
-    return
-
-  const cursor = preserveViewport ? editor.getCursor() : null
-  const { left, top } = preserveViewport
-    ? editor.getScrollInfo()
-    : { left: 0, top: 0 }
-
-  isProgrammaticChange.value = programmatic
-  editor.setValue(value)
-  if (programmatic) {
-    editor.clearHistory()
   }
-  isProgrammaticChange.value = false
 
-  if (preserveViewport) {
-    if (cursor)
-      editor.setCursor(cursor)
-    editor.scrollTo(left, top)
+  let support = appliedLanguageSupport
+  let languageLoaded = true
+  if (languageId !== appliedLanguage) {
+    try {
+      support = (await loadLanguageSupport(languageId)) ?? []
+    }
+    catch (error) {
+      console.error(error)
+      support = []
+      languageLoaded = false
+    }
+  }
+  if (
+    isUnmounted
+    || revision !== contentApplyRevision
+    || (snippetId !== undefined && snippetId !== state.snippetId)
+    || snippetId !== displayedSnippet.value?.id
+    || contentId !== displayedSnippetContent.value?.id
+    || languageId !== (displayedSnippetContent.value?.language ?? 'plain_text')
+  ) {
+    return
+  }
+
+  let nextValue = content?.value ?? ''
+  if (snippetId && contentId) {
+    const pendingUpdate = getPendingContentUpdate(snippetId, contentId)
+    if (pendingUpdate)
+      nextValue = pendingUpdate.value ?? ''
+    if (
+      isSameContent
+      && editor
+      && (isContentUpdateBusy(snippetId, contentId)
+        || editor.state.doc.toString() !== previousDocument)
+    ) {
+      nextValue = editor.state.doc.toString()
+    }
+  }
+
+  if (!editor) {
+    const parent = document.getElementById('editor')
+    if (!parent)
+      return
+    editor = new EditorView({ parent, state: createState(nextValue, support) })
   }
   else {
-    editor.setCursor({ line: 0, ch: 0 })
-    editor.scrollTo(0, 0)
-    editor.refresh()
+    // A new fragment gets fresh history. Same-fragment updates retain selection
+    // and history, and install the new language in the document transaction.
+    setValue(nextValue, true, isSameContent, support)
   }
+  lastAppliedContentId = contentId
+  appliedLanguage = languageLoaded ? languageId : undefined
+  appliedLanguageSupport = support
+  isApplyingContent.value = false
+  getCursorPosition()
+  updateAiContext()
+  if (contentSearchQuery.value)
+    refreshContentSearch()
+  focusPendingContentSearch()
 }
 
-function setLanguage(language: Language) {
-  editor?.setOption('mode', language)
+function canChangeContent() {
+  return isProgrammaticChange.value || isSelectedSnippetContentReady.value
+}
+
+function saveEditorContent() {
+  if (
+    !editor
+    || isProgrammaticChange.value
+    || !selectedSnippet.value?.id
+    || !isSelectedSnippetContentReady.value
+  ) {
+    return
+  }
+  const content = selectedSnippetContent.value
+  if (
+    !content
+    || content.value === undefined
+    || content.id !== lastAppliedContentId
+  ) {
+    return
+  }
+  const value = editor.state.doc.toString()
+  if (content.value !== value) {
+    addToUpdateContentQueue(selectedSnippet.value.id, content.id, {
+      label: content.label,
+      value,
+      language: content.language,
+    })
+  }
+}
+function onImageDrop(event: DragEvent) {
+  const file = event.dataTransfer?.files[0]
+  if (
+    !editor
+    || !isSelectedSnippetContentReady.value
+    || displayedSnippetContent.value?.language !== 'markdown'
+    || !file?.type.startsWith('image/')
+  ) {
+    return false
+  }
+  event.preventDefault()
+  const contentId = lastAppliedContentId
+  const snippetId = state.snippetId
+  const vault = store.preferences.get<string>('storage.vaultPath') ?? ''
+  const current = () =>
+    editor
+    && isSelectedSnippetContentReady.value
+    && contentId === lastAppliedContentId
+    && snippetId === state.snippetId
+    && vault === (store.preferences.get<string>('storage.vaultPath') ?? '')
+  void (async () => {
+    const buffer = Array.from(new Uint8Array(await file.arrayBuffer()))
+    if (!current())
+      return
+    const path = await ipc.invoke('fs:assets', { buffer, fileName: file.name })
+    if (current()) {
+      editor!.dispatch(
+        editor!.state.replaceSelection(`![${file.name}](./${path})`),
+      )
+    }
+  })().catch(console.error)
+  return true
+}
+function setValue(
+  value: string,
+  programmatic = true,
+  preserveViewport = true,
+  support?: Extension,
+) {
+  if (!editor)
+    return
+  const { scrollLeft, scrollTop } = editor.scrollDOM
+  isProgrammaticChange.value = programmatic
+  try {
+    if (!preserveViewport) {
+      editor.setState(createState(value, support ?? appliedLanguageSupport))
+      getCursorPosition()
+      editor.scrollDOM.scrollTo(0, 0)
+    }
+    else if (editor.state.doc.toString() !== value || support !== undefined) {
+      const selection = EditorSelection.create(
+        editor.state.selection.ranges.map(range =>
+          EditorSelection.range(
+            Math.min(range.anchor, value.length),
+            Math.min(range.head, value.length),
+          ),
+        ),
+      )
+      editor.dispatch({
+        changes:
+          editor.state.doc.toString() !== value
+            ? { from: 0, to: editor.state.doc.length, insert: value }
+            : undefined,
+        effects:
+          support === undefined ? [] : languageCompartment.reconfigure(support),
+        selection,
+        annotations: programmatic
+          ? Transaction.addToHistory.of(false)
+          : isolateHistory.of('full'),
+      })
+      editor.scrollDOM.scrollTo(scrollLeft, scrollTop)
+    }
+  }
+  finally {
+    isProgrammaticChange.value = false
+  }
 }
 
 function focusEditor() {
@@ -530,7 +630,7 @@ function refreshContentSearch(selectFirst = true) {
 
   contentSearchRevision += 1
   contentSearchMatches.value = getContentSearchMatches(
-    editor.getValue(),
+    editor.state.doc.toString(),
     contentSearchQuery.value,
   )
 
@@ -563,15 +663,9 @@ function selectContentSearchMatch(index: number) {
   const match = contentSearchMatches.value[normalizedIndex]
   const targetEditor = editor
   const revision = ++contentSearchRevision
-  const from = targetEditor.posFromIndex(match.from)
-  const to = targetEditor.posFromIndex(match.to)
-
   contentSearchIndex.value = normalizedIndex
-  currentSearchMarker?.clear()
-  currentSearchMarker = editor.markText(from, to, {
-    className: 'cm-content-search-current',
-  })
-  targetEditor.setSelection(from, to)
+  updateSearchOverlay()
+  targetEditor.dispatch({ selection: { anchor: match.from, head: match.to } })
   if (contentSearchScrollFrame !== undefined)
     cancelAnimationFrame(contentSearchScrollFrame)
   contentSearchScrollFrame = requestAnimationFrame(() => {
@@ -579,9 +673,14 @@ function selectContentSearchMatch(index: number) {
     if (
       editor === targetEditor
       && revision === contentSearchRevision
-      && match.to <= targetEditor.getValue().length
+      && match.to <= targetEditor.state.doc.length
     ) {
-      targetEditor.scrollIntoView({ from, to }, 50)
+      targetEditor.dispatch({
+        effects: EditorView.scrollIntoView(match.from, {
+          y: 'center',
+          yMargin: 50,
+        }),
+      })
     }
   })
 }
@@ -597,20 +696,21 @@ function openContentSearch() {
 }
 
 function focusPendingContentSearch() {
-  if (!isContentSearchFocusPending || isSelectedSnippetContentLoading.value)
+  if (!isContentSearchFocusPending || !isSelectedSnippetContentReady.value)
     return
 
   const revision = contentSearchFocusRevision
   nextTick(() => {
     if (
-      !isContentSearchOpen.value
+      !isContentSearchFocusPending
+      || !isContentSearchOpen.value
       || revision !== contentSearchFocusRevision
-      || isSelectedSnippetContentLoading.value
+      || !isSelectedSnippetContentReady.value
     ) {
       return
     }
     isContentSearchFocusPending = false
-    editor?.refresh()
+    editor?.requestMeasure()
     contentSearchPanelRef.value?.focusInput()
   })
 }
@@ -701,7 +801,7 @@ async function formatCurrent(
     if (
       !current()
       || !isSelectedSnippetContentReady.value
-      || editor?.getValue() !== value
+      || editor?.state.doc.toString() !== value
       || state.snippetId !== snippetId
       || selectedSnippetContent.value?.id !== contentId
       || selectedSnippetContent.value?.language !== lang
@@ -810,7 +910,7 @@ function onCopySnippetMenu() {
   if (!isSelectedSnippetContentReady.value)
     return
 
-  const { copy } = useClipboard({ source: editor?.getValue() || '' })
+  const { copy } = useClipboard({ source: editor?.state.doc.toString() || '' })
   copy()
   useDonations().incrementCopy('code')
 }
@@ -819,27 +919,32 @@ function normalizeTerminalOutput() {
   if (!editor || !isSelectedSnippetContentReady.value)
     return
 
-  if (editor.somethingSelected()) {
-    const selections = editor.getSelections()
-    const normalized = selections.map(normalizeTerminalText)
-
-    if (normalized.some((value, index) => value !== selections[index]))
-      editor.replaceSelections(normalized, 'around')
-
+  if (editor.state.selection.ranges.some(range => !range.empty)) {
+    editor.dispatch(
+      editor.state.changeByRange((range) => {
+        const value = normalizeTerminalText(
+          editor!.state.sliceDoc(range.from, range.to),
+        )
+        return {
+          changes: { from: range.from, to: range.to, insert: value },
+          range: EditorSelection.range(range.from, range.from + value.length),
+        }
+      }),
+    )
     return
   }
 
-  const value = editor.getValue()
+  const value = editor.state.doc.toString()
   const normalized = normalizeTerminalText(value)
 
   if (normalized === value)
     return
 
-  const cursorIndex = editor.indexFromPos(editor.getCursor())
+  const cursorIndex = editor.state.selection.main.head
   const mappedIndex = mapNormalizedCursorIndex(value, cursorIndex, normalized)
 
   setValue(normalized, false)
-  editor.setCursor(editor.posFromIndex(mappedIndex))
+  editor.dispatch({ selection: { anchor: mappedIndex } })
 }
 
 ipc.on('main-menu:format', format)
@@ -851,6 +956,10 @@ ipc.on('main-menu:normalize-code-line-breaks', normalizeTerminalOutput)
 // прокси и removeListener по ссылке не срабатывает; владелец каналов — только
 // этот компонент.
 onBeforeUnmount(() => {
+  isUnmounted = true
+  contentApplyRevision++
+  editor?.destroy()
+  editor = null
   unregisterAiEditor?.()
   contentSearchRevision += 1
   if (contentSearchScrollFrame !== undefined)
@@ -863,72 +972,18 @@ onBeforeUnmount(() => {
   ipc.removeListeners('main-menu:find')
 })
 
-function createSearchOverlay(query: string) {
-  if (!query)
-    return null
-
-  let regexp: RegExp
-
-  try {
-    regexp = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
-  }
-  catch {
-    return null
-  }
-
-  return {
-    token: (stream: any) => {
-      regexp.lastIndex = stream.pos
-      const match = regexp.exec(stream.string)
-      if (match && match.index === stream.pos) {
-        stream.pos += match[0].length
-        return 'searching'
-      }
-      else if (match) {
-        stream.pos = match.index
-      }
-      else {
-        stream.skipToEnd()
-      }
-    },
-  }
-}
-
 function updateSearchOverlay() {
   if (!editor)
     return
-
-  if (currentSearchOverlay) {
-    editor.removeOverlay(currentSearchOverlay)
-    currentSearchOverlay = null
-  }
-
-  currentSearchMarker?.clear()
-  currentSearchMarker = null
-
   const query = isContentSearchOpen.value
     ? contentSearchQuery.value
     : spaceSearchQuery.value
-
-  if (query) {
-    currentSearchOverlay = createSearchOverlay(query)
-    if (currentSearchOverlay) {
-      editor.addOverlay(currentSearchOverlay)
-    }
-  }
-
-  if (
-    isContentSearchOpen.value
-    && contentSearchIndex.value >= 0
-    && contentSearchMatches.value.length
-  ) {
-    const match = contentSearchMatches.value[contentSearchIndex.value]
-    currentSearchMarker = editor.markText(
-      editor.posFromIndex(match.from),
-      editor.posFromIndex(match.to),
-      { className: 'cm-content-search-current' },
-    )
-  }
+  editor.dispatch({
+    effects: setContentSearchMatches.of({
+      matches: getContentSearchMatches(editor.state.doc.toString(), query),
+      currentIndex: isContentSearchOpen.value ? contentSearchIndex.value : -1,
+    }),
+  })
 }
 
 onMounted(() => {
@@ -1028,58 +1083,34 @@ onMounted(() => {
 </template>
 
 <style>
-@reference '../../styles.css';
-.CodeMirror {
-  font-size: var(--editor-font-size);
-  font-family: var(--editor-font-family);
-  line-height: calc(var(--editor-font-size) * 1.5);
+#editor .cm-editor {
   height: 100%;
-  background-color: var(--background) !important;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: var(--editor-font-size);
 }
-
-.CodeMirror-gutters {
-  background-color: var(--background) !important;
+#editor .cm-scroller {
+  overflow: auto;
+  font-family: var(--editor-font-family);
+  line-height: 1.5;
+  scrollbar-color: var(--scrollbar) transparent;
 }
-
-.CodeMirror-linenumber {
-  color: var(--muted-foreground) !important;
+#editor .cm-gutters {
+  background: var(--background);
+  color: var(--muted-foreground);
+  border: none;
 }
-
-.CodeMirror-cursor {
-  border-left: 2px solid var(--foreground) !important;
-  background-color: transparent !important;
+#editor .cm-cursor {
+  border-left: 2px solid var(--foreground);
 }
-
-.CodeMirror-selected {
-  background-color: var(--accent) !important;
+#editor .cm-selectionBackground,
+#editor .cm-focused .cm-selectionBackground {
+  background: var(--accent) !important;
 }
-
-.CodeMirror-overlayscroll-vertical div {
-  background-color: var(--scrollbar);
-  width: 7px;
-  opacity: var(--editor-scrollbar-opacity);
-  transition: opacity 0.3s;
+#editor .cm-activeLine {
+  background: var(--muted);
 }
-
-.CodeMirror-overlayscroll-horizontal div {
-  background-color: var(--scrollbar);
-  height: 7px;
-  opacity: var(--editor-scrollbar-opacity);
-  transition: opacity 0.3s;
-}
-
-.CodeMirror-scrollbar-filler {
-  background-color: transparent;
-}
-
-.CodeMirror .cm-searching {
-  background-color: var(--text-highlight);
-  color: black !important;
-  border-radius: 2px;
-}
-
-.CodeMirror .cm-content-search-current {
-  outline: 1px solid var(--foreground);
-  outline-offset: 1px;
+#editor .cm-focused {
+  outline: none;
 }
 </style>

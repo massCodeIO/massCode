@@ -93,7 +93,7 @@
       "name": "constant.language.hotkey.ahk"
     },
     {
-      "match": "\\b(?<!\\.)(?i:if|else|return|loop|break|for|while|class|extends|catch|finally|throw|try|until|continue|critical|exit|exitapp|gosub|goto||not|or|and|is|in|switch|case)\\b",
+      "match": "\\b(?<!\\.)(?i:if|else|return|loop|break|for|while|class|extends|catch|finally|throw|try|until|continue|critical|exit|exitapp|gosub|goto|not|or|and|is|in|switch|case)\\b",
       "name": "keyword.control.ahk"
     },
     {

@@ -2,13 +2,8 @@
 import type { Extension } from '@codemirror/state'
 import { createCodeHighlight } from '@/components/cm-extensions/codeHighlight'
 import { editorScrollbarTheme } from '@/components/cm-extensions/scrollbarTheme'
+import { loadLanguageSupport } from '@/components/editor/grammars'
 import { useTheme } from '@/composables'
-import { json } from '@codemirror/lang-json'
-import { LanguageDescription, StreamLanguage } from '@codemirror/language'
-import { languages } from '@codemirror/language-data'
-import { http } from '@codemirror/legacy-modes/mode/http'
-import { javascript } from '@codemirror/legacy-modes/mode/javascript'
-import { shell } from '@codemirror/legacy-modes/mode/shell'
 import { Compartment, EditorState } from '@codemirror/state'
 import {
   drawSelection,
@@ -40,28 +35,19 @@ const editorContainer = ref<HTMLElement>()
 let view: EditorView | null = null
 const languageCompartment = new Compartment()
 
+let languageRevision = 0
 async function loadLanguage() {
-  const language = props.language
-  if (
-    !language
-    || ['plain', 'json', 'http', 'shell', 'javascript'].includes(language)
-  ) {
-    return
-  }
-  const aliases: Record<string, string> = { csharp: 'c#', ocaml: 'ocaml' }
-  const description = LanguageDescription.matchLanguageName(
-    languages,
-    aliases[language] ?? language,
-  )
-  if (!description)
-    return
+  const revision = ++languageRevision
   try {
-    const support = await description.load()
-    if (view && props.language === language)
-      view.dispatch({ effects: languageCompartment.reconfigure(support) })
+    const support = await loadLanguageSupport(props.language)
+    if (view && revision === languageRevision) {
+      view.dispatch({
+        effects: languageCompartment.reconfigure(support ?? []),
+      })
+    }
   }
   catch {
-    // Keep the generated code readable if a language chunk fails to load.
+    /* Keep plain text when a language chunk is unavailable. */
   }
 }
 
@@ -143,19 +129,6 @@ function createEditorState(doc: string): EditorState {
 
   if (props.wrapLines) {
     extensions.push(EditorView.lineWrapping)
-  }
-
-  if (props.language === 'json') {
-    extensions.push(json())
-  }
-  else if (props.language === 'http') {
-    extensions.push(StreamLanguage.define(http))
-  }
-  else if (props.language === 'shell') {
-    extensions.push(StreamLanguage.define(shell))
-  }
-  else if (props.language === 'javascript') {
-    extensions.push(StreamLanguage.define(javascript))
   }
 
   return EditorState.create({ doc, extensions })

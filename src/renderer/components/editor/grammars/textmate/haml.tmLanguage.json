@@ -132,7 +132,7 @@
           "name": "meta.selector.css"
         },
         {
-          "begin": "(?<!\\#)\\{(?=.*(,|(do)|\\{|\\}|\\||(\\#.*)|\\R)\\s*)",
+          "begin": "(?<!\\#)\\{",
           "end": "\\s*\\}(?!\\s*\\,)(?!\\s*\\|)(?!\\#\\{.*\\})",
           "name": "meta.section.attributes.haml",
           "patterns": [

@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { createCodeHighlight } from '@/components/cm-extensions/codeHighlight'
 import { editorScrollbarTheme } from '@/components/cm-extensions/scrollbarTheme'
+import { loadLanguageSupport } from '@/components/editor/grammars'
 import { useTheme } from '@/composables/useTheme'
 import { i18n } from '@/electron'
-import { LanguageDescription } from '@codemirror/language'
-import { languages } from '@codemirror/language-data'
 import { MergeView } from '@codemirror/merge'
 import { Compartment, EditorState } from '@codemirror/state'
 import { drawSelection, EditorView, lineNumbers } from '@codemirror/view'
@@ -145,12 +144,8 @@ async function mountViewer() {
   makeCollapseAccessible()
   if (!props.language || props.language === 'plain')
     return
-  const description = LanguageDescription.matchLanguageName(
-    languages,
-    props.language === 'csharp' ? 'c#' : props.language,
-  )
   try {
-    const support = await description?.load()
+    const support = await loadLanguageSupport(props.language)
     if (support && view === current) {
       current.a.dispatch({ effects: language.reconfigure(support) })
       current.b.dispatch({ effects: language.reconfigure(support) })

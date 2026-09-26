@@ -2,6 +2,13 @@
   "scopeName": "text.asciidoc",
   "fileTypes": ["adoc", "ad", "asciidoc"],
   "patterns": [
+    {"begin": "^\\[source,\\s*(?:javascript|js)(?:,[^\\]]*)?\\]\\s*$", "beginCaptures": {"0": {"name": "meta.attribute-list.asciidoc"}}, "end": "(?<=----)[ \t]*$", "patterns": [{"begin": "^----\\s*$", "end": "^----(?=[ \t]*$)", "contentName": "source.js", "patterns": [{"include": "source.js"}]}]},
+    {"begin": "^\\[source,\\s*(?:typescript|ts)(?:,[^\\]]*)?\\]\\s*$", "beginCaptures": {"0": {"name": "meta.attribute-list.asciidoc"}}, "end": "(?<=----)[ \t]*$", "patterns": [{"begin": "^----\\s*$", "end": "^----(?=[ \t]*$)", "contentName": "source.ts", "patterns": [{"include": "source.ts"}]}]},
+    {"begin": "^\\[source,\\s*(?:python|py)(?:,[^\\]]*)?\\]\\s*$", "beginCaptures": {"0": {"name": "meta.attribute-list.asciidoc"}}, "end": "(?<=----)[ \t]*$", "patterns": [{"begin": "^----\\s*$", "end": "^----(?=[ \t]*$)", "contentName": "source.python", "patterns": [{"include": "source.python"}]}]},
+    {"begin": "^\\[source,\\s*(?:ruby)(?:,[^\\]]*)?\\]\\s*$", "beginCaptures": {"0": {"name": "meta.attribute-list.asciidoc"}}, "end": "(?<=----)[ \t]*$", "patterns": [{"begin": "^----\\s*$", "end": "^----(?=[ \t]*$)", "contentName": "source.ruby", "patterns": [{"include": "source.ruby"}]}]},
+    {"begin": "^\\[source,\\s*(?:json)(?:,[^\\]]*)?\\]\\s*$", "beginCaptures": {"0": {"name": "meta.attribute-list.asciidoc"}}, "end": "(?<=----)[ \t]*$", "patterns": [{"begin": "^----\\s*$", "end": "^----(?=[ \t]*$)", "contentName": "source.json", "patterns": [{"include": "source.json"}]}]},
+    {"begin": "^\\[source,\\s*(?:css)(?:,[^\\]]*)?\\]\\s*$", "beginCaptures": {"0": {"name": "meta.attribute-list.asciidoc"}}, "end": "(?<=----)[ \t]*$", "patterns": [{"begin": "^----\\s*$", "end": "^----(?=[ \t]*$)", "contentName": "source.css", "patterns": [{"include": "source.css"}]}]},
+    {"begin": "^\\[source,\\s*(?:bash|sh)(?:,[^\\]]*)?\\]\\s*$", "beginCaptures": {"0": {"name": "meta.attribute-list.asciidoc"}}, "end": "(?<=----)[ \t]*$", "patterns": [{"begin": "^----\\s*$", "end": "^----(?=[ \t]*$)", "contentName": "source.shell", "patterns": [{"include": "source.shell"}]}]},
     { "include": "#lists" },
     { "include": "#blocks" },
     { "include": "#section_titles" },

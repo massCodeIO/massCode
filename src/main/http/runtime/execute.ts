@@ -1210,6 +1210,7 @@ export async function executeHttpRequest(
         undefined,
         snapshot,
       )
+      result.historyId = historyId ?? null
       result.executionTrace = captureExecutionTrace(
         networkIds,
         [
@@ -1311,6 +1312,7 @@ export async function executeHttpRequest(
       snapshot?.response.error ?? historyError,
       snapshot,
     )
+    result.historyId = historyId ?? null
     result.executionTrace = captureExecutionTrace(
       networkIds,
       [

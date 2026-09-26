@@ -14,7 +14,7 @@ import {
   getEntryNameConflictMessage,
   getEntryNameValidationMessage,
 } from '@/utils'
-import { CloudDownload, Folder, Layers, Star } from 'lucide-vue-next'
+import { CloudDownload, Folder, Inbox, Layers, Star } from 'lucide-vue-next'
 import { folderKey, requestKey, sidebarNodes, UNFILED_ID } from './liveModel'
 import { selectRange, visibleRows } from './model'
 
@@ -59,7 +59,7 @@ const source = computed(() =>
   sidebarNodes(nodes.value, {
     trash: props.trash,
     favorites: props.favorites,
-    unfiledLabel: i18n.t('spaces.http.sidebar.unfiled'),
+    unfiledLabel: i18n.t('common.inbox'),
   }),
 )
 const nodeById = computed(
@@ -463,6 +463,10 @@ watch(
                   class="ml-1 size-1 rounded-full bg-current"
                 />
               </template>
+              <Inbox
+                v-else-if="node.id === UNFILED_ID"
+                class="size-4"
+              />
               <UiFolderIcon
                 v-else-if="nodeById.get(String(node.id))?.icon"
                 :folder-id="nodeById.get(String(node.id))!.entityId!"

@@ -237,6 +237,7 @@
       "noSelected": "No drawing selected"
     },
     "http": {
+      "requestConflict": "This request changed since you opened it. Your edits are preserved. Discard your changes and reopen the request to load the latest version before saving.",
       "history": {
         "title": "History",
         "empty": "No saved executions for this request.",
@@ -757,9 +758,6 @@
         },
         "noNamedOperations": "No named operations",
         "helpTitle": "GraphQL help"
-      },
-      "sidebar": {
-        "unfiled": "Unfiled"
       },
       "folderPanel": {
         "runCollection": "Run collection",

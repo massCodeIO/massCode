@@ -405,6 +405,7 @@ export interface HttpRequestCreateInput {
 }
 
 export interface HttpRequestUpdateInput {
+  expectedRevision?: string
   protocol?: 'http' | 'websocket'
   name?: string
   folderId?: number | null
@@ -422,6 +423,7 @@ export interface HttpRequestUpdateInput {
 }
 
 export interface HttpRequestUpdateResult {
+  contentRevision?: string
   invalidInput: boolean
   notFound: boolean
 }
@@ -468,7 +470,11 @@ export interface HttpRequestsStorage {
   createRequest: (input: HttpRequestCreateInput) => { id: number }
   deleteRequest: (id: number) => { deleted: boolean }
   emptyTrash: () => { deletedCount: number }
-  getRequestById: (id: number) => (HttpRequestRecord & HttpRuntimeRead) | null
+  getRequestById: (
+    id: number,
+  ) =>
+    | (HttpRequestRecord & HttpRuntimeRead & { contentRevision: string | null })
+    | null
   updateRuntime: (
     id: number,
     runtime: HttpRuntime,

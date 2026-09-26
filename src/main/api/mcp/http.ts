@@ -1,21 +1,26 @@
 import type { McpServer } from '@modelcontextprotocol/server'
+import type { HttpFoldersStorage } from '../../storage/contracts'
 import { Buffer } from 'node:buffer'
 import { z } from 'zod'
 import { getEntryNameValidationIssue } from '../../../shared/entryNameValidation'
-import { emptyHttpRuntime } from '../../../shared/httpRuntime'
 import {
   beginHttpExecution,
   finishHttpExecution,
 } from '../../http/runtime/session'
 import { useHttpStorage } from '../../storage'
 import { PartialCreateError } from '../../storage/partialCreateError'
+import { getHttpItem, httpMetadata, mcpHttpRuntime } from './httpItems'
+import { registerHttpSavedTools } from './httpSaved'
 import {
   CONTENT_LIMIT,
   failure,
   notifyStorageSynced,
   result,
+  safely,
   storageFailure,
 } from './results'
+
+export { getHttpItem, httpMetadata, searchHttpItems } from './httpItems'
 
 const entrySchema = z.object({
   key: z.string(),
@@ -25,6 +30,13 @@ const entrySchema = z.object({
 })
 const createSchema = {
   name: z.string().trim().min(1).max(255),
+  folderId: z
+    .number()
+    .int()
+    .positive()
+    .max(Number.MAX_SAFE_INTEGER)
+    .nullable()
+    .default(null),
   method: z
     .enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'])
     .default('GET'),
@@ -38,66 +50,121 @@ const createSchema = {
   description: z.string().default(''),
 }
 
-type HttpItem = NonNullable<
-  ReturnType<ReturnType<typeof useHttpStorage>['requests']['getRequestById']>
->
+type HttpCollection = Pick<
+  ReturnType<HttpFoldersStorage['getFoldersTree']>[number],
+  'id' | 'name' | 'parentId'
+> & { children: HttpCollection[] }
 
-export function httpMetadata(
-  item: Pick<
-    HttpItem,
-    | 'id'
-    | 'name'
-    | 'method'
-    | 'url'
-    | 'folderId'
-    | 'createdAt'
-    | 'updatedAt'
-    | 'pendingCloudDownload'
-  >,
-) {
+function httpCollectionMetadata(
+  folder: ReturnType<HttpFoldersStorage['getFoldersTree']>[number],
+): HttpCollection {
   return {
-    type: 'http_request' as const,
-    id: item.id,
-    name: item.name,
-    method: item.method,
-    url: item.url,
-    folderId: item.folderId,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
-    pendingCloudDownload: item.pendingCloudDownload === true,
+    id: folder.id,
+    name: folder.name,
+    parentId: folder.parentId,
+    children: folder.children.map(httpCollectionMetadata),
   }
-}
-
-export function searchHttpItems(query: string) {
-  return useHttpStorage()
-    .requests
-    .getRequests({ search: query, isDeleted: 0 })
-    .filter(item => !item.isDeleted && item.protocol !== 'websocket')
-    .map(httpMetadata)
-}
-
-export function getHttpItem(id: number) {
-  const item = useHttpStorage().requests.getRequestById(id)
-  if (!item || item.isDeleted || item.protocol === 'websocket')
-    throw new Error('HTTP_REQUEST_NOT_FOUND')
-  if (item.pendingCloudDownload)
-    throw new Error('CLOUD_FILE_NOT_DOWNLOADED')
-  if (
-    Buffer.byteLength(item.body ?? '', 'utf8')
-    + Buffer.byteLength(item.description, 'utf8')
-    > CONTENT_LIMIT
-  ) {
-    throw new Error('CONTENT_TOO_LARGE')
-  }
-  return { type: 'http_request' as const, ...item }
 }
 
 export function registerHttpTools(server: McpServer) {
+  registerHttpSavedTools(server)
+  server.registerTool(
+    'list_http_collections',
+    {
+      description:
+        'List HTTP collections and nested folders as a tree of id, name, parentId and children. Excludes configuration, secrets, requests and the virtual Inbox group. Use a returned ID as folderId in create_http_request.',
+      inputSchema: {},
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    () =>
+      safely(() =>
+        useHttpStorage().folders.getFoldersTree().map(httpCollectionMetadata),
+      ),
+  )
+
+  server.registerTool(
+    'list_http_requests',
+    {
+      description:
+        'List saved HTTP request metadata without sending requests. Omit folderId for all HTTP requests; pass null for Inbox, or a collection/folder ID for its direct requests only (not nested folders). Excludes trash and WebSocket requests. Sorted by updatedAt descending, then ID ascending. Supports offset and limit (default 20, maximum 100); returns items, hasMore and nextOffset. Use get_item for full content.',
+      inputSchema: {
+        folderId: z
+          .number()
+          .int()
+          .positive()
+          .max(Number.MAX_SAFE_INTEGER)
+          .nullable()
+          .optional(),
+        offset: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),
+        limit: z.number().int().min(1).max(100).default(20),
+      },
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    ({ folderId, offset, limit }) =>
+      safely(() => {
+        const items = useHttpStorage()
+          .requests
+          .getRequests({
+            isDeleted: 0,
+            ...(folderId === null ? { isInbox: 1 } : { folderId }),
+          })
+          .filter(item => !item.isDeleted && item.protocol !== 'websocket')
+          .sort((a, b) => b.updatedAt - a.updatedAt || a.id - b.id)
+        const page = items.slice(offset, offset + limit).map(httpMetadata)
+        const hasMore = offset + page.length < items.length
+        return {
+          items: page,
+          hasMore,
+          nextOffset: hasMore ? offset + page.length : null,
+        }
+      }, 'HTTP request list JSON exceeds the 2 MiB limit. Reduce limit and retry; a single oversized item cannot be returned.'),
+  )
+
+  server.registerTool(
+    'create_http_collection',
+    {
+      description:
+        'Create a top-level HTTP collection. Use the returned ID as folderId in create_http_request to add requests to it.',
+      inputSchema: { name: z.string().trim().min(1).max(255) },
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+      },
+    },
+    ({ name }) => {
+      if (getEntryNameValidationIssue(name))
+        return failure('INVALID_NAME', 'The item name is invalid.')
+      try {
+        const { id } = useHttpStorage().folders.createFolder({
+          name,
+          parentId: null,
+        })
+        notifyStorageSynced()
+        return result({ type: 'http_collection', id })
+      }
+      catch (error) {
+        return storageFailure(error)
+      }
+    },
+  )
+
   server.registerTool(
     'create_http_request',
     {
       description:
-        'Save an HTTP request to HTTP Inbox without sending it. Supports text bodies, headers, query parameters and {{variables}}. Body plus description is limited to 256 KiB UTF-8. On PARTIAL_CREATE inspect the returned ID; do not retry creation.',
+        'Save an HTTP request without sending it. Provide folderId for a root HTTP collection or nested folder; omit it or pass null to save without a collection (Inbox). Requests in a collection inherit its authorization. Supports text bodies, headers, query parameters and {{variables}}. Body plus description is limited to 256 KiB UTF-8. On PARTIAL_CREATE inspect the returned ID; do not retry creation.',
       inputSchema: createSchema,
       annotations: {
         readOnlyHint: false,
@@ -126,7 +193,7 @@ export function registerHttpTools(server: McpServer) {
           name: input.name,
           method: input.method,
           url: input.url,
-          folderId: null,
+          folderId: input.folderId,
           protocol: 'http',
         }).id
         const update = requests.updateRequest(id, {
@@ -202,7 +269,7 @@ export function registerHttpTools(server: McpServer) {
             'Send requests that upload local files from the massCode app.',
           )
         }
-        const runtime = item.runtime ?? emptyHttpRuntime()
+        const runtime = mcpHttpRuntime(item.runtime)
         const controller = new AbortController()
         const abort = () => controller.abort()
         ctx.mcpReq.signal.addEventListener('abort', abort, { once: true })
@@ -216,26 +283,18 @@ export function registerHttpTools(server: McpServer) {
               requestId: id,
               environmentId:
                 useHttpStorage().environments.getActiveEnvironmentId(),
-              runtime: {
-                ...runtime,
-                transport: {
-                  ...runtime.transport,
-                  maxResponseBytes: Math.min(
-                    runtime.transport?.maxResponseBytes || CONTENT_LIMIT,
-                    CONTENT_LIMIT,
-                  ),
-                  timeoutMs: Math.min(
-                    runtime.transport?.timeoutMs || 30_000,
-                    60_000,
-                  ),
-                },
-              },
+              runtime,
             },
             undefined,
             controller.signal,
           )
           const output = result(
-            { type: 'http_request', id, ...response },
+            {
+              type: 'http_request',
+              id,
+              ...response,
+              historyId: response.historyId ?? null,
+            },
             'The request was sent, but the result exceeds 2 MiB. Inspect HTTP history in massCode; do not resend automatically.',
           )
           if (response.error || response.discarded)

@@ -149,9 +149,27 @@ describe('mCP protocol and tools', () => {
       'get_item',
       'create_snippet',
       'create_note',
+      'update_http_request',
+      'preview_http_request',
+      'list_http_history',
+      'get_http_history',
+      'list_http_collections',
+      'list_http_requests',
+      'create_http_collection',
       'create_http_request',
       'execute_http_request',
     ])
+    for (const name of ['list_http_collections', 'list_http_requests']) {
+      expect(
+        listed.result.tools.find((tool: { name: string }) => tool.name === name)
+          .annotations,
+      ).toMatchObject({
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      })
+    }
   })
 
   it('searches full text, excludes trash and paginates a deterministic metadata-only merged list', async () => {

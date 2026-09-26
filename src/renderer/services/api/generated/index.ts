@@ -1094,6 +1094,7 @@ export interface HttpRuntimeSaveResponse {
 }
 
 export interface HttpRequestItemResponse {
+  contentRevision: string | null;
   runtimeRevision: string | null;
   runtime: {
     scripts?: {
@@ -1314,6 +1315,7 @@ export type HttpRequestsResponse = {
 }[];
 
 export interface HttpRequestsUpdate {
+  expectedRevision?: string;
   name?: string;
   folderId?: number | null;
   /**
@@ -1367,6 +1369,11 @@ export interface HttpRequestsUpdate {
     password?: string;
   };
   description?: string;
+}
+
+export interface HttpRequestsUpdateResponse {
+  message: string;
+  contentRevision: string;
 }
 
 export interface HttpEnvironmentItemResponse {
@@ -2937,11 +2944,17 @@ export class Api<
       data: HttpRequestsUpdate,
       params: RequestParams = {},
     ) =>
-      this.request<void, any>({
+      this.request<
+        HttpRequestsUpdateResponse,
+        {
+          message: string;
+        }
+      >({
         path: `/http-requests/${id}`,
         method: "PATCH",
         body: data,
         type: ContentType.Json,
+        format: "json",
         ...params,
       }),
 

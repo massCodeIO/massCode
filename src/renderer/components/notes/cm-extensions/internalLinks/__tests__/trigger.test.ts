@@ -1,7 +1,10 @@
+import type { InternalLinkPickerItem } from '../trigger'
+import { EditorState } from '@codemirror/state'
 import { describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import {
   buildInternalLinkInsertChange,
+  createInternalLinksTrigger,
   findInternalLinkSearchMatch,
   findInternalLinkTriggerRange,
   getInternalLinksPickerAnchorFromCoords,
@@ -10,6 +13,7 @@ import {
   internalLinksPickerState,
   isInternalLinkPickerEnabled,
   pickShortestUniqueInsertTarget,
+  selectInternalLinksPickerItem,
   setInternalLinksPickerQuery,
   shouldOpenInternalLinksPicker,
 } from '../trigger'
@@ -348,6 +352,25 @@ describe('buildInternalLinkInsertChange', () => {
 })
 
 describe('pickShortestUniqueInsertTarget', () => {
+  it.each([undefined, 'Projects/Active'])(
+    'uses a typed note target for a cross-type name collision in %s',
+    (folderPath) => {
+      const selected: InternalLinkPickerItem = {
+        folderPath,
+        id: 7,
+        locationLabel: '',
+        name: 'Hello',
+        type: 'note',
+      }
+      expect(
+        pickShortestUniqueInsertTarget(selected, [
+          selected,
+          { id: 8, locationLabel: '', name: 'hello', type: 'snippet' },
+        ]),
+      ).toBe('note:7')
+    },
+  )
+
   it('returns bare name for snippets regardless of duplicates', () => {
     const selected = {
       folderPath: 'A',
@@ -486,6 +509,112 @@ describe('pickShortestUniqueInsertTarget', () => {
 
     expect(pickShortestUniqueInsertTarget(selected, items)).toBe('Shared')
   })
+})
+
+describe('selectInternalLinksPickerItem', () => {
+  it.each([
+    {
+      folderPath: undefined,
+      otherName: 'Hello',
+      otherType: 'snippet',
+      expected: '[[note:7|Hello]]',
+    },
+    {
+      folderPath: 'Projects',
+      otherName: 'hello',
+      otherType: 'snippet',
+      expected: '[[note:7|Hello]]',
+    },
+    {
+      folderPath: undefined,
+      otherName: 'hello',
+      otherType: 'http-request',
+      expected: '[[note:7|Hello]]',
+    },
+    {
+      folderPath: undefined,
+      otherName: 'Other',
+      otherType: 'snippet',
+      expected: '[[Hello]]',
+    },
+    {
+      folderPath: 'Projects',
+      otherName: 'Other',
+      otherType: 'snippet',
+      expected: '[[Hello]]',
+    },
+    {
+      folderPath: 'Projects',
+      otherName: 'hello',
+      otherType: 'note',
+      expected: '[[Projects/Hello]]',
+    },
+  ] as const)(
+    'inserts $expected for a note in $folderPath alongside $otherType $otherName',
+    async ({ folderPath, otherName, otherType, expected }) => {
+      const { api } = await import('@/services/api')
+      for (const get of [
+        api.snippets.getSnippets,
+        api.notes.getNotes,
+        api.noteFolders.getNoteFolders,
+        api.httpRequests.getHttpRequests,
+        api.httpFolders.getHttpFolders,
+      ])
+        vi.mocked(get).mockResolvedValue({ data: [] } as never)
+
+      let state = EditorState.create({ doc: 'Before  after' })
+      let plugin: { update: (value: unknown) => void, destroy: () => void }
+      const view = {
+        get state() {
+          return state
+        },
+        requestMeasure: vi.fn(),
+        focus: vi.fn(),
+        dispatch(spec: Parameters<typeof state.update>[0]) {
+          const tr = state.update(spec)
+          state = tr.state
+          plugin.update({
+            view,
+            docChanged: tr.docChanged,
+            selectionSet: tr.selection !== undefined,
+            changes: tr.changes,
+          })
+        },
+      }
+      const extension = createInternalLinksTrigger({
+        mode: 'raw',
+        editable: true,
+      })
+      plugin = (
+        extension[0] as { create: (view: unknown) => typeof plugin }
+      ).create(view)
+      try {
+        view.dispatch({
+          changes: { from: 7, insert: '[[Hel' },
+          selection: { anchor: 12 },
+        })
+        await setInternalLinksPickerQuery('Hel')
+        internalLinksPickerState.items = [
+          {
+            id: 8,
+            name: otherName,
+            type: otherType,
+            locationLabel: '',
+            folderPath: 'Archive',
+          },
+          { id: 7, name: 'Hello', type: 'note', locationLabel: '', folderPath },
+        ]
+        selectInternalLinksPickerItem(1)
+        expect(state.doc.toString()).toBe(`Before ${expected} after`)
+        expect(state.selection.main.head).toBe(7 + expected.length)
+        expect(internalLinksPickerState.isOpen).toBe(false)
+        expect(view.focus).toHaveBeenCalledOnce()
+      }
+      finally {
+        plugin.destroy()
+      }
+    },
+  )
 })
 
 describe('planned occurrence owner actions', () => {

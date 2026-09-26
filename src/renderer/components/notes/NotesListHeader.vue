@@ -141,6 +141,11 @@ function onKeydown(event: KeyboardEvent) {
       <UiActionButton
         v-else-if="!isSearch"
         :tooltip="createActionTooltip"
+        :shortcut="
+          notesCreateKind === 'task'
+            ? 'CommandOrControl+T'
+            : 'CommandOrControl+N'
+        "
         @click="createNoteBySelectedKindAndSelect"
       >
         <Plus class="h-4 w-4" />

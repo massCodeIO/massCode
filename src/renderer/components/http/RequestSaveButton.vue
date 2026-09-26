@@ -3,7 +3,6 @@ import type { useHttpCollection } from '@/composables/spaces/http/useHttpCollect
 import { useHttpRequests } from '@/composables/spaces/http/useHttpRequests'
 import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
 import { i18n } from '@/electron'
-import { isMac } from '@/utils'
 import { onKeyStroke } from '@vueuse/core'
 import { LoaderCircle, Save } from 'lucide-vue-next'
 
@@ -47,7 +46,8 @@ onKeyStroke(['s', 'S'], (event) => {
 <template>
   <UiActionButton
     class="relative shrink-0"
-    :tooltip="`${i18n.t('button.save')} (${isMac ? '⌘S' : 'Ctrl+S'})`"
+    :tooltip="i18n.t('button.save')"
+    shortcut="CommandOrControl+S"
     :aria-label="i18n.t('button.save')"
     :disabled="busy || unavailable"
     aria-keyshortcuts="Meta+S Control+S"

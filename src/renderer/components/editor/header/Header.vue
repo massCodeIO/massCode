@@ -7,6 +7,7 @@ import {
   useSnippetUpdate,
 } from '@/composables'
 import { useAi } from '@/composables/ai/useAi'
+import { useSpacePanels } from '@/composables/useSpacePanels'
 import { i18n } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
 import { getEntryNameConflictMessage } from '@/utils'
@@ -28,7 +29,9 @@ const emit = defineEmits<{
   focusEditor: []
 }>()
 
-const { open: isAiOpen, setOpen: setAiOpen } = useAi()
+const { toggleSecondary } = useSpacePanels()
+
+const { open: isAiOpen } = useAi()
 
 const {
   displayedSnippet,
@@ -245,6 +248,7 @@ function onAddFragment() {
           <UiActionButton
             :disabled="!canGoBack"
             :tooltip="i18n.t('menu:history.back')"
+            shortcut="CommandOrControl+["
             @click="onBackClick"
           >
             <ChevronLeft class="h-3 w-3" />
@@ -252,6 +256,7 @@ function onAddFragment() {
           <UiActionButton
             :disabled="!canGoForward"
             :tooltip="i18n.t('menu:history.forward')"
+            shortcut="CommandOrControl+]"
             @click="onForwardClick"
           >
             <ChevronRight class="h-3 w-3" />
@@ -290,6 +295,7 @@ function onAddFragment() {
               ? `${i18n.t('action.hide')} ${i18n.t('menu:editor.previewCode')}`
               : i18n.t('menu:editor.previewCode')
           "
+          shortcut="Alt+CommandOrControl+P"
           :active="isShowCodePreview"
           @click="onCodePreviewToggle"
         >
@@ -298,6 +304,7 @@ function onAddFragment() {
         <UiActionButton
           v-if="isShowJsonVisualizerAction"
           :tooltip="i18n.t('menu:editor.previewJson')"
+          shortcut="Alt+CommandOrControl+J"
           :active="isShowJsonVisualizer"
           @click="onJsonVisualizerToggle"
         >
@@ -311,6 +318,7 @@ function onAddFragment() {
         </UiActionButton>
         <UiActionButton
           :tooltip="i18n.t('action.new.fragment')"
+          shortcut="CommandOrControl+T"
           @click="onAddFragment"
         >
           <Plus class="h-4 w-4" />
@@ -321,6 +329,7 @@ function onAddFragment() {
               ? i18n.t('action.showSidebar')
               : i18n.t('action.hideSidebar')
           "
+          shortcut="CommandOrControl+B"
           :active="isSidebarHidden"
           @click="toggleCodeSidebar"
         >
@@ -330,9 +339,16 @@ function onAddFragment() {
           />
         </UiActionButton>
         <UiActionButton
-          :tooltip="i18n.t('ai.ask')"
+          :tooltip="
+            i18n.t(
+              isAiOpen
+                ? 'action.hideSecondarySidebar'
+                : 'action.showSecondarySidebar',
+            )
+          "
+          shortcut="Alt+CommandOrControl+B"
           :active="isAiOpen"
-          @click="setAiOpen(!isAiOpen)"
+          @click="toggleSecondary"
         >
           <UiPanelIcon
             side="right"

@@ -118,6 +118,7 @@ onMounted(() => {
 
 <template>
   <div
+    data-ai-panel
     class="flex h-full min-h-0 flex-col"
     :class="!embedded && 'pt-[var(--content-top-offset)]'"
   >

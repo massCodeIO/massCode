@@ -269,12 +269,14 @@ onUnmounted(() => {
         </UiActionButton>
         <UiActionButton
           :tooltip="i18n.t('button.prev')"
+          shortcut="ArrowLeft"
           @click="onPrevNext('prev')"
         >
           <ArrowLeft class="h-3 w-3" />
         </UiActionButton>
         <UiActionButton
           :tooltip="i18n.t('button.next')"
+          shortcut="ArrowRight"
           @click="onPrevNext('next')"
         >
           <ArrowRight class="h-3 w-3" />
@@ -282,6 +284,7 @@ onUnmounted(() => {
         <UiActionButton
           :active="isLaserPointerActive"
           :tooltip="i18n.t('button.laserPointer')"
+          shortcut="CommandOrControl+L"
           @click="toggleLaserPointer"
         >
           <Zap class="h-3 w-3" />

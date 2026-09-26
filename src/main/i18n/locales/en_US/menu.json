@@ -38,6 +38,8 @@
     "new": "New"
   },
   "view": {
+    "primarySidebar": "Primary Side Bar",
+    "secondarySidebar": "Secondary Side Bar",
     "label": "View",
     "showSidebar": "Show/Hide Sidebar",
     "layout": {

@@ -14,6 +14,7 @@ import { nativeEditorMutation } from '@/composables/ai/taskUndo'
 import { useAi } from '@/composables/ai/useAi'
 import { useNoteContent } from '@/composables/spaces/notes/useNoteContent'
 import { useResizeHandle } from '@/composables/useResizeHandle'
+import { useSpacePanels } from '@/composables/useSpacePanels'
 import { i18n, ipc, store } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
 import { router, RouterName } from '@/router'
@@ -84,7 +85,7 @@ const {
   toggleNotesSidebar,
 } = useNotesApp()
 
-const { open: aiOpen, setOpen: setAiOpen, setVaultContext } = useAi()
+const { setVaultContext } = useAi()
 watch(
   selectedNote,
   (note) => {
@@ -102,10 +103,6 @@ const unregisterAiWorkspace = useAi().registerWorkspace(() => ({
   library: notesState.libraryFilter,
 }))
 onBeforeUnmount(unregisterAiWorkspace)
-function closeInspector() {
-  setAiOpen(false)
-  isNotesInspectorOpen.value = false
-}
 const workspace = ref<HTMLElement>()
 const inspectorHandle = ref<HTMLElement>()
 const { width: workspaceWidth } = useElementSize(workspace)
@@ -115,18 +112,11 @@ const inspectorWidth = ref(
 const panelWidth = computed(() =>
   Math.min(inspectorWidth.value, Math.max(240, workspaceWidth.value - 320)),
 )
-const showInspector = computed(
-  () =>
-    aiOpen.value
-    || (isNotesInspectorOpen.value
-      && !isNotesMindmapShown.value
-      && !isNotesPresentationShown.value),
-)
-function toggleInspector() {
-  if (showInspector.value)
-    closeInspector()
-  else isNotesInspectorOpen.value = true
-}
+const {
+  secondaryOpen: showInspector,
+  toggleSecondary: toggleInspector,
+  closeSecondary: closeInspector,
+} = useSpacePanels()
 useResizeHandle(inspectorHandle, {
   direction: 'horizontal',
   onMove: (delta) => {
@@ -639,6 +629,7 @@ onBeforeUnmount(() => {
                   <UiActionButton
                     :disabled="!canGoBack"
                     :tooltip="i18n.t('menu:history.back')"
+                    shortcut="CommandOrControl+["
                     @click="onBackClick"
                   >
                     <ChevronLeft class="h-3 w-3" />
@@ -646,6 +637,7 @@ onBeforeUnmount(() => {
                   <UiActionButton
                     :disabled="!canGoForward"
                     :tooltip="i18n.t('menu:history.forward')"
+                    shortcut="CommandOrControl+]"
                     @click="onForwardClick"
                   >
                     <ChevronRight class="h-3 w-3" />
@@ -672,6 +664,7 @@ onBeforeUnmount(() => {
               <div class="ml-2 flex h-7 items-center">
                 <UiActionButton
                   :tooltip="mindmapActionTooltip"
+                  shortcut="CommandOrControl+Shift+I"
                   :active="isNotesMindmapShown"
                   @click="onMindmapToggle"
                 >
@@ -679,6 +672,7 @@ onBeforeUnmount(() => {
                 </UiActionButton>
                 <UiActionButton
                   :tooltip="presentationActionTooltip"
+                  shortcut="CommandOrControl+Shift+P"
                   :active="isNotesPresentationShown"
                   @click="onPresentationToggle"
                 >
@@ -686,6 +680,7 @@ onBeforeUnmount(() => {
                 </UiActionButton>
                 <UiActionButton
                   :tooltip="sidebarActionTooltip"
+                  shortcut="CommandOrControl+B"
                   :active="isNotesSidebarHidden"
                   @click="onSidebarToggle"
                 >
@@ -696,7 +691,14 @@ onBeforeUnmount(() => {
                 </UiActionButton>
                 <UiActionButton
                   v-if="!isNotesMindmapShown && !isNotesPresentationShown"
-                  :tooltip="i18n.t('notes.inspector.title')"
+                  :tooltip="
+                    i18n.t(
+                      showInspector
+                        ? 'action.hideSecondarySidebar'
+                        : 'action.showSecondarySidebar',
+                    )
+                  "
+                  shortcut="Alt+CommandOrControl+B"
                   :active="showInspector"
                   @click="toggleInspector"
                 >

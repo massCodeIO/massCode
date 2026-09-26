@@ -215,6 +215,7 @@ async function onFolderDrag({
             <template #action>
               <UiActionButton
                 :tooltip="i18n.t('action.new.folder')"
+                shortcut="CommandOrControl+Shift+N"
                 @click="createFolderAndSelect()"
               >
                 <Plus class="h-4 w-4" />

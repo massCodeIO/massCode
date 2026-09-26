@@ -148,6 +148,7 @@ async function onSend() {
           <UiActionButton
             :disabled="!canGoBack"
             :tooltip="i18n.t('menu:history.back')"
+            shortcut="CommandOrControl+["
             @click="onBackClick"
           >
             <ChevronLeft class="h-3 w-3" />
@@ -155,6 +156,7 @@ async function onSend() {
           <UiActionButton
             :disabled="!canGoForward"
             :tooltip="i18n.t('menu:history.forward')"
+            shortcut="CommandOrControl+]"
             @click="onForwardClick"
           >
             <ChevronRight class="h-3 w-3" />
@@ -188,6 +190,7 @@ async function onSend() {
         v-else
         :aria-label="i18n.t('spaces.http.editor.send')"
         :tooltip="i18n.t('spaces.http.editor.send')"
+        shortcut="CommandOrControl+Enter"
         :disabled="
           isExecuting
             || !currentDraft.url

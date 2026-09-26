@@ -32,9 +32,7 @@ function onTwoPanelResize(lw: number) {
 }
 
 const isWorkspaceRoute = computed(() => route.name === RouterName.notesSpace)
-const isSidebarShown = computed(() =>
-  isWorkspaceRoute.value ? !isNotesSidebarHidden.value : true,
-)
+const isSidebarShown = computed(() => !isNotesSidebarHidden.value)
 const isListShown = computed(() =>
   isWorkspaceRoute.value ? !isNotesListHidden.value : false,
 )

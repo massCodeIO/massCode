@@ -21,6 +21,12 @@ export interface MainMenuFileContext {
 export interface MainMenuViewContext {
   layoutMode: MainMenuLayoutMode | null
   layoutModes: MainMenuLayoutMode[]
+  sidebars?: {
+    primaryAvailable?: boolean
+    primary: boolean
+    secondary: boolean
+    secondaryAvailable: boolean
+  }
   notesInspector?: { open: boolean, enabled: boolean }
   httpPanels?: {
     sidebar: boolean

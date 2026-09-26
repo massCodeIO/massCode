@@ -80,7 +80,8 @@ watch(
     >
       <UiActionButton
         v-if="supportsAi"
-        :tooltip="`${i18n.t('ai.title')} (${isMac ? '⌘L' : 'Ctrl+L'})`"
+        :tooltip="i18n.t('ai.title')"
+        shortcut="CommandOrControl+L"
         :aria-pressed="aiOpen"
         @click="openAi"
       >
@@ -95,6 +96,7 @@ watch(
       >
         <UiActionButton
           :tooltip="i18n.t('preferences:label')"
+          shortcut="CommandOrControl+,"
           @click="navigate"
         >
           <Settings class="size-4" />

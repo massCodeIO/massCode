@@ -97,9 +97,10 @@ watch(
   (name) => {
     if (name && typeof name === 'string' && name.startsWith('preferences/')) {
       sessionStorage.setItem('preferences:lastRoute', name)
+      scrollRef.value?.scrollTo({ top: 0, behavior: 'instant' })
     }
   },
-  { immediate: true },
+  { immediate: true, flush: 'post' },
 )
 
 provide(preferencesKeys, {

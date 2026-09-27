@@ -375,5 +375,24 @@
     "version": {
       "label": "Current version"
     }
+  },
+  "about": {
+    "label": "About",
+    "copyVersion": "Copy version",
+    "checkUpdates": "Check for updates",
+    "checkingUpdates": "Checking…",
+    "website": "Website",
+    "sourceCode": "Source code",
+    "reportIssue": "Report an issue",
+    "license": "License",
+    "support": "Support the project",
+    "checkUpdatesFailed": "Could not check for updates. Please restart massCode and try again.",
+    "runtime": {
+      "electron": "Electron",
+      "chrome": "Chrome",
+      "node": "Node.js",
+      "v8": "V8",
+      "os": "OS"
+    }
   }
 }

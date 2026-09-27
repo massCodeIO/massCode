@@ -98,7 +98,7 @@ function showWhatsNewOnce() {
       onClick: () => {
         ipc.invoke(
           'system:open-external',
-          `${repository}/releases/tag/v${version}`,
+          `${repository}/releases/tag/v${version}?ref=masscode-app`,
         )
       },
     },

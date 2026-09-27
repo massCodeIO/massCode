@@ -342,5 +342,24 @@
     "version": {
       "label": "Текущая версия"
     }
+  },
+  "about": {
+    "label": "О приложении",
+    "copyVersion": "Скопировать версию",
+    "checkUpdates": "Проверить обновления",
+    "checkingUpdates": "Проверка…",
+    "website": "Сайт",
+    "sourceCode": "Исходный код",
+    "reportIssue": "Сообщить об ошибке",
+    "license": "Лицензия",
+    "support": "Поддержать проект",
+    "checkUpdatesFailed": "Не удалось проверить обновления. Перезапустите massCode и попробуйте ещё раз.",
+    "runtime": {
+      "electron": "Electron",
+      "chrome": "Chrome",
+      "node": "Node.js",
+      "v8": "V8",
+      "os": "ОС"
+    }
   }
 }

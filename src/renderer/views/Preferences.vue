@@ -11,6 +11,7 @@ import {
   Globe,
   HardDrive,
   Heart,
+  Info,
   Notebook,
   Palette,
   Plug,
@@ -83,6 +84,11 @@ const nav: { label: string, name: string, icon: Component }[] = [
     label: i18n.t('preferences:supporter.label'),
     name: RouterName.preferencesSupporter,
     icon: Heart,
+  },
+  {
+    label: i18n.t('preferences:about.label'),
+    name: RouterName.preferencesAbout,
+    icon: Info,
   },
 ]
 

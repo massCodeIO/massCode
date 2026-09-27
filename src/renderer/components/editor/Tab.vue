@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useApp, useSnippets, useSnippetUpdate } from '@/composables'
+import {
+  useApp,
+  useDialog,
+  useSnippets,
+  useSnippetUpdate,
+} from '@/composables'
 import { i18n } from '@/electron'
 
 interface Props {
@@ -14,6 +19,7 @@ const props = defineProps<Props>()
 const { selectedSnippet, selectedSnippetRecordStatus, deleteSnippetContent }
   = useSnippets()
 const { addToUpdateContentQueue, isContentUpdateBusy } = useSnippetUpdate()
+const { confirm } = useDialog()
 const { highlightedSnippetIds, highlightedFolderIds, state } = useApp()
 
 const tabRef = ref<HTMLDivElement>()
@@ -91,7 +97,17 @@ async function onDelete() {
     return
   }
 
-  await deleteSnippetContent(selectedSnippet.value!.id, props.id)
+  const snippetId = selectedSnippet.value.id
+  const contentId = props.id
+  const isConfirmed = await confirm({
+    title: i18n.t('messages:confirm.deletePermanently', {
+      name: name.value,
+    }),
+    content: i18n.t('messages:warning.noUndo'),
+  })
+
+  if (isConfirmed)
+    await deleteSnippetContent(snippetId, contentId)
 }
 </script>
 

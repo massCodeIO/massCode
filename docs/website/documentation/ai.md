@@ -5,7 +5,11 @@ description: "Ask the AI assistant to edit code, organize notes, run HTTP workfl
 
 # AI Assistant
 
-Ask the assistant to work with your snippets, notes and HTTP requests: update code, organize records, run a collection or save a report. Connect your own AI provider account or a local model. Requested edits apply directly unless you ask for a preview. HTTP draft changes still need **Save**; sending requests requires confirmation.
+<AppVersion text=">=6.0" />
+
+Use your own AI provider or a local model to edit snippets, organize notes and work with HTTP requests. Edits apply directly unless you ask for a preview.
+
+<img :src="withBase('/http-ai.png')" alt="AI assistant reviewing an HTTP product request and suggesting additional response checks">
 
 ## Connect a Provider
 
@@ -18,12 +22,12 @@ Open **Preferences → AI assistant** and choose a provider.
 | LM Studio | Start its API server and enter the address, usually `http://localhost:1234/v1`. Enter a key if the server requires one. |
 
 1. Click **Save and check connection** to save the connection and load available models.
-2. Choose a model from the list or enter its ID manually.
+2. Choose a text chat model with **tool calling** support so the assistant can search and perform actions. Select it from the list or enter its ID manually.
 3. Click **Save and check connection** again to save the selection.
 
-Settings are saved before the connection check; a failed check does not undo them. The check verifies access to the model list, not whether every listed model works in chat. Choose a text chat model with **tool calling** support so the assistant can search and perform actions.
+For local servers, include `/v1` in the address. Install and manage models in Ollama or LM Studio; massCode connects to the running server.
 
-For local servers, include `/v1` in the address. Install and manage models in Ollama or LM Studio; massCode connects to the running server. To change a saved key, use **Replace key** or **Remove key** and save. Changing the server address clears its saved key.
+To change a saved key, use **Replace key** or **Remove key** and save. Changing the server address clears its saved key.
 
 ### Custom Instructions
 
@@ -36,11 +40,13 @@ Click **Save and check connection** to save. Instructions apply across chats and
 ## Your First Task
 
 1. Open a note you want to edit.
-2. Open **AI assistant** from the space rail or **View → AI assistant**. You can also press <kbd>Cmd+L</kbd> on macOS / <kbd>Ctrl+L</kbd> on Windows and Linux. The chat appears in the secondary sidebar. This shortcut opens chat or focuses it when focus is elsewhere. When focus is already inside AI chat, it closes the whole secondary sidebar and returns focus to the editor. To toggle the whole sidebar, use <kbd>Cmd+Option+B</kbd> on macOS / <kbd>Ctrl+Alt+B</kbd> on Windows and Linux.
+2. Open **AI assistant** from the space rail or **View → AI assistant**, or press <kbd>Cmd+L</kbd> on macOS / <kbd>Ctrl+L</kbd> on Windows and Linux.
 3. Check the attached note below the message box, then send: “Rewrite the opening paragraph to be shorter. Show me the diff first.”
 4. Open the review card, inspect the proposed changes, then apply or reject them.
 
 After applying the edit, check the note. Use **Undo task changes** beside the response to reverse it. For later tasks, omit the preview request when you want the assistant to apply edits directly.
+
+The chat opens in the secondary sidebar. The chat shortcut focuses it when focus is elsewhere; when focus is inside chat, it closes the sidebar and returns focus to the editor. To toggle the sidebar regardless of focus, use <kbd>Cmd+Option+B</kbd> on macOS / <kbd>Ctrl+Alt+B</kbd> on Windows and Linux.
 
 You can combine related steps in one request:
 
@@ -62,7 +68,7 @@ Use **+** below the message box to attach more context:
 
 Workspace selection is captured when you send each message. Use it for requests such as “Move these notes to Planning.” Changing the selection afterward does not change the task’s targets; expand **Task context** beside the response to check them.
 
-Attachments are optional. Ask the assistant to find records across Code, Notes and HTTP, then click a record link in the answer or **Found records** to open it. An attached item helps with “explain this” without preventing a search elsewhere in the vault. If a search finds nothing, try another name or phrase.
+Attachments are optional and do not restrict vault search. Ask the assistant to find records across Code, Notes and HTTP, then click a record link in the answer or **Found records** to open it.
 
 ## Apply, Preview and Undo Changes
 
@@ -70,11 +76,19 @@ The assistant can create and edit records, duplicate them, change tags and folde
 
 Ordinary edit requests apply directly. To review first, say “Show me the changes before applying them.” Editor edits appear under **Review changes**. Changes to saved records appear under **Review vault changes**, where you select operations and choose **Apply selected changes**. If a record needs a new folder, include that folder’s creation too.
 
+For example, ask the assistant to improve a retry helper and propose the changes for review:
+
+<img :src="withBase('/snippets-ai-2.png')" alt="AI assistant proposing improvements to a Python retry snippet with a Review changes button">
+
+Open **Review changes** to compare **Before** and **After**, then choose **Apply changes** or **Reject changes**.
+
+<img :src="withBase('/snippets-ai-3.png')" alt="Review changes dialog comparing the original retry snippet with the proposed improvements">
+
+If the source changed since the preview was prepared, ask for a fresh preview. Code or Markdown shown only in an answer does not change your records.
+
 Code and Notes edits use normal editor saving. Changes to saved records are written to the vault. Changes to the open HTTP draft remain unsaved until you choose **Save** or ask the assistant to save them. Save or discard an existing HTTP draft before asking to change the saved request.
 
-Check the action result if a task fails partway through: completed changes remain applied. Code or Markdown shown only in an answer does not change your records. If the source changed since a preview was prepared, ask for a fresh preview. Some editor actions also require the original record to be open.
-
-Use **Undo task changes** during the current session to reverse the recorded changes that support Undo. Unrelated manual edits remain intact. If you changed an affected field afterward, Undo reports a conflict instead of overwriting it. Undoing creation moves the new record to Trash; a new folder must be empty before it can be removed.
+Use **Undo task changes** to undo the task’s edits during the current session, subject to the exceptions below. Unrelated manual edits remain intact. If you changed an affected field afterward, Undo reports a conflict instead of overwriting it. Undoing creation moves the new record to Trash; a new folder must be empty before it can be removed.
 
 ::: warning Changes that cannot be undone
 Network requests, exported files, cleared HTTP data and permanent deletion cannot be reversed with task Undo. Deleting folders, tags, fragments or environments also has no Undo. Folder deletion removes descendant folders and moves their records to Trash; tag deletion removes its assignments. Review the affected items before confirming.
@@ -82,12 +96,14 @@ Network requests, exported files, cleared HTTP data and permanent deletion canno
 
 ## Guide an Active Task
 
-The chat shows when the assistant is working, waiting for your answer or confirmation, or waiting for an operation to finish. Answer a question in its card or complete the requested dialog to let the task continue. You do not need to send “continue” after each step.
+Answer questions and confirm actions in their cards, or complete the requested dialog. The task continues automatically.
 
 - **Update current task** changes the direction of ongoing work. Changes already completed remain in place.
 - **Next task** queues a separate request with its own context. The queue pauses after a stopped or failed task; use **Start queue** when ready to continue.
 - **Stop** ends assistant work and keeps partial text and completed changes. Running application operations have their own Stop control; stopping the chat does not retract a sent request or undo an edit.
 - **Retry**, when available, repeats the latest failed or interrupted response with its original context. After corrections, clarification replies or completed actions, send a new request instead.
+
+If a task fails partway through, check the action result: completed changes remain applied.
 
 ## Run HTTP Workflows
 
@@ -137,6 +153,8 @@ For local processing, use a model running on your computer. A local server addre
 
 ## Troubleshooting
 
+- **Connection check failed:** settings are saved before the check; failure does not undo them. Correct the connection details and check again.
+- **Connection check passes but chat fails:** the check verifies access to the model list, not whether every listed model works in chat. Check that the selected model supports text chat and tool calling.
 - **Server unavailable:** start Ollama or the LM Studio API server and verify its address and port.
 - **Authentication failed:** replace the key in Preferences and save.
 - **Model unavailable:** check the selected model ID and server address.
@@ -144,3 +162,7 @@ For local processing, use a model running on your computer. A local server addre
 - **First response takes time:** a local server may be loading the model. You can stop while it loads.
 - **Context is too large:** select a smaller section or start a new chat.
 - **An edit cannot be applied:** reopen the target, attach its current text and ask again. Use a smaller selection if the text cannot be matched.
+
+<script setup>
+import { withBase } from 'vitepress'
+</script>

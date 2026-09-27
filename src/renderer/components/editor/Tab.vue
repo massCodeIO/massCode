@@ -18,6 +18,7 @@ const { highlightedSnippetIds, highlightedFolderIds, state } = useApp()
 
 const tabRef = ref<HTMLDivElement>()
 const isEdit = ref(false)
+let renameRequested = false
 
 const name = computed({
   get() {
@@ -50,6 +51,15 @@ const name = computed({
 function onClickContextMenu() {
   highlightedSnippetIds.value.clear()
   highlightedFolderIds.value.clear()
+}
+
+function onMenuCloseAutoFocus(event: Event) {
+  if (!renameRequested)
+    return
+
+  event.preventDefault()
+  renameRequested = false
+  isEdit.value = true
 }
 
 async function onDelete() {
@@ -95,8 +105,8 @@ async function onDelete() {
           {{ name }}
         </UiText>
       </ContextMenu.ContextMenuTrigger>
-      <ContextMenu.ContextMenuContent>
-        <ContextMenu.ContextMenuItem @click="isEdit = true">
+      <ContextMenu.ContextMenuContent @close-auto-focus="onMenuCloseAutoFocus">
+        <ContextMenu.ContextMenuItem @select="renameRequested = true">
           <span class="inline-flex min-w-0 items-center">
             {{ i18n.t("action.rename") }} "<span class="max-w-36 truncate">{{
               name
@@ -116,17 +126,32 @@ async function onDelete() {
         </ContextMenu.ContextMenuItem>
       </ContextMenu.ContextMenuContent>
     </ContextMenu.ContextMenu>
-    <UiInput
+    <div
       v-else
-      v-model="name"
-      variant="ghost"
-      focus
-      select
-      class="h-full w-full min-w-0 rounded-none px-0 py-0"
-      @mousedown.stop
-      @keydown.stop
-      @blur="isEdit = false"
-      @keydown.esc="isEdit = false"
-    />
+      class="relative w-full min-w-0"
+    >
+      <UiText
+        as="span"
+        variant="base"
+        weight="medium"
+        aria-hidden="true"
+        class="invisible block truncate text-center leading-5"
+      >
+        {{ name }}
+      </UiText>
+      <div class="absolute inset-0 min-w-0">
+        <UiInput
+          v-model="name"
+          variant="ghost"
+          focus
+          select
+          class="h-5 w-full min-w-0 rounded-none px-0 py-0"
+          @mousedown.stop
+          @keydown.stop
+          @blur="isEdit = false"
+          @keydown.esc="isEdit = false"
+        />
+      </div>
+    </div>
   </div>
 </template>

@@ -11,12 +11,8 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const {
-  selectedSnippetContent,
-  selectedSnippet,
-  selectedSnippetRecordStatus,
-  deleteSnippetContent,
-} = useSnippets()
+const { selectedSnippet, selectedSnippetRecordStatus, deleteSnippetContent }
+  = useSnippets()
 const { addToUpdateContentQueue } = useSnippetUpdate()
 const { highlightedSnippetIds, highlightedFolderIds, state } = useApp()
 
@@ -28,7 +24,9 @@ const name = computed({
     return props.name
   },
   set(v: string) {
-    const content = selectedSnippetContent.value
+    const content = selectedSnippet.value?.contents.find(
+      content => content.id === props.id,
+    )
 
     // value === undefined: тело фрагмента ещё не загружено, переименование
     // отправило бы пустой контент.
@@ -58,6 +56,7 @@ async function onDelete() {
   if (
     selectedSnippetRecordStatus.value !== 'ready'
     || selectedSnippet.value?.id !== state.snippetId
+    || selectedSnippet.value.contents.length <= 1
   ) {
     return
   }
@@ -80,17 +79,21 @@ async function onDelete() {
   <div
     ref="tabRef"
     data-editor-tab
-    class="border-border border-r px-2 py-0.5 select-none last:border-r-0"
+    class="min-w-0 cursor-default select-none"
     @contextmenu="onClickContextMenu"
   >
     <ContextMenu.ContextMenu v-if="!isEdit">
-      <ContextMenu.ContextMenuTrigger>
-        <div
-          class="truncate"
+      <ContextMenu.ContextMenuTrigger class="block w-full min-w-0">
+        <UiText
+          as="span"
+          variant="base"
+          weight="medium"
+          class="block truncate text-center leading-5 text-inherit"
+          :title="name"
           @dblclick="isEdit = true"
         >
           {{ name }}
-        </div>
+        </UiText>
       </ContextMenu.ContextMenuTrigger>
       <ContextMenu.ContextMenuContent>
         <ContextMenu.ContextMenuItem @click="isEdit = true">
@@ -101,7 +104,10 @@ async function onDelete() {
           </span>
         </ContextMenu.ContextMenuItem>
         <ContextMenu.ContextMenuSeparator />
-        <ContextMenu.ContextMenuItem @click="onDelete">
+        <ContextMenu.ContextMenuItem
+          :disabled="(selectedSnippet?.contents.length ?? 0) <= 1"
+          @click="onDelete"
+        >
           <span class="inline-flex min-w-0 items-center">
             {{ i18n.t("action.delete.common") }} "<span
               class="max-w-36 truncate"
@@ -116,7 +122,9 @@ async function onDelete() {
       variant="ghost"
       focus
       select
-      class="w-full rounded-none px-0 py-0 leading-0"
+      class="h-full w-full min-w-0 rounded-none px-0 py-0"
+      @mousedown.stop
+      @keydown.stop
       @blur="isEdit = false"
       @keydown.esc="isEdit = false"
     />

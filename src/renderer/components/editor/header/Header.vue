@@ -17,10 +17,8 @@ import {
   Code,
   Image,
   Network,
-  Plus,
   Type,
 } from 'lucide-vue-next'
-import Draggable from 'vuedraggable'
 import {
   formatEntryNameValidationChars,
   getEntryNameValidationIssue,
@@ -40,15 +38,11 @@ const {
   displayedSnippets,
   selectedSnippet,
   selectedSnippetRecordStatus,
-  addFragment,
-  reorderSnippetContents,
-  pendingContentReorders,
   isAvailableToCodePreview,
 } = useSnippets()
 const { canGoBack, canGoForward } = useNavigationHistory()
 const {
   isFocusedSnippetName,
-  state,
   isShowCodePreview,
   isShowCodeImage,
   isShowJsonVisualizer,
@@ -196,30 +190,6 @@ const isShowTags = computed(() => {
 
 const isHistoryVisible = computed(() => canGoBack.value || canGoForward.value)
 
-const canReorderFragments = computed(
-  () =>
-    selectedSnippetRecordStatus.value === 'ready'
-    && displayedSnippet.value?.id === state.snippetId
-    && selectedSnippet.value?.id === state.snippetId
-    && !displayedSnippet.value?.pendingCloudDownload
-    && !pendingContentReorders.has(state.snippetId!),
-)
-
-function onReorderFragments(
-  contents: NonNullable<typeof displayedSnippet.value>['contents'],
-) {
-  if (canReorderFragments.value && displayedSnippet.value) {
-    void reorderSnippetContents(
-      displayedSnippet.value.id,
-      contents.map(content => content.id),
-    )
-  }
-}
-
-function onClickTab(index: number) {
-  state.snippetContentIndex = index
-}
-
 function onBackClick() {
   void navigateBack()
 }
@@ -245,21 +215,13 @@ function onJsonVisualizerToggle() {
   isShowCodePreview.value = false
   isShowCodeImage.value = false
 }
-
-function onAddFragment() {
-  if (
-    selectedSnippetRecordStatus.value !== 'ready'
-    || selectedSnippet.value?.id !== displayedSnippet.value?.id
-  ) {
-    return
-  }
-
-  void addFragment()
-}
 </script>
 
 <template>
-  <div data-editor-header>
+  <div
+    data-editor-header
+    class="min-w-0"
+  >
     <div
       class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
     >
@@ -340,13 +302,6 @@ function onAddFragment() {
           <Type class="h-3 w-3" />
         </UiActionButton>
         <UiActionButton
-          :tooltip="i18n.t('action.new.fragment')"
-          shortcut="CommandOrControl+T"
-          @click="onAddFragment"
-        >
-          <Plus class="h-4 w-4" />
-        </UiActionButton>
-        <UiActionButton
           :tooltip="
             isSidebarHidden
               ? i18n.t('action.showSidebar')
@@ -380,35 +335,7 @@ function onAddFragment() {
         </UiActionButton>
       </div>
     </div>
-    <Draggable
-      v-if="displayedSnippet?.contents && displayedSnippet.contents.length > 1"
-      :model-value="displayedSnippet.contents"
-      item-key="id"
-      direction="horizontal"
-      :disabled="!canReorderFragments"
-      :animation="200"
-      :force-fallback="true"
-      :fallback-on-body="true"
-      :fallback-tolerance="3"
-      fallback-class="snippet-fragment-drag"
-      filter="input, textarea, [contenteditable]"
-      :prevent-on-filter="false"
-      class="border-border grid auto-cols-fr grid-flow-col border-b"
-      @update:model-value="onReorderFragments"
-    >
-      <template #item="{ element: content, index }">
-        <EditorTab
-          :id="content.id"
-          :index="index"
-          :name="content.label"
-          :class="{
-            'bg-accent text-accent-foreground':
-              displayedSnippetContent?.id === content.id,
-          }"
-          @click="onClickTab(index)"
-        />
-      </template>
-    </Draggable>
+    <EditorHeaderFragments :key="displayedSnippet?.id" />
     <EditorDescription v-model:show="isShowDescription" />
     <div
       v-if="isShowTags"
@@ -418,11 +345,3 @@ function onAddFragment() {
     </div>
   </div>
 </template>
-
-<style scoped>
-/* ContextMenuTrigger sets pointer-events:auto inline. The fallback clone must
-   remain transparent to Sortable's elementFromPoint hit testing. */
-.snippet-fragment-drag :deep(*) {
-  pointer-events: none !important;
-}
-</style>

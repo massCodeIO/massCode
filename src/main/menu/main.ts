@@ -195,15 +195,6 @@ const helpMenuItems: MenuConfig[] = [
     type: 'separator',
   },
   {
-    label: i18n.t('menu:help.links.snippets'),
-    click: () => {
-      shell.openExternal('https://masscode.io/snippets')
-    },
-  },
-  {
-    type: 'separator',
-  },
-  {
     label: i18n.t('menu:help.donate.openCollective'),
     click: () => {
       shell.openExternal('https://opencollective.com/masscode')

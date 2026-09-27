@@ -28,10 +28,7 @@
       "gumroad": "Wesprzyj przez Gumroad (Visa, Mastercard, itp.)"
     },
     "twitter": "X",
-    "devTools": "Przełącz narzędzia deweloperskie",
-    "links": {
-      "snippets": "Kolekcja fragmentów"
-    }
+    "devTools": "Przełącz narzędzia deweloperskie"
   },
   "view": {
     "label": "Widok",

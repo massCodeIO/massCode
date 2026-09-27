@@ -28,10 +28,7 @@
       "gumroad": "Gumroadで寄付（Visa、Mastercard等）"
     },
     "twitter": "X",
-    "devTools": "開発者ツールの切り替え",
-    "links": {
-      "snippets": "スニペットコレクション"
-    }
+    "devTools": "開発者ツールの切り替え"
   },
   "view": {
     "label": "表示",

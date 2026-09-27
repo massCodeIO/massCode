@@ -28,10 +28,7 @@
       "gumroad": "Donate via Gumroad (Visa, Mastercard, etc.)"
     },
     "twitter": "X",
-    "devTools": "Toggle Developer Tools",
-    "links": {
-      "snippets": "Snippet Collection"
-    }
+    "devTools": "Toggle Developer Tools"
   },
   "file": {
     "label": "File",

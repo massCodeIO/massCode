@@ -28,10 +28,7 @@
       "gumroad": "Gumroad로 후원하기 (Visa, Mastercard 등)"
     },
     "twitter": "X",
-    "devTools": "개발자 도구 전환",
-    "links": {
-      "snippets": "스니펫 컬렉션"
-    }
+    "devTools": "개발자 도구 전환"
   },
   "file": {
     "label": "파일",

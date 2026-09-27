@@ -28,10 +28,7 @@
       "gumroad": "Über Gumroad spenden (Visa, Mastercard, etc.)"
     },
     "twitter": "X",
-    "devTools": "Entwicklerwerkzeuge ein-/ausblenden",
-    "links": {
-      "snippets": "Snippet-Sammlung"
-    }
+    "devTools": "Entwicklerwerkzeuge ein-/ausblenden"
   },
   "view": {
     "label": "Ansicht",

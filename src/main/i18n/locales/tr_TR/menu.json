@@ -28,10 +28,7 @@
       "gumroad": "Gumroad ile Bağış Yap (Visa, Mastercard, vb.)"
     },
     "twitter": "X",
-    "devTools": "Geliştirici Araçlarını Aç/Kapat",
-    "links": {
-      "snippets": "Snippet Koleksiyonu"
-    }
+    "devTools": "Geliştirici Araçlarını Aç/Kapat"
   },
   "view": {
     "label": "Görünüm",

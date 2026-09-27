@@ -28,10 +28,7 @@
       "gumroad": "Δωρεά μέσω Gumroad (Visa, Mastercard, κλπ.)"
     },
     "twitter": "X",
-    "devTools": "Εναλλαγή Developer Tools",
-    "links": {
-      "snippets": "Συλλογή Snippets"
-    }
+    "devTools": "Εναλλαγή Developer Tools"
   },
   "view": {
     "label": "Προβολή",

@@ -55,6 +55,7 @@ vi.mock('@/composables', () => ({
 vi.mock('@/composables/ai/useAi', () => ({
   useAi: () => ({
     setContext: vi.fn(),
+    setVaultContext: vi.fn(),
     registerEditor: () => () => {},
     registerWorkspace: () => () => {},
   }),

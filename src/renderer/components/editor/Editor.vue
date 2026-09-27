@@ -58,7 +58,11 @@ import {
 import { getCodeFormatterParser } from '~/shared/codeFormatter'
 import { loadLanguageSupport } from './grammars'
 
-const { setContext: setAiContext, registerEditor: registerAiEditor } = useAi()
+const {
+  setContext: setAiContext,
+  registerEditor: registerAiEditor,
+  setVaultContext,
+} = useAi()
 const { settings, cursorPosition } = useEditor()
 const { sonner } = useSonner()
 const {
@@ -241,6 +245,18 @@ const unregisterAiWorkspace = useAi().registerWorkspace(() => ({
   library: state.libraryFilter,
 }))
 onBeforeUnmount(unregisterAiWorkspace)
+watch(
+  [selectedSnippet, selectedSnippetIds],
+  ([snippet, ids]) => {
+    setVaultContext(
+      snippet && ids.length === 1
+        ? { type: 'snippet', id: snippet.id, name: snippet.name }
+        : undefined,
+    )
+  },
+  { immediate: true },
+)
+onBeforeUnmount(() => setVaultContext(undefined))
 function readAiContext() {
   const content = selectedSnippetContent.value
   const snippet = selectedSnippet.value

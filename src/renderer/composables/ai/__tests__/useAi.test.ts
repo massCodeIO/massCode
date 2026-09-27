@@ -228,6 +228,33 @@ describe('aI chat context and request lifecycle', () => {
     expect(ai.attachments.value[0]?.id).toBe(9)
   })
 
+  it('keeps the selected snippet attached while its editor content loads', async () => {
+    const { ai, setSnapshot } = await setup()
+    ai.setVaultContext({ type: 'snippet', id: 1, name: 'First' })
+    ai.setOpen(true)
+    setSnapshot(undefined)
+    ai.setVaultContext({ type: 'snippet', id: 2, name: 'Next' })
+    expect(ai.attachments.value).toEqual([
+      { type: 'snippet', id: 2, name: 'Next' },
+    ])
+    setSnapshot({
+      space: 'code',
+      snippetId: 2,
+      contentId: 20,
+      name: 'Next',
+      text: 'next',
+      selection: '',
+      language: 'text',
+    })
+    expect(ai.attachments.value).toEqual([
+      { type: 'snippet', id: 2, name: 'Next' },
+    ])
+    expect(ai.contextMode.value).toBe('none')
+    ai.removeAttachment(0)
+    ai.setVaultContext({ type: 'snippet', id: 3, name: 'Third' })
+    expect(ai.attachments.value).toEqual([])
+  })
+
   it('captures unsaved selection at send time without attaching the rest of the fragment', async () => {
     const { ai, updateBuffer, request } = await setup()
     updateBuffer({

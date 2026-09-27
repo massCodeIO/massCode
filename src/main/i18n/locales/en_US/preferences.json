@@ -370,7 +370,7 @@
     "label": "Updates",
     "autoUpdate": {
       "label": "Automatic updates",
-      "description": "Download updates in the background and install them on restart. When disabled, massCode only notifies you about new versions. Major versions are never installed automatically."
+      "description": "Download updates in the background and install on restart. When off, only notify about new versions. Major upgrades require manual installation."
     },
     "version": {
       "label": "Current version"

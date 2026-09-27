@@ -45,7 +45,7 @@ if (command === 'prepare') {
   fs.mkdirSync(path.join(root, 'vault'))
   const marker = { version: 1, root, count, space: values.space, seed: values.seed, corpus: values.corpus, port }
   fs.writeFileSync(path.join(root, markerName), JSON.stringify(marker, null, 2))
-  fs.writeFileSync(path.join(root, 'profile/v2/preferences.json'), JSON.stringify({ storage: { rootPath: path.join(root, 'vault'), vaultPath: path.join(root, 'vault'), sqliteMigrated: true }, api: { port }, updates: { autoUpdate: false } }))
+  fs.writeFileSync(path.join(root, 'profile/v2/preferences.json'), JSON.stringify({ storage: { rootPath: path.join(root, 'vault'), vaultPath: path.join(root, 'vault') }, api: { port }, updates: { autoUpdate: false } }))
   const manifest = { ...marker, createdAt: new Date().toISOString(), commit: git(['rev-parse', 'HEAD']), dirty: git(['status', '--porcelain']), buildMode: 'production', packageVersion: require('../../package.json').version, node: process.versions.node, electron: require('electron/package.json').version, platform: os.platform(), release: os.release(), arch: os.arch(), cpu: os.cpus()[0]?.model, logicalCpus: os.cpus().length, memoryBytes: os.totalmem() }
   fs.writeFileSync(path.join(root, 'manifest.json'), JSON.stringify(manifest, null, 2))
   fs.copyFileSync(path.join(repo, 'package.json'), path.join(root, 'package.json'))

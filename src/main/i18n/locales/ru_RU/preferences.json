@@ -2,11 +2,9 @@
   "label": "Настройки",
   "storage": {
     "section": {
-      "main": "Основное",
-      "migration": "Миграция"
+      "main": "Основное"
     },
     "label": "Хранилище",
-    "migrateSqliteToMarkdown": "Мигрировать в Markdown Vault",
     "count": "Количество",
     "vaultPath": "Путь к vault",
     "vaultDoctor": {

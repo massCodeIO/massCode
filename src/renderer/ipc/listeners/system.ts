@@ -213,29 +213,6 @@ export function registerSystemListeners() {
     })
   })
 
-  ipc.on(
-    'system:migration-complete',
-    (_, result: { folders: number, snippets: number, tags: number }) => {
-      sonner({
-        message: i18n.t('messages:success.migrateToMarkdown', {
-          folders: result.folders,
-          snippets: result.snippets,
-          tags: result.tags,
-        }),
-        type: 'success',
-      })
-    },
-  )
-
-  ipc.on('system:migration-error', (_, payload: { message: string }) => {
-    sonner({
-      message: i18n.t('messages:error.migration', {
-        error: payload.message,
-      }),
-      type: 'error',
-    })
-  })
-
   ipc.on('system:storage-synced', () => {
     scheduleStorageSyncRefresh()
   })

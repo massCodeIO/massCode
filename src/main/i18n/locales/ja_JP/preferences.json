@@ -2,11 +2,9 @@
   "label": "環境設定",
   "storage": {
     "section": {
-      "main": "メイン",
-      "migration": "マイグレーション"
+      "main": "メイン"
     },
     "label": "ストレージ",
-    "migrateSqliteToMarkdown": "Markdown Vaultに移行",
     "count": "カウント",
     "vaultPath": "Vaultのパス"
   },

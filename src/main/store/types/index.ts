@@ -227,7 +227,6 @@ export interface MarkdownSettings {
 
 export interface StorageSettings {
   vaultPath: string | null
-  sqliteMigrated: boolean
 }
 
 export interface NotesEditorSettings {

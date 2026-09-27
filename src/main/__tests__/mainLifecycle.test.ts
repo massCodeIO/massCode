@@ -97,7 +97,6 @@ vi.mock('../tasks', () => ({
 }))
 vi.mock('../updates', () => ({ checkForUpdates: vi.fn() }))
 vi.mock('../utils', () => ({
-  isSqliteFile: () => false,
   log: context.log,
 }))
 vi.mock('../windowBounds', () => ({

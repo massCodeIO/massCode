@@ -283,13 +283,7 @@ export const aiNativeActionSchema = z.discriminatedUnion('action', [
   z
     .object({
       action: z.literal('storage'),
-      command: z.enum([
-        'select',
-        'move',
-        'migrateSqlite',
-        'doctorScan',
-        'doctorApply',
-      ]),
+      command: z.enum(['select', 'move', 'doctorScan', 'doctorApply']),
     })
     .strict(),
   z.object({ action: z.literal('configureAi') }).strict(),

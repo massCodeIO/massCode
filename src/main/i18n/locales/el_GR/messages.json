@@ -3,15 +3,10 @@
     "delete": "Είστε βέβαιοι ότι θέλετε να διαγράψετε το \"{{name}}\"?",
     "deletePermanently": "Είστε βέβαιοι ότι θέλετε να διαγράψετε οριστικά το \"{{name}}\"?",
     "deleteConfirmMultipleSnippets": "Είστε βέβαιοι ότι θέλετε να διαγράψετε οριστικά τα {{count}} επιλεγμένα snippets;",
-    "emptyTrash": "Είστε βέβαιοι ότι θέλετε να διαγράψετε οριστικά όλα τα snippets στον Κάδο Απορριμμάτων;",
-    "migrateToMarkdown": [
-      "Migrate to Markdown Vault?",
-      "The selected vault will be overwritten with the current SQLite library."
-    ]
+    "emptyTrash": "Είστε βέβαιοι ότι θέλετε να διαγράψετε οριστικά όλα τα snippets στον Κάδο Απορριμμάτων;"
   },
   "success": {
     "copied": "Αντιγράφηκε στο πρόχειρο",
-    "migrateToMarkdown": "Migrated to Markdown Vault. Folders: {{folders}}, snippets: {{snippets}}, tags: {{tags}}.",
     "vaultLoaded": "Vault successfully loaded."
   },
   "warning": {
@@ -26,12 +21,10 @@
     ]
   },
   "error": {
-    "migration": "Auto-migration from SQLite failed: {{error}}"
   },
   "description": {
     "storageVault": "Choose the vault directory. To sync between devices, select a folder in iCloud Drive, Google Drive or Dropbox.",
-    "language": "To apply language changes, you need to reload the app.",
-    "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
+    "language": "To apply language changes, you need to reload the app."
   },
   "special": {
     "unsponsored": "Χωρίς χορηγία"

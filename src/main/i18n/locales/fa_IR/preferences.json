@@ -2,11 +2,9 @@
   "label": "تنظیمات",
   "storage": {
     "section": {
-      "main": "Main",
-      "migration": "Migration"
+      "main": "Main"
     },
     "label": "ذخیره‌سازی",
-    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "تعداد",
     "vaultPath": "Vault Path"
   },

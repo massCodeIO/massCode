@@ -12,10 +12,6 @@
       "Overwrite selected directory?",
       "The selected directory is not empty. Its contents will be overwritten by the current vault."
     ],
-    "migrateToMarkdown": [
-      "Migrate to Markdown Vault?",
-      "All current vault content (including Notes, HTTP, Math and Drawings) will be replaced by the selected SQLite library. This cannot be undone here. Back up the current vault first."
-    ],
     "vaultDoctorApply": [
       "Apply vault fixes?",
       "massCode will update safe metadata fixes and selected duplicate-id decisions. Unselected conflicts will be skipped."
@@ -23,7 +19,6 @@
   },
   "success": {
     "copied": "Copied to clipboard",
-    "migrateToMarkdown": "Migrated to Markdown Vault. Folders: {{folders}}, snippets: {{snippets}}, tags: {{tags}}.",
     "vaultMoved": "Vault successfully moved.",
     "vaultLoaded": "Vault successfully loaded.",
     "licenseActivated": "License activated. Thank you for supporting massCode!",
@@ -61,7 +56,6 @@
   },
   "error": {
     "formatFailed": "Could not format or save the fragment.",
-    "migration": "Auto-migration from SQLite failed: {{error}}",
     "secretNameRequired": "Enter a name for the secret before saving its value.",
     "secretEnvironmentMissing": "This environment no longer exists.",
     "secretEncryptionUnavailable": "Secrets cannot be stored: this system has no OS encryption available.",
@@ -92,8 +86,7 @@
   },
   "description": {
     "storageVault": "Choose the vault directory. To sync between devices, select a folder in iCloud Drive, Google Drive or Dropbox.",
-    "language": "To apply language changes, you need to reload the app.",
-    "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
+    "language": "To apply language changes, you need to reload the app."
   },
   "special": {
     "unsponsored": "Unsponsored"

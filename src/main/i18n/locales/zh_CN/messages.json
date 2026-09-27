@@ -12,10 +12,6 @@
       "确定要覆盖所选目录吗？",
       "所选目录不为空。当前库的内容将会覆盖该目录下的现有内容。"
     ],
-    "migrateToMarkdown": [
-      "确定要迁移至 Markdown 仓库吗？",
-      "当前 SQLite 数据库中的内容将会覆盖所选仓库。"
-    ],
     "vaultDoctorApply": [
       "应用仓库修复？",
       "massCode 将自动执行安全的元数据修复，并应用您选中的重复 ID 处理方案. 未选中的冲突项将被跳过。"
@@ -23,7 +19,6 @@
   },
   "success": {
     "copied": "已复制到剪贴板",
-    "migrateToMarkdown": "已迁移至 Markdown 仓库。文件夹：{{folders}}，代码片段：{{snippets}}，标签：{{tags}}。",
     "vaultMoved": "仓库已成功移动。",
     "vaultLoaded": "仓库已成功加载。",
     "licenseActivated": "许可证已激活。感谢您对 massCode 的支持!",
@@ -50,7 +45,6 @@
     "cloudFileNotReady": "此文件仍在从云存储同步中。请稍后重试。"
   },
   "error": {
-    "migration": "从 SQLite 自动迁移失败：{{error}}",
     "secretNameRequired": "在保存值之前，请为机密变量输入一个名称。",
     "secretEnvironmentMissing": "该环境已不存在。",
     "secretEncryptionUnavailable": "无法存储机密变量：该系统没有可用的操作系统加密功能。",
@@ -72,8 +66,7 @@
   },
   "description": {
     "storageVault": "请选择仓库目录。如需在多设备间同步，请选择 iCloud Drive、Google Drive 或 Dropbox 中的文件夹。",
-    "language": "应用语言更改需要重新加载应用程序。",
-    "migrateSqliteUtility": "如果您有旧版本的 massCode.db 文件，请使用此工具将数据导入当前的 Markdown 仓库。"
+    "language": "应用语言更改需要重新加载应用程序。"
   },
   "special": {
     "unsponsored": "未赞助"

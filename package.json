@@ -96,7 +96,6 @@
     "@xterm/xterm": "^5.5.0",
     "acorn": "8.15.0",
     "ai": "^6.0.286",
-    "better-sqlite3": "^12.4.1",
     "change-case": "^5.4.4",
     "chokidar": "^4.0.3",
     "chroma-js": "^3.1.2",
@@ -158,7 +157,6 @@
     "@electron/rebuild": "^3.7.1",
     "@tailwindcss/postcss": "^4.0.9",
     "@tailwindcss/vite": "^4.0.9",
-    "@types/better-sqlite3": "^7.6.12",
     "@types/chroma-js": "^3.1.1",
     "@types/crypto-js": "^4.2.2",
     "@types/dagre": "^0.7.53",
@@ -202,7 +200,6 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@parcel/watcher",
-      "better-sqlite3",
       "electron",
       "esbuild",
       "simple-git-hooks",

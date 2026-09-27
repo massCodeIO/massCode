@@ -2,11 +2,9 @@
   "label": "환경설정",
   "storage": {
     "section": {
-      "main": "일반",
-      "migration": "마이그레이션"
+      "main": "일반"
     },
     "label": "스토리지",
-    "migrateSqliteToMarkdown": "마크다운 볼트로 마이그레이션",
     "moveVault": "볼트 이동",
     "movingVault": "볼트 이동 중...",
     "count": "개수",

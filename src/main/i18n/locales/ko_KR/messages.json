@@ -11,10 +11,6 @@
       "선택한 디렉터리를 덮어쓸까요?",
       "선택한 디렉터리가 비어 있지 않습니다. 현재 볼트로 내용이 덮어써집니다."
     ],
-    "migrateToMarkdown": [
-      "마크다운 볼트로 마이그레이션할까요?",
-      "선택한 볼트가 현재 SQLite 라이브러리로 덮어써집니다."
-    ],
     "vaultDoctorApply": [
       "볼트 수정 사항을 적용할까요?",
       "massCode가 안전한 메타데이터 수정과 선택한 중복 ID 결정을 적용합니다. 선택하지 않은 충돌은 건너뜁니다."
@@ -22,7 +18,6 @@
   },
   "success": {
     "copied": "클립보드에 복사됨",
-    "migrateToMarkdown": "마크다운 볼트로 마이그레이션했습니다. 폴더 {{folders}}개, 스니펫 {{snippets}}개, 태그 {{tags}}개.",
     "vaultMoved": "볼트를 성공적으로 이동했습니다.",
     "vaultLoaded": "볼트를 성공적으로 불러왔습니다.",
     "licenseActivated": "라이선스가 활성화되었습니다. massCode를 후원해 주셔서 감사합니다!",
@@ -45,7 +40,6 @@
     "cloudFileNotReady": "이 항목은 아직 클라우드 스토리지에서 동기화되는 중입니다. 잠시 후 다시 시도하세요."
   },
   "error": {
-    "migration": "SQLite에서 자동 마이그레이션 실패: {{error}}",
     "entryNameEmpty": "이름을 비워둘 수 없습니다.",
     "entryNameLeadingDot": "이름은 마침표로 시작할 수 없습니다.",
     "entryNameInvalidChars": "이름에 다음 문자를 포함할 수 없습니다: {{- chars}}",
@@ -59,8 +53,7 @@
   },
   "description": {
     "storageVault": "볼트 디렉터리를 선택하세요. 기기 간 동기화를 하려면 iCloud Drive, Google Drive 또는 Dropbox의 폴더를 선택하세요.",
-    "language": "언어 변경을 적용하려면 앱을 다시 시작해야 합니다.",
-    "migrateSqliteUtility": "이전 버전의 massCode.db 파일이 있다면 이 유틸리티로 현재 마크다운 볼트로 데이터를 가져올 수 있습니다."
+    "language": "언어 변경을 적용하려면 앱을 다시 시작해야 합니다."
   },
   "special": {
     "unsponsored": "후원되지 않음"

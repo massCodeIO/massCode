@@ -2,11 +2,9 @@
   "label": "Preferences",
   "storage": {
     "section": {
-      "main": "Main",
-      "migration": "Migration"
+      "main": "Main"
     },
     "label": "Storage",
-    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "moveVault": "Move Vault",
     "movingVault": "Moving vault...",
     "count": "Count",

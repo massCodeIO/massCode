@@ -2,11 +2,9 @@
   "label": "首选项",
   "storage": {
     "section": {
-      "main": "常规",
-      "migration": "迁移"
+      "main": "常规"
     },
     "label": "存储",
-    "migrateSqliteToMarkdown": "迁移到 Markdown 仓库",
     "moveVault": "移动仓库",
     "movingVault": "正在移动仓库...",
     "count": "总计",

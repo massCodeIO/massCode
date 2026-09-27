@@ -213,7 +213,7 @@ async function copyGeneratedToken() {
             @click="
               ipc.invoke(
                 'system:open-external',
-                'https://masscode.io/documentation/mcp',
+                'https://masscode.io/documentation/mcp?ref=masscode-app',
               )
             "
           >

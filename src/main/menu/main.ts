@@ -136,19 +136,19 @@ const helpMenuItems: MenuConfig[] = [
   {
     label: i18n.t('menu:help.website'),
     click: () => {
-      shell.openExternal('https://masscode.io')
+      shell.openExternal('https://masscode.io?ref=masscode-app')
     },
   },
   {
     label: i18n.t('menu:help.documentation'),
     click: () => {
-      shell.openExternal('https://masscode.io/documentation')
+      shell.openExternal('https://masscode.io/documentation?ref=masscode-app')
     },
   },
   {
     label: i18n.t('menu:help.twitter'),
     click: () => {
-      shell.openExternal('https://twitter.com/anton_reshetov')
+      shell.openExternal('https://twitter.com/anton_reshetov?ref=masscode-app')
     },
   },
   {
@@ -157,27 +157,33 @@ const helpMenuItems: MenuConfig[] = [
   {
     label: i18n.t('menu:help.viewInGitHub'),
     click: () => {
-      shell.openExternal('https://github.com/massCodeIO/massCode')
+      shell.openExternal(
+        'https://github.com/massCodeIO/massCode?ref=masscode-app',
+      )
     },
   },
   {
     label: i18n.t('menu:help.changeLog'),
     click: () => {
-      shell.openExternal('https://github.com/massCodeIO/massCode/releases')
+      shell.openExternal(
+        'https://github.com/massCodeIO/massCode/releases?ref=masscode-app',
+      )
     },
   },
   {
     label: i18n.t('menu:help.reportIssue'),
     click: () => {
       shell.openExternal(
-        'https://github.com/massCodeIO/massCode/issues/new/choose',
+        'https://github.com/massCodeIO/massCode/issues/new/choose?ref=masscode-app',
       )
     },
   },
   {
     label: i18n.t('menu:help.giveStar'),
     click: () => {
-      shell.openExternal('https://github.com/massCodeIO/massCode/stargazers')
+      shell.openExternal(
+        'https://github.com/massCodeIO/massCode/stargazers?ref=masscode-app',
+      )
     },
   },
   {
@@ -187,7 +193,7 @@ const helpMenuItems: MenuConfig[] = [
     label: i18n.t('menu:help.extension.vscode'),
     click: () => {
       shell.openExternal(
-        'https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant',
+        'https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant&ref=masscode-app',
       )
     },
   },
@@ -197,19 +203,25 @@ const helpMenuItems: MenuConfig[] = [
   {
     label: i18n.t('menu:help.donate.openCollective'),
     click: () => {
-      shell.openExternal('https://opencollective.com/masscode')
+      shell.openExternal(
+        'https://opencollective.com/masscode?ref=masscode-app',
+      )
     },
   },
   {
     label: i18n.t('menu:help.donate.gumroad'),
     click: () => {
-      shell.openExternal('https://antonreshetov.gumroad.com/l/masscode')
+      shell.openExternal(
+        'https://antonreshetov.gumroad.com/l/masscode?ref=masscode-app',
+      )
     },
   },
   {
     label: i18n.t('menu:help.donate.payPal'),
     click: () => {
-      shell.openExternal('https://www.paypal.com/paypalme/antongithub')
+      shell.openExternal(
+        'https://www.paypal.com/paypalme/antongithub?ref=masscode-app',
+      )
     },
   },
   {

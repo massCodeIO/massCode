@@ -1,5 +1,8 @@
+import type { RuntimeInfo } from '../../types/ipc'
+import os from 'node:os'
 import path from 'node:path'
-import { app, clipboard, ipcMain, shell } from 'electron'
+import process from 'node:process'
+import { app, BrowserWindow, clipboard, ipcMain, shell } from 'electron'
 import {
   generateIntegrationToken,
   revokeIntegrationToken,
@@ -41,7 +44,10 @@ import {
 } from '../../storage/providers/markdown/watcher'
 import { store } from '../../store'
 import { runTasksCleanupWithUndo, undoTasksCleanup } from '../../tasks'
-import { installDownloadedUpdate } from '../../updates'
+import {
+  checkForUpdatesFromMenu,
+  installDownloadedUpdate,
+} from '../../updates'
 import { log } from '../../utils'
 
 function setVaultPathAndRestartWatcher(vaultPath: string): void {
@@ -132,6 +138,20 @@ function moveVaultAndRestartWatcher(
 }
 
 export function registerSystemHandlers() {
+  ipcMain.handle(
+    'system:runtime-info',
+    (): RuntimeInfo => ({
+      electron: process.versions.electron,
+      chrome: process.versions.chrome,
+      node: process.versions.node,
+      v8: process.versions.v8,
+      os: `${os.type()} ${os.arch()} ${os.release()}`,
+    }),
+  )
+
+  ipcMain.handle('system:check-for-updates', event =>
+    checkForUpdatesFromMenu(BrowserWindow.fromWebContents(event.sender)))
+
   ipcMain.handle('system:clipboard-write-text', (_, value: string) => {
     if (typeof value !== 'string')
       throw new Error(i18n.t('messages:error.copyFailed'))

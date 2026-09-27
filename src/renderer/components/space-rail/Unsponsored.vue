@@ -90,7 +90,7 @@ function getPromptSequence() {
 function openDonatePage() {
   void ipc.invoke(
     'system:open-external',
-    'https://masscode.io/donate/?ref=unsponsored-label',
+    'https://masscode.io/donate/?ref=masscode-app',
   )
 }
 

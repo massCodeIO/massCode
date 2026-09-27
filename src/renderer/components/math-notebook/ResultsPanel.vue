@@ -21,7 +21,7 @@ const props = defineProps<Props>()
 const showTotal = ref(true)
 const copy = useCopyToClipboard()
 const MATH_NOTEBOOK_DOCUMENTATION_URL
-  = 'https://masscode.io/documentation/math-notebook.html'
+  = 'https://masscode.io/documentation/math-notebook.html?ref=masscode-app'
 
 const total = computed(() => {
   return sumNumericResults(props.results)

@@ -1,4 +1,5 @@
-import { app, dialog, shell } from 'electron'
+import type { MessageBoxSyncOptions } from 'electron'
+import { app, BrowserWindow, dialog, shell } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { repository, version } from '../../../package.json'
 import i18n from '../i18n'
@@ -44,9 +45,17 @@ export function installDownloadedUpdate() {
 
 // Ручная проверка из меню. Скачивание при необходимости запустит глобальный
 // обработчик 'update-available', здесь только диалоги.
-export async function checkForUpdatesFromMenu() {
+export async function checkForUpdatesFromMenu(
+  parent = BrowserWindow.getFocusedWindow(),
+) {
+  function showDialog(options: MessageBoxSyncOptions) {
+    return parent && !parent.isDestroyed()
+      ? dialog.showMessageBoxSync(parent, options)
+      : dialog.showMessageBoxSync(options)
+  }
+
   function showNoUpdatesDialog() {
-    dialog.showMessageBoxSync({
+    showDialog({
       message: i18n.t('messages:update.noAvailable'),
     })
   }
@@ -69,7 +78,7 @@ export async function checkForUpdatesFromMenu() {
     const isSameMajor = getMajorVersion(latestVersion) === currentMajorVersion
 
     if (isAutoUpdateEnabled && isSameMajor) {
-      dialog.showMessageBoxSync({
+      showDialog({
         message: i18n.t('messages:update.downloading', {
           version: latestVersion,
         }),
@@ -77,7 +86,7 @@ export async function checkForUpdatesFromMenu() {
       return
     }
 
-    const buttonId = dialog.showMessageBoxSync({
+    const buttonId = showDialog({
       message: i18n.t('messages:update.available', {
         newVersion: latestVersion,
         oldVersion: version,
@@ -88,7 +97,7 @@ export async function checkForUpdatesFromMenu() {
     })
 
     if (buttonId === 0) {
-      void shell.openExternal(`${repository}/releases`)
+      void shell.openExternal(`${repository}/releases?ref=masscode-app`)
     }
   }
   catch (error) {

@@ -192,7 +192,10 @@ export function registerSystemListeners() {
       action: {
         label: i18n.t('messages:update.goToGitHub'),
         onClick: () => {
-          ipc.invoke('system:open-external', `${repository}/releases`)
+          ipc.invoke(
+            'system:open-external',
+            `${repository}/releases?ref=masscode-app`,
+          )
         },
       },
     })

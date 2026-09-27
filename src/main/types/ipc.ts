@@ -67,6 +67,8 @@ type SystemAction =
   | 'show-snippet-in-file-manager'
   | 'deep-link'
   | 'install-update'
+  | 'check-for-updates'
+  | 'runtime-info'
   | 'update-available'
   | 'update-downloaded'
   | 'confirm-leave'
@@ -311,4 +313,12 @@ export interface TaskCleanupUndoResult {
   undone: boolean
   restored: number
   conflicts: string[]
+}
+
+export interface RuntimeInfo {
+  electron: string
+  chrome: string
+  node: string
+  v8: string
+  os: string
 }

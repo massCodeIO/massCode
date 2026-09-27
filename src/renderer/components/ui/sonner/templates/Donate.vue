@@ -17,7 +17,10 @@ defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 function onSupport() {
-  ipc.invoke('system:open-external', 'https://masscode.io/donate')
+  ipc.invoke(
+    'system:open-external',
+    'https://masscode.io/donate?ref=masscode-app',
+  )
   emit('closeToast')
 }
 

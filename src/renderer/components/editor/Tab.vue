@@ -13,7 +13,7 @@ const props = defineProps<Props>()
 
 const { selectedSnippet, selectedSnippetRecordStatus, deleteSnippetContent }
   = useSnippets()
-const { addToUpdateContentQueue } = useSnippetUpdate()
+const { addToUpdateContentQueue, isContentUpdateBusy } = useSnippetUpdate()
 const { highlightedSnippetIds, highlightedFolderIds, state } = useApp()
 
 const tabRef = ref<HTMLDivElement>()
@@ -23,9 +23,12 @@ const pendingName = ref<string>()
 let renameRequested = false
 
 watch(
-  () => props.name,
-  (value) => {
-    if (value === pendingName.value)
+  () => {
+    const snippetId = selectedSnippet.value?.id
+    return snippetId !== undefined && isContentUpdateBusy(snippetId, props.id)
+  },
+  (busy) => {
+    if (!busy)
       pendingName.value = undefined
   },
 )
@@ -89,16 +92,6 @@ async function onDelete() {
   }
 
   await deleteSnippetContent(selectedSnippet.value!.id, props.id)
-
-  if (state.snippetContentIndex === props.index) {
-    state.snippetContentIndex = 0
-  }
-  else if (
-    state.snippetContentIndex
-    && state.snippetContentIndex > props.index
-  ) {
-    state.snippetContentIndex--
-  }
 }
 </script>
 

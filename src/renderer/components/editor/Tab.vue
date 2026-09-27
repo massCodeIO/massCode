@@ -19,11 +19,20 @@ const { highlightedSnippetIds, highlightedFolderIds, state } = useApp()
 const tabRef = ref<HTMLDivElement>()
 const isEdit = ref(false)
 const editName = ref('')
+const pendingName = ref<string>()
 let renameRequested = false
+
+watch(
+  () => props.name,
+  (value) => {
+    if (value === pendingName.value)
+      pendingName.value = undefined
+  },
+)
 
 const name = computed({
   get() {
-    return isEdit.value ? editName.value : props.name
+    return isEdit.value ? editName.value : (pendingName.value ?? props.name)
   },
   set(v: string) {
     editName.value = v
@@ -42,6 +51,7 @@ const name = computed({
       return
     }
 
+    pendingName.value = v
     addToUpdateContentQueue(selectedSnippet.value.id, content.id, {
       label: v,
       language: content.language,
@@ -56,7 +66,7 @@ function onClickContextMenu() {
 }
 
 function startEdit() {
-  editName.value = props.name
+  editName.value = name.value
   isEdit.value = true
 }
 

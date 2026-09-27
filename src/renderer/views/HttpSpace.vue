@@ -54,9 +54,7 @@ watch(
   () => ({ request: currentRequest.value, panel: httpState.activePanel }),
   ({ request, panel }) => {
     setVaultContext(
-      request
-      && (!panel || panel === 'request')
-      && request.protocol !== 'websocket'
+      request && (!panel || panel === 'request')
         ? { type: 'http_request', id: request.id, name: request.name }
         : undefined,
     )

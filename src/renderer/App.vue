@@ -14,6 +14,7 @@ import { i18n, ipc, store } from '@/electron'
 import { router, RouterName } from '@/router'
 import { getSpaceDefinitions, isSpaceRouteName } from '@/spaceDefinitions'
 import { isMac } from '@/utils'
+import { useEventListener } from '@vueuse/core'
 import { LoaderCircle } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 import { Toaster } from 'vue-sonner'
@@ -70,6 +71,13 @@ watch(
 )
 
 useTheme()
+
+useEventListener(document, 'selectstart', (event) => {
+  // Chromium targets body for document-wide Select All, including the native menu.
+  if (event.target === document.body) {
+    event.preventDefault()
+  }
+})
 
 // Одноразовый тост после смены версии приложения; контент живёт в release notes.
 function showWhatsNewOnce() {

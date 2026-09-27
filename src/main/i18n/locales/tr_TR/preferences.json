@@ -2,11 +2,9 @@
   "label": "Tercihler",
   "storage": {
     "section": {
-      "main": "Main",
-      "migration": "Migration"
+      "main": "Main"
     },
     "label": "Depolama",
-    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "Sayı",
     "vaultPath": "Vault Path"
   },

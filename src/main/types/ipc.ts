@@ -43,8 +43,6 @@ type MainMenuAction =
   | 'update-context'
   | 'goto-math-notebook'
 
-type DBAction = 'migrate-to-markdown'
-
 type SystemAction =
   | `ai:${'settings' | 'configure' | 'models' | 'context-search' | 'start' | 'cancel' | 'event' | 'workspace-apply' | 'workspace-undo' | 'http-apply' | 'http-complete' | 'http-cancel' | 'data-complete' | 'mutation-complete' | 'mutation-start' | 'native-start' | 'native-complete' | 'workspace-cancel' | 'workspace-undo-partial' | 'steer' | 'answer'}`
   | 'activate-license'
@@ -71,14 +69,11 @@ type SystemAction =
   | 'install-update'
   | 'update-available'
   | 'update-downloaded'
-  | 'renderer-ready'
   | 'confirm-leave'
   | 'confirm-leave-result'
   | 'storage-synced'
   | 'cloud-download-status'
   | 'cloud-download-progress'
-  | 'migration-complete'
-  | 'migration-error'
   | 'notes-asset-ready'
   | 'error'
 type PrettierAction = 'format'
@@ -145,7 +140,6 @@ type SpacesAction =
   | 'drawings:delete'
 
 export type MainMenuChannel = CombineWith<MainMenuAction, 'main-menu'>
-export type DBChannel = CombineWith<DBAction, 'db'>
 export type SystemChannel = CombineWith<SystemAction, 'system'>
 export type PrettierChannel = CombineWith<PrettierAction, 'prettier'>
 export type FsChannel = CombineWith<FsAction, 'fs'>
@@ -154,7 +148,6 @@ export type SpacesChannel = CombineWith<SpacesAction, 'spaces'>
 
 export type Channel =
   | MainMenuChannel
-  | DBChannel
   | SystemChannel
   | PrettierChannel
   | FsChannel

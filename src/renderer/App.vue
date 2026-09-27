@@ -220,7 +220,6 @@ function restoreSavedSpace() {
 
 async function init() {
   registerIPCListeners()
-  ipc.send('system:renderer-ready', null, () => {})
   restoreSavedSpace()
   useActivityTracker()
   useCopyTracker()

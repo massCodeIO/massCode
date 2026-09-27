@@ -3,15 +3,10 @@
     "delete": "「{{name}}」を削除してもよろしいですか？",
     "deletePermanently": "「{{name}}」を完全に削除してもよろしいですか？",
     "deleteConfirmMultipleSnippets": "選択された{{count}}個のスニペットを完全に削除してもよろしいですか？",
-    "emptyTrash": "ゴミ箱内のすべてのスニペットを完全に削除してもよろしいですか？",
-    "migrateToMarkdown": [
-      "Markdown Vaultに移行しますか？",
-      "選択されたボールトは現在のSQLiteライブラリで上書きされます。"
-    ]
+    "emptyTrash": "ゴミ箱内のすべてのスニペットを完全に削除してもよろしいですか？"
   },
   "success": {
     "copied": "クリップボードにコピーしました",
-    "migrateToMarkdown": "Markdown Vaultに移行しました。フォルダ: {{folders}}, スニペット: {{snippets}}, タグ: {{tags}}.",
     "vaultLoaded": "Vault successfully loaded."
   },
   "warning": {
@@ -26,12 +21,10 @@
     ]
   },
   "error": {
-    "migration": "SQLiteからの自動マイグレーションに失敗しました: {{error}}"
   },
   "description": {
     "storageVault": "ボールトディレクトリを選択してください。デバイス間で同期するには、iCloud Drive、Google Drive、またはDropboxのフォルダを選択してください。",
-    "language": "言語の変更を適用するには、アプリを再読み込みする必要があります。",
-    "migrateSqliteUtility": "以前のバージョンのmassCode.dbファイルがある場合は、このユーティリティを使用して、データを現在のMarkdown Vaultにインポートしてください。"
+    "language": "言語の変更を適用するには、アプリを再読み込みする必要があります。"
   },
   "special": {
     "unsponsored": "未スポンサー"

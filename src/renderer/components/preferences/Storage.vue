@@ -414,72 +414,6 @@ async function moveVaultStorage(
   }
 }
 
-async function migrateSqliteToMarkdown(
-  current: () => boolean = () => true,
-): Promise<NativeBridgeResult> {
-  const source = effectiveVaultPath.value
-  if (isMovingVault.value) {
-    return { status: 'unavailable' }
-  }
-
-  const sqliteDbPath = await ipc.invoke<DialogOptions, string>(
-    'main-menu:open-dialog',
-    {
-      properties: ['openFile'],
-      filters: [{ name: 'SQLite Database', extensions: ['db'] }],
-    },
-  )
-
-  if (!sqliteDbPath) {
-    return { status: 'cancelled' }
-  }
-
-  const isConfirmed = await confirm({
-    title: i18n.t('messages:confirm.migrateToMarkdown.0'),
-    content: i18n.t('messages:confirm.migrateToMarkdown.1'),
-  })
-
-  if (!isConfirmed) {
-    return { status: 'cancelled' }
-  }
-  if (!current() || source !== effectiveVaultPath.value)
-    return { status: 'stale' }
-
-  let operationCompleted = false
-  try {
-    const result = await ipc.invoke<
-      { path: string, expectedVault: string },
-      { folders: number, snippets: number, tags: number }
-    >('db:migrate-to-markdown', { path: sqliteDbPath, expectedVault: source })
-
-    operationCompleted = true
-    const refreshed = await resetAndReloadVaultData()
-
-    sonner({
-      message: i18n.t('messages:success.migrateToMarkdown', {
-        folders: result.folders,
-        snippets: result.snippets,
-        tags: result.tags,
-      }),
-      type: 'success',
-    })
-    return storageOutcome(
-      refreshed ? 'done' : 'failed',
-      source,
-      true,
-      refreshed,
-      result,
-    )
-  }
-  catch (err) {
-    const error = err as Error
-    sonner({ message: error.message, type: 'error' })
-    return storageOutcome('failed', source, operationCompleted, false, {
-      changesMayHaveOccurred: true,
-    })
-  }
-}
-
 async function scanVaultDoctor(): Promise<NativeBridgeResult> {
   const source = effectiveVaultPath.value
   showVaultDoctorScanLoader()
@@ -610,8 +544,6 @@ const unregisterNative = registerPreferenceFlow(
       return openVaultStorage(current)
     if (action.command === 'move')
       return moveVaultStorage(current)
-    if (action.command === 'migrateSqlite')
-      return migrateSqliteToMarkdown(current)
     if (isVaultDoctorScanning.value || isVaultDoctorApplying.value)
       return { status: 'unavailable' }
     const scanned = await scanVaultDoctor()
@@ -743,24 +675,6 @@ onMounted(() => {
         <template v-else>
           {{ i18n.t("common.total") }}: {{ counts.total }},
           {{ i18n.t("common.trash") }}: {{ counts.trash }}
-        </template>
-      </UiMenuFormItem>
-    </UiMenuFormSection>
-
-    <UiMenuFormSection :label="i18n.t('preferences:storage.section.migration')">
-      <UiMenuFormItem
-        :label="i18n.t('preferences:storage.migrateSqliteToMarkdown')"
-      >
-        <Button
-          variant="outline"
-          :disabled="isMovingVault"
-          @click="migrateSqliteToMarkdown()"
-        >
-          {{ i18n.t("preferences:storage.migrateSqliteToMarkdown") }}
-        </Button>
-
-        <template #description>
-          {{ i18n.t("messages:description.migrateSqliteUtility") }}
         </template>
       </UiMenuFormItem>
     </UiMenuFormSection>

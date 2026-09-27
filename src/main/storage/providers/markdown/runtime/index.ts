@@ -33,7 +33,6 @@ export {
   getNextFolderOrder,
   getPaths,
   getVaultPath,
-  hasMarkdownVaultData,
   normalizeDirectoryPath,
   resetPathsCache,
 } from './paths'
@@ -121,9 +120,6 @@ export type {
   Paths,
   PersistSnippetOptions,
   SaveStateOptions,
-  SqliteSnippetContentRow,
-  SqliteSnippetRow,
-  SqliteSnippetTagRow,
 } from './types'
 
 // Validation

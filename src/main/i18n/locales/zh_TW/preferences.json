@@ -2,11 +2,9 @@
   "label": "偏好設定",
   "storage": {
     "section": {
-      "main": "Main",
-      "migration": "Migration"
+      "main": "Main"
     },
     "label": "儲存庫",
-    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "數量",
     "vaultPath": "Vault Path"
   },

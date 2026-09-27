@@ -1,9 +1,8 @@
 import type { Event as ElectronEvent } from 'electron'
-import { createRequire } from 'node:module'
 /* eslint-disable node/prefer-global/process */
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { app, BrowserWindow, ipcMain, Menu, protocol, screen } from 'electron'
+import { app, BrowserWindow, Menu, protocol, screen } from 'electron'
 import { registerAiHandlers } from './ai/ipc'
 import { initApi } from './api'
 import { registerApiRequestHandler } from './api/requestIpc'
@@ -35,11 +34,10 @@ import {
   resolveNotesAsset,
 } from './storage/providers/markdown/notes/runtime'
 import { getVaultPath } from './storage/providers/markdown/runtime/paths'
-import { ensureFlatSpacesLayout } from './storage/providers/markdown/runtime/spaces'
 import { store } from './store'
 import { startTasksCleanupScheduler, stopTasksCleanupScheduler } from './tasks'
 import { checkForUpdates } from './updates'
-import { isSqliteFile, log } from './utils'
+import { log } from './utils'
 import { DEFAULT_WINDOW_BOUNDS, normalizeWindowBounds } from './windowBounds'
 import { mainWindowWebPreferences } from './windowSecurity'
 
@@ -55,17 +53,10 @@ if (process.env.MASSCODE_REMOTE_DEBUG_PORT) {
 
 const isDev = process.env.NODE_ENV === 'development'
 const gotTheLock = app.requestSingleInstanceLock()
-const lazyRequire = createRequire(__filename)
 const WINDOW_BOUNDS_SAVE_DELAY = 250
 
 let mainWindow: BrowserWindow
 let saveWindowBoundsTimer: ReturnType<typeof setTimeout> | null = null
-let migrationResult: {
-  folders: number
-  snippets: number
-  tags: number
-} | null = null
-let migrationError: string | null = null
 
 function saveWindowBounds() {
   if (!mainWindow || mainWindow.isDestroyed()) {
@@ -212,17 +203,6 @@ function createWindow(sessionToken: string) {
     )
   }
 
-  ipcMain.once('system:renderer-ready', () => {
-    if (migrationResult) {
-      mainWindow.webContents.send('system:migration-complete', migrationResult)
-    }
-    else if (migrationError) {
-      mainWindow.webContents.send('system:migration-error', {
-        message: migrationError,
-      })
-    }
-  })
-
   mainWindow.on('move', scheduleWindowBoundsSave)
   mainWindow.on('resize', scheduleWindowBoundsSave)
 
@@ -255,61 +235,6 @@ else {
 
       return new Response('Not found', { status: 404 })
     })
-
-    try {
-      const storagePath = store.preferences.get('storage.rootPath') as string
-      const dbPath = `${storagePath}/massCode.db`
-
-      if (isSqliteFile(dbPath)) {
-        const vaultPath
-          = (store.preferences.get('storage.vaultPath') as string | null)
-            || path.join(storagePath, 'markdown-vault')
-        ensureFlatSpacesLayout(vaultPath)
-
-        // Авто-миграция из SQLite выполняется только один раз. Флаг
-        // storage.sqliteMigrated персистентно блокирует повтор, иначе ручная
-        // очистка vault при сохранившемся massCode.db триггерила бы миграцию
-        // заново и возвращала удалённые данные.
-        const alreadyMigrated
-          = store.preferences.get('storage.sqliteMigrated') === true
-
-        if (!alreadyMigrated) {
-          const { hasMarkdownVaultData } = lazyRequire(
-            './storage/providers/markdown',
-          ) as typeof import('./storage/providers/markdown')
-          const vaultHasData = hasMarkdownVaultData(vaultPath)
-
-          if (!vaultHasData) {
-            const { closeDB } = lazyRequire('./db') as typeof import('./db')
-            const { migrateSqliteToMarkdownStorage } = lazyRequire(
-              './storage/providers/markdown',
-            ) as typeof import('./storage/providers/markdown')
-
-            try {
-              migrationResult = migrateSqliteToMarkdownStorage()
-
-              store.preferences.delete('storage.engine' as any)
-              store.preferences.delete('backup' as any)
-
-              // eslint-disable-next-line no-console
-              console.log('[Auto-migration complete]', migrationResult)
-            }
-            finally {
-              closeDB()
-            }
-          }
-
-          // Помечаем миграцию как выполненную в обоих случаях: после успешной
-          // миграции и как backfill для пользователей, уже мигрировавших в
-          // прошлых версиях (vault с данными, но без флага).
-          store.preferences.set('storage.sqliteMigrated', true)
-        }
-      }
-    }
-    catch (error) {
-      log('Error during auto-migration from SQLite', error)
-      migrationError = error instanceof Error ? error.message : String(error)
-    }
 
     try {
       startTasksCleanupScheduler()

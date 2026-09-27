@@ -1892,7 +1892,6 @@
       "storageCommands": {
         "select": "Choose the vault to open.",
         "move": "Choose a destination for the current vault. An occupied destination requires separate overwrite confirmation.",
-        "migrateSqlite": "Choose a SQLite library. Migration replaces the contents of the current vault; confirm this separately in the native dialog.",
         "doctorScan": "Scan the current vault without changing files.",
         "doctorApply": "Review and apply Vault Doctor fixes in Storage."
       },

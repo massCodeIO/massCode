@@ -1,9 +1,4 @@
-export { migrateSqliteToMarkdownStorage } from './migrations'
-export {
-  getMarkdownStorageErrorMessage,
-  hasMarkdownVaultData,
-  resetRuntimeCache,
-} from './runtime'
+export { getMarkdownStorageErrorMessage, resetRuntimeCache } from './runtime'
 export { createMarkdownStorageProvider } from './storages'
 export {
   prepareMarkdownWatcher,

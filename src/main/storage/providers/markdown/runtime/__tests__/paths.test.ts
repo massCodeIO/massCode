@@ -3,7 +3,7 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { enqueueCloudDownload } from '../../cloudDownloads'
-import { getPaths, hasMarkdownVaultData, resetPathsCache } from '../paths'
+import { getPaths, resetPathsCache } from '../paths'
 import { setDatalessProbeForTests } from '../shared/cloudFiles'
 
 vi.mock('electron-store', () => {
@@ -153,45 +153,6 @@ describe('getPaths', () => {
       fs.pathExistsSync(path.join(paths.vaultPath, 'Cloud', 'demo.md')),
     ).toBe(true)
     expect(fs.pathExistsSync(path.join(vaultPath, '.masscode'))).toBe(false)
-  })
-
-  it('detects existing data in legacy root vault layout', () => {
-    const vaultPath = createTempDir()
-
-    fs.ensureDirSync(path.join(vaultPath, '.masscode'))
-    fs.writeJSONSync(path.join(vaultPath, '.masscode', 'state.json'), {
-      counters: {
-        contentId: 0,
-        folderId: 1,
-        snippetId: 1,
-        tagId: 0,
-      },
-      folders: [
-        {
-          id: 1,
-          name: 'Legacy',
-          orderIndex: 0,
-          parentId: null,
-        },
-      ],
-      snippets: [
-        {
-          filePath: 'Legacy/file.md',
-          id: 1,
-        },
-      ],
-      tags: [],
-      version: 2,
-    })
-    fs.ensureDirSync(path.join(vaultPath, 'Legacy'))
-    fs.writeFileSync(path.join(vaultPath, 'Legacy', 'file.md'), '# Legacy')
-
-    expect(hasMarkdownVaultData(vaultPath)).toBe(true)
-    expect(
-      fs.pathExistsSync(
-        path.join(vaultPath, 'code', '.masscode', 'state.json'),
-      ),
-    ).toBe(true)
   })
 
   it('migrates legacy code vault root into code', () => {

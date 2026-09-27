@@ -43,12 +43,6 @@ interface LegacyStateFolderLike {
   parentId: number | null
 }
 
-interface MarkdownStateCollectionsLike {
-  folders?: unknown[]
-  snippets?: unknown[]
-  tags?: unknown[]
-}
-
 function toTopLevelEntry(relativePath: string): string | null {
   const normalized = relativePath
     .replaceAll('\\', '/')
@@ -266,33 +260,6 @@ export function getPaths(vaultPath: string): Paths {
 
 export function resetPathsCache(): void {
   pathsCacheByVaultPath.clear()
-}
-
-export function hasMarkdownVaultData(vaultPath: string): boolean {
-  const { statePath } = getPaths(vaultPath)
-
-  if (!fs.pathExistsSync(statePath)) {
-    return false
-  }
-
-  // Недокачанный state.json означает, что vault существует и синхронизирован
-  // из облака: считаем, что данные есть (безопасное направление, миграция
-  // поверх такого vault не запустится), а файл докачиваем в фоне.
-  if (getFileAvailability(statePath).isCloudPlaceholder) {
-    enqueueCloudDownload(statePath)
-    return true
-  }
-
-  try {
-    const state = fs.readJSONSync(statePath) as MarkdownStateCollectionsLike
-
-    return [state.folders, state.snippets, state.tags].some(
-      collection => Array.isArray(collection) && collection.length > 0,
-    )
-  }
-  catch {
-    return false
-  }
 }
 
 export {

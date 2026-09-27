@@ -2,11 +2,9 @@
   "label": "Předvolby",
   "storage": {
     "section": {
-      "main": "Hlavní",
-      "migration": "Migration"
+      "main": "Hlavní"
     },
     "label": "Úložiště",
-    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "Počet",
     "vaultPath": "Vault Path"
   },

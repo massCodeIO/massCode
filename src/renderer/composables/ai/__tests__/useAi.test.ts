@@ -2204,7 +2204,7 @@ it('retains only a boundary receipt across a vault switch and never replays the 
   ).toHaveLength(1)
 })
 
-it('invalidates same-path snapshots after a partially failed destructive migration', async () => {
+it('invalidates same-path snapshots after a partially failed vault repair', async () => {
   vi.doMock('../nativeActions', () => ({
     executeNativeAction: async () => ({
       status: 'failed',
@@ -2223,16 +2223,16 @@ it('invalidates same-path snapshots after a partially failed destructive migrati
       ? { ok: true, data: { execute: true } }
       : { ok: true, data: null },
   )
-  await ai.send('Migrate SQLite')
+  await ai.send('Apply vault fixes')
   emit({
     requestId: request().requestId,
     type: 'nativeAction',
     autoApply: false,
     action: {
       id: '11111111-1111-4111-8111-111111111111',
-      summary: 'Migrate',
+      summary: 'Apply vault fixes',
       status: 'pending',
-      operation: { action: 'storage', command: 'migrateSqlite' },
+      operation: { action: 'storage', command: 'doctorApply' },
     },
   })
   const message = ai.conversation.value.messages.at(-1)!

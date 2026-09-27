@@ -110,7 +110,7 @@ export function useDialog() {
                       default: () => [
                         h(
                           Dialog.DialogHeader,
-                          {},
+                          { class: 'min-w-0 pr-6 break-words' },
                           {
                             default: () => [
                               h(

@@ -55,6 +55,7 @@
     }
   },
   "error": {
+    "fragmentOrderFailed": "Could not save the fragment order. Try again.",
     "formatFailed": "Could not format or save the fragment.",
     "secretNameRequired": "Enter a name for the secret before saving its value.",
     "secretEnvironmentMissing": "This environment no longer exists.",

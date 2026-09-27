@@ -41,6 +41,10 @@ export interface SnippetContentsAdd {
   language: string;
 }
 
+export interface SnippetContentsOrder {
+  contentIds: number[];
+}
+
 export interface SnippetContentsUpdate {
   label?: string;
   value?: string | null;
@@ -2004,6 +2008,34 @@ export class Api<
       >({
         path: `/snippets/${id}/contents`,
         method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Snippets
+     * @name PatchSnippetsByIdContentsOrder
+     * @request PATCH:/snippets/{id}/contents/order
+     */
+    patchSnippetsByIdContentsOrder: (
+      id: string,
+      data: SnippetContentsOrder,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          message: string;
+        },
+        {
+          message: string;
+        }
+      >({
+        path: `/snippets/${id}/contents/order`,
+        method: "PATCH",
         body: data,
         type: ContentType.Json,
         format: "json",

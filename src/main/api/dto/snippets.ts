@@ -26,6 +26,10 @@ const snippetContentsUpdate = t.Object({
   language: t.Optional(t.String()), // TODO: enum
 })
 
+const snippetContentsOrder = t.Object({
+  contentIds: t.Array(t.Number({ minimum: 1, multipleOf: 1 })),
+})
+
 const snippetItemBase = {
   id: t.Number(),
   name: t.String(),
@@ -84,6 +88,7 @@ const snippetsCountsResponse = t.Object({
 
 export const snippetsDTO = new Elysia().model({
   snippetContentsAdd,
+  snippetContentsOrder,
   snippetContentsUpdate,
   snippetItemResponse: snippetItem,
   snippetsAdd,

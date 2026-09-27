@@ -1010,7 +1010,7 @@ onMounted(() => {
 <template>
   <div
     data-editor
-    class="relative grid h-full grid-rows-[auto_1fr_auto] overflow-hidden pt-[var(--content-top-offset)]"
+    class="relative grid h-full min-w-0 grid-cols-1 grid-rows-[auto_1fr_auto] overflow-hidden pt-[var(--content-top-offset)]"
   >
     <UiLoadingOverlay
       v-if="isSelectedSnippetContentLoading"

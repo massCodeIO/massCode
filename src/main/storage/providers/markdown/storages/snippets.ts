@@ -341,6 +341,48 @@ export function createSnippetsStorage(): SnippetsStorage {
         notFound: false,
       }
     },
+    reorderSnippetContents: (snippetId, contentIds) => {
+      const paths = getPaths(getVaultPath())
+      const { state, snippets } = getRuntimeCache(paths)
+      assertVaultNotHydrating(state)
+      const snippet = findSnippetById(snippets, snippetId)
+      if (!snippet) {
+        throwStorageError('SNIPPET_NOT_FOUND', 'Snippet not found')
+      }
+      const contentsById = new Map(
+        snippet.contents.map(content => [content.id, content]),
+      )
+      if (
+        contentIds.length !== snippet.contents.length
+        || new Set(contentIds).size !== contentIds.length
+        || contentIds.some(
+          id => !Number.isInteger(id) || id <= 0 || !contentsById.has(id),
+        )
+      ) {
+        throwStorageError(
+          'INVALID_CONTENT_ORDER',
+          'Expected all snippet content IDs exactly once',
+        )
+      }
+
+      assertEntityFileWritable(
+        path.join(paths.vaultPath, snippet.filePath),
+        snippet,
+      )
+      // Lazy loading assigns bodies by position, so hydrate before changing order.
+      if (!ensureSnippetContentLoaded(paths, snippet)) {
+        throwCloudContentUnavailable()
+      }
+      const reordered = {
+        ...snippet,
+        contents: contentIds.map(id => contentsById.get(id)!),
+        updatedAt: Date.now(),
+      }
+      writeSnippetToFile(paths, reordered)
+      snippet.contents = reordered.contents
+      snippet.updatedAt = reordered.updatedAt
+      saveState(paths, state)
+    },
     updateSnippetContent: (
       snippetId,
       contentId,

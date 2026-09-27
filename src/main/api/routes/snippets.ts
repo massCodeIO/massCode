@@ -61,7 +61,8 @@ function mapStorageError(status: unknown, error: unknown): never {
   }
 
   if (
-    parsedError.code === 'INVALID_NAME'
+    parsedError.code === 'INVALID_CONTENT_ORDER'
+    || parsedError.code === 'INVALID_NAME'
     || parsedError.code === 'RESERVED_NAME'
   ) {
     return setStatus(400, { message: parsedError.message })
@@ -218,6 +219,38 @@ app
       detail: {
         tags: ['Snippets'],
       },
+    },
+  )
+  .patch(
+    '/:id/contents/order',
+    ({ params, body, status }) => {
+      try {
+        useStorage().snippets.reorderSnippetContents(
+          Number(params.id),
+          body.contentIds,
+        )
+        return { message: 'Snippet contents reordered' }
+      }
+      catch (error) {
+        return mapStorageError(status, error)
+      }
+    },
+    {
+      body: 'snippetContentsOrder',
+      error: ({ code, status }) => {
+        if (code === 'VALIDATION') {
+          return status(400, {
+            message: 'Expected positive integer content IDs',
+          })
+        }
+      },
+      response: {
+        200: commonMessageResponse,
+        400: commonMessageResponse,
+        404: commonMessageResponse,
+        503: commonMessageResponse,
+      },
+      detail: { tags: ['Snippets'] },
     },
   )
   // Обновление содержимого сниппета

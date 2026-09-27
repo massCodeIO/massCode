@@ -156,6 +156,7 @@ async function onDelete() {
           @mousedown.stop
           @keydown.stop
           @blur="isEdit = false"
+          @keydown.enter.prevent="isEdit = false"
           @keydown.esc="isEdit = false"
         />
       </div>

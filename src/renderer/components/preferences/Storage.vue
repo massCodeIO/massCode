@@ -705,7 +705,7 @@ onMounted(() => {
 
           <Button
             v-if="vaultDoctorHasReport"
-            variant="outline"
+            variant="default"
             :disabled="
               isVaultDoctorScanning
                 || isVaultDoctorApplying

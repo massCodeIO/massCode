@@ -340,6 +340,8 @@
         "description": "Use this token in external clients. The full token is shown only after generation.",
         "empty": "No token generated",
         "generate": "Generate token",
+        "replace": "Replace token",
+        "replaceConfirm": "The current token will stop working immediately. Update all connected clients with the new token.",
         "revoke": "Revoke token"
       }
     }

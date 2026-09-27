@@ -168,7 +168,7 @@ async function onCleanupNow() {
       </UiMenuFormItem>
       <UiMenuFormItem :label="i18n.t('preferences:tasks.cleanupNow.label')">
         <Button
-          variant="outline"
+          variant="destructive"
           :disabled="isCleaningUp"
           @click="onCleanupNow"
         >

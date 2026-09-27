@@ -103,7 +103,7 @@ function requestKeyByEmail() {
               class="w-72"
             />
             <Button
-              variant="outline"
+              variant="default"
               @click="activateLicense"
             >
               {{ i18n.t("preferences:supporter.key.activate") }}

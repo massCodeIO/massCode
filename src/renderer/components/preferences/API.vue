@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/shadcn/button'
 import { Switch } from '@/components/ui/shadcn/switch'
+import { useDialog } from '@/composables/useDialog'
 import { useSonner } from '@/composables/useSonner'
 import { i18n, ipc, store } from '@/electron'
 
@@ -20,6 +21,9 @@ const generatedToken = ref('')
 const mcpEnabled = ref(store.preferences.get('api.mcp.enabled') === true)
 const mcpEndpoint = computed(() => `http://127.0.0.1:${apiPort.value}/mcp`)
 const { sonner } = useSonner()
+const { confirm } = useDialog()
+const hasToken = computed(() => !!(tokenPreview.value || generatedToken.value))
+const isGeneratingToken = ref(false)
 
 watch(apiPort, (value) => {
   const port = Number(value)
@@ -47,14 +51,34 @@ async function copyMcpEndpoint() {
 }
 
 async function generateApiToken() {
-  const result = (await ipc.invoke(
-    'system:api-token-generate',
-    null,
-  )) as ApiTokenGenerateResult
+  if (isGeneratingToken.value)
+    return
 
-  integrationsEnabled.value = true
-  tokenPreview.value = result.tokenPreview
-  generatedToken.value = result.token
+  isGeneratingToken.value = true
+  try {
+    if (hasToken.value) {
+      const confirmed = await confirm({
+        title: i18n.t('preferences:api.integrations.token.replace'),
+        content: i18n.t('preferences:api.integrations.token.replaceConfirm'),
+        confirmText: i18n.t('preferences:api.integrations.token.replace'),
+        confirmVariant: 'destructive',
+      })
+      if (!confirmed)
+        return
+    }
+
+    const result = (await ipc.invoke(
+      'system:api-token-generate',
+      null,
+    )) as ApiTokenGenerateResult
+
+    integrationsEnabled.value = true
+    tokenPreview.value = result.tokenPreview
+    generatedToken.value = result.token
+  }
+  finally {
+    isGeneratingToken.value = false
+  }
 }
 
 async function revokeApiToken() {
@@ -128,10 +152,16 @@ async function copyGeneratedToken() {
             class="w-72"
           />
           <Button
-            variant="outline"
+            :variant="hasToken ? 'outline' : 'default'"
+            :disabled="isGeneratingToken"
+            :aria-busy="isGeneratingToken"
             @click="generateApiToken"
           >
-            {{ i18n.t("preferences:api.integrations.token.generate") }}
+            {{
+              hasToken
+                ? i18n.t("preferences:api.integrations.token.replace")
+                : i18n.t("preferences:api.integrations.token.generate")
+            }}
           </Button>
           <Button
             v-if="generatedToken"
@@ -143,6 +173,7 @@ async function copyGeneratedToken() {
           <Button
             v-if="tokenPreview || generatedToken"
             variant="destructive"
+            :disabled="isGeneratingToken"
             @click="revokeApiToken"
           >
             {{ i18n.t("preferences:api.integrations.token.revoke") }}

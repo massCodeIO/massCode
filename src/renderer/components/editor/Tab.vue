@@ -18,13 +18,15 @@ const { highlightedSnippetIds, highlightedFolderIds, state } = useApp()
 
 const tabRef = ref<HTMLDivElement>()
 const isEdit = ref(false)
+const editName = ref('')
 let renameRequested = false
 
 const name = computed({
   get() {
-    return props.name
+    return isEdit.value ? editName.value : props.name
   },
   set(v: string) {
+    editName.value = v
     const content = selectedSnippet.value?.contents.find(
       content => content.id === props.id,
     )
@@ -53,13 +55,18 @@ function onClickContextMenu() {
   highlightedFolderIds.value.clear()
 }
 
+function startEdit() {
+  editName.value = props.name
+  isEdit.value = true
+}
+
 function onMenuCloseAutoFocus(event: Event) {
   if (!renameRequested)
     return
 
   event.preventDefault()
   renameRequested = false
-  isEdit.value = true
+  startEdit()
 }
 
 async function onDelete() {
@@ -100,7 +107,7 @@ async function onDelete() {
           weight="medium"
           class="block truncate text-center leading-5 text-inherit"
           :title="name"
-          @dblclick="isEdit = true"
+          @dblclick="startEdit"
         >
           {{ name }}
         </UiText>
@@ -135,7 +142,7 @@ async function onDelete() {
         variant="base"
         weight="medium"
         aria-hidden="true"
-        class="invisible block truncate text-center leading-5"
+        class="invisible block truncate pr-1 text-center leading-5 whitespace-pre"
       >
         {{ name }}
       </UiText>
@@ -145,7 +152,7 @@ async function onDelete() {
           variant="ghost"
           focus
           select
-          class="h-5 w-full min-w-0 rounded-none px-0 py-0"
+          class="h-5 w-full min-w-0 rounded-none px-0 py-0 text-sm font-medium"
           @mousedown.stop
           @keydown.stop
           @blur="isEdit = false"

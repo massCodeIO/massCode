@@ -189,7 +189,7 @@ function onDragEnd(event: { originalEvent?: MouseEvent }) {
             <template #item="{ element: content, index }">
               <div
                 :data-fragment-id="content.id"
-                class="fragment-item relative h-full w-max min-w-0"
+                class="fragment-item relative h-full w-max max-w-50 min-w-0"
                 :class="{
                   'insert-before':
                     insertion?.id === content.id && !insertion.after,
@@ -201,7 +201,7 @@ function onDragEnd(event: { originalEvent?: MouseEvent }) {
                 <!-- Include the preferred minimum in intrinsic sizing without preventing flex shrink. -->
                 <span
                   aria-hidden="true"
-                  class="pointer-events-none block h-0 w-16"
+                  class="pointer-events-none block h-0 w-[calc(1ch+1rem+2px)]"
                 />
                 <Tabs.TabsTrigger
                   :value="content.id"

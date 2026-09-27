@@ -1116,6 +1116,9 @@ onMounted(() => {
   color: var(--muted-foreground);
   border: none;
 }
+#editor .cm-lineNumbers .cm-gutterElement {
+  min-width: calc(3ch + 8px);
+}
 #editor .cm-cursor {
   border-left: 2px solid var(--foreground);
 }

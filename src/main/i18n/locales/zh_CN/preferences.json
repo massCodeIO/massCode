@@ -297,8 +297,7 @@
   "updates": {
     "label": "更新",
     "autoUpdate": {
-      "label": "自动更新",
-      "description": "后台下载更新，并在应用重启时安装。禁用后，massCode 只会告知你有新版本。大版本更新永远不会自动安装。"
+      "label": "自动更新"
     },
     "version": {
       "label": "当前版本"

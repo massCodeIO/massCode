@@ -260,7 +260,7 @@
         "messages": "Messages",
         "clear": "Clear messages",
         "empty": "Connect and send a message to start the conversation.",
-        "messageHint": "Send text or JSON. Variables use the environment and Session captured at connection time. Save keeps this message draft.",
+        "messageHint": "Send text or JSON. Variables use collection, environment and Session values captured when you connect. Save the request to keep this message draft.",
         "logHint": "Messages stay in memory: the latest 100, with previews up to 16 KiB. Incoming messages may contain sensitive data.",
         "dropped": "Older messages removed: {{count}}",
         "incoming": "Received",
@@ -526,14 +526,14 @@
           "converted": "scripts converted",
           "blocked": "scripts need adaptation"
         },
-        "scriptTrustNotice": "Imported scripts require local trust before they can run. Review the code in Scripts. Blocked scripts also require manual adaptation.",
+        "scriptTrustNotice": "Review imported scripts in Scripts. They must be trusted on this device before they can run. Blocked scripts also need manual adaptation.",
         "runtimeWarnings": {
           "invalidVariableName": "A variable with an invalid name was retained but disabled. Rename it before enabling it.",
           "duplicateVariable": "Duplicate variables were retained; only the last enabled value remains active.",
           "graphqlVariables": "GraphQL variables could not be parsed as a JSON object. The original value was kept; adapt it before sending.",
           "disabled": "Disabled rule or event was not imported.",
           "unsupportedScript": "Unsupported or malformed script: all scripts for this request are blocked. Original code is retained as comments for manual adaptation.",
-          "variables": "Temporary writes use massCode Session or isolated Runner variables. Reads resolve Session/Runner, environment, then collection variables; explicit scope getters read their own scope. Only string values are supported. Persistent environment and collection writes are unsupported.",
+          "variables": "Temporary writes use massCode Session or isolated Runner variables. Reads check Session/Runner, then environment, then collection variables; explicit scope getters read only their own scope. Values must be strings. Scripts cannot write persistent environment or collection variables.",
           "sourceLimit": "Script input or generated code exceeds import limits. The request is blocked. Keep the original file: its full code may not fit in the imported request.",
           "unsupportedAssertion": "Unsupported, dynamic, malformed, or excess assertion was not imported. Keep the source file and recreate this rule manually.",
           "depthLimit": "Folder nesting exceeds the import limit; nested items were not imported.",
@@ -832,7 +832,7 @@
         "documentationEmpty": "Describe the purpose of this collection, its endpoints and how to use them. Markdown is supported.",
         "dashboard": {
           "editDescription": "Click anywhere in this description to start editing.",
-          "descriptionGuide": "# A starting point for your API\n\nKeep the context next to your requests. Describe what this collection does and what someone needs to know before running it. **Click anywhere in this description to start editing.**\n\n## Before the first request\n\n- Which environment and base URL should be used?\n- How do you get credentials and configure authorization?\n- Which variables need values before sending a request?\n\n## A useful path through the collection\n\nDescribe the main workflow: where to start, which requests depend on earlier responses, and what a successful result looks like. Include common errors when they need an explanation.\n\n## Keep the details close\n\nAdd sample payloads, response notes, or links to related notes and snippets. Use Markdown headings, lists, tables, and code blocks to make the important parts easy to find.",
+          "descriptionGuide": "# Document your API\n\nDescribe what this collection does and how to use it. **Click this description to edit.**\n\n## Before the first request\n\n- Environment and base URL\n- How to get credentials and configure authorization\n- Required variables\n\n## Main workflow\n\nDescribe the request order, dependencies, expected results, and common errors.\n\n## References\n\nAdd sample payloads, response notes, and links to related notes or snippets. Markdown is supported.",
           "requests": "Requests",
           "folders": "Folders",
           "lastRun": "Last available run · this session",
@@ -1597,7 +1597,7 @@
     "attachCurrent": "Open fragment",
     "searching": "Searching…",
     "noResults": "No results",
-    "savedContext": "Listed records use saved content. The open fragment captures the editor buffer.",
+    "savedContext": "Listed records use saved content. Attaching the open note or fragment captures its current content, including unsaved changes.",
     "autoContext": "Context: search vault when needed",
     "contextReadFailed": "Could not read context",
     "itemTypes": {
@@ -1620,7 +1620,7 @@
     },
     "http": {
       "review": "Review HTTP checks",
-      "description": "These checks will be added to the request draft. Existing checks stay unchanged. Run the request to verify these draft checks.",
+      "description": "These checks will be added to the request draft without changing existing checks. Run the request to verify them.",
       "apply": "Add to draft",
       "applied": "Checks added to draft. Run the request to verify these draft checks.",
       "stale": "The request, response or environment has changed, or the HTTP editor is not available. Return to the request and ask for a new proposal.",

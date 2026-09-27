@@ -264,8 +264,7 @@
   "updates": {
     "label": "업데이트",
     "autoUpdate": {
-      "label": "자동 업데이트",
-      "description": "업데이트를 백그라운드에서 다운로드하고 다시 시작할 때 설치합니다. 끄면 massCode는 새 버전을 알려주기만 합니다. 주 버전(major version)은 자동으로 설치되지 않습니다."
+      "label": "자동 업데이트"
     },
     "version": {
       "label": "현재 버전"

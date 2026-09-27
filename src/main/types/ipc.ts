@@ -38,6 +38,7 @@ type MainMenuAction =
   | 'set-notes-editor-mode'
   | 'send-http-request'
   | 'toggle-sidebar'
+  | 'toggle-secondary-sidebar'
   | 'toggle-compact-mode'
   | 'toggle-hide-completed-tasks'
   | 'update-context'

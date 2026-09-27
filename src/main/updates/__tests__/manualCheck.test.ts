@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { checkForUpdatesFromMenu } from '../index'
 
 const { parent, app, showMessageBoxSync, checkForUpdates, getFocusedWindow }
   = vi.hoisted(() => {
@@ -24,8 +25,6 @@ vi.mock('../../ipc', () => ({ send: vi.fn() }))
 vi.mock('../../lifecycle', () => ({ requestLifecycleAction: vi.fn() }))
 vi.mock('../../store', () => ({ store: { preferences: { get: () => true } } }))
 vi.mock('../../utils', () => ({ log: vi.fn() }))
-
-const { checkForUpdatesFromMenu } = await import('../index')
 
 describe('manual update feedback', () => {
   beforeEach(() => {

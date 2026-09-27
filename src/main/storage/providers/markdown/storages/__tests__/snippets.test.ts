@@ -5,7 +5,11 @@ import fs from 'fs-extra'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as cloudDownloads from '../../cloudDownloads'
 
-import { getRuntimeCache, writeSnippetToFile } from '../../runtime'
+import {
+  findSnippetByContentId,
+  getRuntimeCache,
+  writeSnippetToFile,
+} from '../../runtime'
 import { getPaths } from '../../runtime/paths'
 import { updateRuntimeSearchIndex } from '../../runtime/search'
 import { ensureStateFile } from '../../runtime/state'
@@ -96,6 +100,117 @@ describe('code snippets storage validations', () => {
 
     if (tempVaultPath) {
       fs.removeSync(tempVaultPath)
+    }
+  })
+
+  it('persists reordered lazy fragments with their bodies and repairs content lookup', () => {
+    const storage = createSnippetsStorage()
+    const { id } = storage.createSnippet({ name: 'Reorder' })
+    const first = storage.createSnippetContent(id, {
+      label: 'First',
+      language: 'javascript',
+      value: 'first body',
+    }).id
+    const second = storage.createSnippetContent(id, {
+      label: 'Second',
+      language: 'python',
+      value: 'second body',
+    }).id
+    const cache = resyncTwiceForLazySnippets()
+    expect(cache.snippets[0].contents.map(content => content.value)).toEqual([
+      null,
+      null,
+    ])
+    expect(findSnippetByContentId(cache.snippets, first)?.contentIndex).toBe(0)
+    storage.reorderSnippetContents(id, [second, first])
+    expect(findSnippetByContentId(cache.snippets, first)?.contentIndex).toBe(1)
+    resetRuntimeCache()
+    expect(storage.getSnippetById(id)?.contents).toEqual([
+      { id: second, label: 'Second', language: 'python', value: 'second body' },
+      {
+        id: first,
+        label: 'First',
+        language: 'javascript',
+        value: 'first body',
+      },
+    ])
+  })
+
+  it('rejects invalid permutations without writing or mutating order', () => {
+    const storage = createSnippetsStorage()
+    const { id } = storage.createSnippet({ name: 'Reorder' })
+    const first = storage.createSnippetContent(id, {
+      label: 'First',
+      language: 'text',
+      value: 'one',
+    }).id
+    const second = storage.createSnippetContent(id, {
+      label: 'Second',
+      language: 'text',
+      value: 'two',
+    }).id
+    const record = getRuntimeCache(getPaths(tempVaultPath)).snippets[0]
+    const source = fs.readFileSync(
+      path.join(getPaths(tempVaultPath).vaultPath, record.filePath),
+      'utf8',
+    )
+    for (const ids of [
+      [first],
+      [first, first],
+      [first, 99999],
+      [first, -1],
+      [first, 1.5],
+      [first, second, 99],
+    ]) {
+      expect(() => storage.reorderSnippetContents(id, ids)).toThrow(
+        'INVALID_CONTENT_ORDER',
+      )
+    }
+    expect(() =>
+      storage.reorderSnippetContents(99999, [first, second]),
+    ).toThrow('SNIPPET_NOT_FOUND')
+    expect(record.contents.map(content => content.id)).toEqual([
+      first,
+      second,
+    ])
+    expect(
+      fs.readFileSync(
+        path.join(getPaths(tempVaultPath).vaultPath, record.filePath),
+        'utf8',
+      ),
+    ).toBe(source)
+  })
+
+  it('keeps runtime order and timestamp when the file write fails', () => {
+    const storage = createSnippetsStorage()
+    const { id } = storage.createSnippet({ name: 'Reorder' })
+    const first = storage.createSnippetContent(id, {
+      label: 'First',
+      language: 'text',
+      value: 'one',
+    }).id
+    const second = storage.createSnippetContent(id, {
+      label: 'Second',
+      language: 'text',
+      value: 'two',
+    }).id
+    const record = getRuntimeCache(getPaths(tempVaultPath)).snippets[0]
+    const before = record.updatedAt
+    const write = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {
+      throw new Error('write failed')
+    })
+    try {
+      expect(() => storage.reorderSnippetContents(id, [second, first])).toThrow(
+        'write failed',
+      )
+      expect(record.contents.map(content => content.id)).toEqual([
+        first,
+        second,
+      ])
+      expect(record.updatedAt).toBe(before)
+    }
+    finally {
+      write.mockRestore()
     }
   })
 

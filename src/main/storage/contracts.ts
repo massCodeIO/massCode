@@ -189,6 +189,7 @@ export interface SnippetsStorage {
   getSnippets: (query: SnippetsQueryInput) => SnippetRecord[]
   getSnippetsAsync?: (query: SnippetsQueryInput) => Promise<SnippetRecord[]>
   getSnippetsCounts: () => SnippetsCount
+  reorderSnippetContents: (snippetId: number, contentIds: number[]) => void
   updateSnippet: (id: number, input: SnippetUpdateInput) => SnippetUpdateResult
   updateSnippetContent: (
     snippetId: number,

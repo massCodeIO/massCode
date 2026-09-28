@@ -1,0 +1,531 @@
+import type {
+  HttpFoldersResponse,
+  HttpFoldersUpdate,
+} from '@/services/api/generated'
+import type { HttpFoldersTreeResponse } from './useHttpFolderTree'
+import { useDialog } from '@/composables/useDialog'
+import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
+import { i18n } from '@/electron'
+import { api } from '@/services/api'
+import { getContiguousSelection, scrollToElement } from '@/utils'
+import { httpRuntimeNavigation } from './runtimeNavigation'
+import { useHttpApp } from './useHttpApp'
+import {
+  findParentFolderIds,
+  flattenFolderTree,
+  getFolderByIdFromTree,
+} from './useHttpFolderTree'
+import { selectHttpRequest, useHttpRequests } from './useHttpRequests'
+
+export type HttpFolderItem = HttpFoldersResponse[number]
+
+const folders = shallowRef<HttpFoldersTreeResponse>([])
+
+const renameFolderId = ref<number | null>(null)
+let isApplyingFolderSelection = false
+
+const { httpState } = useHttpApp()
+
+const selectedFolderIds = ref<number[]>(
+  httpState.folderId ? [httpState.folderId] : [],
+)
+const lastSelectedFolderId = ref<number | undefined>(httpState.folderId)
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function getNextIndexedName(baseName: string, existingNames: string[]): string {
+  const normalizedBase = baseName.trim()
+  const indexedNameRe = new RegExp(
+    `^${escapeRegExp(normalizedBase)}(?:\\s+(\\d+))?$`,
+    'i',
+  )
+
+  let maxIndex = 0
+  existingNames.forEach((name) => {
+    const match = name.trim().match(indexedNameRe)
+    if (!match)
+      return
+    const index = match[1] ? Number(match[1]) : 0
+    if (Number.isFinite(index)) {
+      maxIndex = Math.max(maxIndex, index)
+    }
+  })
+  return `${normalizedBase} ${maxIndex + 1}`
+}
+
+function getNextUntitledFolderName(parentId?: number): string {
+  const normalizedParentId = parentId ?? null
+  const siblingNames = flattenFolderTree(folders.value)
+    .filter(folder => (folder.parentId ?? null) === normalizedParentId)
+    .map(folder => folder.name)
+
+  return getNextIndexedName(i18n.t('folder.untitled'), siblingNames)
+}
+
+const flatFolderList = computed(() => flattenFolderTree(folders.value))
+
+const folderOrderMap = computed(() => {
+  const map = new Map<number, number>()
+  flatFolderList.value.forEach((folder, index) => {
+    map.set(folder.id, index)
+  })
+  return map
+})
+
+function sortFolderIdsByTreeOrder(ids: number[]) {
+  const seen = new Set<number>()
+
+  return ids
+    .filter((id) => {
+      if (seen.has(id))
+        return false
+      seen.add(id)
+      return folderOrderMap.value.has(id)
+    })
+    .sort((a, b) => {
+      const orderA = folderOrderMap.value.get(a) ?? Number.MAX_SAFE_INTEGER
+      const orderB = folderOrderMap.value.get(b) ?? Number.MAX_SAFE_INTEGER
+      return orderA - orderB
+    })
+}
+
+function syncSelectedFoldersWithTree() {
+  if (httpState.libraryFilter) {
+    selectedFolderIds.value = []
+    lastSelectedFolderId.value = undefined
+    return
+  }
+
+  const orderedIds = flatFolderList.value.map(folder => folder.id)
+
+  // Tree refresh changes highlights, never the active collection document.
+  // Its editor retains an unavailable owner's draft until explicit navigation.
+  if (httpState.activePanel === 'folder') {
+    selectedFolderIds.value = sortFolderIdsByTreeOrder(selectedFolderIds.value)
+    if (
+      lastSelectedFolderId.value !== undefined
+      && !folderOrderMap.value.has(lastSelectedFolderId.value)
+    ) {
+      lastSelectedFolderId.value = undefined
+    }
+    return
+  }
+
+  if (!orderedIds.length) {
+    clearFolderSelection()
+    return
+  }
+
+  const filteredSelection = selectedFolderIds.value.filter(id =>
+    folderOrderMap.value.has(id),
+  )
+
+  // Refresh updates the selection highlight, never the active document.
+  if (
+    httpState.folderId !== undefined
+    && folderOrderMap.value.has(httpState.folderId)
+  ) {
+    selectedFolderIds.value = sortFolderIdsByTreeOrder(filteredSelection)
+    if (
+      lastSelectedFolderId.value !== undefined
+      && !folderOrderMap.value.has(lastSelectedFolderId.value)
+    ) {
+      lastSelectedFolderId.value = httpState.folderId
+    }
+    return
+  }
+
+  if (!filteredSelection.length) {
+    const fallbackId
+      = httpState.folderId && folderOrderMap.value.has(httpState.folderId)
+        ? httpState.folderId
+        : orderedIds[0]
+
+    if (fallbackId) {
+      setFolderSelection([fallbackId])
+    }
+    else {
+      clearFolderSelection()
+    }
+    return
+  }
+
+  setFolderSelection(filteredSelection)
+}
+
+watch(
+  () => httpState.folderId,
+  (folderId) => {
+    if (isApplyingFolderSelection)
+      return
+
+    if (folderId === undefined) {
+      selectedFolderIds.value = []
+      lastSelectedFolderId.value = undefined
+      return
+    }
+
+    selectedFolderIds.value = [folderId]
+    lastSelectedFolderId.value = folderId
+  },
+)
+
+function clearFolderSelection() {
+  isApplyingFolderSelection = true
+  selectedFolderIds.value = []
+  httpState.folderId = undefined
+  httpState.activePanel = 'request'
+  // requestId намеренно не сбрасывается: иначе список и редактор запроса
+  // мигают пустым состоянием при переходах Library, пока загружается список.
+  // Вызывающие реселектят через selectFirstRequest/selectHttpRequest либо
+  // чистят выбор явно (resetHttpRequestsState, deleteSelectedHttpFolders).
+  lastSelectedFolderId.value = undefined
+  isApplyingFolderSelection = false
+}
+
+function setFolderSelection(ids: number[]) {
+  if (!ids.length) {
+    clearFolderSelection()
+    return
+  }
+
+  const orderedSelection = sortFolderIdsByTreeOrder(ids)
+  isApplyingFolderSelection = true
+  selectedFolderIds.value = orderedSelection
+  httpState.folderId = orderedSelection[0]
+  lastSelectedFolderId.value = orderedSelection[orderedSelection.length - 1]
+  isApplyingFolderSelection = false
+}
+
+function applySingleFolderSelection(folderId: number) {
+  isApplyingFolderSelection = true
+  selectedFolderIds.value = [folderId]
+  httpState.folderId = folderId
+  httpState.libraryFilter = undefined
+  lastSelectedFolderId.value = folderId
+  isApplyingFolderSelection = false
+}
+
+function applyRangeFolderSelection(folderId: number) {
+  const orderedIds = flatFolderList.value.map(folder => folder.id)
+
+  if (!orderedIds.length) {
+    applySingleFolderSelection(folderId)
+    return
+  }
+
+  const anchorId = httpState.folderId ?? selectedFolderIds.value[0] ?? folderId
+  const rangeSelection = getContiguousSelection(orderedIds, anchorId, folderId)
+
+  if (!rangeSelection.length) {
+    applySingleFolderSelection(folderId)
+    return
+  }
+
+  isApplyingFolderSelection = true
+  selectedFolderIds.value = rangeSelection
+  httpState.libraryFilter = undefined
+  lastSelectedFolderId.value = folderId
+  isApplyingFolderSelection = false
+}
+
+function applyToggleFolderSelection(folderId: number) {
+  if (selectedFolderIds.value.includes(folderId)) {
+    if (selectedFolderIds.value.length === 1)
+      return
+
+    isApplyingFolderSelection = true
+    selectedFolderIds.value = selectedFolderIds.value.filter(
+      id => id !== folderId,
+    )
+    httpState.folderId = selectedFolderIds.value[0]
+    httpState.libraryFilter = undefined
+    lastSelectedFolderId.value
+      = selectedFolderIds.value[selectedFolderIds.value.length - 1]
+    isApplyingFolderSelection = false
+    return
+  }
+
+  isApplyingFolderSelection = true
+  selectedFolderIds.value = sortFolderIdsByTreeOrder([
+    ...selectedFolderIds.value,
+    folderId,
+  ])
+  httpState.folderId = folderId
+  httpState.libraryFilter = undefined
+  lastSelectedFolderId.value = folderId
+  isApplyingFolderSelection = false
+}
+
+async function ensureSelectedFolderIsVisible() {
+  if (!httpState.folderId || !folders.value.length)
+    return
+
+  const parentIds = findParentFolderIds(
+    httpState.folderId,
+    flatFolderList.value,
+  )
+
+  if (parentIds.length === 0)
+    return
+
+  const foldersToOpen = parentIds.filter((parentId) => {
+    const folder = flatFolderList.value.find(f => f.id === parentId)
+    return folder && folder.isOpen === 0
+  })
+
+  if (foldersToOpen.length === 0)
+    return
+
+  try {
+    await Promise.allSettled(
+      foldersToOpen.map(folderId =>
+        api.httpFolders.patchHttpFoldersById(String(folderId), {
+          isOpen: 1,
+        }),
+      ),
+    )
+    await getHttpFolders(false)
+  }
+  catch (error) {
+    console.error('Error while opening parent http folders:', error)
+  }
+}
+
+async function getHttpFolders(shouldEnsureVisibility = true) {
+  const hadFolders = folders.value.length > 0
+  try {
+    const { data } = await api.httpFolders.getHttpFoldersTree()
+    folders.value = data as HttpFoldersTreeResponse
+    if (folders.value.length || hadFolders)
+      syncSelectedFoldersWithTree()
+
+    if (shouldEnsureVisibility) {
+      await ensureSelectedFolderIsVisible()
+    }
+    return true
+  }
+  catch (error) {
+    console.error(error)
+    return false
+  }
+}
+
+async function createHttpFolder(parentId?: number) {
+  try {
+    const name = getNextUntitledFolderName(parentId)
+    markPersistedStorageMutation()
+    const { data } = await api.httpFolders.postHttpFolders({
+      name,
+      ...(parentId !== undefined && { parentId }),
+    })
+
+    if (parentId) {
+      await updateHttpFolder(parentId, { isOpen: 1 })
+    }
+
+    await getHttpFolders(false)
+
+    return Number(data.id)
+  }
+  catch (error) {
+    console.error(error)
+  }
+}
+
+async function createHttpFolderAndSelect(parentId?: number) {
+  const id = await createHttpFolder(parentId)
+  if (id) {
+    if (!(await openHttpFolder(id)))
+      return
+    renameFolderId.value = id
+  }
+}
+
+async function updateHttpFolder(folderId: number, data: HttpFoldersUpdate) {
+  try {
+    markPersistedStorageMutation()
+    await api.httpFolders.patchHttpFoldersById(String(folderId), data)
+    await getHttpFolders(false)
+    return true
+  }
+  catch (error) {
+    console.error(error)
+    return false
+  }
+}
+
+async function deleteHttpFolder(folderId: number, shouldRefresh = true) {
+  if (!(await httpRuntimeNavigation.confirmLeave()))
+    return
+  try {
+    const { currentRequest, getHttpRequests, getAllHttpRequests, allRequests }
+      = useHttpRequests()
+    const selectedRequestId = currentRequest.value?.id
+
+    markPersistedStorageMutation()
+    await api.httpFolders.deleteHttpFoldersById(String(folderId))
+
+    if (httpState.folderId === folderId) {
+      httpState.folderId = undefined
+    }
+
+    await Promise.all([getHttpRequests(), getAllHttpRequests()])
+
+    if (
+      selectedRequestId !== undefined
+      && !allRequests.value.some(request => request.id === selectedRequestId)
+    ) {
+      await selectHttpRequest(undefined, false, {
+        preservePanel: httpState.activePanel === 'folder',
+      })
+    }
+
+    if (shouldRefresh) {
+      await getHttpFolders(false)
+    }
+  }
+  catch (error) {
+    console.error(error)
+  }
+}
+
+function getDeleteTargetFolderIds(fallbackFolderId?: number) {
+  if (
+    fallbackFolderId !== undefined
+    && selectedFolderIds.value.includes(fallbackFolderId)
+  ) {
+    return [...selectedFolderIds.value]
+  }
+
+  if (fallbackFolderId !== undefined) {
+    return [fallbackFolderId]
+  }
+
+  return [...selectedFolderIds.value]
+}
+
+async function deleteSelectedHttpFolders(fallbackFolderId?: number) {
+  if (!(await httpRuntimeNavigation.confirmLeave()))
+    return
+  const targetIds = getDeleteTargetFolderIds(fallbackFolderId)
+
+  if (!targetIds.length) {
+    return
+  }
+
+  const { confirm } = useDialog()
+  const folderName
+    = fallbackFolderId !== undefined
+      ? getFolderByIdFromTree(folders.value, fallbackFolderId)?.name
+      : undefined
+
+  const isConfirmed = await confirm({
+    title:
+      targetIds.length > 1
+        ? i18n.t('messages:confirm.delete', {
+            name: i18n.t('common.folders'),
+          })
+        : i18n.t('messages:confirm.delete', { name: folderName }),
+  })
+
+  if (!isConfirmed) {
+    return
+  }
+
+  await Promise.all(targetIds.map(id => deleteHttpFolder(id, false)))
+  await getHttpFolders(false)
+
+  const fallbackId = selectedFolderIds.value[0]
+  if (fallbackId) {
+    await openHttpFolder(fallbackId)
+    scrollToElement(`[id="${fallbackId}"]`)
+  }
+  else {
+    clearFolderSelection()
+  }
+}
+
+interface SelectFolderOptions {
+  mode?: 'single' | 'range' | 'toggle'
+  ensureVisibility?: boolean
+}
+
+async function selectHttpFolder(
+  folderId: number,
+  options: SelectFolderOptions = {},
+) {
+  const mode = options.mode ?? 'single'
+  const shouldEnsureVisibility = options.ensureVisibility ?? mode === 'single'
+
+  if (mode === 'range') {
+    applyRangeFolderSelection(folderId)
+  }
+  else if (mode === 'toggle') {
+    applyToggleFolderSelection(folderId)
+  }
+  else {
+    applySingleFolderSelection(folderId)
+    // requestId намеренно не сбрасывается: иначе список и редактор запроса
+    // мигают пустым состоянием, пока загружается список новой папки.
+    // Вызывающие реселектят после загрузки списка.
+  }
+
+  if (folders.value.length && shouldEnsureVisibility) {
+    await ensureSelectedFolderIsVisible()
+  }
+}
+
+async function openHttpFolder(
+  folderId: number,
+  current: () => boolean = () => true,
+) {
+  const token = ++httpRuntimeNavigation.transitionToken
+  if (
+    !(await httpRuntimeNavigation.confirmLeave())
+    || !current()
+    || token !== httpRuntimeNavigation.transitionToken
+  ) {
+    return false
+  }
+  if (!getFolderByIdFromTree(folders.value, folderId))
+    return false
+  const { currentRequest, isCurrentRequestLoading } = useHttpRequests()
+  if (isCurrentRequestLoading.value)
+    httpState.requestId = currentRequest.value?.id
+  httpState.activePanel = 'folder'
+  await selectHttpFolder(folderId)
+  if (!current() || token !== httpRuntimeNavigation.transitionToken)
+    return false
+  const loaded = await useHttpRequests().getHttpRequests({ folderId })
+  return loaded && current() && token === httpRuntimeNavigation.transitionToken
+}
+
+function resetHttpFoldersState() {
+  folders.value = []
+  renameFolderId.value = null
+  clearFolderSelection()
+}
+
+export function useHttpFolders() {
+  return {
+    clearFolderSelection,
+    createHttpFolder,
+    createHttpFolderAndSelect,
+    deleteHttpFolder,
+    deleteSelectedHttpFolders,
+    folders,
+    getFolderByIdFromTree,
+    getHttpFolders,
+    lastSelectedFolderId,
+    renameFolderId,
+    resetHttpFoldersState,
+    selectedFolderIds,
+    selectHttpFolder,
+    openHttpFolder,
+    setFolderSelection,
+    updateHttpFolder,
+  }
+}

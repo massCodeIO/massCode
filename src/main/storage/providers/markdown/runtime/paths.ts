@@ -3,6 +3,7 @@ import type { MarkdownState, Paths } from './types'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { store } from '../../../../store'
+import { enqueueCloudDownload } from '../cloudDownloads'
 import { runtimeRef } from './cache'
 import {
   CODE_SPACE_ID,
@@ -12,6 +13,7 @@ import {
   STATE_FILE_NAME,
   TRASH_DIR_NAME,
 } from './constants'
+import { getFileAvailability } from './shared/cloudFiles'
 import {
   buildFolderPathMap as buildFolderPathMapShared,
   buildPathToFolderIdMap as buildPathToFolderIdMapShared,
@@ -60,6 +62,16 @@ function readLegacyStateEntries(vaultPath: string): Set<string> {
   const legacyStatePath = path.join(vaultPath, META_DIR_NAME, STATE_FILE_NAME)
   if (!fs.pathExistsSync(legacyStatePath)) {
     return entries
+  }
+
+  // Недокачанный legacy-state нельзя читать (блокировка main process) и
+  // нельзя трактовать как пустой (это запустило бы миграцию раскладки по
+  // неполным данным): файл докачивается, решение переносится на потом.
+  if (getFileAvailability(legacyStatePath).isCloudPlaceholder) {
+    enqueueCloudDownload(legacyStatePath)
+    throw new Error(
+      `CLOUD_FILE_NOT_DOWNLOADED:Vault file is not downloaded from cloud storage yet: ${legacyStatePath}`,
+    )
   }
 
   try {
@@ -220,17 +232,34 @@ function resolveCodeVaultPath(vaultPath: string): string {
   return codeRootPath
 }
 
+// Legacy layout checks in resolveCodeVaultPath are expensive (fs scans and
+// JSON parsing), so resolved paths are memoized per vault path. The cache is
+// reset on vault re-watch (stopMarkdownWatcher) and via resetPathsCache().
+const pathsCacheByVaultPath = new Map<string, Paths>()
+
 export function getPaths(vaultPath: string): Paths {
+  const cachedPaths = pathsCacheByVaultPath.get(vaultPath)
+  if (cachedPaths) {
+    return cachedPaths
+  }
+
   const codeVaultPath = resolveCodeVaultPath(vaultPath)
   const metaDirPath = path.join(codeVaultPath, META_DIR_NAME)
 
-  return {
+  const paths: Paths = {
     inboxDirPath: path.join(metaDirPath, INBOX_DIR_NAME),
     metaDirPath,
     statePath: path.join(metaDirPath, 'state.json'),
     trashDirPath: path.join(metaDirPath, TRASH_DIR_NAME),
     vaultPath: codeVaultPath,
   }
+
+  pathsCacheByVaultPath.set(vaultPath, paths)
+  return paths
+}
+
+export function resetPathsCache(): void {
+  pathsCacheByVaultPath.clear()
 }
 
 export {

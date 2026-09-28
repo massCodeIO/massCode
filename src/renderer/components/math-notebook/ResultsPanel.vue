@@ -8,6 +8,7 @@ import { LoaderCircle, Sigma } from 'lucide-vue-next'
 import { sumNumericResults } from './sumNumericResults'
 
 interface Props {
+  sheetId: string
   results: LineResult[]
   scrollTop: number
   activeLine: number
@@ -20,7 +21,7 @@ const props = defineProps<Props>()
 const showTotal = ref(true)
 const copy = useCopyToClipboard()
 const MATH_NOTEBOOK_DOCUMENTATION_URL
-  = 'https://masscode.io/documentation/math-notebook.html'
+  = 'https://masscode.io/documentation/math-notebook.html?ref=masscode-app'
 
 const total = computed(() => {
   return sumNumericResults(props.results)
@@ -97,7 +98,7 @@ function openDocumentation() {
       >
         <div
           v-for="(result, index) in results"
-          :key="index"
+          :key="`${sheetId}:${index}`"
           :class="getResultClasses(result)"
           @click="handleClickResult(result)"
         >

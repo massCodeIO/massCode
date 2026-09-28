@@ -2,71 +2,200 @@
 import {
   useApp,
   useEditableField,
+  useNavigationHistory,
   useSnippets,
   useSnippetUpdate,
 } from '@/composables'
+import { useAi } from '@/composables/ai/useAi'
+import { useSpacePanels } from '@/composables/useSpacePanels'
 import { i18n } from '@/electron'
-
+import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
+import { getEntryNameConflictMessage } from '@/utils'
 import {
+  ChevronLeft,
+  ChevronRight,
   Code,
   Image,
   Network,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Plus,
   Type,
 } from 'lucide-vue-next'
+import {
+  formatEntryNameValidationChars,
+  getEntryNameValidationIssue,
+} from '~/shared/entryNameValidation'
+
+const emit = defineEmits<{
+  focusEditor: []
+}>()
+
+const { toggleSecondary } = useSpacePanels()
+
+const { open: isAiOpen } = useAi()
 
 const {
+  displayedSnippet,
+  displayedSnippetContent,
+  displayedSnippets,
   selectedSnippet,
-  selectedSnippetContent,
-  addFragment,
+  selectedSnippetRecordStatus,
   isAvailableToCodePreview,
 } = useSnippets()
+const { canGoBack, canGoForward } = useNavigationHistory()
 const {
   isFocusedSnippetName,
-  state,
   isShowCodePreview,
   isShowCodeImage,
   isShowJsonVisualizer,
   isSidebarHidden,
+  toggleCodeSidebar,
 } = useApp()
 const { addToUpdateQueue } = useSnippetUpdate()
 
+function hasSiblingSnippetNameConflict(value: string, excludeId: number) {
+  const normalized = value.trim().toLowerCase()
+  if (!normalized || !displayedSnippet.value) {
+    return false
+  }
+  const folderId = displayedSnippet.value.folder?.id ?? null
+  return (displayedSnippets.value ?? []).some(
+    snippet =>
+      snippet.id !== excludeId
+      && (snippet.folder?.id ?? null) === folderId
+      && snippet.name.toLowerCase() === normalized,
+  )
+}
+
 const isShowDescription = ref(false)
+const isNameFocused = ref(false)
 
 const {
   model: name,
   onFocus: onNameFocus,
   onBlur,
+  reset: resetName,
 } = useEditableField(
-  () => selectedSnippet?.value?.name,
+  () => displayedSnippet.value?.name,
   (v) => {
-    addToUpdateQueue(selectedSnippet.value!.id, {
-      name: v,
-      description: selectedSnippet.value!.description,
-      folderId: selectedSnippet.value!.folder?.id || null,
-      isDeleted: selectedSnippet.value!.isDeleted,
-      isFavorites: selectedSnippet.value!.isFavorites,
+    if (getEntryNameValidationIssue(v)) {
+      return
+    }
+
+    if (
+      selectedSnippetRecordStatus.value !== 'ready'
+      || !selectedSnippet.value
+      || selectedSnippet.value.id !== displayedSnippet.value?.id
+    ) {
+      return
+    }
+
+    if (hasSiblingSnippetNameConflict(v, selectedSnippet.value.id)) {
+      return
+    }
+
+    addToUpdateQueue(selectedSnippet.value.id, {
+      name: v.trim(),
     })
   },
 )
 
+const nameValidationIssue = computed(() =>
+  getEntryNameValidationIssue(name.value),
+)
+const hasNameConflict = computed(() => {
+  if (nameValidationIssue.value || !displayedSnippet.value) {
+    return false
+  }
+
+  if (
+    name.value.trim().toLowerCase()
+    === displayedSnippet.value.name.toLowerCase()
+  ) {
+    return false
+  }
+
+  return hasSiblingSnippetNameConflict(name.value, displayedSnippet.value.id)
+})
+const nameValidationMessage = computed(() => {
+  const issue = nameValidationIssue.value
+
+  if (issue) {
+    if (issue.code === 'invalidChars') {
+      return i18n.t('messages:error.entryNameInvalidChars', {
+        chars: formatEntryNameValidationChars(issue.chars),
+      })
+    }
+
+    if (issue.code === 'leadingDot') {
+      return i18n.t('messages:error.entryNameLeadingDot')
+    }
+
+    if (issue.code === 'trailingDot') {
+      return i18n.t('messages:error.entryNameTrailingDot')
+    }
+
+    if (issue.code === 'windowsReserved') {
+      return i18n.t('messages:error.entryNameWindowsReserved')
+    }
+
+    return i18n.t('messages:error.entryNameEmpty')
+  }
+
+  if (hasNameConflict.value) {
+    return getEntryNameConflictMessage('snippet', i18n.t.bind(i18n))
+  }
+
+  return ''
+})
+
+const isNameValidationTooltipOpen = computed(() => {
+  return isNameFocused.value && Boolean(nameValidationMessage.value)
+})
+
+function onSnippetNameFocus() {
+  isNameFocused.value = true
+  onNameFocus()
+}
+
 function onNameBlur() {
+  if (nameValidationIssue.value || hasNameConflict.value) {
+    resetName()
+  }
+
+  isNameFocused.value = false
   onBlur()
   isFocusedSnippetName.value = false
 }
 
+function onNameKeydown(event: KeyboardEvent) {
+  if (
+    (event.key !== 'Enter' && event.key !== 'Tab')
+    || event.shiftKey
+    || nameValidationIssue.value
+    || hasNameConflict.value
+  ) {
+    return
+  }
+
+  event.preventDefault()
+  emit('focusEditor')
+}
+
 const isShowJsonVisualizerAction = computed(
-  () => selectedSnippetContent.value?.language === 'json',
+  () => displayedSnippetContent.value?.language === 'json',
 )
 
 const isShowTags = computed(() => {
   return !isShowCodeImage.value && !isShowJsonVisualizer.value
 })
 
-function onClickTab(index: number) {
-  state.snippetContentIndex = index
+const isHistoryVisible = computed(() => canGoBack.value || canGoForward.value)
+
+function onBackClick() {
+  void navigateBack()
+}
+
+function onForwardClick() {
+  void navigateForward()
 }
 
 function onCodePreviewToggle() {
@@ -89,37 +218,54 @@ function onJsonVisualizerToggle() {
 </script>
 
 <template>
-  <div data-editor-header>
+  <div
+    data-editor-header
+    class="min-w-0"
+  >
     <div
       class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
     >
-      <UiInput
-        v-model="name"
-        variant="ghost"
-        class="w-full truncate px-0"
-        :select="isFocusedSnippetName"
-        @focus="onNameFocus"
-        @blur="onNameBlur"
-      />
-      <div class="ml-2 flex">
-        <UiActionButton
-          class="mr-1"
-          :tooltip="
-            isSidebarHidden
-              ? i18n.t('action.showSidebar')
-              : i18n.t('action.hideSidebar')
-          "
-          @click="isSidebarHidden = !isSidebarHidden"
+      <div class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
+        <div
+          v-if="isHistoryVisible"
+          class="flex shrink-0 items-center gap-0.5"
         >
-          <PanelLeftOpen
-            v-if="isSidebarHidden"
-            class="h-3 w-3"
-          />
-          <PanelLeftClose
-            v-else
-            class="h-3 w-3"
-          />
-        </UiActionButton>
+          <UiActionButton
+            :disabled="!canGoBack"
+            :tooltip="i18n.t('menu:history.back')"
+            shortcut="CommandOrControl+["
+            @click="onBackClick"
+          >
+            <ChevronLeft class="h-3 w-3" />
+          </UiActionButton>
+          <UiActionButton
+            :disabled="!canGoForward"
+            :tooltip="i18n.t('menu:history.forward')"
+            shortcut="CommandOrControl+]"
+            @click="onForwardClick"
+          >
+            <ChevronRight class="h-3 w-3" />
+          </UiActionButton>
+        </div>
+        <div class="min-w-0 flex-1">
+          <UiInputValidationTooltip
+            :open="isNameValidationTooltipOpen"
+            :message="nameValidationMessage"
+          >
+            <UiInput
+              v-model="name"
+              variant="ghost"
+              class="w-full truncate px-0"
+              :data-planned-title="`snippet:${displayedSnippet?.id}`"
+              :select="isFocusedSnippetName"
+              @focus="onSnippetNameFocus"
+              @blur="onNameBlur"
+              @keydown="onNameKeydown"
+            />
+          </UiInputValidationTooltip>
+        </div>
+      </div>
+      <div class="ml-2 flex">
         <UiActionButton
           :tooltip="i18n.t('menu:editor.previewScreenshot')"
           :active="isShowCodeImage"
@@ -134,6 +280,7 @@ function onJsonVisualizerToggle() {
               ? `${i18n.t('action.hide')} ${i18n.t('menu:editor.previewCode')}`
               : i18n.t('menu:editor.previewCode')
           "
+          shortcut="Alt+CommandOrControl+P"
           :active="isShowCodePreview"
           @click="onCodePreviewToggle"
         >
@@ -142,6 +289,7 @@ function onJsonVisualizerToggle() {
         <UiActionButton
           v-if="isShowJsonVisualizerAction"
           :tooltip="i18n.t('menu:editor.previewJson')"
+          shortcut="Alt+CommandOrControl+J"
           :active="isShowJsonVisualizer"
           @click="onJsonVisualizerToggle"
         >
@@ -154,30 +302,40 @@ function onJsonVisualizerToggle() {
           <Type class="h-3 w-3" />
         </UiActionButton>
         <UiActionButton
-          :tooltip="i18n.t('action.new.fragment')"
-          @click="addFragment"
+          :tooltip="
+            isSidebarHidden
+              ? i18n.t('action.showSidebar')
+              : i18n.t('action.hideSidebar')
+          "
+          shortcut="CommandOrControl+B"
+          :active="isSidebarHidden"
+          @click="toggleCodeSidebar"
         >
-          <Plus class="h-4 w-4" />
+          <UiPanelIcon
+            side="left"
+            :open="!isSidebarHidden"
+          />
+        </UiActionButton>
+        <UiActionButton
+          :tooltip="
+            i18n.t(
+              isAiOpen
+                ? 'action.hideSecondarySidebar'
+                : 'action.showSecondarySidebar',
+            )
+          "
+          shortcut="Alt+CommandOrControl+B"
+          :active="isAiOpen"
+          @click="toggleSecondary"
+        >
+          <UiPanelIcon
+            side="right"
+            :open="isAiOpen"
+          />
         </UiActionButton>
       </div>
     </div>
-    <div
-      v-if="selectedSnippet?.contents && selectedSnippet.contents.length > 1"
-      class="border-border grid auto-cols-fr grid-flow-col border-b"
-    >
-      <EditorTab
-        v-for="(i, index) in selectedSnippet?.contents"
-        :id="i.id"
-        :key="i.id"
-        :index="index"
-        :name="i.label"
-        :class="{
-          'bg-accent text-accent-foreground':
-            state.snippetContentIndex === index,
-        }"
-        @click="onClickTab(index)"
-      />
-    </div>
+    <EditorHeaderFragments :key="displayedSnippet?.id" />
     <EditorDescription v-model:show="isShowDescription" />
     <div
       v-if="isShowTags"

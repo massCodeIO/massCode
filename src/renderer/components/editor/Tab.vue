@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useApp, useSnippets, useSnippetUpdate } from '@/composables'
+import {
+  useApp,
+  useDialog,
+  useSnippets,
+  useSnippetUpdate,
+} from '@/composables'
 import { i18n } from '@/electron'
 
 interface Props {
@@ -11,28 +16,56 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { selectedSnippetContent, selectedSnippet, deleteSnippetContent }
+const { selectedSnippet, selectedSnippetRecordStatus, deleteSnippetContent }
   = useSnippets()
-const { addToUpdateContentQueue } = useSnippetUpdate()
+const { addToUpdateContentQueue, isContentUpdateBusy } = useSnippetUpdate()
+const { confirm } = useDialog()
 const { highlightedSnippetIds, highlightedFolderIds, state } = useApp()
 
 const tabRef = ref<HTMLDivElement>()
 const isEdit = ref(false)
+const editName = ref('')
+const pendingName = ref<string>()
+let renameRequested = false
+
+watch(
+  () => {
+    const snippetId = selectedSnippet.value?.id
+    return snippetId !== undefined && isContentUpdateBusy(snippetId, props.id)
+  },
+  (busy) => {
+    if (!busy)
+      pendingName.value = undefined
+  },
+)
 
 const name = computed({
   get() {
-    return props.name
+    return isEdit.value ? editName.value : (pendingName.value ?? props.name)
   },
   set(v: string) {
-    addToUpdateContentQueue(
-      selectedSnippet.value!.id,
-      selectedSnippetContent.value!.id,
-      {
-        label: v,
-        language: selectedSnippetContent.value!.language,
-        value: selectedSnippetContent.value!.value,
-      },
+    editName.value = v
+    const content = selectedSnippet.value?.contents.find(
+      content => content.id === props.id,
     )
+
+    // value === undefined: тело фрагмента ещё не загружено, переименование
+    // отправило бы пустой контент.
+    if (
+      selectedSnippetRecordStatus.value !== 'ready'
+      || selectedSnippet.value?.id !== state.snippetId
+      || !content
+      || content.value === undefined
+    ) {
+      return
+    }
+
+    pendingName.value = v
+    addToUpdateContentQueue(selectedSnippet.value.id, content.id, {
+      label: v,
+      language: content.language,
+      value: content.value,
+    })
   },
 })
 
@@ -41,18 +74,40 @@ function onClickContextMenu() {
   highlightedFolderIds.value.clear()
 }
 
-async function onDelete() {
-  await deleteSnippetContent(selectedSnippet.value!.id, props.id)
+function startEdit() {
+  editName.value = name.value
+  isEdit.value = true
+}
 
-  if (state.snippetContentIndex === props.index) {
-    state.snippetContentIndex = 0
-  }
-  else if (
-    state.snippetContentIndex
-    && state.snippetContentIndex > props.index
+function onMenuCloseAutoFocus(event: Event) {
+  if (!renameRequested)
+    return
+
+  event.preventDefault()
+  renameRequested = false
+  startEdit()
+}
+
+async function onDelete() {
+  if (
+    selectedSnippetRecordStatus.value !== 'ready'
+    || selectedSnippet.value?.id !== state.snippetId
+    || selectedSnippet.value.contents.length <= 1
   ) {
-    state.snippetContentIndex--
+    return
   }
+
+  const snippetId = selectedSnippet.value.id
+  const contentId = props.id
+  const isConfirmed = await confirm({
+    title: i18n.t('messages:confirm.deletePermanently', {
+      name: name.value,
+    }),
+    content: i18n.t('messages:warning.noUndo'),
+  })
+
+  if (isConfirmed)
+    await deleteSnippetContent(snippetId, contentId)
 }
 </script>
 
@@ -60,41 +115,70 @@ async function onDelete() {
   <div
     ref="tabRef"
     data-editor-tab
-    class="border-border border-r px-2 py-0.5 select-none last:border-r-0"
+    class="min-w-0 cursor-default select-none"
     @contextmenu="onClickContextMenu"
   >
     <ContextMenu.ContextMenu v-if="!isEdit">
-      <ContextMenu.ContextMenuTrigger>
-        <div
-          class="truncate"
-          @dblclick="isEdit = true"
+      <ContextMenu.ContextMenuTrigger class="block w-full min-w-0">
+        <UiText
+          as="span"
+          variant="base"
+          weight="medium"
+          class="block truncate text-center leading-5 text-inherit"
+          :title="name"
+          @dblclick="startEdit"
         >
           {{ name }}
-        </div>
+        </UiText>
       </ContextMenu.ContextMenuTrigger>
-      <ContextMenu.ContextMenuContent>
-        <ContextMenu.ContextMenuItem @click="isEdit = true">
-          {{ i18n.t("action.rename") }} "<span class="max-w-36 truncate">{{
-            name
-          }}</span>"
+      <ContextMenu.ContextMenuContent @close-auto-focus="onMenuCloseAutoFocus">
+        <ContextMenu.ContextMenuItem @select="renameRequested = true">
+          <span class="inline-flex min-w-0 items-center">
+            {{ i18n.t("action.rename") }} "<span class="max-w-36 truncate">{{
+              name
+            }}</span>"
+          </span>
         </ContextMenu.ContextMenuItem>
         <ContextMenu.ContextMenuSeparator />
-        <ContextMenu.ContextMenuItem @click="onDelete">
-          {{ i18n.t("action.delete.common") }} "<span
-            class="max-w-36 truncate"
-          >{{ name }}</span>"
+        <ContextMenu.ContextMenuItem
+          :disabled="(selectedSnippet?.contents.length ?? 0) <= 1"
+          @click="onDelete"
+        >
+          <span class="inline-flex min-w-0 items-center">
+            {{ i18n.t("action.delete.common") }} "<span
+              class="max-w-36 truncate"
+            >{{ name }}</span>"
+          </span>
         </ContextMenu.ContextMenuItem>
       </ContextMenu.ContextMenuContent>
     </ContextMenu.ContextMenu>
-    <UiInput
+    <div
       v-else
-      v-model="name"
-      variant="ghost"
-      focus
-      select
-      class="w-full rounded-none px-0 py-0 leading-0"
-      @blur="isEdit = false"
-      @keydown.esc="isEdit = false"
-    />
+      class="relative w-full min-w-0"
+    >
+      <UiText
+        as="span"
+        variant="base"
+        weight="medium"
+        aria-hidden="true"
+        class="invisible block truncate pr-1 text-center leading-5 whitespace-pre"
+      >
+        {{ name }}
+      </UiText>
+      <div class="absolute inset-0 min-w-0">
+        <UiInput
+          v-model="name"
+          variant="ghost"
+          focus
+          select
+          class="h-5 w-full min-w-0 rounded-none px-0 py-0 text-sm font-medium"
+          @mousedown.stop
+          @keydown.stop
+          @blur="isEdit = false"
+          @keydown.enter.prevent="isEdit = false"
+          @keydown.esc="isEdit = false"
+        />
+      </div>
+    </div>
   </div>
 </template>

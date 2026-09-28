@@ -34,6 +34,7 @@ export {
   getPaths,
   getVaultPath,
   normalizeDirectoryPath,
+  resetPathsCache,
 } from './paths'
 
 // Search
@@ -54,6 +55,7 @@ export { readYamlObjectFile, writeYamlObjectFile } from './shared/yaml'
 export {
   buildSnippetTargetPath,
   createSnippetRecord,
+  ensureSnippetContentLoaded,
   findSnippetByContentId,
   findSnippetById,
   getSnippetTargetDirectory,
@@ -88,6 +90,8 @@ export {
 // Sync & Cache
 export {
   getRuntimeCache,
+  isCodeVaultDiskReady,
+  refreshPendingSnippetFiles,
   resetRuntimeCache,
   setRuntimeCache,
   syncCounters,
@@ -116,16 +120,15 @@ export type {
   Paths,
   PersistSnippetOptions,
   SaveStateOptions,
-  SqliteSnippetContentRow,
-  SqliteSnippetRow,
-  SqliteSnippetTagRow,
 } from './types'
 
 // Validation
 export {
   assertDirectoryNameAvailable,
   assertNotReservedRootFolderName,
+  assertUniqueSiblingEntryName,
   assertUniqueSiblingFolderName,
+  assertVaultNotHydrating,
   getMarkdownStorageErrorMessage,
   resolveUniqueSiblingFolderName,
   throwStorageError,

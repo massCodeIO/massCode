@@ -1,14 +1,25 @@
 <script setup lang="ts">
+import type {
+  FolderIconSetPayload,
+  NoteFolderSiteExportPayload,
+  NoteFolderSiteExportPreparePayload,
+  NoteFolderSiteExportPrepareResponse,
+  NoteFolderSiteExportResponse,
+} from '~/main/types/ipc'
 import CustomIcons from '@/components/sidebar/folders/custom-icons/CustomIcons.vue'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import {
+  markPersistedStorageMutation,
+  useContentSort,
   useDialog,
   useNoteFolders,
-  useNotes,
-  useNotesApp,
+  useSonner,
 } from '@/composables'
-import { i18n, ipc } from '@/electron'
-import { isMac, scrollToElement } from '@/utils'
+import { i18n, ipc, store } from '@/electron'
+import { isMac } from '@/utils'
+import { renderDiagramPreviews } from './diagramExport'
+import { renderDrawingPreviews } from './drawingExport'
+import { showNoteExportWarnings } from './exportWarnings'
 
 const props = defineProps<{
   contextNode: any
@@ -21,18 +32,12 @@ const emit = defineEmits<{
 
 const {
   createNoteFolderAndSelect,
-  deleteNoteFolder,
-  folders,
-  getFolderByIdFromTree,
+  deleteSelectedNoteFolders,
   getNoteFolders,
-  updateNoteFolder,
   selectedFolderIds,
-  clearFolderSelection,
-  selectNoteFolder,
 } = useNoteFolders()
-
-const { notesState } = useNotesApp()
-const { clearNotesState } = useNotes()
+const { sonner } = useSonner()
+const { getContentSortQuery } = useContentSort()
 
 const isContextMultiSelection = computed(() => {
   if (!props.contextNode)
@@ -52,43 +57,7 @@ async function onDeleteFolder() {
   if (!props.contextNode)
     return
 
-  const { confirm } = useDialog()
-  const activeBeforeDelete = notesState.folderId
-  const targetIds = selectedFolderIds.value.includes(props.contextNode.id)
-    ? [...selectedFolderIds.value]
-    : [props.contextNode.id]
-  const folderName = getFolderByIdFromTree(
-    folders.value,
-    props.contextNode.id,
-  )?.name
-
-  const isConfirmed = await confirm({
-    title:
-      targetIds.length > 1
-        ? i18n.t('messages:confirm.delete', {
-            name: i18n.t('common.folders'),
-          })
-        : i18n.t('messages:confirm.delete', { name: folderName }),
-  })
-
-  if (!isConfirmed)
-    return
-
-  await Promise.all(targetIds.map(id => deleteNoteFolder(id, false)))
-  await getNoteFolders(false)
-
-  if (activeBeforeDelete && targetIds.includes(activeBeforeDelete)) {
-    clearNotesState()
-    const fallbackId = selectedFolderIds.value[0]
-
-    if (fallbackId) {
-      await selectNoteFolder(fallbackId)
-      scrollToElement(`[id="${fallbackId}"]`)
-    }
-    else {
-      clearFolderSelection()
-    }
-  }
+  await deleteSelectedNoteFolders(props.contextNode.id)
 }
 
 function onRenameFolder() {
@@ -109,10 +78,8 @@ function onSetCustomIcon() {
     title: i18n.t('action.setCustomIcon'),
     content: h(CustomIcons, {
       nodeId: props.contextNode.id,
-      onSetIcon: async (nodeId: number, iconName: string) => {
-        await updateNoteFolder(nodeId, { icon: iconName })
-        await getNoteFolders(false)
-      },
+      onIconChanged: () => getNoteFolders(false),
+      spaceId: 'notes',
     }),
   })
 }
@@ -121,8 +88,21 @@ async function onRemoveCustomIcon() {
   if (!props.contextNode)
     return
 
-  await updateNoteFolder(props.contextNode.id, { icon: null })
-  await getNoteFolders(false)
+  try {
+    await ipc.invoke<FolderIconSetPayload, void>('fs:folder-icon:set', {
+      folderId: Number(props.contextNode.id),
+      icon: null,
+      spaceId: 'notes',
+    })
+    markPersistedStorageMutation()
+    await getNoteFolders(false)
+  }
+  catch {
+    sonner({
+      message: i18n.t('folder.iconPicker.errors.updateFailed'),
+      type: 'error',
+    })
+  }
 }
 
 function onRevealInFileManager() {
@@ -134,6 +114,68 @@ function onRevealInFileManager() {
     'system:show-notes-folder-in-file-manager',
     Number(props.contextNode.id),
   )
+}
+
+function showCloudFileNotReadyWarning() {
+  sonner({
+    message: i18n.t('messages:warning.cloudFileNotReady'),
+    type: 'warning',
+  })
+}
+
+async function onExportSite() {
+  const vault = store.preferences.get('storage.vaultPath')
+  if (!props.contextNode) {
+    return
+  }
+
+  try {
+    const folderId = Number(props.contextNode.id)
+    const preparation = await ipc.invoke<
+      NoteFolderSiteExportPreparePayload,
+      NoteFolderSiteExportPrepareResponse
+    >('fs:prepare-note-folder-site-export', { folderId })
+    if (preparation.status === 'cloud-unavailable') {
+      showCloudFileNotReadyWarning()
+      return
+    }
+
+    const drawingPreviews = await renderDrawingPreviews(preparation.drawingIds)
+    const diagramPreviews = await renderDiagramPreviews(
+      preparation.mermaidSources ?? [],
+      Math.max(0, 500 - drawingPreviews.length),
+    )
+    if (store.preferences.get('storage.vaultPath') !== vault)
+      throw new Error('VAULT_CHANGED')
+    const result = await ipc.invoke<
+      NoteFolderSiteExportPayload,
+      NoteFolderSiteExportResponse
+    >('fs:export-note-folder-site', {
+      drawingPreviews,
+      diagramPreviews,
+      folderId,
+      ...getContentSortQuery('notes'),
+    })
+    if (result.status === 'cloud-unavailable') {
+      showCloudFileNotReadyWarning()
+    }
+    else if (
+      result.status === 'exported'
+      && !showNoteExportWarnings(result.warnings)
+    ) {
+      sonner({
+        message: i18n.t('messages:success.noteFolderSiteExported'),
+        type: 'success',
+      })
+    }
+  }
+  catch (error) {
+    console.error(error)
+    sonner({
+      message: i18n.t('messages:error.noteFolderSiteExportFailed'),
+      type: 'error',
+    })
+  }
 }
 </script>
 
@@ -156,6 +198,9 @@ function onRevealInFileManager() {
       </ContextMenu.ContextMenuItem>
       <ContextMenu.ContextMenuItem @click="onRevealInFileManager">
         {{ revealInFileManagerLabel }}
+      </ContextMenu.ContextMenuItem>
+      <ContextMenu.ContextMenuItem @click="onExportSite">
+        {{ i18n.t("action.export.folderToHtmlSite") }}
       </ContextMenu.ContextMenuItem>
       <ContextMenu.ContextMenuSeparator />
       <ContextMenu.ContextMenuItem @click="onDeleteFolder">

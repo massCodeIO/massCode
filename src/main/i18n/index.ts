@@ -3,14 +3,13 @@ import { join } from 'node:path'
 import i18next from 'i18next'
 import Backend from 'i18next-fs-backend'
 import { store } from '../store'
-import { language } from './language'
+import { language, resolveLanguage } from './language'
 
 const storedLng = store.preferences.get('localization.locale') as
   | string
   | undefined
 
-const lng
-  = storedLng && Object.keys(language).includes(storedLng) ? storedLng : 'en_US'
+const lng = resolveLanguage(storedLng)
 
 i18next.use(Backend).init({
   fallbackLng: 'en_US',

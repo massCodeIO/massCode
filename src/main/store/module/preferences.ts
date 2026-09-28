@@ -1,12 +1,25 @@
 import type {
   EditorSettings,
+  HttpSettings,
   MarkdownSettings,
   MathSettings,
   NotesEditorSettings,
   PreferencesStore,
+  TasksSettings,
 } from '../types'
 import { homedir, platform } from 'node:os'
 import Store from 'electron-store'
+import {
+  AI_PROMPT_HISTORY_DEFAULT_LIMIT,
+  AI_PROMPT_HISTORY_LIMITS,
+} from '../../../shared/aiPromptHistory'
+import { DATE_FORMATS, DEFAULT_DATE_FORMAT } from '../../../shared/dateFormat'
+import {
+  HTTP_HISTORY_DEFAULT_LIMIT,
+  HTTP_HISTORY_LIMITS,
+} from '../../../shared/httpHistory'
+import { HTTP_PREVIEW_FORMATS } from '../../../shared/httpPreview'
+import { httpTransportSchema } from '../../../shared/httpTransport'
 import { EDITOR_DEFAULTS, NOTES_EDITOR_DEFAULTS } from '../constants'
 import {
   asRecord,
@@ -27,15 +40,41 @@ const MATH_DEFAULTS: MathSettings = {
   dateFormat: 'numeric',
 }
 
+const HTTP_DEFAULTS: HttpSettings = {
+  historyLimit: HTTP_HISTORY_DEFAULT_LIMIT,
+  wrapLines: true,
+  defaultPreviewFormat: 'http',
+  autoSwitchToResponse: true,
+  skipCertificateVerification: false,
+}
+
+const TASKS_DEFAULTS: TasksSettings = {
+  autoCleanupCompleted: 'never',
+}
+
+const API_INTEGRATIONS_DEFAULTS: PreferencesStore['api']['integrations'] = {
+  enabled: false,
+  tokenHash: null,
+  tokenPreview: null,
+}
+
 const PREFERENCES_DEFAULTS: PreferencesStore = {
+  aiPromptHistoryLimit: AI_PROMPT_HISTORY_DEFAULT_LIMIT,
   appearance: {
     theme: 'auto',
+    dockBadgeSource: 'none',
+    dateFormat: DEFAULT_DATE_FORMAT,
+  },
+  updates: {
+    autoUpdate: true,
   },
   localization: {
     locale: 'en_US',
   },
   api: {
     port: 4321,
+    mcp: { enabled: false },
+    integrations: API_INTEGRATIONS_DEFAULTS,
   },
   storage: {
     rootPath: storagePath,
@@ -49,6 +88,31 @@ const PREFERENCES_DEFAULTS: PreferencesStore = {
     },
   },
   math: MATH_DEFAULTS,
+  http: HTTP_DEFAULTS,
+  tasks: TASKS_DEFAULTS,
+}
+
+function sanitizeApiIntegrationsSettings(
+  value: unknown,
+): PreferencesStore['api']['integrations'] {
+  const source = asRecord(value)
+
+  return {
+    enabled:
+      typeof source.enabled === 'boolean'
+        ? source.enabled
+        : API_INTEGRATIONS_DEFAULTS.enabled,
+    tokenHash: readNullableString(
+      source,
+      'tokenHash',
+      API_INTEGRATIONS_DEFAULTS.tokenHash,
+    ),
+    tokenPreview: readNullableString(
+      source,
+      'tokenPreview',
+      API_INTEGRATIONS_DEFAULTS.tokenPreview,
+    ),
+  }
 }
 
 function sanitizeCodeEditorSettings(value: unknown): EditorSettings {
@@ -127,6 +191,10 @@ function sanitizeNotesEditorSettings(value: unknown): NotesEditorSettings {
       typeof source.limitWidth === 'boolean'
         ? source.limitWidth
         : PREFERENCES_DEFAULTS.editor.notes.limitWidth,
+    wrapTables:
+      typeof source.wrapTables === 'boolean'
+        ? source.wrapTables
+        : PREFERENCES_DEFAULTS.editor.notes.wrapTables,
     lineNumbers:
       typeof source.lineNumbers === 'boolean'
         ? source.lineNumbers
@@ -170,6 +238,48 @@ function sanitizeMathSettings(value: unknown): MathSettings {
   }
 }
 
+function sanitizeHttpSettings(value: unknown): HttpSettings {
+  const source = asRecord(value)
+
+  return {
+    transport: httpTransportSchema.catch({}).parse(source.transport ?? {}),
+    historyLimit: HTTP_HISTORY_LIMITS.includes(source.historyLimit as 20)
+      ? (source.historyLimit as number)
+      : HTTP_HISTORY_DEFAULT_LIMIT,
+    wrapLines:
+      typeof source.wrapLines === 'boolean'
+        ? source.wrapLines
+        : HTTP_DEFAULTS.wrapLines,
+    defaultPreviewFormat: readEnum(
+      source,
+      'defaultPreviewFormat',
+      HTTP_PREVIEW_FORMATS,
+      HTTP_DEFAULTS.defaultPreviewFormat,
+    ),
+    autoSwitchToResponse:
+      typeof source.autoSwitchToResponse === 'boolean'
+        ? source.autoSwitchToResponse
+        : HTTP_DEFAULTS.autoSwitchToResponse,
+    skipCertificateVerification:
+      typeof source.skipCertificateVerification === 'boolean'
+        ? source.skipCertificateVerification
+        : HTTP_DEFAULTS.skipCertificateVerification,
+  }
+}
+
+function sanitizeTasksSettings(value: unknown): TasksSettings {
+  const source = asRecord(value)
+
+  return {
+    autoCleanupCompleted: readEnum(
+      source,
+      'autoCleanupCompleted',
+      ['never', '1d', '7d', '30d'] as const,
+      TASKS_DEFAULTS.autoCleanupCompleted,
+    ),
+  }
+}
+
 function sanitizePreferences(value: unknown): PreferencesStore {
   const source = asRecord(value)
   const appearanceSource = asRecord(source.appearance)
@@ -190,14 +300,39 @@ function sanitizePreferences(value: unknown): PreferencesStore {
       ? asRecord(editorSource.markdown)
       : asRecord(source.markdown)
   const mathSource = asRecord(source.math)
+  const httpSource = asRecord(source.http)
+  const tasksSource = asRecord(source.tasks)
 
   return {
+    aiPromptHistoryLimit: AI_PROMPT_HISTORY_LIMITS.includes(
+      source.aiPromptHistoryLimit as 20,
+    )
+      ? (source.aiPromptHistoryLimit as number)
+      : AI_PROMPT_HISTORY_DEFAULT_LIMIT,
     appearance: {
       theme: readString(
         appearanceSource,
         'theme',
         readString(source, 'theme', PREFERENCES_DEFAULTS.appearance.theme),
       ),
+      dateFormat: readEnum(
+        appearanceSource,
+        'dateFormat',
+        DATE_FORMATS,
+        DEFAULT_DATE_FORMAT,
+      ),
+      dockBadgeSource: readEnum(
+        appearanceSource,
+        'dockBadgeSource',
+        ['none', 'codeInbox', 'notesInbox', 'tasksDue'] as const,
+        PREFERENCES_DEFAULTS.appearance.dockBadgeSource,
+      ),
+    },
+    updates: {
+      autoUpdate:
+        typeof asRecord(source.updates).autoUpdate === 'boolean'
+          ? Boolean(asRecord(source.updates).autoUpdate)
+          : PREFERENCES_DEFAULTS.updates.autoUpdate,
     },
     localization: {
       locale: readString(
@@ -216,6 +351,8 @@ function sanitizePreferences(value: unknown): PreferencesStore {
         'port',
         readNumber(source, 'apiPort', PREFERENCES_DEFAULTS.api.port),
       ),
+      mcp: { enabled: asRecord(apiSource.mcp).enabled === true },
+      integrations: sanitizeApiIntegrationsSettings(apiSource.integrations),
     },
     storage: {
       rootPath: readString(
@@ -239,6 +376,8 @@ function sanitizePreferences(value: unknown): PreferencesStore {
       markdown: sanitizeMarkdownSettings(markdownSource),
     },
     math: sanitizeMathSettings(mathSource),
+    http: sanitizeHttpSettings(httpSource),
+    tasks: sanitizeTasksSettings(tasksSource),
   }
 }
 

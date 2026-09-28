@@ -28,10 +28,7 @@
       "gumroad": "Підтримати через Gumroad (Visa, Mastercard, тощо)"
     },
     "twitter": "X",
-    "devTools": "Інструменти розробника",
-    "links": {
-      "snippets": "Колекція сніпетів"
-    }
+    "devTools": "Інструменти розробника"
   },
   "view": {
     "label": "Вигляд",

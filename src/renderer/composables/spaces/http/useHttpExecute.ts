@@ -1,0 +1,219 @@
+import type {
+  HttpExecutePayload,
+  HttpExecuteRequest,
+  HttpExecuteResult,
+} from '~/main/types/http'
+import type { AiHttpResultConsumer } from '~/shared/aiHttpActions'
+import { useDonations } from '@/composables/useDonations'
+import { useSonner } from '@/composables/useSonner'
+import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
+import { i18n, ipc, store } from '@/electron'
+import { useHttpApp } from './useHttpApp'
+import { useHttpEnvironments } from './useHttpEnvironments'
+import { useHttpRequests } from './useHttpRequests'
+import { useHttpRuntime } from './useHttpRuntime'
+import { useHttpSession } from './useHttpSession'
+import { useHttpSettings } from './useHttpSettings'
+
+export type HttpResponse = HttpExecuteResult
+
+const isExecuting = ref(false)
+const lastResponse = shallowRef<HttpResponse | null>(null)
+const lastExecutionRequest = shallowRef<HttpExecuteRequest | null>(null)
+const lastError = ref<string | null>(null)
+
+const { currentDraft, currentRequest, isCurrentRequestLoading }
+  = useHttpRequests()
+const { httpState } = useHttpApp()
+const { activeEnvironmentId } = useHttpEnvironments()
+const { incrementSent } = useDonations()
+const { settings } = useHttpSettings()
+const { draft: runtimeDraft, validateRuntime } = useHttpRuntime()
+const { sessionNames, resetHttpSessionNames } = useHttpSession()
+let executionToken = 0
+
+watch(activeEnvironmentId, () => {
+  resetHttpExecuteState()
+  resetHttpSessionNames()
+})
+watch(
+  () => currentRequest.value?.id,
+  () => resetHttpExecuteState(false),
+  { flush: 'sync' },
+)
+
+function buildExecuteRequest(): HttpExecuteRequest | null {
+  const draft = currentDraft.value
+  if (!draft)
+    return null
+
+  return {
+    method: draft.method,
+    url: draft.url,
+    headers: draft.headers.map(h => ({ ...h })),
+    query: draft.query.map(q => ({ ...q })),
+    bodyType: draft.bodyType,
+    body: draft.body,
+    formData: draft.formData.map(f => ({ ...f })),
+    auth: { ...draft.auth },
+  }
+}
+
+async function executeCurrentRequest(
+  execute?: (payload: HttpExecutePayload) => Promise<HttpResponse>,
+): Promise<HttpResponse | null> {
+  // Переключение на другой запрос ещё грузит его полную запись:
+  // currentRequest/draft в этот момент принадлежат предыдущему запросу
+  // (в том числе бессрочно, если GET упал), и execute отправил бы не тот
+  // запрос, что подсвечен в списке.
+  if (
+    (httpState.activePanel !== undefined
+      && httpState.activePanel !== 'request')
+    || currentDraft.value?.protocol === 'websocket'
+    || isExecuting.value
+    || (currentRequest.value?.runtimeState
+      && currentRequest.value.runtimeState !== 'ready')
+    || isCurrentRequestLoading.value
+    || httpState.requestId !== currentRequest.value?.id
+  ) {
+    return null
+  }
+
+  // Тело pending-запроса ещё не докачано из облака: draft содержит
+  // body: null, и запрос ушёл бы на реальный сервер с пустым payload.
+  // Центральный guard закрывает все пути запуска (кнопка, меню, hotkey).
+  if (currentRequest.value?.pendingCloudDownload) {
+    useSonner().sonner({
+      id: 'cloud-file-not-ready',
+      message: i18n.t('messages:warning.cloudFileNotReady'),
+      type: 'warning',
+    })
+    return null
+  }
+
+  const request = buildExecuteRequest()
+  if (!request || !validateRuntime())
+    return null
+
+  const payload: HttpExecutePayload = {
+    request,
+    runtime: JSON.parse(JSON.stringify(runtimeDraft.value)),
+    requestId: currentRequest.value?.id ?? null,
+    environmentId: activeEnvironmentId.value,
+    skipCertificateVerification: settings.skipCertificateVerification,
+    transport: JSON.parse(JSON.stringify(settings.transport ?? {})),
+  }
+
+  isExecuting.value = true
+  const token = ++executionToken
+  const requestId = currentRequest.value?.id
+  lastError.value = null
+  lastResponse.value = null
+  lastExecutionRequest.value = null
+
+  try {
+    markPersistedStorageMutation()
+    incrementSent('http')
+    const response = execute
+      ? await execute(payload)
+      : ((await ipc.invoke('spaces:http:execute', payload)) as HttpResponse)
+    if (
+      token !== executionToken
+      || response.discarded
+      || currentRequest.value?.id !== requestId
+    ) {
+      return null
+    }
+    acceptResponse(request, response)
+    return response
+  }
+  catch (error) {
+    if (token !== executionToken)
+      return null
+    const message = error instanceof Error ? error.message : String(error)
+    lastError.value = message
+    return null
+  }
+  finally {
+    // Selection invalidates the displayed response, not the pending IPC call.
+    // Main releases its execution lock before this invocation settles.
+    isExecuting.value = false
+  }
+}
+
+function acceptResponse(request: HttpExecuteRequest, response: HttpResponse) {
+  lastError.value = null
+  lastResponse.value = response
+  lastExecutionRequest.value = JSON.parse(JSON.stringify(request))
+  sessionNames.value = response.sessionNames ?? sessionNames.value
+  if (response.error) {
+    lastError.value
+      = response.error === 'HTTP_BODY_FILE_UNAVAILABLE'
+        ? i18n.t('spaces.http.editor.body.fileUnavailable')
+        : response.error === 'HTTP_SCRIPT_FAILED'
+          ? i18n.t('spaces.http.scripts.failed')
+          : [
+              'HTTP2_HTTPS_REQUIRED',
+              'HTTP2_NOT_NEGOTIATED',
+              'HTTP_URL_ENCODING_REQUIRED',
+              'HTTP_REDIRECT_PROTOCOL',
+              'HTTP_REDIRECT_LIMIT',
+            ].includes(response.error)
+              ? i18n.t(`preferences:http.transport.${response.error}`)
+              : response.error.startsWith('GRAPHQL_')
+                ? i18n.t(`spaces.http.graphql.errors.${response.error}`)
+                : response.error
+  }
+}
+
+function captureSavedExecutionResult(): AiHttpResultConsumer {
+  const token = executionToken
+  const requestId = currentRequest.value?.id
+  const createdAt = currentRequest.value?.createdAt
+  const vault = store.preferences.get('storage.vaultPath')
+  const environmentId = activeEnvironmentId.value
+  return (execution, response) => {
+    if (
+      response.discarded
+      || token !== executionToken
+      || execution.vault !== vault
+      || store.preferences.get('storage.vaultPath') !== vault
+      || execution.payload.requestId !== requestId
+      || currentRequest.value?.id !== requestId
+      || execution.requestCreatedAt !== createdAt
+      || currentRequest.value?.createdAt !== createdAt
+      || httpState.requestId !== requestId
+      || isCurrentRequestLoading.value
+      || execution.payload.environmentId !== environmentId
+      || activeEnvironmentId.value !== environmentId
+    ) {
+      return false
+    }
+    acceptResponse(execution.payload.request, response)
+    return true
+  }
+}
+
+function resetHttpExecuteState(resetSession = true) {
+  executionToken += 1
+  if (resetSession)
+    resetHttpSessionNames()
+  if (isExecuting.value)
+    void ipc.invoke('spaces:http:cancel', undefined).catch(console.error)
+  lastResponse.value = null
+  lastExecutionRequest.value = null
+  lastError.value = null
+}
+
+export function useHttpExecute() {
+  return {
+    cancelRequest: () => ipc.invoke('spaces:http:cancel', undefined),
+    executeCurrentRequest,
+    captureSavedExecutionResult,
+    isExecuting,
+    lastError,
+    lastResponse,
+    lastExecutionRequest,
+    resetHttpExecuteState,
+  }
+}

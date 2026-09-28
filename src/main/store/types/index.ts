@@ -1,5 +1,15 @@
+import type { DateFormat } from '../../../shared/dateFormat'
+import type { HttpRequestPreviewFormat } from '../../../shared/httpPreview'
+
 export type SpaceLayoutMode = 'all-panels' | 'list-editor' | 'editor-only'
 export type NotesEditorMode = 'raw' | 'livePreview' | 'preview'
+export type ContentSortField = 'createdAt' | 'updatedAt' | 'name'
+export type ContentSortOrder = 'ASC' | 'DESC'
+
+export interface ContentSortState {
+  sort: ContentSortField
+  order: ContentSortOrder
+}
 
 export interface CodeState {
   snippetId?: number
@@ -16,18 +26,111 @@ export interface NotesState {
   libraryFilter?: string
 }
 
-export type SpaceId = 'code' | 'tools' | 'math' | 'notes'
+export interface HttpState {
+  activePanel?: 'request' | 'folder' | 'environments' | 'runner'
+  requestId?: number
+  folderId?: number
+  libraryFilter?: string
+}
+
+export type NotesRouteName =
+  | 'notes-space'
+  | 'notes-space/dashboard'
+  | 'notes-space/graph'
+
+export interface NotesDashboardWidgets {
+  stats: boolean
+  activityHeatmap: boolean
+  recent: boolean
+  graphPreview: boolean
+  topLinked: boolean
+}
+
+export type SpaceId = 'code' | 'tools' | 'math' | 'notes' | 'http' | 'drawings'
+export type CommandPaletteRecentTarget =
+  | 'space'
+  | 'snippet'
+  | 'note'
+  | 'http-request'
+export type CommandPaletteUsageTarget = CommandPaletteRecentTarget | 'command'
+
+export interface CommandPaletteRecentEntry {
+  id: string
+  target: CommandPaletteRecentTarget
+  targetId: string
+  title: string
+  subtitle: string
+  spaceId: SpaceId
+  openedAt: number
+}
+
+export interface CommandPaletteUsageEntry {
+  id: string
+  target: CommandPaletteUsageTarget
+  targetId: string
+  openedAt: number
+  openCount: number
+  lastQuery?: string
+}
+
+export interface DonationsState {
+  lastActiveDay: string
+  currentStreak: number
+  copies: {
+    code: number
+    http: number
+    notes: number
+    math: number
+    tools: number
+    drawings: number
+  }
+  created: {
+    code: number
+    http: number
+    notes: number
+    math: number
+    drawings: number
+  }
+  sent: {
+    http: number
+  }
+  lastShownCopyMilestones: {
+    code: number
+    http: number
+    notes: number
+    math: number
+    tools: number
+    drawings: number
+  }
+  lastShownCreatedMilestones: {
+    code: number
+    http: number
+    notes: number
+    math: number
+    drawings: number
+  }
+  lastShownSentMilestones: {
+    http: number
+  }
+  shownStreakMilestones: number[]
+  lastGreetingDay: string
+}
 
 export interface AppStore {
+  aiPromptHistory: string[]
   window: {
     bounds: object
+    devToolsOpen: boolean
   }
   ui: {
     compactListMode: boolean
   }
   code: {
     selection: CodeState
+    contentSort: ContentSortState
     layout: {
+      inspectorOpen?: boolean
+      inspectorWidth?: number
       mode: SpaceLayoutMode
       tagsListHeight: number
       threePanel?: number[]
@@ -36,19 +139,74 @@ export interface AppStore {
   }
   notes: {
     selection: NotesState
+    contentSort: ContentSortState
+    route: NotesRouteName
     editorMode: NotesEditorMode
+    hideCompletedTasksInFolders: boolean
+    lastTasksCleanupAt: number
+    dashboard: {
+      widgets: NotesDashboardWidgets
+    }
     layout: {
+      inspectorTab?: 'outline' | 'links' | 'annotations'
+      inspectorOpen?: boolean
+      inspectorWidth?: number
       mode: SpaceLayoutMode
       tagsListHeight: number
       threePanel?: number[]
       twoPanel?: number
     }
   }
+  http: {
+    selection: HttpState
+    contentSort: ContentSortState
+    layout: {
+      mode: SpaceLayoutMode
+      bottomOpen?: boolean
+      inspectorOpen?: boolean
+      inspectorWidth?: number
+      environmentsListHeight: number
+      collectionsOpen?: boolean
+      environmentsOpen?: boolean
+      trashOpen?: boolean
+      unfiledOpen?: boolean
+      favoritesOnly?: boolean
+      trashHeight?: number
+      treeWidth?: number
+      threePanel?: number[]
+      twoPanel?: number
+      responsePanelHeight?: number
+    }
+  }
+  math: {
+    contentSort: ContentSortState
+  }
   notifications: {
-    nextDonateAt?: number
     lastNotifiedUpdateVersion: string
+    lastWhatsNewVersion: string
+  }
+  license: {
+    key: string | null
+    name: string | null
+    email: string | null
+  }
+  commandPalette: {
+    recent: CommandPaletteRecentEntry[]
+    usage: CommandPaletteUsageEntry[]
+  }
+  donations: DonationsState
+  drawings: {
+    contentSort: ContentSortState
+    activeDrawingId: string | null
+    viewport: Record<string, DrawingViewportState>
   }
   activeSpaceId: SpaceId
+}
+
+export interface DrawingViewportState {
+  scrollX: number
+  scrollY: number
+  zoom: number
 }
 
 export interface EditorSettings {
@@ -77,6 +235,7 @@ export interface NotesEditorSettings {
   codeFontFamily: string
   lineHeight: number
   limitWidth: boolean
+  wrapTables: boolean
   lineNumbers: boolean
   indentSize: number
 }
@@ -87,15 +246,47 @@ export interface MathSettings {
   dateFormat: 'numeric' | 'short' | 'long'
 }
 
+export interface HttpSettings {
+  transport?: import('../../../shared/httpTransport').HttpTransport
+  historyLimit: number
+  wrapLines: boolean
+  defaultPreviewFormat: HttpRequestPreviewFormat
+  autoSwitchToResponse: boolean
+  skipCertificateVerification: boolean
+}
+
+export interface UpdatesSettings {
+  autoUpdate: boolean
+}
+
+export type TasksAutoCleanupInterval = 'never' | '1d' | '7d' | '30d'
+export type DockBadgeSource = 'none' | 'codeInbox' | 'notesInbox' | 'tasksDue'
+
+export interface TasksSettings {
+  autoCleanupCompleted: TasksAutoCleanupInterval
+}
+
 export interface PreferencesStore {
+  aiPromptHistoryLimit: number
   appearance: {
     theme: string
+    dockBadgeSource: DockBadgeSource
+    dateFormat: DateFormat
   }
+  updates: UpdatesSettings
   localization: {
     locale: string
   }
   api: {
     port: number
+    mcp: {
+      enabled: boolean
+    }
+    integrations: {
+      enabled: boolean
+      tokenHash: string | null
+      tokenPreview: string | null
+    }
   }
   storage: StorageSettings & {
     rootPath: string
@@ -106,6 +297,8 @@ export interface PreferencesStore {
     markdown: MarkdownSettings
   }
   math: MathSettings
+  http: HttpSettings
+  tasks: TasksSettings
 }
 
 export interface MathSheet {
@@ -128,6 +321,15 @@ export interface CurrencyRatesCache {
 
 export interface CurrencyRatesStore {
   cache: CurrencyRatesCache | null
+}
+
+/**
+ * Значения secret-переменных HTTP-окружений: зашифрованные строки в разрезе
+ * vault (хэш пути) → storage scope окружения → имя переменной. Хранится вне vault,
+ * потому что vault синхронизируется через облачную папку.
+ */
+export interface HttpSecretsStore {
+  vaults: Record<string, Record<string, Record<string, string>>>
 }
 
 export interface StoreBridge<_T extends Record<string, any>> {

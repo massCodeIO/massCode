@@ -1,0 +1,272 @@
+<script setup lang="ts">
+import * as Tabs from '@/components/ui/shadcn/tabs'
+import {
+  useCopyToClipboard,
+  useDonations,
+  useHttpExecute,
+  useHttpSettings,
+} from '@/composables'
+import { useNativeHttpPanelBridge } from '@/composables/ai/nativeBridges'
+import { i18n } from '@/electron'
+import { Copy, LoaderCircle } from 'lucide-vue-next'
+
+const { lastResponse, lastError, isExecuting } = useHttpExecute()
+const { settings } = useHttpSettings()
+const copy = useCopyToClipboard()
+const { incrementCopy } = useDonations()
+
+const activeTab = ref<'body' | 'headers' | 'tests'>('body')
+const runtimeResults = computed(() => [
+  ...(lastResponse.value?.scriptResults ?? []).map(phase => ({
+    ok: !phase.error && phase.tests.every(test => test.ok),
+  })),
+  ...(lastResponse.value?.runtimeResults?.extractions ?? []),
+  ...(lastResponse.value?.runtimeResults?.assertions ?? []),
+])
+const assertionResults = computed(() => [
+  ...(lastResponse.value?.runtimeResults?.assertions ?? []),
+  ...(lastResponse.value?.scriptResults ?? []).flatMap(phase =>
+    phase.error ? [{ ok: false }] : phase.tests,
+  ),
+])
+const passedAssertions = computed(
+  () => assertionResults.value.filter(result => result.ok).length,
+)
+watch(runtimeResults, (results) => {
+  if (!results.length && activeTab.value === 'tests')
+    activeTab.value = 'body'
+})
+
+const formattedBody = computed(() => {
+  const response = lastResponse.value
+  if (!response)
+    return ''
+  if (response.bodyKind === 'binary')
+    return ''
+  if (response.bodyKind === 'json') {
+    try {
+      return JSON.stringify(JSON.parse(response.body), null, 2)
+    }
+    catch {
+      return response.body
+    }
+  }
+  return response.body
+})
+
+const formattedHeaders = computed(() => {
+  const response = lastResponse.value
+  if (!response)
+    return ''
+
+  return response.headers
+    .map(header => `${header.key}: ${header.value}`)
+    .join('\n')
+})
+
+const copyValue = computed(() => {
+  if (activeTab.value === 'tests')
+    return ''
+  return activeTab.value === 'headers'
+    ? formattedHeaders.value
+    : formattedBody.value
+})
+
+const bodyViewerLanguage = computed(() => {
+  return lastResponse.value?.bodyKind === 'json' ? 'json' : 'plain'
+})
+
+const responseError = computed(() => {
+  if (lastError.value)
+    return lastError.value
+  if (lastResponse.value?.error)
+    return lastResponse.value.error
+  if (lastResponse.value?.status === null)
+    return i18n.t('spaces.http.editor.response.noResponse')
+  return null
+})
+
+function copyActiveTab() {
+  if (copyValue.value) {
+    copy(copyValue.value)
+    incrementCopy('http')
+  }
+}
+useNativeHttpPanelBridge('httpResponse', async (action, current) => {
+  if (!current())
+    return { status: 'stale' }
+  const panel = {
+    responseBody: 'body',
+    responseHeaders: 'headers',
+    responseTests: 'tests',
+  }[action.panel as 'responseBody' | 'responseHeaders' | 'responseTests']
+  if (
+    !panel
+    || !lastResponse.value
+    || (panel === 'tests' && !runtimeResults.value.length)
+  ) {
+    return { status: 'unavailable' }
+  }
+  activeTab.value = panel as typeof activeTab.value
+  await nextTick()
+  if (!current() || activeTab.value !== panel)
+    return { status: 'stale' }
+  if (action.action === 'httpView' && action.copy) {
+    const text = copyValue.value
+    if (!text)
+      return { status: 'unavailable' }
+    const copied = await copy(text)
+    if (copied)
+      incrementCopy('http')
+    return {
+      status: copied ? 'done' : 'failed',
+      panel: action.panel,
+      characters: copied ? text.length : undefined,
+    }
+  }
+  return { status: 'done', panel: action.panel }
+})
+</script>
+
+<template>
+  <div class="flex h-full flex-col">
+    <div
+      v-if="isExecuting"
+      class="text-muted-foreground flex flex-1 items-center justify-center gap-2 text-sm"
+    >
+      <LoaderCircle class="size-4 animate-spin" />
+      {{ i18n.t("spaces.http.editor.response.executing") }}
+    </div>
+    <div
+      v-else-if="responseError && !runtimeResults.length"
+      class="flex flex-1 items-center justify-center px-4"
+    >
+      <UiAlert
+        variant="error"
+        class="max-w-xl"
+        :title="i18n.t('spaces.http.editor.response.error')"
+      >
+        {{ responseError }}
+      </UiAlert>
+    </div>
+    <div
+      v-else-if="!lastResponse"
+      class="flex flex-1 items-center justify-center"
+    >
+      <UiText class="text-muted-foreground text-sm">
+        {{ i18n.t("spaces.http.editor.response.empty") }}
+      </UiText>
+    </div>
+    <div
+      v-else
+      class="flex min-h-0 flex-1 flex-col"
+    >
+      <UiAlert
+        v-if="responseError"
+        variant="error"
+        layout="panel"
+      >
+        {{ i18n.t("spaces.http.editor.response.error") }}:
+        {{ responseError }}
+      </UiAlert>
+
+      <UiAlert
+        v-if="
+          !responseError
+            && lastResponse.graphql
+            && lastResponse.graphql !== 'success'
+        "
+        variant="error"
+        layout="panel"
+      >
+        {{ i18n.t(`spaces.http.graphql.response.${lastResponse.graphql}`) }}
+      </UiAlert>
+      <Tabs.Tabs
+        v-model="activeTab"
+        class="flex min-h-0 flex-1 flex-col gap-0"
+      >
+        <div
+          class="border-border scrollbar flex min-w-0 items-center justify-between overflow-x-auto border-b px-3 py-1"
+        >
+          <Tabs.TabsList>
+            <Tabs.TabsTrigger
+              v-if="runtimeResults.length"
+              value="tests"
+            >
+              {{
+                i18n.t(
+                  assertionResults.length
+                    ? "spaces.http.runtime.testResults"
+                    : "spaces.http.runtime.extractionResults",
+                )
+              }}
+              <span v-if="assertionResults.length">({{ passedAssertions }}/{{ assertionResults.length }})</span>
+            </Tabs.TabsTrigger>
+            <Tabs.TabsTrigger value="body">
+              {{ i18n.t("spaces.http.editor.response.tabs.body") }}
+            </Tabs.TabsTrigger>
+            <Tabs.TabsTrigger value="headers">
+              {{ i18n.t("spaces.http.editor.response.tabs.headers") }}
+              <span
+                v-if="lastResponse.headers.length"
+                class="bg-muted text-muted-foreground ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded px-1 text-[10px] font-medium tabular-nums"
+              >
+                {{ lastResponse.headers.length }}
+              </span>
+            </Tabs.TabsTrigger>
+          </Tabs.TabsList>
+          <UiActionButton
+            v-if="copyValue"
+            :tooltip="i18n.t('spaces.http.editor.response.copy')"
+            @click="copyActiveTab"
+          >
+            <Copy class="size-4" />
+          </UiActionButton>
+        </div>
+
+        <div class="min-h-0 flex-1">
+          <Tabs.TabsContent
+            value="tests"
+            class="scrollbar m-0 h-full overflow-auto"
+          >
+            <HttpResponseTests />
+          </Tabs.TabsContent>
+          <Tabs.TabsContent
+            value="body"
+            class="m-0 h-full"
+          >
+            <div
+              v-if="lastResponse.bodyKind === 'binary'"
+              class="text-muted-foreground p-3 text-xs"
+            >
+              {{ i18n.t("spaces.http.editor.response.binaryNotice") }}
+            </div>
+            <HttpCodeViewer
+              v-else
+              :content="formattedBody"
+              :language="bodyViewerLanguage"
+              :wrap-lines="settings.wrapLines"
+            />
+          </Tabs.TabsContent>
+          <Tabs.TabsContent
+            value="headers"
+            class="scrollbar m-0 h-full overflow-auto"
+          >
+            <div class="flex flex-col">
+              <div
+                v-for="(header, index) in lastResponse.headers"
+                :key="index"
+                class="border-border grid grid-cols-[1fr_2fr] gap-2 border-b px-3 py-1.5 text-xs"
+              >
+                <span class="text-muted-foreground font-mono">{{
+                  header.key
+                }}</span>
+                <span class="font-mono break-all">{{ header.value }}</span>
+              </div>
+            </div>
+          </Tabs.TabsContent>
+        </div>
+      </Tabs.Tabs>
+    </div>
+  </div>
+</template>

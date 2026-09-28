@@ -5,6 +5,23 @@ export function toPosixPath(filePath: string): string {
   return filePath.replaceAll('\\', '/')
 }
 
+// Листинг каталога для scan-путей: отсутствующий каталог — валидный пустой
+// результат, но любая другая ошибка (EIO, EACCES, сбой облачного провайдера)
+// бросается. Тихий пустой listing (как у existsSync, который превращает
+// stat-ошибку в false) закоммитил бы усечённый индекс как успешный скан —
+// без ошибки reconciler не запустит retry.
+export function readDirEntriesFailClosed(currentPath: string): fs.Dirent[] {
+  try {
+    return fs.readdirSync(currentPath, { withFileTypes: true })
+  }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return []
+    }
+    throw error
+  }
+}
+
 export function depthOfRelativePath(relativePath: string): number {
   if (!relativePath) {
     return 0
@@ -34,11 +51,7 @@ export function listMarkdownFiles(
   skipDirNames?: Set<string>,
   currentPath = rootPath,
 ): string[] {
-  if (!fs.pathExistsSync(currentPath)) {
-    return []
-  }
-
-  const entries = fs.readdirSync(currentPath, { withFileTypes: true })
+  const entries = readDirEntriesFailClosed(currentPath)
   const files: string[] = []
   const isRoot = currentPath === rootPath
 

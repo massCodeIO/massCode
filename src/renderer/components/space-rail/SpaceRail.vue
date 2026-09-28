@@ -1,21 +1,17 @@
 <script setup lang="ts">
 import * as Tooltip from '@/components/ui/shadcn/tooltip'
-import { useApp, useTheme } from '@/composables'
-import { i18n, ipc, store } from '@/electron'
+import { useAi } from '@/composables/ai/useAi'
+import { i18n, store } from '@/electron'
+import { openSpaceTarget } from '@/ipc/listeners/deepLinks'
 import { RouterName } from '@/router'
 import { getSpaceDefinitions } from '@/spaceDefinitions'
 import { isMac } from '@/utils'
-import { Settings } from 'lucide-vue-next'
+import { MessageSquare, Settings } from 'lucide-vue-next'
 import { RouterLink, useRoute } from 'vue-router'
 import packageJson from '../../../../package.json'
 
-const { isSponsored } = useApp()
-const { isDark } = useTheme()
 const route = useRoute()
-
-function openDonatePage() {
-  void ipc.invoke('system:open-external', 'https://masscode.io/donate/')
-}
+const { open: aiOpen, openAndFocus: openAi } = useAi()
 
 const spaces = computed(() => {
   return getSpaceDefinitions().map(space => ({
@@ -23,6 +19,12 @@ const spaces = computed(() => {
     active: space.isActive(route.name),
   }))
 })
+
+const supportsAi = computed(() =>
+  spaces.value.some(
+    space => space.active && ['code', 'notes', 'http'].includes(space.id),
+  ),
+)
 
 watch(
   () => spaces.value.find(s => s.active)?.id,
@@ -44,7 +46,6 @@ watch(
       <RouterLink
         v-for="space in spaces"
         :key="space.id"
-        v-slot="{ navigate }"
         custom
         :to="space.to"
       >
@@ -52,25 +53,20 @@ watch(
           <Tooltip.TooltipTrigger as-child>
             <button
               type="button"
-              class="text-muted-foreground flex w-full cursor-default flex-col items-center gap-1 rounded-lg px-2 py-2 transition-colors"
+              class="text-muted-foreground flex h-11.5 w-full cursor-default items-center justify-center rounded-lg px-2 py-2 transition-colors"
               :class="
                 space.active
                   ? 'bg-accent text-accent-foreground'
                   : 'hover:bg-accent-hover'
               "
-              @click="navigate"
+              :aria-label="space.label"
+              :aria-current="space.active ? 'page' : undefined"
+              @click="openSpaceTarget(space.id)"
             >
               <component
                 :is="space.icon"
-                class="h-4 w-4 shrink-0"
+                class="size-5 shrink-0"
               />
-              <UiText
-                variant="caption"
-                weight="medium"
-                class="leading-none select-none"
-              >
-                {{ space.label }}
-              </UiText>
             </button>
           </Tooltip.TooltipTrigger>
           <Tooltip.TooltipContent side="right">
@@ -80,30 +76,30 @@ watch(
       </RouterLink>
     </div>
     <div
-      v-if="!isSponsored"
-      class="mt-auto flex flex-1 flex-col items-center justify-end gap-2 pb-2"
+      class="mt-auto flex min-h-0 flex-1 flex-col items-center justify-end gap-2 overflow-hidden pb-2"
     >
-      <span
-        class="cursor-pointer text-center text-[9px] leading-none font-semibold tracking-[0.14em] uppercase select-none [writing-mode:sideways-lr]"
-        :class="isDark ? 'text-amber-300/70' : 'text-violet-500/70'"
-        role="link"
-        tabindex="0"
-        @click="openDonatePage"
-        @keydown.enter="openDonatePage"
-        @keydown.space.prevent="openDonatePage"
+      <UiActionButton
+        v-if="supportsAi"
+        :tooltip="i18n.t('ai.title')"
+        shortcut="CommandOrControl+L"
+        :aria-pressed="aiOpen"
+        @click="openAi"
       >
-        {{ i18n.t("messages:special.unsponsored") }}
-      </span>
+        <MessageSquare class="size-4" />
+      </UiActionButton>
+      <SpaceRailCloudDownloads />
+      <SpaceRailUnsponsored />
       <RouterLink
         v-slot="{ navigate }"
         custom
-        :to="{ name: RouterName.preferencesStorage }"
+        :to="{ name: RouterName.preferences }"
       >
         <UiActionButton
           :tooltip="i18n.t('preferences:label')"
+          shortcut="CommandOrControl+,"
           @click="navigate"
         >
-          <Settings class="h-4 w-4" />
+          <Settings class="size-4" />
         </UiActionButton>
       </RouterLink>
       <UiText

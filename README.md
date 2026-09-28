@@ -8,9 +8,9 @@ A free, open-source developer workspace.
 </p>
 
 <p align="center">
-  <strong>Snippets, notes, calculations, and dev tools in one local-first app.</strong>
+  <strong>Snippets, notes, HTTP requests, calculations, drawings, and dev tools in one local-first app.</strong>
   <br>
-  Your data stays on your machine as plain Markdown files.
+  Your workspace is stored locally as plain Markdown files.
 </p>
 
 <p align="center">
@@ -75,7 +75,7 @@ massCode is free and open source. But building and maintaining a quality tool ta
 
 ## About
 
-Originally a snippet manager, massCode now brings together snippets, notes, calculations, and developer tools in one desktop app, so everyday work stays in one place.
+Originally a snippet manager, massCode now brings together snippets, notes, HTTP requests, calculations, drawings, and developer tools in one desktop app, so everyday work stays in one place.
 
 ## Features
 
@@ -93,11 +93,33 @@ Use massCode as a focused snippet workspace with multi-level folders, tags, and 
 
 Write longer markdown documents right next to your snippets: project docs, drafts, research notes, and personal knowledge bases.
 
+- Task notes with status, priority, due dates, and Today / Upcoming / Completed views
+- Completed task cleanup and auto-clean scheduling
+- Dashboard with activity overview, recent notes, top linked notes, and a notes graph preview
 - Editor, Live Preview, and Preview modes
+- Editable markdown tables with row and column controls
+- Internal links to notes, snippets, and HTTP requests, with placeholders for items you plan to create later
+- Note inspector with section navigation and reordering, link filters, and grouped callouts
+- Fullscreen notes graph for exploring internal links between notes
 - Integrated [Mermaid](https://mermaid-js.github.io/mermaid/#) diagrams
 - Mind maps generated from markdown heading structure
 - Fullscreen presentation mode for demos and meetings
-- Callout blocks and image embedding
+- Callout blocks, including TODOs for unfinished writing, and image embedding
+
+### HTTP Client
+
+Build and test API workflows alongside your code snippets and project notes.
+
+- Send HTTP and GraphQL requests and exchange WebSocket messages
+- Organize collections and nested folders with shared auth, headers, variables, and scripts
+- Switch environments, protect tokens with local secret variables, and pass response values between requests
+- Check responses with assertions and JavaScript tests, then run collections or folders in sequence
+- Edit query parameters, headers, authentication, and JSON, text, form, or file payloads
+- Generate request code for 20 languages and runtimes, including cURL
+- Inspect responses and saved history, debug traffic in Console, and manage cookies and transport settings
+- Import collections from OpenAPI, Postman, and Bruno
+
+See the [HTTP documentation](https://masscode.io/documentation/http/) to get started.
 
 ### Math Notebook
 
@@ -108,18 +130,78 @@ A calculator-style notebook for natural-language calculations, conversions, and 
 - Variables, functions, and aggregates for quick iterative calculations
 - Finance calculations (compound interest, ROI, loan repayment)
 
+### Drawings
+
+Sketch diagrams, wireframes, and whiteboard ideas on an [Excalidraw](https://excalidraw.com)-powered canvas next to your snippets and notes.
+
+- Searchable list of drawings with keyboard navigation
+- Pan and zoom remembered per drawing, with fit-to-content to recenter
+- Export drawings as images
+- Embed drawings directly in your markdown notes
+
 ### Developer Tools
 
 Built-in utilities for the small tasks that usually send you to a browser tab:
 
-- **Text:** Case Converter, Slug Generator, URL Parser
+- **Compare:** JSON Diff
+- **Text:** Case Converter, Slug Generator, URL Parser, Line Break Normalizer
 - **Crypto:** Hash/HMAC Generator, Password Generator, UUID
 - **Encoders:** URL, Base64, JSON to TOML/XML/YAML, Color Converter
 - **Generators:** JSON Generator, Lorem Ipsum
 
+### Command Palette
+
+Jump to spaces, snippets, notes, HTTP requests, and common actions from anywhere with a keyboard-first command palette.
+
+- Open with <kbd>Cmd+P</kbd> on macOS or <kbd>Ctrl+P</kbd> on Windows and Linux
+- Search across snippets, notes, HTTP requests, spaces, and commands
+- Run create actions for snippets, notes, HTTP requests, and folders
+- Scope search to a space with `@` or open command mode with `>`
+
+### Imports
+
+Bring existing work into your vault with preview-first imports for snippets, notes, and API collections.
+
+- Import snippets from VS Code, Raycast, SnippetsLab, and public GitHub Gists
+- Import markdown notes from Obsidian folders
+- Import HTTP collections from OpenAPI, Postman, and Bruno
+- Review detected items, folders, tags, environments, and warnings before writing anything
+
+### Browser Clipper
+
+Save web content from Chrome, Firefox, or Safari into the local massCode app.
+
+- Install the Chrome version from the [Chrome Web Store](https://chromewebstore.google.com/detail/masscode-clipper/fkaaogdifollkhjbfoabbiocecehaaii)
+- Save selected code as snippets
+- Save selected text or readable page content as notes
+- Save pages or links as HTTP `GET` requests
+- Connect through the local Integration API with an API token
+
+### AI Assistant
+
+Ask the built-in assistant to carry out tasks across Code, Notes, and HTTP using your own AI provider account or a local model.
+
+- Edit and format snippets, organize notes, and update tasks
+- Find records across your vault and use them in a conversation
+- Run HTTP collections with confirmation, explain failed checks, and save reports in Notes
+- Request a preview before edits, adjust a task while it runs, and undo changes that support Undo
+
+Cloud providers receive the context used for the task; use a model running on your computer for local processing. See the [AI Assistant guide](https://masscode.io/documentation/ai/) for setup and examples.
+
+### MCP Integration
+
+Connect Codex, Claude Code, Cursor, or VS Code Copilot to your massCode vault through the built-in MCP server.
+
+- Find and read snippets, notes, and saved HTTP requests from your coding agent
+- Save code and Markdown notes to Inbox; organize HTTP requests in Inbox or collections
+- Edit and move saved HTTP requests with protection against overwriting newer changes
+- Preview and send requests using the active massCode environment, then inspect saved execution history
+
+See the [MCP setup guide](https://masscode.io/documentation/mcp/) to connect your agent.
+
 ## Markdown Vault
 
-Your snippets and notes live as plain `.md` files on disk with frontmatter metadata, so the data stays readable and portable.
+Your snippets, notes, and HTTP requests live as plain `.md` files on disk with frontmatter metadata, so the data stays readable and portable.
 
 - **Git-friendly** - track changes and sync via any Git remote
 - **Cloud sync** - works with iCloud, Dropbox, Google Drive, Syncthing
@@ -129,6 +211,12 @@ Your snippets and notes live as plain `.md` files on disk with frontmatter metad
 ## Custom Themes
 
 Customize the app UI and editor syntax highlighting with JSON theme files. Supports light and dark themes with live reload. See the [theme docs](https://masscode.io/documentation/themes.html).
+
+## Contributions
+
+massCode accepts external pull requests only for localizations and new syntax highlighting languages. To report a bug, please [open an issue](https://github.com/massCodeIO/massCode/issues/new/choose). For feature requests and ideas, start a discussion in [GitHub Discussions](https://github.com/massCodeIO/massCode/discussions).
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## Build Locally
 
@@ -168,24 +256,6 @@ To run in development mode:
 
 ```bash
 pnpm dev
-```
-
-</details>
-
-## Troubleshooting
-
-<details>
-<summary>macOS: "massCode is damaged and can't be opened"</summary>
-
-This is caused by macOS security settings. Fix it with:
-
-**Option 1: System Settings (macOS 13+)**
-1. Open **System Settings** -> **Privacy & Security**
-2. Find "massCode" and click **Allow Anyway**
-
-**Option 2: Terminal**
-```bash
-sudo xattr -r -d com.apple.quarantine /Applications/massCode.app
 ```
 
 </details>

@@ -7,7 +7,7 @@
     "quit": "massCodeを終了",
     "about": "massCodeについて",
     "hide": "massCodeを隠す",
-    "mathNotebook": "Math Notebook"
+    "mathNotebook": "数学ノートブック"
   },
   "help": {
     "label": "ヘルプ",
@@ -28,10 +28,7 @@
       "gumroad": "Gumroadで寄付（Visa、Mastercard等）"
     },
     "twitter": "X",
-    "devTools": "開発者ツールの切り替え",
-    "links": {
-      "snippets": "スニペットコレクション"
-    }
+    "devTools": "開発者ツールの切り替え"
   },
   "view": {
     "label": "表示",
@@ -44,10 +41,10 @@
     },
     "compactMode": "コンパクトモード",
     "layout": {
-      "label": "Layout",
-      "allPanels": "All Panels",
-      "listEditor": "List + Editor",
-      "editorOnly": "Editor Only"
+      "label": "レイアウト",
+      "allPanels": "すべてのパネル",
+      "listEditor": "リスト + エディタ",
+      "editorOnly": "エディタのみ"
     }
   },
   "edit": {
@@ -64,10 +61,10 @@
     "fontSizeIncrease": "フォントサイズを大きく",
     "fontSizeDecrease": "フォントサイズを小さく",
     "fontSizeReset": "フォントサイズをリセット",
-    "mode": "Mode",
-    "modeRaw": "Raw",
-    "modeLivePreview": "Live Preview",
-    "modePreview": "Preview"
+    "mode": "モード",
+    "modeRaw": "RAWデータ",
+    "modeLivePreview": "ライブプレビュー",
+    "modePreview": "プレビュー"
   },
   "markdown": {
     "label": "Markdown",
@@ -85,11 +82,11 @@
     "label": "開発者ツール"
   },
   "window": {
-    "label": "Window",
-    "minimize": "Minimize"
+    "label": "ウィンドウ",
+    "minimize": "最小化"
   },
   "file": {
-    "label": "File",
-    "new": "New"
+    "label": "ファイル",
+    "new": "新規作成"
   }
 }

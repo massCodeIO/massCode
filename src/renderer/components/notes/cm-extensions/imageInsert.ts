@@ -1,45 +1,85 @@
-import { ipc } from '@/electron'
-import { EditorView } from '@codemirror/view'
+import { i18n, ipc, store } from '@/electron'
+import {
+  Decoration,
+  EditorView,
+  ViewPlugin,
+  WidgetType,
+} from '@codemirror/view'
+import {
+  forgetImageUpload,
+  imageUploadRanges,
+  trackImageUpload,
+} from './imageUploadRange'
 
-function getImageExtension(file: File): string {
-  const ext = file.name.includes('.') ? `.${file.name.split('.').pop()}` : ''
-  if (ext)
+const liveViews = new WeakSet<EditorView>()
+
+function getImageExtension(file: File): string | null {
+  const ext = file.name.includes('.')
+    ? `.${file.name.split('.').pop()?.toLowerCase()}`
+    : ''
+  if (ext === '.png' || ext === '.jpg' || ext === '.jpeg') {
     return ext
+  }
 
   const mimeToExt: Record<string, string> = {
     'image/png': '.png',
     'image/jpeg': '.jpg',
-    'image/gif': '.gif',
-    'image/webp': '.webp',
-    'image/svg+xml': '.svg',
-    'image/bmp': '.bmp',
   }
-  return mimeToExt[file.type] || '.png'
+  return mimeToExt[file.type] ?? null
 }
 
-async function insertImage(view: EditorView, file: File, pos: number) {
-  const placeholder = '![Uploading...]()'
-  view.dispatch({
-    changes: { from: pos, insert: placeholder },
-  })
-
+async function insertImage(
+  view: EditorView,
+  file: File,
+  pos: number,
+  noteId: () => number | undefined,
+) {
+  const id = crypto.randomUUID()
+  const vault = store.preferences.get<string>('storage.vaultPath') ?? ''
+  const target = noteId()
+  view.dispatch({ effects: trackImageUpload.of({ id, from: pos, text: '' }) })
+  function finish(markdown: string) {
+    if (
+      !liveViews.has(view)
+      || noteId() !== target
+      || vault !== (store.preferences.get<string>('storage.vaultPath') ?? '')
+    ) {
+      return
+    }
+    const range = view.state.field(imageUploadRanges, false)?.get(id)
+    if (!range)
+      return
+    view.dispatch({
+      changes: { from: range.from, to: range.to, insert: markdown },
+      effects: forgetImageUpload.of(id),
+    })
+  }
   try {
     const arrayBuffer = await file.arrayBuffer()
-    const buffer = Array.from(new Uint8Array(arrayBuffer))
     const ext = getImageExtension(file)
-    const url: string = await ipc.invoke('fs:notes-asset', { buffer, ext })
-    const alt = file.name.replace(/\.[^.]+$/, '') || 'image'
-    const markdown = `![${alt}](${url})`
-
-    view.dispatch({
-      changes: { from: pos, to: pos + placeholder.length, insert: markdown },
+    if (!ext)
+      throw new TypeError('Unsupported Notes image type')
+    if (
+      !liveViews.has(view)
+      || noteId() !== target
+      || !view.state.field(imageUploadRanges, false)?.has(id)
+      || vault !== (store.preferences.get<string>('storage.vaultPath') ?? '')
+    ) {
+      return
+    }
+    const url: string = await ipc.invoke('fs:notes-asset', {
+      buffer: arrayBuffer,
+      ext,
+      vault,
     })
+    if (vault !== (store.preferences.get<string>('storage.vaultPath') ?? ''))
+      return
+    const alt = file.name.replace(/\.[^.]+$/, '').replace(/[[\]\\\r\n]/g, ' ')
+    finish(`![${alt}](${url})`)
   }
   catch (error) {
     console.error('[notes] Failed to save image', error)
-    view.dispatch({
-      changes: { from: pos, to: pos + placeholder.length, insert: '' },
-    })
+    finish('')
   }
 }
 
@@ -47,36 +87,65 @@ function getImageFile(dataTransfer: DataTransfer | null): File | null {
   if (!dataTransfer)
     return null
   for (const file of Array.from(dataTransfer.files)) {
-    if (file.type.startsWith('image/'))
+    if (getImageExtension(file))
       return file
   }
   return null
 }
 
-export function createImageInsert() {
-  return EditorView.domEventHandlers({
-    paste(event, view) {
-      const file = getImageFile(event.clipboardData)
-      if (!file)
-        return false
+class UploadWidget extends WidgetType {
+  toDOM() {
+    const element = document.createElement('span')
+    element.textContent = i18n.t('spaces.notes.imageUploading')
+    element.className = 'text-muted-foreground text-xs'
+    return element
+  }
+}
+export function createImageInsert(noteId: () => number | undefined) {
+  return [
+    imageUploadRanges,
+    ViewPlugin.define((view) => {
+      liveViews.add(view)
+      return { destroy: () => liveViews.delete(view) }
+    }),
+    EditorView.decorations.compute([imageUploadRanges], state =>
+      Decoration.set(
+        [...state.field(imageUploadRanges).values()].map(range =>
+          Decoration.widget({ widget: new UploadWidget(), side: 1 }).range(
+            range.from,
+          ),
+        ),
+        true,
+      )),
+    EditorView.domEventHandlers({
+      paste(event, view) {
+        const file = getImageFile(event.clipboardData)
+        if (!file)
+          return false
 
-      event.preventDefault()
-      const pos = view.state.selection.main.head
-      void insertImage(view, file, pos)
-      return true
-    },
+        // В буфере есть и текст — текстовая вставка приоритетнее: Excel кладёт
+        // рядом с TSV ещё и картинку-рендер скопированных ячеек.
+        if (event.clipboardData?.getData('text/plain'))
+          return false
 
-    drop(event, view) {
-      const file = getImageFile(event.dataTransfer)
-      if (!file)
-        return false
+        event.preventDefault()
+        const pos = view.state.selection.main.head
+        void insertImage(view, file, pos, noteId)
+        return true
+      },
 
-      event.preventDefault()
-      const pos
-        = view.posAtCoords({ x: event.clientX, y: event.clientY })
-          ?? view.state.selection.main.head
-      void insertImage(view, file, pos)
-      return true
-    },
-  })
+      drop(event, view) {
+        const file = getImageFile(event.dataTransfer)
+        if (!file)
+          return false
+
+        event.preventDefault()
+        const pos
+          = view.posAtCoords({ x: event.clientX, y: event.clientY })
+            ?? view.state.selection.main.head
+        void insertImage(view, file, pos, noteId)
+        return true
+      },
+    }),
+  ]
 }

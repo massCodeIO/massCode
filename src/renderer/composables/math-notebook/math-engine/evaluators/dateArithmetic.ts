@@ -8,6 +8,7 @@ import { splitTopLevelAddSub } from '../utils'
 interface DateArithmeticDeps {
   mathEvaluate: (expression: string, scope: Record<string, any>) => any
   formatResult: (result: any) => any
+  locale: string
 }
 
 function evaluateDateLikeExpression(
@@ -16,7 +17,7 @@ function evaluateDateLikeExpression(
   scope: Record<string, any>,
   deps: DateArithmeticDeps,
 ) {
-  const timeZoneResult = evaluateTimeZoneLine(expression, now)
+  const timeZoneResult = evaluateTimeZoneLine(expression, now, deps.locale)
   if (timeZoneResult?.rawResult instanceof Date) {
     return timeZoneResult.rawResult
   }
@@ -24,6 +25,7 @@ function evaluateDateLikeExpression(
   const localTemporalResult = parseExplicitLocalTemporalExpression(
     expression,
     now,
+    deps.locale,
   )
   if (localTemporalResult) {
     return localTemporalResult.date

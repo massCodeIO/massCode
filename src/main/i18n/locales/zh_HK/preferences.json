@@ -2,11 +2,9 @@
   "label": "偏好設置",
   "storage": {
     "section": {
-      "main": "Main",
-      "migration": "Migration"
+      "main": "Main"
     },
     "label": "存儲",
-    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "數量",
     "vaultPath": "Vault Path"
   },
@@ -116,7 +114,7 @@
     "codeRenderer": "程式碼區塊渲染器"
   },
   "api": {
-    "label": "API 端口",
+    "label": "API",
     "port": {
       "label": "API 端口",
       "description": "API 伺服器的端口號（需要重新啟動應用程式）。有效範圍：1024-65535。"

@@ -9,16 +9,71 @@
  * ---------------------------------------------------------------
  */
 
+export interface CaptureRequest {
+  target: "code" | "notes" | "http";
+  name?: string;
+  folderId?: number | null;
+  text?: string;
+  markdown?: string;
+  url?: string;
+  pageTitle?: string;
+  suggestedName?: string;
+  sourceTitle?: string;
+  sourceUrl?: string;
+  contextLabel?: string;
+  language?: string;
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  source?: {
+    title?: string;
+    url?: string;
+    capturedAt?: number;
+  };
+}
+
+export interface CaptureResponse {
+  target: "code" | "notes" | "http";
+  id: number;
+}
+
 export interface SnippetContentsAdd {
   label: string;
   value: string | null;
   language: string;
 }
 
+export interface SnippetContentsOrder {
+  contentIds: number[];
+}
+
 export interface SnippetContentsUpdate {
   label?: string;
   value?: string | null;
   language?: string;
+}
+
+export interface SnippetItemResponse {
+  id: number;
+  name: string;
+  description: string | null;
+  tags: {
+    id: number;
+    name: string;
+  }[];
+  folder: {
+    id: number;
+    name: string;
+  } | null;
+  isFavorites: number;
+  isDeleted: number;
+  createdAt: number;
+  updatedAt: number;
+  pendingCloudDownload?: boolean;
+  contents: {
+    id: number;
+    label: string;
+    value: string | null;
+    language: string;
+  }[];
 }
 
 export interface SnippetsAdd {
@@ -51,6 +106,11 @@ export interface SnippetsQuery {
   search?: string;
   sort?: string;
   order?: "ASC" | "DESC";
+  /**
+   * @min 0
+   * @max 1
+   */
+  searchNameOnly?: number;
   folderId?: number;
   tagId?: number;
   /**
@@ -82,16 +142,16 @@ export type SnippetsResponse = {
     id: number;
     name: string;
   } | null;
-  contents: {
-    id: number;
-    label: string;
-    value: string | null;
-    language: string;
-  }[];
   isFavorites: number;
   isDeleted: number;
   createdAt: number;
   updatedAt: number;
+  pendingCloudDownload?: boolean;
+  contents: {
+    id: number;
+    label: string;
+    language: string;
+  }[];
 }[];
 
 export interface FoldersAdd {
@@ -137,6 +197,101 @@ export type FoldersTreeResponse = {
   children: any[];
 }[];
 
+export interface VaultDoctorInput {
+  decisions?: {
+    groupId: string;
+    keepPath: string;
+  }[];
+  spaces?: ("code" | "notes" | "http" | "math")[];
+}
+
+export interface VaultDoctorResponse {
+  conflictGroups: {
+    id: string;
+    items: {
+      action:
+        | "create-folder-metadata"
+        | "detect-conflict"
+        | "write-frontmatter"
+        | "register-file"
+        | "reassign-id"
+        | "repair-environment-state"
+        | "repair-math-state"
+        | "sync-state"
+        | "skip";
+      fingerprint: {
+        mtimeMs: number;
+        path: string;
+        size: number;
+      };
+      kind:
+        | "conflict"
+        | "environment"
+        | "file"
+        | "folder"
+        | "math-sheet"
+        | "note"
+        | "snippet";
+      path: string;
+      space: "code" | "notes" | "http" | "math";
+      status: "applied" | "blocked" | "needs-decision" | "pending" | "skipped";
+    }[];
+    reason:
+      | "conflicted-copy"
+      | "duplicate-id"
+      | "invalid-frontmatter"
+      | "merge-markers";
+  }[];
+  items: {
+    action:
+      | "create-folder-metadata"
+      | "detect-conflict"
+      | "write-frontmatter"
+      | "register-file"
+      | "reassign-id"
+      | "repair-environment-state"
+      | "repair-math-state"
+      | "sync-state"
+      | "skip";
+    fingerprint: {
+      mtimeMs: number;
+      path: string;
+      size: number;
+    };
+    kind:
+      | "conflict"
+      | "environment"
+      | "file"
+      | "folder"
+      | "math-sheet"
+      | "note"
+      | "snippet";
+    path: string;
+    space: "code" | "notes" | "http" | "math";
+    status: "applied" | "blocked" | "needs-decision" | "pending" | "skipped";
+  }[];
+  notReady?: boolean;
+  summary: {
+    affectedFiles: number;
+    blocked: number;
+    conflicts: number;
+    folders: number;
+    httpEnvironments: number;
+    httpRequests: number;
+    mathSheets: number;
+    notes: number;
+    skipped: number;
+    snippets: number;
+    warnings: number;
+  };
+  warnings: {
+    code: string;
+    details?: object;
+    path: string;
+    space: "code" | "notes" | "http" | "math";
+  }[];
+}
+
 export interface TagsAdd {
   name: string;
 }
@@ -150,9 +305,64 @@ export interface TagsAddResponse {
   id: number;
 }
 
+export interface NotesDashboardResponse {
+  stats: {
+    notesCount: number;
+    wordsCount: number;
+    foldersCount: number;
+    tagsCount: number;
+  };
+  activity: {
+    days: object;
+    notesUpdatedToday: number;
+    notesUpdatedLast7Days: number;
+  };
+  recent: {
+    id: number;
+    name: string;
+    folder: {
+      id: number;
+      name: string;
+    } | null;
+    updatedAt: number;
+  }[];
+  topLinked: {
+    id: number;
+    name: string;
+    incomingLinksCount: number;
+  }[];
+  graphPreview: {
+    nodes: {
+      id: number;
+      name: string;
+      folderId: number | null;
+      incomingLinksCount: number;
+    }[];
+    edges: {
+      source: number;
+      target: number;
+    }[];
+  };
+}
+
+export interface NotesGraphResponse {
+  nodes: {
+    id: number;
+    name: string;
+    folderId: number | null;
+    tagIds: number[];
+    incomingLinksCount: number;
+  }[];
+  edges: {
+    source: number;
+    target: number;
+  }[];
+}
+
 export interface NotesAdd {
   name: string;
   folderId?: number | null;
+  properties?: object;
 }
 
 export interface NotesContentUpdate {
@@ -164,11 +374,15 @@ export interface NotesCountsResponse {
   trash: number;
 }
 
-export type NotesResponse = {
+export interface NotesTasksCleanupResponse {
+  count: number;
+}
+
+export interface NoteItemResponse {
   id: number;
   name: string;
   description: string | null;
-  content: string;
+  properties: object;
   tags: {
     id: number;
     name: string;
@@ -181,12 +395,41 @@ export type NotesResponse = {
   isDeleted: number;
   createdAt: number;
   updatedAt: number;
+  pendingCloudDownload?: boolean;
+  content: string;
+}
+
+export type NoteProperties = object;
+
+export type NotesResponse = {
+  id: number;
+  name: string;
+  description: string | null;
+  properties: object;
+  tags: {
+    id: number;
+    name: string;
+  }[];
+  folder: {
+    id: number;
+    name: string;
+  } | null;
+  isFavorites: number;
+  isDeleted: number;
+  createdAt: number;
+  updatedAt: number;
+  pendingCloudDownload?: boolean;
 }[];
 
 export interface NotesQuery {
   search?: string;
   sort?: string;
   order?: "ASC" | "DESC";
+  /**
+   * @min 0
+   * @max 1
+   */
+  searchNameOnly?: number;
   folderId?: number;
   tagId?: number;
   /**
@@ -204,6 +447,20 @@ export interface NotesQuery {
    * @max 1
    */
   isInbox?: number;
+  propertyDue?: "today" | "upcoming";
+  propertyStatus?: string;
+  propertyStatusNot?: string;
+  propertyType?: string;
+  /**
+   * @min 0
+   * @max 1
+   */
+  hideCompletedTasks?: number;
+}
+
+export interface NotePropertiesUpdate {
+  properties?: object;
+  unset?: string[];
 }
 
 export interface NotesUpdate {
@@ -277,6 +534,1045 @@ export type NoteTagsResponse = {
 
 export interface NoteTagsUpdate {
   name: string;
+}
+
+export interface InternalLinksResolveBody {
+  /** @maxItems 500 */
+  titles: string[];
+}
+
+export type InternalLinksResolveResponse = {
+  title: string;
+  resolved: {
+    type: "snippet" | "note" | "http-request";
+    id: number;
+    name: string;
+    folder: {
+      id: number;
+      name: string;
+    } | null;
+    isDeleted: number;
+    firstContent?: {
+      language: string;
+      value: string | null;
+    } | null;
+    contentExcerpt?: string;
+    request?: {
+      method: string;
+      url: string;
+      description: string;
+    };
+  } | null;
+}[];
+
+export interface HttpFoldersAdd {
+  name: string;
+  icon?: string | null;
+  parentId?: number | null;
+}
+
+export type HttpFoldersResponse = {
+  collectionConfig?: {
+    postResponseOrder?: "parent-first" | "child-first";
+    /** @maxLength 1048576 */
+    documentation: string;
+    /** @maxLength 256 */
+    version: string;
+    /** @maxItems 1000 */
+    headers: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    /** @maxItems 1000 */
+    variables: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    auth: {
+      type: "none" | "inherit" | "basic" | "bearer" | "apikey";
+      key?: string;
+      value?: string;
+      in?: "header" | "query";
+      token?: string;
+      username?: string;
+      password?: string;
+    };
+    runtime: {
+      scripts?: {
+        /** @maxLength 65536 */
+        preRequest: string;
+        /** @maxLength 65536 */
+        postResponse: string;
+      };
+      version: 1 | 2;
+      /** @maxItems 100 */
+      extractions: {
+        name: string;
+        source: "json" | "header";
+        path: string;
+      }[];
+      /** @maxItems 100 */
+      assertions: {
+        name: string;
+        source: "json" | "header" | "status" | "durationMs";
+        path?: string;
+        operator:
+          | "eq"
+          | "neq"
+          | "exists"
+          | "contains"
+          | "gt"
+          | "gte"
+          | "lt"
+          | "lte"
+          | "notContains"
+          | "startsWith"
+          | "endsWith"
+          | "matches"
+          | "notMatches"
+          | "length"
+          | "between"
+          | "in"
+          | "notIn"
+          | "isString"
+          | "isNumber"
+          | "isBoolean"
+          | "isArray"
+          | "isObject"
+          | "isNull";
+        expected?:
+          | string
+          | number
+          | boolean
+          | null
+          | (string | number | boolean | null)[];
+      }[];
+      transport?: {
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 2147483647
+         */
+        timeoutMs?: number;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 9007199254740991
+         */
+        maxResponseBytes?: number;
+        protocolVersion?: "http1" | "auto" | "http2";
+        encodeUrl?: boolean;
+        followOriginalHttpMethod?: boolean;
+        followAuthorizationHeader?: boolean;
+        removeRefererHeaderOnRedirect?: boolean;
+        followRedirects?: boolean;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 100
+         */
+        maxRedirects?: number;
+        skipCertificateVerification?: boolean;
+      };
+    };
+  } | null;
+  collectionConfigState?: "ready" | "invalid";
+  id: number;
+  name: string;
+  icon: string | null;
+  createdAt: number;
+  updatedAt: number;
+  parentId: number | null;
+  isOpen: number;
+  orderIndex: number;
+}[];
+
+export type HttpFoldersTreeResponse = {
+  collectionConfig?: {
+    postResponseOrder?: "parent-first" | "child-first";
+    /** @maxLength 1048576 */
+    documentation: string;
+    /** @maxLength 256 */
+    version: string;
+    /** @maxItems 1000 */
+    headers: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    /** @maxItems 1000 */
+    variables: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    auth: {
+      type: "none" | "inherit" | "basic" | "bearer" | "apikey";
+      key?: string;
+      value?: string;
+      in?: "header" | "query";
+      token?: string;
+      username?: string;
+      password?: string;
+    };
+    runtime: {
+      scripts?: {
+        /** @maxLength 65536 */
+        preRequest: string;
+        /** @maxLength 65536 */
+        postResponse: string;
+      };
+      version: 1 | 2;
+      /** @maxItems 100 */
+      extractions: {
+        name: string;
+        source: "json" | "header";
+        path: string;
+      }[];
+      /** @maxItems 100 */
+      assertions: {
+        name: string;
+        source: "json" | "header" | "status" | "durationMs";
+        path?: string;
+        operator:
+          | "eq"
+          | "neq"
+          | "exists"
+          | "contains"
+          | "gt"
+          | "gte"
+          | "lt"
+          | "lte"
+          | "notContains"
+          | "startsWith"
+          | "endsWith"
+          | "matches"
+          | "notMatches"
+          | "length"
+          | "between"
+          | "in"
+          | "notIn"
+          | "isString"
+          | "isNumber"
+          | "isBoolean"
+          | "isArray"
+          | "isObject"
+          | "isNull";
+        expected?:
+          | string
+          | number
+          | boolean
+          | null
+          | (string | number | boolean | null)[];
+      }[];
+      transport?: {
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 2147483647
+         */
+        timeoutMs?: number;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 9007199254740991
+         */
+        maxResponseBytes?: number;
+        protocolVersion?: "http1" | "auto" | "http2";
+        encodeUrl?: boolean;
+        followOriginalHttpMethod?: boolean;
+        followAuthorizationHeader?: boolean;
+        removeRefererHeaderOnRedirect?: boolean;
+        followRedirects?: boolean;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 100
+         */
+        maxRedirects?: number;
+        skipCertificateVerification?: boolean;
+      };
+    };
+  } | null;
+  collectionConfigState?: "ready" | "invalid";
+  id: number;
+  name: string;
+  icon: string | null;
+  createdAt: number;
+  updatedAt: number;
+  parentId: number | null;
+  isOpen: number;
+  orderIndex: number;
+  children: any[];
+}[];
+
+export interface HttpFoldersUpdate {
+  collectionConfig?: {
+    postResponseOrder?: "parent-first" | "child-first";
+    /** @maxLength 1048576 */
+    documentation: string;
+    /** @maxLength 256 */
+    version: string;
+    /** @maxItems 1000 */
+    headers: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    /** @maxItems 1000 */
+    variables: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    auth: {
+      type: "none" | "inherit" | "basic" | "bearer" | "apikey";
+      key?: string;
+      value?: string;
+      in?: "header" | "query";
+      token?: string;
+      username?: string;
+      password?: string;
+    };
+    runtime: {
+      scripts?: {
+        /** @maxLength 65536 */
+        preRequest: string;
+        /** @maxLength 65536 */
+        postResponse: string;
+      };
+      version: 1 | 2;
+      /** @maxItems 100 */
+      extractions: {
+        name: string;
+        source: "json" | "header";
+        path: string;
+      }[];
+      /** @maxItems 100 */
+      assertions: {
+        name: string;
+        source: "json" | "header" | "status" | "durationMs";
+        path?: string;
+        operator:
+          | "eq"
+          | "neq"
+          | "exists"
+          | "contains"
+          | "gt"
+          | "gte"
+          | "lt"
+          | "lte"
+          | "notContains"
+          | "startsWith"
+          | "endsWith"
+          | "matches"
+          | "notMatches"
+          | "length"
+          | "between"
+          | "in"
+          | "notIn"
+          | "isString"
+          | "isNumber"
+          | "isBoolean"
+          | "isArray"
+          | "isObject"
+          | "isNull";
+        expected?:
+          | string
+          | number
+          | boolean
+          | null
+          | (string | number | boolean | null)[];
+      }[];
+      transport?: {
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 2147483647
+         */
+        timeoutMs?: number;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 9007199254740991
+         */
+        maxResponseBytes?: number;
+        protocolVersion?: "http1" | "auto" | "http2";
+        encodeUrl?: boolean;
+        followOriginalHttpMethod?: boolean;
+        followAuthorizationHeader?: boolean;
+        removeRefererHeaderOnRedirect?: boolean;
+        followRedirects?: boolean;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 100
+         */
+        maxRedirects?: number;
+        skipCertificateVerification?: boolean;
+      };
+    };
+  };
+  name?: string;
+  icon?: string | null;
+  parentId?: number | null;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isOpen?: number;
+  orderIndex?: number;
+}
+
+export interface HttpRuntime {
+  scripts?: {
+    /** @maxLength 65536 */
+    preRequest: string;
+    /** @maxLength 65536 */
+    postResponse: string;
+  };
+  version: 1 | 2;
+  /** @maxItems 100 */
+  extractions: {
+    name: string;
+    source: "json" | "header";
+    path: string;
+  }[];
+  /** @maxItems 100 */
+  assertions: {
+    name: string;
+    source: "json" | "header" | "status" | "durationMs";
+    path?: string;
+    operator:
+      | "eq"
+      | "neq"
+      | "exists"
+      | "contains"
+      | "gt"
+      | "gte"
+      | "lt"
+      | "lte"
+      | "notContains"
+      | "startsWith"
+      | "endsWith"
+      | "matches"
+      | "notMatches"
+      | "length"
+      | "between"
+      | "in"
+      | "notIn"
+      | "isString"
+      | "isNumber"
+      | "isBoolean"
+      | "isArray"
+      | "isObject"
+      | "isNull";
+    expected?:
+      | string
+      | number
+      | boolean
+      | null
+      | (string | number | boolean | null)[];
+  }[];
+  transport?: {
+    /**
+     * @min 0
+     * @multipleOf 1
+     * @max 2147483647
+     */
+    timeoutMs?: number;
+    /**
+     * @min 0
+     * @multipleOf 1
+     * @max 9007199254740991
+     */
+    maxResponseBytes?: number;
+    protocolVersion?: "http1" | "auto" | "http2";
+    encodeUrl?: boolean;
+    followOriginalHttpMethod?: boolean;
+    followAuthorizationHeader?: boolean;
+    removeRefererHeaderOnRedirect?: boolean;
+    followRedirects?: boolean;
+    /**
+     * @min 0
+     * @multipleOf 1
+     * @max 100
+     */
+    maxRedirects?: number;
+    skipCertificateVerification?: boolean;
+  };
+}
+
+export interface HttpRuntimeSave {
+  runtime: {
+    scripts?: {
+      /** @maxLength 65536 */
+      preRequest: string;
+      /** @maxLength 65536 */
+      postResponse: string;
+    };
+    version: 1 | 2;
+    /** @maxItems 100 */
+    extractions: {
+      name: string;
+      source: "json" | "header";
+      path: string;
+    }[];
+    /** @maxItems 100 */
+    assertions: {
+      name: string;
+      source: "json" | "header" | "status" | "durationMs";
+      path?: string;
+      operator:
+        | "eq"
+        | "neq"
+        | "exists"
+        | "contains"
+        | "gt"
+        | "gte"
+        | "lt"
+        | "lte"
+        | "notContains"
+        | "startsWith"
+        | "endsWith"
+        | "matches"
+        | "notMatches"
+        | "length"
+        | "between"
+        | "in"
+        | "notIn"
+        | "isString"
+        | "isNumber"
+        | "isBoolean"
+        | "isArray"
+        | "isObject"
+        | "isNull";
+      expected?:
+        | string
+        | number
+        | boolean
+        | null
+        | (string | number | boolean | null)[];
+    }[];
+    transport?: {
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 2147483647
+       */
+      timeoutMs?: number;
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 9007199254740991
+       */
+      maxResponseBytes?: number;
+      protocolVersion?: "http1" | "auto" | "http2";
+      encodeUrl?: boolean;
+      followOriginalHttpMethod?: boolean;
+      followAuthorizationHeader?: boolean;
+      removeRefererHeaderOnRedirect?: boolean;
+      followRedirects?: boolean;
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 100
+       */
+      maxRedirects?: number;
+      skipCertificateVerification?: boolean;
+    };
+  };
+  expectedRevision: string;
+}
+
+export interface HttpRuntimeSaveResponse {
+  runtimeRevision: string;
+}
+
+export interface HttpRequestItemResponse {
+  contentRevision: string | null;
+  runtimeRevision: string | null;
+  runtime: {
+    scripts?: {
+      /** @maxLength 65536 */
+      preRequest: string;
+      /** @maxLength 65536 */
+      postResponse: string;
+    };
+    version: 1 | 2;
+    /** @maxItems 100 */
+    extractions: {
+      name: string;
+      source: "json" | "header";
+      path: string;
+    }[];
+    /** @maxItems 100 */
+    assertions: {
+      name: string;
+      source: "json" | "header" | "status" | "durationMs";
+      path?: string;
+      operator:
+        | "eq"
+        | "neq"
+        | "exists"
+        | "contains"
+        | "gt"
+        | "gte"
+        | "lt"
+        | "lte"
+        | "notContains"
+        | "startsWith"
+        | "endsWith"
+        | "matches"
+        | "notMatches"
+        | "length"
+        | "between"
+        | "in"
+        | "notIn"
+        | "isString"
+        | "isNumber"
+        | "isBoolean"
+        | "isArray"
+        | "isObject"
+        | "isNull";
+      expected?:
+        | string
+        | number
+        | boolean
+        | null
+        | (string | number | boolean | null)[];
+    }[];
+    transport?: {
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 2147483647
+       */
+      timeoutMs?: number;
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 9007199254740991
+       */
+      maxResponseBytes?: number;
+      protocolVersion?: "http1" | "auto" | "http2";
+      encodeUrl?: boolean;
+      followOriginalHttpMethod?: boolean;
+      followAuthorizationHeader?: boolean;
+      removeRefererHeaderOnRedirect?: boolean;
+      followRedirects?: boolean;
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 100
+       */
+      maxRedirects?: number;
+      skipCertificateVerification?: boolean;
+    };
+  } | null;
+  runtimeState: "ready" | "pending" | "invalid" | "unsupported";
+  id: number;
+  name: string;
+  folderId: number | null;
+  protocol?: "http" | "websocket";
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
+  url: string;
+  headers: {
+    key: string;
+    value: string;
+    description?: string;
+    enabled?: boolean;
+  }[];
+  query: {
+    key: string;
+    value: string;
+    description?: string;
+    enabled?: boolean;
+  }[];
+  bodyType:
+    | "none"
+    | "json"
+    | "graphql"
+    | "text"
+    | "form-urlencoded"
+    | "multipart"
+    | "binary";
+  body: string | null;
+  formData: {
+    enabled?: boolean;
+    description?: string;
+    key: string;
+    type: "text" | "file";
+    value: string;
+  }[];
+  auth: {
+    type: "inherit" | "none" | "bearer" | "apikey" | "basic";
+    key?: string;
+    value?: string;
+    in?: "header" | "query";
+    token?: string;
+    username?: string;
+    password?: string;
+  };
+  description: string;
+  filePath: string;
+  isFavorites: number;
+  isDeleted: number;
+  pendingCloudDownload?: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface HttpRequestsAdd {
+  name: string;
+  folderId?: number | null;
+  protocol?: "http" | "websocket";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
+  url?: string;
+}
+
+export interface HttpRequestsQuery {
+  search?: string;
+  sort?: string;
+  order?: "ASC" | "DESC";
+  /**
+   * @min 0
+   * @max 1
+   */
+  searchNameOnly?: number;
+  folderId?: number;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isFavorites?: number;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isDeleted?: number;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isInbox?: number;
+}
+
+export type HttpRequestsResponse = {
+  id: number;
+  name: string;
+  folderId: number | null;
+  protocol?: "http" | "websocket";
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
+  url: string;
+  headers: {
+    key: string;
+    value: string;
+    description?: string;
+    enabled?: boolean;
+  }[];
+  query: {
+    key: string;
+    value: string;
+    description?: string;
+    enabled?: boolean;
+  }[];
+  bodyType:
+    | "none"
+    | "json"
+    | "graphql"
+    | "text"
+    | "form-urlencoded"
+    | "multipart"
+    | "binary";
+  formData: {
+    enabled?: boolean;
+    description?: string;
+    key: string;
+    type: "text" | "file";
+    value: string;
+  }[];
+  auth: {
+    type: "inherit" | "none" | "bearer" | "apikey" | "basic";
+    key?: string;
+    value?: string;
+    in?: "header" | "query";
+    token?: string;
+    username?: string;
+    password?: string;
+  };
+  description: string;
+  filePath: string;
+  isFavorites: number;
+  isDeleted: number;
+  pendingCloudDownload?: boolean;
+  createdAt: number;
+  updatedAt: number;
+}[];
+
+export interface HttpRequestsUpdate {
+  expectedRevision?: string;
+  name?: string;
+  folderId?: number | null;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isDeleted?: number;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isFavorites?: number;
+  protocol?: "http" | "websocket";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
+  url?: string;
+  headers?: {
+    key: string;
+    value: string;
+    description?: string;
+    enabled?: boolean;
+  }[];
+  query?: {
+    key: string;
+    value: string;
+    description?: string;
+    enabled?: boolean;
+  }[];
+  bodyType?:
+    | "none"
+    | "json"
+    | "graphql"
+    | "text"
+    | "form-urlencoded"
+    | "multipart"
+    | "binary";
+  body?: string | null;
+  formData?: {
+    enabled?: boolean;
+    description?: string;
+    key: string;
+    type: "text" | "file";
+    value: string;
+  }[];
+  auth?: {
+    type: "inherit" | "none" | "bearer" | "apikey" | "basic";
+    key?: string;
+    value?: string;
+    in?: "header" | "query";
+    token?: string;
+    username?: string;
+    password?: string;
+  };
+  description?: string;
+}
+
+export interface HttpRequestsUpdateResponse {
+  message: string;
+  contentRevision: string;
+}
+
+export interface HttpEnvironmentItemResponse {
+  id: number;
+  name: string;
+  variables: object;
+  secretKeys: string[];
+  missingSecretKeys: string[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface HttpEnvironmentsAdd {
+  name: string;
+  variables?: object;
+}
+
+export interface HttpEnvironmentsResponse {
+  activeId: number | null;
+  items: {
+    id: number;
+    name: string;
+    variables: object;
+    secretKeys: string[];
+    missingSecretKeys: string[];
+    createdAt: number;
+    updatedAt: number;
+  }[];
+}
+
+export interface HttpEnvironmentsSetActive {
+  id: number | null;
+}
+
+export interface HttpEnvironmentsUpdate {
+  name?: string;
+  variables?: object;
+}
+
+export interface HttpHistoryItemResponse {
+  id: number;
+  hasResponse: boolean;
+  requestId: number | null;
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
+  url: string;
+  status: number | null;
+  durationMs: number;
+  sizeBytes: number;
+  requestedAt: number;
+  error?: string;
+}
+
+export type HttpHistoryResponse = {
+  id: number;
+  hasResponse: boolean;
+  requestId: number | null;
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
+  url: string;
+  status: number | null;
+  durationMs: number;
+  sizeBytes: number;
+  requestedAt: number;
+  error?: string;
+}[];
+
+export interface HttpImportApplyInput {
+  files: {
+    content: string;
+    encoding?: "text" | "base64";
+    name: string;
+  }[];
+  selectedCollectionIndexes?: number[];
+  selectedEnvironmentIndexes?: number[];
+}
+
+export interface HttpImportApplyResponse {
+  collections: number;
+  createdCollectionNames: string[];
+  environments: number;
+  folders: number;
+  requests: number;
+  warnings: {
+    message: string;
+    source: string;
+  }[];
+}
+
+export interface HttpImportPreviewInput {
+  files: {
+    content: string;
+    encoding?: "text" | "base64";
+    name: string;
+  }[];
+}
+
+export interface HttpImportPreviewResponse {
+  collections: {
+    folders: number;
+    index: number;
+    name: string;
+    requests: number;
+    runtime: {
+      name: string;
+      assertions: number;
+      scripts: "none" | "converted" | "blocked";
+    }[];
+  }[];
+  environments: {
+    index: number;
+    name: string;
+    variables: number;
+  }[];
+  warnings: {
+    message: string;
+    source: string;
+  }[];
+}
+
+export interface ImportApplyInput {
+  files?: {
+    content: string;
+    encoding?: "text" | "base64";
+    name: string;
+    relativePath?: string;
+  }[];
+  source?:
+    | "github-gists"
+    | "obsidian"
+    | "raycast-snippets"
+    | "snippetslab"
+    | "vscode-snippets";
+  space?: "code" | "notes";
+  url?: string;
+}
+
+export interface ImportApplyResponse {
+  createdRootFolderName: string;
+  createdSnippetNames: string[];
+  folders: number;
+  notes: number;
+  snippets: number;
+  source:
+    | "github-gists"
+    | "obsidian"
+    | "raycast-snippets"
+    | "snippetslab"
+    | "vscode-snippets";
+  tags: number;
+  warnings: {
+    code: string;
+    details?: object;
+    source: string;
+  }[];
+}
+
+export interface ImportPreviewInput {
+  files?: {
+    content: string;
+    encoding?: "text" | "base64";
+    name: string;
+    relativePath?: string;
+  }[];
+  source?:
+    | "github-gists"
+    | "obsidian"
+    | "raycast-snippets"
+    | "snippetslab"
+    | "vscode-snippets";
+  space?: "code" | "notes";
+  url?: string;
+}
+
+export interface ImportPreviewResponse {
+  folders: {
+    path: string;
+    snippets: number;
+  }[];
+  groups: {
+    name: string;
+    snippets: number;
+  }[];
+  notes: number;
+  snippets: number;
+  source:
+    | "github-gists"
+    | "obsidian"
+    | "raycast-snippets"
+    | "snippetslab"
+    | "vscode-snippets";
+  tags: string[];
+  warnings: {
+    code: string;
+    details?: object;
+    source: string;
+  }[];
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -525,13 +1821,36 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title massCode API
- * @version 4.7.1
+ * @version 5.10.0
  *
  * Development documentation
  */
 export class Api<
   SecurityDataType extends unknown,
 > extends HttpClient<SecurityDataType> {
+  captures = {
+    /**
+     * No description
+     *
+     * @tags Captures
+     * @name PostCaptures
+     * @request POST:/captures/
+     */
+    postCaptures: (data: CaptureRequest, params: RequestParams = {}) =>
+      this.request<
+        CaptureResponse,
+        {
+          message: string;
+        }
+      >({
+        path: `/captures/`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+  };
   snippets = {
     /**
      * No description
@@ -545,6 +1864,11 @@ export class Api<
         search?: string;
         sort?: string;
         order?: "ASC" | "DESC";
+        /**
+         * @min 0
+         * @max 1
+         */
+        searchNameOnly?: number;
         folderId?: number;
         tagId?: number;
         /**
@@ -614,24 +1938,18 @@ export class Api<
      * No description
      *
      * @tags Snippets
-     * @name PostSnippetsByIdContents
-     * @request POST:/snippets/{id}/contents
+     * @name GetSnippetsById
+     * @request GET:/snippets/{id}
      */
-    postSnippetsByIdContents: (
-      id: string,
-      data: SnippetContentsAdd,
-      params: RequestParams = {},
-    ) =>
+    getSnippetsById: (id: string, params: RequestParams = {}) =>
       this.request<
+        SnippetItemResponse,
         {
-          id: number | bigint;
-        },
-        any
+          message: string;
+        }
       >({
-        path: `/snippets/${id}/contents`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
+        path: `/snippets/${id}`,
+        method: "GET",
         format: "json",
         ...params,
       }),
@@ -667,6 +1985,60 @@ export class Api<
       this.request<void, any>({
         path: `/snippets/${id}`,
         method: "DELETE",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Snippets
+     * @name PostSnippetsByIdContents
+     * @request POST:/snippets/{id}/contents
+     */
+    postSnippetsByIdContents: (
+      id: string,
+      data: SnippetContentsAdd,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          id: number | bigint;
+        },
+        any
+      >({
+        path: `/snippets/${id}/contents`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Snippets
+     * @name PatchSnippetsByIdContentsOrder
+     * @request PATCH:/snippets/{id}/contents/order
+     */
+    patchSnippetsByIdContentsOrder: (
+      id: string,
+      data: SnippetContentsOrder,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          message: string;
+        },
+        {
+          message: string;
+        }
+      >({
+        path: `/snippets/${id}/contents/order`,
+        method: "PATCH",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
         ...params,
       }),
 
@@ -874,6 +2246,46 @@ export class Api<
         method: "POST",
         ...params,
       }),
+
+    /**
+     * No description
+     *
+     * @tags System
+     * @name PostSystemVaultDoctorPreview
+     * @request POST:/system/vault-doctor/preview
+     */
+    postSystemVaultDoctorPreview: (
+      data: VaultDoctorInput,
+      params: RequestParams = {},
+    ) =>
+      this.request<VaultDoctorResponse, any>({
+        path: `/system/vault-doctor/preview`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags System
+     * @name PostSystemVaultDoctorApply
+     * @request POST:/system/vault-doctor/apply
+     */
+    postSystemVaultDoctorApply: (
+      data: VaultDoctorInput,
+      params: RequestParams = {},
+    ) =>
+      this.request<VaultDoctorResponse, any>({
+        path: `/system/vault-doctor/apply`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   tags = {
     /**
@@ -926,6 +2338,36 @@ export class Api<
     /**
      * No description
      *
+     * @tags Notes Dashboard
+     * @name GetNotesDashboard
+     * @request GET:/notes/dashboard
+     */
+    getNotesDashboard: (params: RequestParams = {}) =>
+      this.request<NotesDashboardResponse, any>({
+        path: `/notes/dashboard`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notes Dashboard
+     * @name GetNotesGraph
+     * @request GET:/notes/graph
+     */
+    getNotesGraph: (params: RequestParams = {}) =>
+      this.request<NotesGraphResponse, any>({
+        path: `/notes/graph`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @tags Notes
      * @name GetNotes
      * @request GET:/notes/
@@ -935,6 +2377,11 @@ export class Api<
         search?: string;
         sort?: string;
         order?: "ASC" | "DESC";
+        /**
+         * @min 0
+         * @max 1
+         */
+        searchNameOnly?: number;
         folderId?: number;
         tagId?: number;
         /**
@@ -952,6 +2399,15 @@ export class Api<
          * @max 1
          */
         isInbox?: number;
+        propertyDue?: "today" | "upcoming";
+        propertyStatus?: string;
+        propertyStatusNot?: string;
+        propertyType?: string;
+        /**
+         * @min 0
+         * @max 1
+         */
+        hideCompletedTasks?: number;
       },
       params: RequestParams = {},
     ) =>
@@ -995,6 +2451,26 @@ export class Api<
     getNotesCounts: (params: RequestParams = {}) =>
       this.request<NotesCountsResponse, any>({
         path: `/notes/counts`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notes
+     * @name GetNotesById
+     * @request GET:/notes/{id}
+     */
+    getNotesById: (id: string, params: RequestParams = {}) =>
+      this.request<
+        NoteItemResponse,
+        {
+          message: string;
+        }
+      >({
+        path: `/notes/${id}`,
         method: "GET",
         format: "json",
         ...params,
@@ -1058,6 +2534,26 @@ export class Api<
      * No description
      *
      * @tags Notes
+     * @name PatchNotesByIdProperties
+     * @request PATCH:/notes/{id}/properties
+     */
+    patchNotesByIdProperties: (
+      id: string,
+      data: NotePropertiesUpdate,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/notes/${id}/properties`,
+        method: "PATCH",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notes
      * @name PostNotesByIdTagsByTagId
      * @request POST:/notes/{id}/tags/{tagId}
      */
@@ -1101,6 +2597,21 @@ export class Api<
       this.request<void, any>({
         path: `/notes/trash`,
         method: "DELETE",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notes
+     * @name PostNotesTasksCleanup
+     * @request POST:/notes/tasks/cleanup
+     */
+    postNotesTasksCleanup: (params: RequestParams = {}) =>
+      this.request<NotesTasksCleanupResponse, any>({
+        path: `/notes/tasks/cleanup`,
+        method: "POST",
+        format: "json",
         ...params,
       }),
   };
@@ -1255,6 +2766,504 @@ export class Api<
       this.request<void, any>({
         path: `/note-tags/${id}`,
         method: "DELETE",
+        ...params,
+      }),
+  };
+  internalLinks = {
+    /**
+     * No description
+     *
+     * @tags InternalLinks
+     * @name PostInternalLinksResolve
+     * @request POST:/internal-links/resolve
+     */
+    postInternalLinksResolve: (
+      data: InternalLinksResolveBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<InternalLinksResolveResponse, any>({
+        path: `/internal-links/resolve`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+  };
+  httpFolders = {
+    /**
+     * No description
+     *
+     * @tags HTTP Folders
+     * @name GetHttpFolders
+     * @request GET:/http-folders/
+     */
+    getHttpFolders: (params: RequestParams = {}) =>
+      this.request<HttpFoldersResponse, any>({
+        path: `/http-folders/`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Folders
+     * @name PostHttpFolders
+     * @request POST:/http-folders/
+     */
+    postHttpFolders: (data: HttpFoldersAdd, params: RequestParams = {}) =>
+      this.request<
+        {
+          id: number | bigint;
+        },
+        any
+      >({
+        path: `/http-folders/`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Folders
+     * @name GetHttpFoldersTree
+     * @request GET:/http-folders/tree
+     */
+    getHttpFoldersTree: (params: RequestParams = {}) =>
+      this.request<HttpFoldersTreeResponse, any>({
+        path: `/http-folders/tree`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Folders
+     * @name PatchHttpFoldersById
+     * @request PATCH:/http-folders/{id}
+     */
+    patchHttpFoldersById: (
+      id: string,
+      data: HttpFoldersUpdate,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/http-folders/${id}`,
+        method: "PATCH",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Folders
+     * @name DeleteHttpFoldersById
+     * @request DELETE:/http-folders/{id}
+     */
+    deleteHttpFoldersById: (id: string, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/http-folders/${id}`,
+        method: "DELETE",
+        ...params,
+      }),
+  };
+  httpRequests = {
+    /**
+     * No description
+     *
+     * @tags HTTP Requests
+     * @name GetHttpRequests
+     * @request GET:/http-requests/
+     */
+    getHttpRequests: (
+      query?: {
+        search?: string;
+        sort?: string;
+        order?: "ASC" | "DESC";
+        /**
+         * @min 0
+         * @max 1
+         */
+        searchNameOnly?: number;
+        folderId?: number;
+        /**
+         * @min 0
+         * @max 1
+         */
+        isFavorites?: number;
+        /**
+         * @min 0
+         * @max 1
+         */
+        isDeleted?: number;
+        /**
+         * @min 0
+         * @max 1
+         */
+        isInbox?: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<HttpRequestsResponse, any>({
+        path: `/http-requests/`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Requests
+     * @name PostHttpRequests
+     * @request POST:/http-requests/
+     */
+    postHttpRequests: (data: HttpRequestsAdd, params: RequestParams = {}) =>
+      this.request<
+        {
+          id: number | bigint;
+        },
+        any
+      >({
+        path: `/http-requests/`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Requests
+     * @name GetHttpRequestsById
+     * @request GET:/http-requests/{id}
+     */
+    getHttpRequestsById: (id: string, params: RequestParams = {}) =>
+      this.request<
+        HttpRequestItemResponse,
+        {
+          message: string;
+        }
+      >({
+        path: `/http-requests/${id}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Requests
+     * @name PatchHttpRequestsById
+     * @request PATCH:/http-requests/{id}
+     */
+    patchHttpRequestsById: (
+      id: string,
+      data: HttpRequestsUpdate,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        HttpRequestsUpdateResponse,
+        {
+          message: string;
+        }
+      >({
+        path: `/http-requests/${id}`,
+        method: "PATCH",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Requests
+     * @name DeleteHttpRequestsById
+     * @request DELETE:/http-requests/{id}
+     */
+    deleteHttpRequestsById: (id: string, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/http-requests/${id}`,
+        method: "DELETE",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Requests
+     * @name PutHttpRequestsByIdRuntime
+     * @request PUT:/http-requests/{id}/runtime
+     */
+    putHttpRequestsByIdRuntime: (
+      id: string,
+      data: HttpRuntimeSave,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        HttpRuntimeSaveResponse,
+        {
+          message: string;
+        }
+      >({
+        path: `/http-requests/${id}/runtime`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Requests
+     * @name DeleteHttpRequestsTrash
+     * @request DELETE:/http-requests/trash
+     */
+    deleteHttpRequestsTrash: (params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/http-requests/trash`,
+        method: "DELETE",
+        ...params,
+      }),
+  };
+  httpEnvironments = {
+    /**
+     * No description
+     *
+     * @tags HTTP Environments
+     * @name GetHttpEnvironments
+     * @request GET:/http-environments/
+     */
+    getHttpEnvironments: (params: RequestParams = {}) =>
+      this.request<HttpEnvironmentsResponse, any>({
+        path: `/http-environments/`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Environments
+     * @name PostHttpEnvironments
+     * @request POST:/http-environments/
+     */
+    postHttpEnvironments: (
+      data: HttpEnvironmentsAdd,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          id: number | bigint;
+        },
+        any
+      >({
+        path: `/http-environments/`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Environments
+     * @name PatchHttpEnvironmentsById
+     * @request PATCH:/http-environments/{id}
+     */
+    patchHttpEnvironmentsById: (
+      id: string,
+      data: HttpEnvironmentsUpdate,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/http-environments/${id}`,
+        method: "PATCH",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Environments
+     * @name DeleteHttpEnvironmentsById
+     * @request DELETE:/http-environments/{id}
+     */
+    deleteHttpEnvironmentsById: (id: string, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/http-environments/${id}`,
+        method: "DELETE",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Environments
+     * @name PostHttpEnvironmentsActive
+     * @request POST:/http-environments/active
+     */
+    postHttpEnvironmentsActive: (
+      data: HttpEnvironmentsSetActive,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/http-environments/active`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  httpHistory = {
+    /**
+     * No description
+     *
+     * @tags HTTP History
+     * @name GetHttpHistory
+     * @request GET:/http-history/
+     */
+    getHttpHistory: (params: RequestParams = {}) =>
+      this.request<HttpHistoryResponse, any>({
+        path: `/http-history/`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP History
+     * @name DeleteHttpHistory
+     * @request DELETE:/http-history/
+     */
+    deleteHttpHistory: (params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/http-history/`,
+        method: "DELETE",
+        ...params,
+      }),
+  };
+  httpImport = {
+    /**
+     * No description
+     *
+     * @tags HTTP Import
+     * @name PostHttpImportPreview
+     * @request POST:/http-import/preview
+     */
+    postHttpImportPreview: (
+      data: HttpImportPreviewInput,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        HttpImportPreviewResponse,
+        {
+          message: string;
+        }
+      >({
+        path: `/http-import/preview`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Import
+     * @name PostHttpImportApply
+     * @request POST:/http-import/apply
+     */
+    postHttpImportApply: (
+      data: HttpImportApplyInput,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        HttpImportApplyResponse,
+        {
+          message: string;
+        }
+      >({
+        path: `/http-import/apply`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+  };
+  imports = {
+    /**
+     * No description
+     *
+     * @tags Imports
+     * @name PostImportsPreview
+     * @request POST:/imports/preview
+     */
+    postImportsPreview: (
+      data: ImportPreviewInput,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ImportPreviewResponse,
+        {
+          message: string;
+        }
+      >({
+        path: `/imports/preview`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Imports
+     * @name PostImportsApply
+     * @request POST:/imports/apply
+     */
+    postImportsApply: (data: ImportApplyInput, params: RequestParams = {}) =>
+      this.request<
+        ImportApplyResponse,
+        {
+          message: string;
+        }
+      >({
+        path: `/imports/apply`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
         ...params,
       }),
   };

@@ -367,6 +367,7 @@ async function openThemesDir(): Promise<void> {
 
   if (openError) {
     log('theme:open-dir', new Error(openError))
+    throw new Error(openError)
   }
 }
 

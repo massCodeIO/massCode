@@ -28,10 +28,7 @@
       "gumroad": "حمایت مالی از طریق Gumroad (Visa، Mastercard و غیره)"
     },
     "twitter": "X",
-    "devTools": "تغییر وضعیت ابزارهای توسعه",
-    "links": {
-      "snippets": "مجموعه Snippet"
-    }
+    "devTools": "تغییر وضعیت ابزارهای توسعه"
   },
   "view": {
     "label": "نمایش",

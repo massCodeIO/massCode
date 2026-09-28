@@ -41,7 +41,7 @@ function getMaxWidth(excludeWidth: number) {
 const { isResizing: isSidebarResizing } = useResizeHandle(sidebarHandleRef, {
   direction: 'horizontal',
   onMove(dx) {
-    const max = getMaxWidth(internalListWidth.value)
+    const max = getMaxWidth(props.showList ? internalListWidth.value : 0)
     internalSidebarWidth.value = clampWidth(
       internalSidebarWidth.value + dx,
       LAYOUT_DEFAULTS.sidebar.min,
@@ -81,10 +81,38 @@ const isResizing = computed(
 
 <template>
   <div
-    v-if="!showList"
+    v-if="!showList && !showSidebar"
     class="h-screen"
   >
     <slot name="editor" />
+  </div>
+  <div
+    v-else-if="!showList"
+    ref="containerRef"
+    class="flex h-screen"
+  >
+    <div
+      :style="{ width: `${internalSidebarWidth}px` }"
+      class="shrink-0 overflow-hidden"
+    >
+      <div
+        class="h-full"
+        :style="{ '--header-gap': `${props.headerGap}px` }"
+      >
+        <slot name="sidebar" />
+      </div>
+    </div>
+    <div
+      ref="sidebarHandleRef"
+      class="before:bg-border hover:before:bg-primary data-[resizing]:before:bg-primary relative z-10 flex w-px shrink-0 cursor-col-resize items-center justify-center bg-transparent before:absolute before:inset-y-0 before:left-1/2 before:w-px before:-translate-x-1/2 before:transition-[background-color,width] before:duration-150 before:content-[''] after:absolute after:inset-y-0 after:left-1/2 after:w-3 after:-translate-x-1/2 after:content-[''] hover:before:w-0.5 hover:before:delay-200 data-[resizing]:before:w-0.5"
+    />
+    <div class="min-w-0 flex-1 overflow-hidden">
+      <slot name="editor" />
+    </div>
+    <div
+      v-if="isResizing"
+      class="fixed inset-0 z-50 cursor-col-resize"
+    />
   </div>
   <div
     v-else

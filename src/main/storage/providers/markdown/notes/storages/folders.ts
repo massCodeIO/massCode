@@ -5,12 +5,22 @@ import type {
   NotesFoldersStorage,
 } from '../../../../contracts'
 import path from 'node:path'
+import { scheduleDockBadgeRefresh } from '../../../../../dockBadge'
 import { normalizeFlag, normalizeNumber } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
+import {
+  getFileAvailability,
+  markAppWrittenFileAsLocal,
+} from '../../runtime/shared/cloudFiles'
+import {
+  assertEntityFileWritable,
+  throwCloudContentUnavailable,
+} from '../../runtime/shared/cloudGuards'
 import { collectDescendantIds } from '../../runtime/shared/folderIndex'
 import {
   applyFolderParentAndOrder,
   assertFolderMoveTargetValid,
+  assertNoUnknownDomainFiles,
   createFolderInStateAndDisk,
   getFolderPathsByDepth,
   getFoldersSortedByCreatedAt,
@@ -24,15 +34,18 @@ import {
 import {
   assertDirectoryNameAvailableAtRoot,
   assertUniqueSiblingFolderName,
+  resolveUniqueSiblingFolderName,
   throwStorageError,
   validateEntryName,
 } from '../../runtime/validation'
+import { rewriteBacklinksAfterFolderUpdate } from '../runtime/backlinks'
 import {
   getNotesPaths,
   META_DIR_NAME,
+  META_FILE_NAME,
   NOTES_RESERVED_ROOT_NAMES,
 } from '../runtime/constants'
-import { persistNote } from '../runtime/notes'
+import { ensureNoteContentLoaded, persistNote } from '../runtime/notes'
 import { writeNotesFolderMetadataFile } from '../runtime/parser'
 import {
   buildNotesFolderPathMap,
@@ -42,6 +55,7 @@ import {
 import { saveNotesState } from '../runtime/state'
 import {
   getNotesRuntimeCache,
+  isNotesVaultDiskReady,
   syncNotesFolderMetadataFiles,
 } from '../runtime/sync'
 
@@ -133,6 +147,20 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
       input: NoteFolderUpdateInput,
     ): NoteFolderUpdateResult {
       const paths = resolvePaths()
+
+      // Rename/move каталога до завершения фоновой сверки работал бы по
+      // пустому provisional-списку заметок: файлы переместились бы на диске,
+      // а index paths и backlinks остались бы старыми.
+      if (
+        (input.name !== undefined || input.parentId !== undefined)
+        && !isNotesVaultDiskReady(paths)
+      ) {
+        throwStorageError(
+          'VAULT_HYDRATING',
+          'Vault is still syncing, folder rename or move is not available yet',
+        )
+      }
+
       const { state, notes } = getNotesRuntimeCache(paths)
       const folder = findNotesFolderById(state, id)
 
@@ -156,22 +184,10 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
       const oldFolderPathMap = buildNotesFolderPathMap(state)
       const oldPath = oldFolderPathMap.get(id)
 
-      if (input.name !== undefined) {
-        const name = validateEntryName(input.name, 'folder')
-        const parentId
-          = input.parentId !== undefined
-            ? (input.parentId ?? null)
-            : folder.parentId
-
-        assertNotReservedRootName(parentId, name)
-        assertUniqueSiblingFolderName(state, parentId, name, id)
-
-        if (name !== folder.name) {
-          pathChanged = true
-        }
-
-        folder.name = name
-      }
+      let targetName
+        = input.name !== undefined
+          ? validateEntryName(input.name, 'folder')
+          : folder.name
 
       const { targetOrderIndex, targetParentId } = resolveFolderUpdateTargets(
         folder,
@@ -180,13 +196,27 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
       )
 
       if (input.parentId !== undefined) {
-        const newParentId = input.parentId ?? null
+        assertFolderMoveTargetValid(state.folders, id, targetParentId)
+      }
 
-        assertFolderMoveTargetValid(state.folders, id, newParentId)
+      assertNotReservedRootName(targetParentId, targetName)
 
-        if (newParentId !== folder.parentId && input.name === undefined) {
-          assertUniqueSiblingFolderName(state, newParentId, folder.name, id)
-        }
+      const isParentChanged = targetParentId !== folder.parentId
+      if (isParentChanged) {
+        targetName = resolveUniqueSiblingFolderName(
+          state,
+          targetParentId,
+          targetName,
+          id,
+        )
+      }
+      else if (targetName !== folder.name) {
+        assertUniqueSiblingFolderName(state, targetParentId, targetName, id)
+      }
+
+      if (targetName !== folder.name) {
+        folder.name = targetName
+        pathChanged = true
       }
 
       const { parentChanged } = applyFolderParentAndOrder(
@@ -223,7 +253,40 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
             oldPath,
           )
 
+          const affectedFolderIds = collectDescendantIds(state.folders, id)
+          affectedFolderIds.add(id)
+          const localMetadataTargetPaths: string[] = []
+
+          for (const folderId of affectedFolderIds) {
+            const oldFolderPath = oldFolderPathMap.get(folderId)
+            const newFolderPath = newFolderPathMap.get(folderId)
+            if (
+              !oldFolderPath
+              || !newFolderPath
+              || oldFolderPath === newFolderPath
+            ) {
+              continue
+            }
+
+            const sourceMetadataPath = path.join(
+              paths.notesRoot,
+              oldFolderPath,
+              META_FILE_NAME,
+            )
+            const sourceAvailability = getFileAvailability(sourceMetadataPath)
+            if (
+              sourceAvailability.exists
+              && !sourceAvailability.isCloudPlaceholder
+            ) {
+              localMetadataTargetPaths.push(
+                path.join(paths.notesRoot, newFolderPath, META_FILE_NAME),
+              )
+            }
+          }
+
           moveFolderDirectoryOnDisk(paths.notesRoot, oldPath, newPath)
+
+          localMetadataTargetPaths.forEach(markAppWrittenFileAsLocal)
 
           updateChildEntityPaths({
             entries: notes,
@@ -236,6 +299,14 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
               }
             },
           })
+
+          rewriteBacklinksAfterFolderUpdate({
+            newFolderPathMap,
+            notes,
+            oldFolderPathMap,
+            paths,
+            state,
+          })
         }
       }
 
@@ -246,6 +317,17 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
 
     deleteFolder(id: number) {
       const paths = resolvePaths()
+
+      // До завершения фоновой сверки runtime-кэш provisional: список заметок
+      // пуст, перенос содержимого папки в trash ничего бы не нашёл, а
+      // removeFolderPathsFromDisk физически уничтожил бы файлы на диске.
+      if (!isNotesVaultDiskReady(paths)) {
+        throwStorageError(
+          'VAULT_HYDRATING',
+          'Vault is still syncing, folder deletion is not available yet',
+        )
+      }
+
       const { state, notes } = getNotesRuntimeCache(paths)
       const folder = findNotesFolderById(state, id)
 
@@ -256,6 +338,42 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
       const descendantIds = collectDescendantIds(state.folders, id)
       descendantIds.add(id)
 
+      // Trash-маркер заметки — frontmatter isDeleted, а не путь: перенос
+      // недокачанного файла без перезаписи frontmatter «воскресил» бы заметку
+      // после докачки. Preflight выполняется до первой мутации в две фазы:
+      // сначала eager-дочитка всех тел, затем свежий stat всех файлов (флаг
+      // pendingCloudDownload мог устареть после eviction) — так окно между
+      // проверкой и мутацией не растягивается на гидрацию соседей.
+      const affectedNotes = notes.filter(
+        note => note.folderId !== null && descendantIds.has(note.folderId),
+      )
+      for (const note of affectedNotes) {
+        if (!ensureNoteContentLoaded(paths, note)) {
+          throwCloudContentUnavailable()
+        }
+      }
+
+      const folderPathMap = buildNotesFolderPathMap(state)
+      const directoryEntriesCache = new Map<string, string[]>()
+
+      // Доменный .md без записи в runtime (плейсхолдер с другого устройства,
+      // сбой чтения при скане) физически уничтожился бы вместе с каталогом:
+      // удаление отклоняется целиком. Обход стартует с корня удаляемой папки
+      // и идёт до финальной stat-фазы, чтобы не расширять окно до мутации.
+      const topFolderPath = folderPathMap.get(id)
+      assertNoUnknownDomainFiles(
+        paths.notesRoot,
+        topFolderPath ? [topFolderPath] : [],
+        new Set(affectedNotes.map(note => note.filePath)),
+      )
+
+      for (const note of affectedNotes) {
+        assertEntityFileWritable(
+          path.join(paths.notesRoot, note.filePath),
+          note,
+        )
+      }
+
       for (const note of notes) {
         if (note.folderId !== null && descendantIds.has(note.folderId)) {
           const previousFilePath = note.filePath
@@ -264,11 +382,12 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
           note.updatedAt = Date.now()
           persistNote(paths, state, note, previousFilePath, {
             allowRenameOnConflict: true,
+            directoryEntriesCache,
+            folderPathMap,
           })
         }
       }
 
-      const folderPathMap = buildNotesFolderPathMap(state)
       const folderPathsToDelete = getFolderPathsByDepth(
         folderPathMap,
         descendantIds,
@@ -280,6 +399,7 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
 
       state.folders = state.folders.filter(f => !descendantIds.has(f.id))
       saveNotesState(paths, state)
+      scheduleDockBadgeRefresh()
 
       return { deleted: true }
     },

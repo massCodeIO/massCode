@@ -4,6 +4,14 @@ import { RouterName } from '@/router'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
+const sidebarRef = useTemplateRef<HTMLElement>('sidebarRef')
+
+onMounted(() => {
+  nextTick(() => {
+    const el = sidebarRef.value?.querySelector('[data-selected="true"]')
+    el?.scrollIntoView({ block: 'center' })
+  })
+})
 
 const isActiveRoute = computed(() => {
   return (name: string) => route.name === name
@@ -21,6 +29,10 @@ const convertersNav = [
   {
     label: i18n.t('devtools:converters.textToAscii.label'),
     name: RouterName.devtoolsTextToAscii,
+  },
+  {
+    label: i18n.t('devtools:converters.lineBreakNormalizer.label'),
+    name: RouterName.devtoolsLineBreakNormalizer,
   },
   {
     label: i18n.t('devtools:converters.base64.label'),
@@ -88,6 +100,23 @@ const generatorsNav = [
     name: RouterName.devtoolsLoremIpsumGenerator,
   },
 ]
+
+watch(
+  () => route.name,
+  (name) => {
+    if (name && typeof name === 'string' && name.startsWith('devtools/')) {
+      sessionStorage.setItem('devtools:lastRoute', name)
+    }
+  },
+  { immediate: true },
+)
+
+const compareNav = [
+  {
+    label: i18n.t('devtools:compare.jsonDiff.label'),
+    name: RouterName.devtoolsJsonDiff,
+  },
+]
 </script>
 
 <template>
@@ -104,7 +133,10 @@ const generatorsNav = [
       </div>
     </template>
     <template #left>
-      <div class="scrollbar h-full min-h-0 overflow-y-auto px-2">
+      <div
+        ref="sidebarRef"
+        class="scrollbar h-full min-h-0 overflow-y-auto px-2 pb-2"
+      >
         <RouterLink
           v-for="item in convertersNav"
           :key="item.name"
@@ -167,6 +199,26 @@ const generatorsNav = [
         <SidebarSectionHeader :title="i18n.t('devtools:generators.label')" />
         <RouterLink
           v-for="item in generatorsNav"
+          :key="item.name"
+          v-slot="{ navigate }"
+          custom
+          :to="{ name: item.name }"
+        >
+          <SidebarItem
+            class="cursor-default"
+            :selected="isActiveRoute(item.name)"
+            @click="navigate"
+          >
+            <div class="flex h-[23px] items-center px-2 pl-5.5">
+              <span class="min-w-0 truncate select-none">
+                {{ item.label }}
+              </span>
+            </div>
+          </SidebarItem>
+        </RouterLink>
+        <SidebarSectionHeader :title="i18n.t('devtools:compare.label')" />
+        <RouterLink
+          v-for="item in compareNav"
           :key="item.name"
           v-slot="{ navigate }"
           custom

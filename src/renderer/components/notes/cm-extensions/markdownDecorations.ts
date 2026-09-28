@@ -1,7 +1,8 @@
-import type { Range } from '@codemirror/state'
+import type { EditorState, Range } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
-import { syntaxTree } from '@codemirror/language'
+import { highlightingFor, syntaxTree } from '@codemirror/language'
 import { Decoration, ViewPlugin, WidgetType } from '@codemirror/view'
+import { tags } from '@lezer/highlight'
 import {
   calloutTitleByType,
   type CalloutTitleMode,
@@ -9,13 +10,36 @@ import {
   parseBlockquoteCallout,
   shouldReplaceCalloutMarker,
 } from './callouts'
-import { buildFencedCodeLineStyle } from './fencedCodeStyles'
+import {
+  type CodeBlockCopyOptions,
+  CodeBlockCopyWidget,
+  getFencedCodeContent,
+} from './codeBlockCopy'
+import {
+  buildFencedCodeLineStyle,
+  isStandaloneFencedCode,
+} from './fencedCodeStyles'
+import {
+  getRevealHasFocus,
+  getRevealSelection,
+  revealSelectionChanged,
+} from './revealSelection'
 
 class HorizontalRuleWidget extends WidgetType {
+  eq(): boolean {
+    // The widget is stateless, so any two instances are interchangeable.
+    return true
+  }
+
   toDOM(): HTMLElement {
     const hr = document.createElement('hr')
+    // Keep the replacement inside the source line's box so revealing the
+    // Markdown marker does not change the height of the document.
+    hr.style.display = 'inline-block'
+    hr.style.width = '100%'
+    hr.style.verticalAlign = 'middle'
     hr.style.borderTop = '1px solid var(--border)'
-    hr.style.margin = '14px 0'
+    hr.style.margin = '0'
     hr.style.borderBottom = 'none'
     hr.style.borderLeft = 'none'
     hr.style.borderRight = 'none'
@@ -26,7 +50,6 @@ class HorizontalRuleWidget extends WidgetType {
 class CheckboxWidget extends WidgetType {
   constructor(
     readonly checked: boolean,
-    readonly pos: number,
     readonly interactive: boolean,
   ) {
     super()
@@ -34,9 +57,7 @@ class CheckboxWidget extends WidgetType {
 
   eq(other: CheckboxWidget): boolean {
     return (
-      this.checked === other.checked
-      && this.pos === other.pos
-      && this.interactive === other.interactive
+      this.checked === other.checked && this.interactive === other.interactive
     )
   }
 
@@ -57,6 +78,7 @@ class CheckboxWidget extends WidgetType {
     checkbox.style.color = 'var(--primary-foreground)'
     checkbox.style.cursor = this.interactive ? 'pointer' : 'default'
     checkbox.style.verticalAlign = 'middle'
+    checkbox.style.textIndent = '0'
 
     if (this.checked) {
       const checkmark = document.createElement('span')
@@ -71,8 +93,11 @@ class CheckboxWidget extends WidgetType {
       checkbox.addEventListener('mousedown', (e) => {
         e.preventDefault()
         const replacement = this.checked ? '[ ]' : '[x]'
+        // The marker position is resolved at click time, so the widget does
+        // not depend on (and get recreated for) a document position.
+        const pos = view.posAtDOM(checkbox)
         view.dispatch({
-          changes: { from: this.pos, to: this.pos + 3, insert: replacement },
+          changes: { from: pos, to: pos + 3, insert: replacement },
         })
       })
     }
@@ -86,6 +111,7 @@ class CheckboxWidget extends WidgetType {
 }
 
 const calloutIconPaths: Record<CalloutType, string> = {
+  TODO: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="m8 12 3 3 5-6"/>',
   NOTE: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
   IMPORTANT:
     '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
@@ -137,6 +163,8 @@ class CalloutTitleWidget extends WidgetType {
     root.style.verticalAlign = 'baseline'
     root.style.height = '0'
     root.style.overflow = 'visible'
+    root.style.position = 'relative'
+    root.style.top = '2px'
 
     root.append(createCalloutIcon(this.type, this.accent))
     root.append(this.title)
@@ -234,21 +262,20 @@ const blockquoteBaseStyle = [
 ].join(';')
 
 const calloutAccentByType: Record<CalloutType, string> = {
-  NOTE: 'var(--primary)',
-  IMPORTANT: 'var(--destructive)',
-  WARNING: 'var(--warning)',
+  TODO: 'var(--callout-todo)',
+  NOTE: 'var(--callout-note)',
+  IMPORTANT: 'var(--callout-important)',
+  WARNING: 'var(--callout-warning)',
 }
 
-const CALLOUT_BACKGROUND_SATURATION = 10
-
-function createCalloutBackground(baseColor: string): string {
-  return `color-mix(in oklch, ${baseColor} ${CALLOUT_BACKGROUND_SATURATION}%, var(--background))`
-}
+const FALLBACK_LIST_MARK_RE = /^([ \t]*)([-*+]|\d+\.)(?=\s)/
+const LIST_MARK_FALLBACK_STYLE = 'color:var(--muted-foreground)'
 
 const calloutBackgroundByType: Record<CalloutType, string> = {
-  NOTE: createCalloutBackground(calloutAccentByType.NOTE),
-  IMPORTANT: createCalloutBackground(calloutAccentByType.IMPORTANT),
-  WARNING: createCalloutBackground(calloutAccentByType.WARNING),
+  TODO: 'var(--callout-todo-bg)',
+  NOTE: 'var(--callout-note-bg)',
+  IMPORTANT: 'var(--callout-important-bg)',
+  WARNING: 'var(--callout-warning-bg)',
 }
 
 function getCalloutBlockquoteStyle(type: CalloutType) {
@@ -266,6 +293,7 @@ function getCalloutBlockquoteStyle(type: CalloutType) {
 interface MarkdownDecorationsOptions {
   interactiveTaskMarkers?: boolean
   calloutTitleMode?: CalloutTitleMode
+  codeBlockCopy?: CodeBlockCopyOptions
 }
 
 interface MarkdownDecorationsUpdateFlags {
@@ -277,12 +305,14 @@ interface MarkdownDecorationsUpdateFlags {
 
 export function shouldRebuildMarkdownDecorations(
   update: MarkdownDecorationsUpdateFlags,
+  treeChanged = false,
 ): boolean {
   return (
     update.docChanged
     || update.viewportChanged
     || update.selectionSet
     || update.focusChanged
+    || treeChanged
   )
 }
 
@@ -309,7 +339,7 @@ export function shouldReplaceTaskMarker(
 }
 
 function isCursorOnLine(view: EditorView, lineNumber: number): boolean {
-  for (const range of view.state.selection.ranges) {
+  for (const range of getRevealSelection(view.state).ranges) {
     const startLine = view.state.doc.lineAt(range.from).number
     const endLine = view.state.doc.lineAt(range.to).number
     if (lineNumber >= startLine && lineNumber <= endLine)
@@ -319,13 +349,75 @@ function isCursorOnLine(view: EditorView, lineNumber: number): boolean {
   return false
 }
 
+interface MarkerRange {
+  from: number
+  to: number
+}
+
+function rangeKey(from: number, to: number): string {
+  return `${from}:${to}`
+}
+
+function isInsideAnyRange(position: number, ranges: MarkerRange[]): boolean {
+  return ranges.some(range => position >= range.from && position < range.to)
+}
+
+export function getFallbackListMarkerRanges(
+  state: EditorState,
+  from = 0,
+  to = state.doc.length,
+): MarkerRange[] {
+  const parsedMarkers = new Set<string>()
+  const codeRanges: MarkerRange[] = []
+
+  syntaxTree(state).iterate({
+    from,
+    to,
+    enter(node) {
+      if (node.name === 'ListMark') {
+        parsedMarkers.add(rangeKey(node.from, node.to))
+      }
+
+      if (node.name === 'FencedCode' || node.name === 'CodeBlock') {
+        codeRanges.push({ from: node.from, to: node.to })
+      }
+    },
+  })
+
+  const ranges: MarkerRange[] = []
+  const startLine = state.doc.lineAt(from).number
+  const endLine = state.doc.lineAt(Math.max(from, to)).number
+
+  for (let lineNumber = startLine; lineNumber <= endLine; lineNumber++) {
+    const line = state.doc.line(lineNumber)
+    if (line.from > to || line.to < from)
+      continue
+
+    if (isInsideAnyRange(line.from, codeRanges))
+      continue
+
+    const match = line.text.match(FALLBACK_LIST_MARK_RE)
+    if (!match)
+      continue
+
+    const markerFrom = line.from + match[1].length
+    const markerTo = markerFrom + match[2].length
+    if (parsedMarkers.has(rangeKey(markerFrom, markerTo)))
+      continue
+
+    ranges.push({ from: markerFrom, to: markerTo })
+  }
+
+  return ranges
+}
+
 function buildDecorations(
   view: EditorView,
   interactiveTaskMarkers: boolean,
   calloutTitleMode: CalloutTitleMode,
+  codeBlockCopy?: CodeBlockCopyOptions,
 ) {
   const decorations: Range<Decoration>[] = []
-  const indentedListLines = new Set<number>()
 
   for (const { from, to } of view.visibleRanges) {
     syntaxTree(view.state).iterate({
@@ -380,6 +472,18 @@ function buildDecorations(
           )
         }
 
+        // Highlight (==text==)
+        if (type === 'Highlight') {
+          decorations.push(
+            Decoration.mark({
+              attributes: {
+                style:
+                  'background:var(--text-highlight);color:#1f2937;border-radius:3px;padding:0 2px',
+              },
+            }).range(node.from, node.to),
+          )
+        }
+
         // Inline code
         if (type === 'InlineCode') {
           decorations.push(
@@ -393,8 +497,23 @@ function buildDecorations(
 
         // Fenced code blocks
         if (type === 'FencedCode') {
+          if (isStandaloneFencedCode(node.node))
+            return
+
           const startLine = view.state.doc.lineAt(node.from)
           const endLine = view.state.doc.lineAt(node.to)
+
+          if (codeBlockCopy) {
+            decorations.push(
+              Decoration.widget({
+                widget: new CodeBlockCopyWidget(
+                  getFencedCodeContent(view.state, node.node),
+                  codeBlockCopy,
+                ),
+                side: 1,
+              }).range(startLine.to),
+            )
+          }
 
           for (let i = startLine.number; i <= endLine.number; i++) {
             const line = view.state.doc.line(i)
@@ -406,7 +525,10 @@ function buildDecorations(
 
             decorations.push(
               Decoration.line({
-                attributes: { style },
+                attributes: {
+                  class: 'cm-fenced-code-line',
+                  style,
+                },
               }).range(line.from),
             )
           }
@@ -428,7 +550,7 @@ function buildDecorations(
             const replaceMarker = shouldReplaceCalloutMarker(
               calloutTitleMode,
               isCursorOnLine(view, startLine.number),
-              view.hasFocus,
+              getRevealHasFocus(view.state, view.hasFocus),
             )
 
             if (replaceMarker) {
@@ -494,7 +616,7 @@ function buildDecorations(
           if (
             shouldReplaceHorizontalRule(
               interactiveTaskMarkers,
-              view.hasFocus,
+              getRevealHasFocus(view.state, view.hasFocus),
               isCursorOnLine(view, line.number),
             )
           ) {
@@ -512,31 +634,16 @@ function buildDecorations(
           const checked = text.includes('x') || text.includes('X')
 
           const line = view.state.doc.lineAt(node.from)
-          if (!indentedListLines.has(line.number)) {
-            indentedListLines.add(line.number)
-            decorations.push(
-              Decoration.line({
-                attributes: {
-                  style: 'padding-left:14px',
-                },
-              }).range(line.from),
-            )
-          }
-
           if (
             shouldReplaceTaskMarker(
               interactiveTaskMarkers,
-              view.hasFocus,
+              getRevealHasFocus(view.state, view.hasFocus),
               isCursorOnLine(view, line.number),
             )
           ) {
             decorations.push(
               Decoration.replace({
-                widget: new CheckboxWidget(
-                  checked,
-                  node.from,
-                  interactiveTaskMarkers,
-                ),
+                widget: new CheckboxWidget(checked, interactiveTaskMarkers),
               }).range(node.from, node.to),
             )
           }
@@ -544,26 +651,27 @@ function buildDecorations(
 
         // List marks (bullets, numbers)
         if (type === 'ListMark') {
-          const line = view.state.doc.lineAt(node.from)
-          if (!indentedListLines.has(line.number)) {
-            indentedListLines.add(line.number)
-            decorations.push(
-              Decoration.line({
-                attributes: {
-                  style: 'padding-left:14px',
-                },
-              }).range(line.from),
-            )
-          }
-
           decorations.push(
             Decoration.mark({
-              attributes: { style: 'color:var(--muted-foreground)' },
+              attributes: { style: LIST_MARK_FALLBACK_STYLE },
             }).range(node.from, node.to),
           )
         }
       },
     })
+
+    const listMarkClass = highlightingFor(view.state, [
+      tags.processingInstruction,
+    ])
+    for (const marker of getFallbackListMarkerRanges(view.state, from, to)) {
+      decorations.push(
+        Decoration.mark({
+          attributes: listMarkClass
+            ? { class: listMarkClass }
+            : { style: LIST_MARK_FALLBACK_STYLE },
+        }).range(marker.from, marker.to),
+      )
+    }
   }
 
   return Decoration.set(decorations, true)
@@ -572,7 +680,11 @@ function buildDecorations(
 export function createMarkdownDecorations(
   options: MarkdownDecorationsOptions = {},
 ) {
-  const { interactiveTaskMarkers = true, calloutTitleMode = 'smart' } = options
+  const {
+    interactiveTaskMarkers = true,
+    calloutTitleMode = 'smart',
+    codeBlockCopy,
+  } = options
 
   return ViewPlugin.fromClass(
     class {
@@ -583,6 +695,7 @@ export function createMarkdownDecorations(
           view,
           interactiveTaskMarkers,
           calloutTitleMode,
+          codeBlockCopy,
         )
       }
 
@@ -591,13 +704,22 @@ export function createMarkdownDecorations(
         selectionSet: boolean
         viewportChanged: boolean
         focusChanged: boolean
+        startState: EditorState
+        state: EditorState
         view: EditorView
       }) {
-        if (shouldRebuildMarkdownDecorations(update)) {
+        if (
+          shouldRebuildMarkdownDecorations(
+            update,
+            syntaxTree(update.startState) !== syntaxTree(update.state),
+          )
+          || revealSelectionChanged(update)
+        ) {
           this.decorations = buildDecorations(
             update.view,
             interactiveTaskMarkers,
             calloutTitleMode,
+            codeBlockCopy,
           )
         }
       }

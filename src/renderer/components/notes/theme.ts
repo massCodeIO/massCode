@@ -1,5 +1,5 @@
+import { editorScrollbarTheme } from '@/components/cm-extensions/scrollbarTheme'
 import { EditorView } from '@codemirror/view'
-import { notesEditorScrollbarTheme } from './cm-extensions/scrollbarTheme'
 
 export interface NotesEditorThemeSettings {
   fontSize: number
@@ -30,6 +30,12 @@ export function createNotesEditThemeStyles(
       padding: raw ? RAW_CONTENT_PADDING : CONTENT_PADDING,
       lineHeight: String(notesSettings.lineHeight),
       caretColor: 'var(--foreground)',
+      // cm-content — flex-элемент scroller'а с min-width:auto: широкий
+      // блок-виджет (таблица) не даёт ему сжаться, редактор получает
+      // горизонтальную прокрутку, и reveal каретки сдвигает весь контент
+      // влево. min-width:0 заставляет контент всегда вписываться в scroller,
+      // а широкие таблицы скроллятся внутри своего виджета.
+      minWidth: '0',
       ...(notesSettings.limitWidth
         ? { maxWidth: '700px', margin: '0 auto' }
         : {}),
@@ -51,7 +57,7 @@ export function createNotesEditThemeStyles(
       lineHeight: String(notesSettings.lineHeight),
       ...(notesSettings.lineNumbers && raw ? {} : { display: 'none' }),
     },
-    ...notesEditorScrollbarTheme,
+    ...editorScrollbarTheme,
     '&.cm-focused': {
       outline: 'none',
     },
@@ -67,6 +73,11 @@ export function createNotesEditThemeStyles(
     },
     '.cm-line': {
       padding: '0',
+    },
+    '.cm-widgetBuffer': {
+      // Align to the line box: text-top can add a pixel to compact headings
+      // while markup is hidden, shifting subsequent lines when it is revealed.
+      verticalAlign: 'bottom',
     },
   }
 }

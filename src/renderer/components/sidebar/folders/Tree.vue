@@ -1,12 +1,24 @@
 <script setup lang="ts">
 import type { TreeNode as TreeNodeType } from '@/components/ui/tree/types'
 import type { Node, Position } from './types'
+import type { FolderIconSetPayload } from '~/main/types/ipc'
 import { languages } from '@/components/editor/grammars/languages'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { Tree as UiTree } from '@/components/ui/tree'
-import { useApp, useDialog, useFolders, useSnippets } from '@/composables'
-import { i18n } from '@/electron'
-import { scrollToElement } from '@/utils'
+import {
+  markPersistedStorageMutation,
+  useApp,
+  useDeleteShortcut,
+  useDialog,
+  useFolders,
+  useSnippets,
+  useSonner,
+} from '@/composables'
+import { i18n, ipc } from '@/electron'
+import {
+  getEntryNameConflictMessage,
+  getEntryNameValidationMessage,
+} from '@/utils'
 import { Folder } from 'lucide-vue-next'
 import CustomIcons from './custom-icons/CustomIcons.vue'
 
@@ -30,14 +42,13 @@ const emit = defineEmits<Emits>()
 
 const {
   createFolderAndSelect,
-  deleteFolder,
+  deleteSelectedFolders,
   folders,
   updateFolder,
   getFolderByIdFromTree,
   getFolders,
   selectedFolderIds,
-  clearFolderSelection,
-  selectFolder,
+  renameFolderId,
 } = useFolders()
 const {
   state,
@@ -46,12 +57,8 @@ const {
   highlightedTagId,
   focusedFolderId,
 } = useApp()
-const {
-  clearSnippetsState,
-  displayedSnippets,
-  updateSnippets,
-  selectFirstSnippet,
-} = useSnippets()
+const { sonner } = useSonner()
+const { displayedSnippets, updateSnippets, selectFirstSnippet } = useSnippets()
 
 // --- Data mapping ---
 
@@ -66,6 +73,14 @@ function mapToTreeNode(folder: Node): TreeNodeType {
 
 const treeData = computed(() => props.modelValue.map(mapToTreeNode))
 
+const foldersById = computed(() => {
+  const map = new Map<number, Node>()
+  for (const folder of flattenFolders((folders.value ?? []) as Node[])) {
+    map.set(folder.id, folder)
+  }
+  return map
+})
+
 const selectedIds = computed({
   get: () => selectedFolderIds.value as (string | number)[],
   set: (val) => {
@@ -74,6 +89,13 @@ const selectedIds = computed({
 })
 
 const editableId = ref<string | number | null>(null)
+
+watch(renameFolderId, (id) => {
+  if (id !== null) {
+    editableId.value = id
+    renameFolderId.value = null
+  }
+})
 
 const focusedId = computed({
   get: () => focusedFolderId.value as string | number | undefined,
@@ -110,6 +132,51 @@ const contextNodeDefaultLanguage = computed(() => {
       ?.defaultLanguage || ''
   )
 })
+
+function flattenFolders(nodes: Node[], acc: Node[] = []): Node[] {
+  for (const folder of nodes) {
+    acc.push(folder)
+    if (folder.children?.length) {
+      flattenFolders(folder.children, acc)
+    }
+  }
+
+  return acc
+}
+
+function hasSiblingFolderConflict(node: TreeNodeType, value: string): boolean {
+  const folderId = Number(node.id)
+  const folder = getFolderByIdFromTree(folders.value, folderId)
+  if (!folder) {
+    return false
+  }
+
+  const normalized = value.trim().toLowerCase()
+  if (!normalized || normalized === folder.name.toLowerCase()) {
+    return false
+  }
+
+  const parentId = folder.parentId ?? null
+  return flattenFolders((folders.value ?? []) as Node[]).some(
+    sibling =>
+      sibling.id !== folderId
+      && (sibling.parentId ?? null) === parentId
+      && sibling.name.toLowerCase() === normalized,
+  )
+}
+
+function getFolderValidationMessage(node: TreeNodeType, value: string) {
+  const message = getEntryNameValidationMessage(value, i18n.t.bind(i18n))
+  if (message) {
+    return message
+  }
+
+  if (hasSiblingFolderConflict(node, value)) {
+    return getEntryNameConflictMessage('folder', i18n.t.bind(i18n))
+  }
+
+  return ''
+}
 
 // --- Event handlers ---
 
@@ -226,44 +293,7 @@ async function onDeleteFolder() {
   if (!contextNode.value)
     return
 
-  const { confirm } = useDialog()
-  const activeBeforeDelete = state.folderId
-  const targetIds = selectedFolderIds.value.includes(contextNode.value.id)
-    ? [...selectedFolderIds.value]
-    : [contextNode.value.id]
-  const folderName = getFolderByIdFromTree(
-    folders.value,
-    contextNode.value.id,
-  )?.name
-
-  const isConfirmed = await confirm({
-    title:
-      targetIds.length > 1
-        ? i18n.t('messages:confirm.delete', {
-            name: i18n.t('common.folders'),
-          })
-        : i18n.t('messages:confirm.delete', { name: folderName }),
-    description: i18n.t('messages:warning:allSnippetsMoveToTrash'),
-  })
-
-  if (!isConfirmed)
-    return
-
-  await Promise.all(targetIds.map(id => deleteFolder(id, false)))
-  await getFolders(false)
-
-  if (activeBeforeDelete && targetIds.includes(activeBeforeDelete)) {
-    clearSnippetsState()
-    const fallbackId = selectedFolderIds.value[0]
-
-    if (fallbackId) {
-      await selectFolder(fallbackId)
-      scrollToElement(`[id="${fallbackId}"]`)
-    }
-    else {
-      clearFolderSelection()
-    }
-  }
+  await deleteSelectedFolders(contextNode.value.id)
 }
 
 function onRenameFolder() {
@@ -301,6 +331,7 @@ function onSetCustomIcon() {
     title: i18n.t('action.setCustomIcon'),
     content: h(CustomIcons, {
       nodeId: contextNode.value.id,
+      spaceId: 'code',
     }),
   })
 }
@@ -309,21 +340,46 @@ async function onRemoveCustomIcon() {
   if (!contextNode.value)
     return
 
-  updateFolder(contextNode.value.id, { icon: null })
-  await getFolders()
+  try {
+    await ipc.invoke<FolderIconSetPayload, void>('fs:folder-icon:set', {
+      folderId: contextNode.value.id,
+      icon: null,
+      spaceId: 'code',
+    })
+    markPersistedStorageMutation()
+    await getFolders()
+  }
+  catch {
+    sonner({
+      message: i18n.t('folder.iconPicker.errors.updateFailed'),
+      type: 'error',
+    })
+  }
 }
+
+useDeleteShortcut({
+  rootSelector: '[data-code-folders-tree]',
+  isEnabled: () => focusedFolderId.value !== undefined,
+  onDelete: () => deleteSelectedFolders(focusedFolderId.value),
+})
 </script>
 
 <template>
-  <div class="h-full min-h-0">
+  <div
+    data-code-folders-tree
+    class="h-full min-h-0"
+  >
     <ContextMenu.ContextMenu>
       <ContextMenu.ContextMenuTrigger as-child>
         <UiTree
+          virtual
+          :active-id="selectedIds.length === 1 ? selectedIds[0] : undefined"
           :model-value="treeData"
           :selected-ids="selectedIds"
           :editable-id="editableId"
           :focused-id="focusedId"
           :highlighted-ids="highlightedIds"
+          :get-validation-message="getFolderValidationMessage"
           @click-node="onClickNode"
           @dblclick-node="onDblclickNode"
           @toggle-node="onToggleNode"
@@ -340,8 +396,10 @@ async function onRemoveCustomIcon() {
           <template #icon="{ node }">
             <div class="mr-1.5 flex flex-shrink-0 items-center">
               <UiFolderIcon
-                v-if="getFolderByIdFromTree(folders, Number(node.id))?.icon"
-                :name="getFolderByIdFromTree(folders, Number(node.id))!.icon!"
+                v-if="foldersById.get(Number(node.id))?.icon"
+                :folder-id="Number(node.id)"
+                :name="foldersById.get(Number(node.id))!.icon!"
+                space-id="code"
               />
               <Folder
                 v-else

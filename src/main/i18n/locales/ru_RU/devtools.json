@@ -115,6 +115,10 @@
         "asciiToText": "ASCII → Текст"
       }
     },
+    "lineBreakNormalizer": {
+      "label": "Нормализатор переносов строк",
+      "description": "Удаление жёстких переносов строк и нормализация текста из терминала"
+    },
     "base64": {
       "label": "Base64 Encoder / Decoder",
       "description": "Кодирование или декодирование текста в Base64",
@@ -188,6 +192,25 @@
     "slugify": {
       "label": "Slugify",
       "description": "Преобразование текста в URL-совместимый slug"
+    }
+  },
+  "compare": {
+    "label": "Сравнение",
+    "jsonDiff": {
+      "label": "JSON Diff",
+      "description": "Сравнение и визуализация различий между двумя JSON-документами",
+      "original": "Исходный",
+      "modified": "Изменённый",
+      "filters": {
+        "added": "Добавлено",
+        "removed": "Удалено",
+        "modified": "Изменено"
+      },
+      "empty": "Вставьте JSON в оба поля, чтобы увидеть различия",
+      "errors": {
+        "invalidJson": "Невалидный JSON",
+        "diffFailed": "Не удалось вычислить diff"
+      }
     }
   },
   "form": {

@@ -1,0 +1,481 @@
+export type InternalLinkType = 'snippet' | 'note' | 'http-request'
+
+export interface InternalLink {
+  alias: string | null
+  plannedTarget: { type: InternalLinkType } | null
+  basename: string
+  legacyTarget: { id: number, type: InternalLinkType } | null
+  label: string
+  pathSegments: string[]
+  raw: string
+  target: string
+}
+
+export interface InternalLinkMatch extends InternalLink {
+  from: number
+  to: number
+}
+
+export interface InternalLinkLookupItem {
+  id: number
+  name: string
+  type: InternalLinkType
+  folderPath?: string
+}
+
+export interface ResolveInternalLinkOptions {
+  linkerFolderPath?: string
+}
+
+const ESCAPABLE_LINK_CHARACTERS = new Set(['\\', '|', ']'])
+const LEGACY_TARGET_RE = /^(?:snippet|note|http-request):\d+$/
+
+export function getPlannedLinkTarget(
+  target: string,
+): { type: InternalLinkType } | null {
+  const match = /^masscode:planned:(note|snippet|http-request)$/.exec(target)
+  return match && match[0] === target
+    ? { type: match[1] as InternalLinkType }
+    : null
+}
+
+export function buildPlannedLinkMarkdown(
+  type: InternalLinkType,
+  title: string,
+): string {
+  if (!title.trim() || /[\r\n]/.test(title))
+    throw new Error('INVALID_PLANNED_TITLE')
+  return `[[masscode:planned:${type}|${escapeLinkPart(title)}]]`
+}
+
+export function realInternalLinkRewrite(
+  target: string,
+  id: number,
+  type: InternalLinkType,
+  alias?: string | null,
+) {
+  return getPlannedLinkTarget(target)
+    ? { target: `${type}:${id}`, alias: alias ?? target }
+    : target
+}
+
+export function splitInternalLinkTarget(target: string): {
+  basename: string
+  pathSegments: string[]
+} {
+  if (!target || LEGACY_TARGET_RE.test(target)) {
+    return { basename: target, pathSegments: [] }
+  }
+
+  const segments = target
+    .split('/')
+    .map(segment => segment.trim())
+    .filter(segment => segment.length > 0)
+
+  if (segments.length === 0) {
+    return { basename: '', pathSegments: [] }
+  }
+
+  return {
+    basename: segments[segments.length - 1],
+    pathSegments: segments.slice(0, -1),
+  }
+}
+
+export function escapeLinkPart(value: string): string {
+  let result = ''
+
+  for (const char of value) {
+    if (ESCAPABLE_LINK_CHARACTERS.has(char)) {
+      result += `\\${char}`
+    }
+    else {
+      result += char
+    }
+  }
+
+  return result
+}
+
+function unescapeLinkPart(value: string): string {
+  let result = ''
+
+  for (let index = 0; index < value.length; index++) {
+    const char = value[index]
+    const nextChar = value[index + 1]
+
+    if (char === '\\' && nextChar && ESCAPABLE_LINK_CHARACTERS.has(nextChar)) {
+      result += nextChar
+      index++
+      continue
+    }
+
+    result += char
+  }
+
+  return result
+}
+
+function readLinkPart(
+  text: string,
+  index: number,
+): { value: string, nextIndex: number, separator: 'pipe' | 'end' | 'eof' } {
+  let rawValue = ''
+
+  while (index < text.length) {
+    const char = text[index]
+
+    if (char === '\n' || char === '\r') {
+      return {
+        nextIndex: index,
+        separator: 'eof',
+        value: rawValue,
+      }
+    }
+
+    if (char === '\\' && index + 1 < text.length) {
+      rawValue += char
+      rawValue += text[index + 1]
+      index += 2
+      continue
+    }
+
+    if (char === '|') {
+      return {
+        nextIndex: index + 1,
+        separator: 'pipe',
+        value: rawValue,
+      }
+    }
+
+    if (char === ']' && text[index + 1] === ']') {
+      return {
+        nextIndex: index + 2,
+        separator: 'end',
+        value: rawValue,
+      }
+    }
+
+    rawValue += char
+    index++
+  }
+
+  return {
+    nextIndex: index,
+    separator: 'eof',
+    value: rawValue,
+  }
+}
+
+function parseLinkAt(text: string, from: number): InternalLinkMatch | null {
+  if (text.slice(from, from + 2) !== '[[') {
+    return null
+  }
+
+  const targetResult = readLinkPart(text, from + 2)
+  if (targetResult.separator === 'eof') {
+    return null
+  }
+
+  const target = unescapeLinkPart(targetResult.value)
+  if (!target) {
+    return null
+  }
+
+  let alias: string | null = null
+  let to = targetResult.nextIndex
+
+  if (targetResult.separator === 'pipe') {
+    const aliasResult = readLinkPart(text, targetResult.nextIndex)
+    if (aliasResult.separator !== 'end') {
+      return null
+    }
+
+    alias = unescapeLinkPart(aliasResult.value)
+    if (!alias) {
+      return null
+    }
+
+    to = aliasResult.nextIndex
+  }
+
+  const raw = text.slice(from, to)
+  const legacyMatch = target.match(/^(snippet|note|http-request):(\d+)$/)
+  const legacyTarget = legacyMatch
+    ? {
+        id: Number(legacyMatch[2]),
+        type: legacyMatch[1] as InternalLinkType,
+      }
+    : null
+
+  const { basename, pathSegments } = splitInternalLinkTarget(target)
+
+  return {
+    alias,
+    plannedTarget: getPlannedLinkTarget(target),
+    basename,
+    from,
+    legacyTarget,
+    label: alias ?? target,
+    pathSegments,
+    raw,
+    target,
+    to,
+  }
+}
+
+export function parseInternalLink(text: string): InternalLink | null {
+  const match = parseLinkAt(text, 0)
+
+  if (!match || match.to !== text.length) {
+    return null
+  }
+
+  return {
+    alias: match.alias,
+    plannedTarget: match.plannedTarget,
+    basename: match.basename,
+    legacyTarget: match.legacyTarget,
+    label: match.label,
+    pathSegments: match.pathSegments,
+    raw: match.raw,
+    target: match.target,
+  }
+}
+
+export function findInternalLinks(text: string): InternalLinkMatch[] {
+  const links: InternalLinkMatch[] = []
+
+  for (let index = 0; index < text.length - 1; index++) {
+    if (text[index] !== '[' || text[index + 1] !== '[') {
+      continue
+    }
+
+    const match = parseLinkAt(text, index)
+    if (!match) {
+      continue
+    }
+
+    links.push(match)
+    index = match.to - 1
+  }
+
+  return links
+}
+
+export function buildLinkMarkdown(target: string, label?: string): string {
+  const escapedTarget = escapeLinkPart(target)
+
+  if (!label || label === target) {
+    return `[[${escapedTarget}]]`
+  }
+
+  return `[[${escapedTarget}|${escapeLinkPart(label)}]]`
+}
+
+export function normalizeInternalLinkLookupKey(name: string): string {
+  return name.trim().toLocaleLowerCase()
+}
+
+export function rewriteInternalLinks(
+  text: string,
+  mapMatch: (
+    match: InternalLinkMatch,
+  ) => string | { target: string, alias: string } | null,
+): string | null {
+  const matches = findInternalLinks(text)
+  let result = ''
+  let cursor = 0
+  let changed = false
+
+  for (const match of matches) {
+    if (match.plannedTarget)
+      continue
+    const nextTarget = mapMatch(match)
+    if (nextTarget === null) {
+      continue
+    }
+
+    result += text.slice(cursor, match.from)
+    result
+      += typeof nextTarget === 'string'
+        ? buildLinkMarkdown(nextTarget, match.alias ?? undefined)
+        : buildLinkMarkdown(nextTarget.target, nextTarget.alias)
+    cursor = match.to
+    changed = true
+  }
+
+  if (!changed) {
+    return null
+  }
+
+  result += text.slice(cursor)
+  return result
+}
+
+export function rewriteInternalLinkTarget(
+  text: string,
+  oldTarget: string,
+  newTarget: string,
+  shouldRewriteMatch?: (match: InternalLinkMatch) => boolean,
+): string | null {
+  const oldKey = normalizeInternalLinkLookupKey(oldTarget)
+  if (!oldKey) {
+    return null
+  }
+
+  return rewriteInternalLinks(text, (match) => {
+    if (match.legacyTarget) {
+      return null
+    }
+
+    if (normalizeInternalLinkLookupKey(match.target) !== oldKey) {
+      return null
+    }
+
+    if (shouldRewriteMatch && !shouldRewriteMatch(match)) {
+      return null
+    }
+
+    return newTarget
+  })
+}
+
+function normalizeFolderPath(folderPath: string | undefined): string {
+  if (!folderPath) {
+    return ''
+  }
+
+  return folderPath
+    .split('/')
+    .map(segment => segment.trim())
+    .filter(segment => segment.length > 0)
+    .join('/')
+}
+
+function buildFolderAncestorWalk(folderPath: string): string[] {
+  const normalized = normalizeFolderPath(folderPath)
+
+  if (!normalized) {
+    return ['']
+  }
+
+  const segments = normalized.split('/')
+  const ancestors: string[] = []
+
+  for (let index = segments.length; index >= 0; index -= 1) {
+    ancestors.push(segments.slice(0, index).join('/'))
+  }
+
+  return ancestors
+}
+
+function buildPathLookupKey(pathSegments: string[], basename: string): string {
+  return [...pathSegments, basename]
+    .map(segment => normalizeInternalLinkLookupKey(segment))
+    .join('/')
+}
+
+function buildCandidatePathLookupKey(item: InternalLinkLookupItem): string {
+  const folderSegments = normalizeFolderPath(item.folderPath)
+    .split('/')
+    .filter(segment => segment.length > 0)
+
+  return buildPathLookupKey(folderSegments, item.name)
+}
+
+export function resolveInternalLinkTargetByTitle(
+  target: string,
+  items: InternalLinkLookupItem[],
+  options?: ResolveInternalLinkOptions,
+): { id: number, type: InternalLinkType } | null {
+  if (getPlannedLinkTarget(target))
+    return null
+  const { basename, pathSegments } = splitInternalLinkTarget(target)
+
+  if (!basename) {
+    return null
+  }
+
+  if (pathSegments.length > 0) {
+    const targetPathKey = buildPathLookupKey(pathSegments, basename)
+
+    const pathMatch = items.find(
+      item =>
+        (item.type === 'note' || item.type === 'http-request')
+        && buildCandidatePathLookupKey(item) === targetPathKey,
+    )
+
+    if (pathMatch) {
+      return {
+        id: pathMatch.id,
+        type: pathMatch.type,
+      }
+    }
+
+    return null
+  }
+
+  const normalizedTitle = normalizeInternalLinkLookupKey(basename)
+
+  const snippet = items.find(
+    item =>
+      item.type === 'snippet'
+      && normalizeInternalLinkLookupKey(item.name) === normalizedTitle,
+  )
+
+  if (snippet) {
+    return {
+      id: snippet.id,
+      type: snippet.type,
+    }
+  }
+
+  const noteCandidates = items.filter(
+    item =>
+      item.type === 'note'
+      && normalizeInternalLinkLookupKey(item.name) === normalizedTitle,
+  )
+
+  if (noteCandidates.length === 0) {
+    const httpRequest = items.find(
+      item =>
+        item.type === 'http-request'
+        && normalizeInternalLinkLookupKey(item.name) === normalizedTitle,
+    )
+
+    return httpRequest
+      ? {
+          id: httpRequest.id,
+          type: httpRequest.type,
+        }
+      : null
+  }
+
+  if (noteCandidates.length === 1) {
+    return {
+      id: noteCandidates[0].id,
+      type: 'note',
+    }
+  }
+
+  const ancestors = buildFolderAncestorWalk(options?.linkerFolderPath ?? '')
+
+  for (const ancestorPath of ancestors) {
+    const match = noteCandidates.find(
+      candidate => normalizeFolderPath(candidate.folderPath) === ancestorPath,
+    )
+
+    if (match) {
+      return {
+        id: match.id,
+        type: 'note',
+      }
+    }
+  }
+
+  return {
+    id: noteCandidates[0].id,
+    type: 'note',
+  }
+}

@@ -134,6 +134,7 @@ export function evaluatePrimaryIntent(
             mathEvaluate: (expression, nextScope) =>
               math.evaluate(expression, nextScope),
             formatResult,
+            locale: activeLocale,
           },
         )
 
@@ -157,6 +158,7 @@ export function evaluatePrimaryIntent(
           mathEvaluate: (expression, nextScope) =>
             math.evaluate(expression, nextScope),
           formatResult,
+          locale: activeLocale,
         },
       )
 

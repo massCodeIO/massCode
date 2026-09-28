@@ -3,11 +3,44 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { enqueueCloudDownload } from '../../../cloudDownloads'
+import {
+  getFileAvailability,
+  markAppWrittenFileAsLocal,
+  resetCloudFileExemptions,
+  setDatalessProbeForTests,
+} from '../../../runtime/shared/cloudFiles'
 import { ensureNotesStateFile } from '../../runtime/state'
 import { resetNotesRuntimeCache } from '../../runtime/sync'
 import { createNotesFoldersStorage } from '../folders'
+import { createNotesNotesStorage } from '../notes'
 
 let tempVaultPath = ''
+
+function makeSparsePlaceholder(absolutePath: string, size = 4096): void {
+  fs.removeSync(absolutePath)
+  const fd = fs.openSync(absolutePath, 'w')
+  fs.ftruncateSync(fd, size)
+  fs.closeSync(fd)
+}
+
+function mockFolderMetadataAsZeroBlocks() {
+  const statSync = fs.statSync.bind(fs)
+
+  return vi.spyOn(fs, 'statSync').mockImplementation((filePath) => {
+    const stats = statSync(filePath)
+
+    if (
+      typeof filePath === 'string'
+      && filePath.endsWith('.meta.yaml')
+      && stats.size > 0
+    ) {
+      return Object.assign(stats, { blocks: 0 })
+    }
+
+    return stats
+  })
+}
 
 vi.mock('electron-store', () => {
   class MockStore {
@@ -59,6 +92,11 @@ vi.mock('electron', () => ({
   },
 }))
 
+vi.mock('../../../cloudDownloads', () => ({
+  enqueueCloudDownload: vi.fn(),
+  prioritizeCloudDownload: vi.fn(),
+}))
+
 vi.mock('../../../../../../store', () => ({
   store: {
     preferences: {
@@ -82,7 +120,9 @@ describe('folders storage validations', () => {
     const metaDirPath = path.join(notesRoot, '.masscode')
 
     ensureNotesStateFile({
+      assetsPath: path.join(metaDirPath, 'assets'),
       inboxDirPath: path.join(metaDirPath, 'inbox'),
+      legacyAssetsPath: path.join(notesRoot, 'assets'),
       metaDirPath,
       notesRoot,
       statePath: path.join(metaDirPath, 'state.json'),
@@ -91,6 +131,10 @@ describe('folders storage validations', () => {
   })
 
   afterEach(() => {
+    setDatalessProbeForTests(null)
+    resetCloudFileExemptions()
+    resetNotesRuntimeCache()
+
     if (tempVaultPath) {
       fs.removeSync(tempVaultPath)
     }
@@ -103,20 +147,20 @@ describe('folders storage validations', () => {
     expect(result).toEqual({ invalidInput: true, notFound: false })
   })
 
-  it('moving folder to sibling with same name throws NAME_CONFLICT', () => {
+  it('moving folder to sibling with same name auto-renames', () => {
     const storage = createNotesFoldersStorage()
 
-    // Create a parent folder
     const { id: parentId } = storage.createFolder({ name: 'Parent' })
 
-    // Create two folders: one at root named "Dupe", one inside Parent named "Dupe"
     storage.createFolder({ name: 'Dupe', parentId })
     const { id: rootDupeId } = storage.createFolder({ name: 'Dupe' })
 
-    // Move rootDupe into Parent — should conflict with existing "Dupe" child
-    expect(() => storage.updateFolder(rootDupeId, { parentId })).toThrow(
-      'NAME_CONFLICT',
-    )
+    storage.updateFolder(rootDupeId, { parentId })
+
+    const moved = storage.getFolders().find(f => f.id === rootDupeId)
+    expect(moved?.parentId).toBe(parentId)
+    expect(moved?.name.toLowerCase()).not.toBe('dupe')
+    expect(moved?.name.toLowerCase()).toContain('dupe')
   })
 
   it('rename to existing disk directory throws NAME_CONFLICT', () => {
@@ -130,5 +174,183 @@ describe('folders storage validations', () => {
     expect(() => storage.updateFolder(id, { name: 'Target' })).toThrow(
       'NAME_CONFLICT',
     )
+  })
+
+  it('rewrites path-based backlinks when a folder is renamed', () => {
+    const folders = createNotesFoldersStorage()
+    const notes = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A' })
+    const folderB = folders.createFolder({ name: 'Folder B' })
+
+    notes.createNote({ name: 'Foo', folderId: folderA.id })
+    notes.createNote({ name: 'Foo', folderId: folderB.id })
+
+    const linker = notes.createNote({ name: 'Linker' })
+    notes.updateNoteContent(linker.id, 'See [[Folder A/Foo]] here')
+
+    folders.updateFolder(folderA.id, { name: 'Renamed' })
+
+    expect(notes.getNoteById(linker.id)?.content).toBe(
+      'See [[Renamed/Foo]] here',
+    )
+  })
+
+  it('rewrites path-based backlinks when a folder is moved into another', () => {
+    const folders = createNotesFoldersStorage()
+    const notes = createNotesNotesStorage()
+
+    const root = folders.createFolder({ name: 'Root' })
+    const folderA = folders.createFolder({ name: 'Folder A' })
+    const folderB = folders.createFolder({ name: 'Folder B' })
+
+    notes.createNote({ name: 'Foo', folderId: folderA.id })
+    notes.createNote({ name: 'Foo', folderId: folderB.id })
+
+    const linker = notes.createNote({ name: 'Linker' })
+    notes.updateNoteContent(linker.id, 'See [[Folder A/Foo]] here')
+
+    folders.updateFolder(folderA.id, { parentId: root.id })
+
+    expect(notes.getNoteById(linker.id)?.content).toBe(
+      'See [[Root/Folder A/Foo]] here',
+    )
+  })
+
+  it('cascades path rewrite when an ancestor folder is renamed', () => {
+    const folders = createNotesFoldersStorage()
+    const notes = createNotesNotesStorage()
+
+    const projects = folders.createFolder({ name: 'Projects' })
+    const child = folders.createFolder({
+      name: 'Active',
+      parentId: projects.id,
+    })
+    const other = folders.createFolder({ name: 'Other' })
+
+    notes.createNote({ name: 'Foo', folderId: child.id })
+    notes.createNote({ name: 'Foo', folderId: other.id })
+
+    const linker = notes.createNote({ name: 'Linker' })
+    notes.updateNoteContent(linker.id, 'See [[Projects/Active/Foo]] here')
+
+    folders.updateFolder(projects.id, { name: 'Workspace' })
+
+    expect(notes.getNoteById(linker.id)?.content).toBe(
+      'See [[Workspace/Active/Foo]] here',
+    )
+  })
+
+  it('leaves bare backlinks unchanged when a folder is renamed', () => {
+    const folders = createNotesFoldersStorage()
+    const notes = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A' })
+
+    notes.createNote({ name: 'Foo', folderId: folderA.id })
+
+    const linker = notes.createNote({ name: 'Linker' })
+    notes.updateNoteContent(linker.id, 'See [[Foo]] here')
+
+    folders.updateFolder(folderA.id, { name: 'Renamed' })
+
+    expect(notes.getNoteById(linker.id)?.content).toBe('See [[Foo]] here')
+  })
+
+  it('keeps resident zero-block subtree metadata local after parent move', () => {
+    const notesRoot = path.join(tempVaultPath, 'notes')
+    setDatalessProbeForTests(() => true)
+    const statSpy = mockFolderMetadataAsZeroBlocks()
+
+    try {
+      const storage = createNotesFoldersStorage()
+      const destination = storage.createFolder({ name: 'Destination' })
+      const parent = storage.createFolder({ name: 'Parent' })
+      storage.createFolder({ name: 'Child', parentId: parent.id })
+      const beforeMetadata = fs.readFileSync(
+        path.join(notesRoot, 'Parent', '.meta.yaml'),
+        'utf8',
+      )
+      const previousUpdatedAt = storage
+        .getFolders()
+        .find(folder => folder.id === parent.id)!.updatedAt
+      const nowSpy = vi
+        .spyOn(Date, 'now')
+        .mockReturnValue(previousUpdatedAt + 1)
+
+      try {
+        storage.updateFolder(parent.id, { parentId: destination.id })
+      }
+      finally {
+        nowSpy.mockRestore()
+      }
+
+      const parentMetaPath = path.join(
+        notesRoot,
+        'Destination',
+        'Parent',
+        '.meta.yaml',
+      )
+      const childMetaPath = path.join(
+        notesRoot,
+        'Destination',
+        'Parent',
+        'Child',
+        '.meta.yaml',
+      )
+
+      expect(getFileAvailability(parentMetaPath).isCloudPlaceholder).toBe(
+        false,
+      )
+      expect(getFileAvailability(childMetaPath).isCloudPlaceholder).toBe(false)
+      expect(fs.readFileSync(parentMetaPath, 'utf8')).not.toBe(beforeMetadata)
+    }
+    finally {
+      statSpy.mockRestore()
+    }
+  })
+
+  it('does not exempt or overwrite descendant metadata placeholder after parent move', () => {
+    const notesRoot = path.join(tempVaultPath, 'notes')
+    setDatalessProbeForTests(() => true)
+    const statSpy = mockFolderMetadataAsZeroBlocks()
+
+    try {
+      const storage = createNotesFoldersStorage()
+      const destination = storage.createFolder({ name: 'Destination' })
+      const parent = storage.createFolder({ name: 'Parent' })
+      storage.createFolder({ name: 'Child', parentId: parent.id })
+      const parentMetaPath = path.join(notesRoot, 'Parent', '.meta.yaml')
+      const childSourcePath = path.join(
+        notesRoot,
+        'Parent',
+        'Child',
+        '.meta.yaml',
+      )
+
+      makeSparsePlaceholder(childSourcePath)
+      resetCloudFileExemptions()
+      markAppWrittenFileAsLocal(parentMetaPath)
+      const placeholderBefore = fs.readFileSync(childSourcePath)
+      const childTargetPath = path.join(
+        notesRoot,
+        'Destination',
+        'Parent',
+        'Child',
+        '.meta.yaml',
+      )
+      vi.mocked(enqueueCloudDownload).mockClear()
+
+      storage.updateFolder(parent.id, { parentId: destination.id })
+
+      expect(fs.readFileSync(childTargetPath)).toEqual(placeholderBefore)
+      expect(getFileAvailability(childTargetPath).isCloudPlaceholder).toBe(
+        true,
+      )
+      expect(enqueueCloudDownload).toHaveBeenCalledWith(childTargetPath)
+    }
+    finally {
+      statSpy.mockRestore()
+    }
   })
 })

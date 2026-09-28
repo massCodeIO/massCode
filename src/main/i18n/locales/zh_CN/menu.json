@@ -7,7 +7,7 @@
     "quit": "退出 massCode",
     "about": "关于 massCode",
     "hide": "隐藏 massCode",
-    "mathNotebook": "Math Notebook"
+    "mathNotebook": "计算草稿本"
   },
   "help": {
     "label": "帮助",
@@ -28,46 +28,63 @@
       "gumroad": "通过 Gumroad 捐赠（Visa、Mastercard 等）"
     },
     "twitter": "X",
-    "devTools": "切换开发者工具",
-    "links": {
-      "snippets": "代码片段集合"
-    }
+    "devTools": "切换开发者工具"
+  },
+  "file": {
+    "label": "文件",
+    "new": "新建"
   },
   "view": {
     "label": "视图",
     "showSidebar": "显示/隐藏侧边栏",
+    "layout": {
+      "label": "布局",
+      "allPanels": "所有面板",
+      "listEditor": "列表 + 编辑器",
+      "editorOnly": "仅编辑器"
+    },
     "sortBy": {
-      "label": "代码片段排序方式",
+      "label": "排序方式",
       "dateModified": "修改日期",
       "dateCreated": "创建日期",
       "name": "名称"
     },
+    "sortOrder": {
+      "label": "排序规则",
+      "ascending": "升序",
+      "descending": "降序"
+    },
     "compactMode": "紧凑模式",
-    "layout": {
-      "label": "Layout",
-      "allPanels": "All Panels",
-      "listEditor": "List + Editor",
-      "editorOnly": "Editor Only"
-    }
+    "hideCompletedTasks": "隐藏已完成的任务"
   },
   "edit": {
     "label": "编辑",
+    "undo": "撤销",
+    "redo": "恢复",
+    "cut": "剪切",
+    "copy": "复制",
+    "paste": "粘贴",
+    "delete": "删除",
+    "selectAll": "全选",
     "find": "查找"
   },
   "editor": {
     "label": "编辑器",
-    "copy": "复制代码片段到剪贴板",
+    "copySnippet": "复制代码片段",
+    "copyNote": "复制笔记",
     "format": "格式化",
+    "normalizeTerminalOutput": "规范化换行符",
+    "mode": "模式",
+    "modeRaw": "源码",
+    "modeLivePreview": "实时预览",
+    "modePreview": "预览",
     "previewCode": "预览代码",
     "previewScreenshot": "预览截图",
     "previewJson": "预览 JSON",
+    "sendRequest": "发送请求",
     "fontSizeIncrease": "增大字体",
     "fontSizeDecrease": "减小字体",
-    "fontSizeReset": "重置字体大小",
-    "mode": "Mode",
-    "modeRaw": "Raw",
-    "modeLivePreview": "Live Preview",
-    "modePreview": "Preview"
+    "fontSizeReset": "重置字体大小"
   },
   "markdown": {
     "label": "Markdown",
@@ -85,11 +102,7 @@
     "label": "开发者工具"
   },
   "window": {
-    "label": "Window",
-    "minimize": "Minimize"
-  },
-  "file": {
-    "label": "File",
-    "new": "New"
+    "label": "窗口",
+    "minimize": "最小化"
   }
 }

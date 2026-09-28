@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { HTTP_PREVIEW_FORMATS } from '../../../shared/httpPreview'
 
 type State = Record<string, any>
 
@@ -111,6 +112,101 @@ afterEach(() => {
 })
 
 describe('preferences store sanitization', () => {
+  it.each([undefined, null, 'true', 1, false, true])(
+    'enables MCP only for explicit true (%s)',
+    async (enabled) => {
+      persistedStateByName.preferences = { api: { mcp: { enabled } } }
+      const { default: preferences } = await import('../module/preferences')
+      expect(preferences.get('api.mcp.enabled')).toBe(enabled === true)
+    },
+  )
+
+  it('defaults MCP to disabled for existing preferences', async () => {
+    persistedStateByName.preferences = { api: { port: 4321 } }
+    const { default: preferences } = await import('../module/preferences')
+    expect(preferences.get('api.mcp.enabled')).toBe(false)
+  })
+
+  it.each(['locale', 'dd.MM.yyyy', 'MM/dd/yyyy', 'dd/MM/yyyy', 'yyyy-MM-dd'])(
+    'keeps saved date format %s',
+    async (dateFormat) => {
+      persistedStateByName.preferences = { appearance: { dateFormat } }
+      const { default: preferences } = await import('../module/preferences')
+      expect(preferences.get('appearance.dateFormat' as any)).toBe(dateFormat)
+    },
+  )
+
+  it.each([undefined, null, 'invalid', 42])(
+    'defaults missing or invalid date format %s to locale',
+    async (dateFormat) => {
+      persistedStateByName.preferences = { appearance: { dateFormat } }
+      const { default: preferences } = await import('../module/preferences')
+      expect(preferences.get('appearance.dateFormat' as any)).toBe('locale')
+    },
+  )
+
+  it('defaults table wrapping to false', async () => {
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('editor.notes.wrapTables' as any)).toBe(false)
+  })
+
+  it('keeps valid table wrapping and rejects invalid values', async () => {
+    persistedStateByName.preferences = {
+      editor: { notes: { wrapTables: true } },
+    }
+
+    const { default: preferences } = await import('../module/preferences')
+    expect(preferences.get('editor.notes.wrapTables' as any)).toBe(true)
+
+    vi.resetModules()
+    persistedStateByName.preferences = {
+      editor: { notes: { wrapTables: 'yes' } },
+    }
+
+    const { default: invalidPreferences } = await import(
+      '../module/preferences'
+    )
+    expect(invalidPreferences.get('editor.notes.wrapTables' as any)).toBe(
+      false,
+    )
+  })
+
+  it('defaults missing dock badge source to none', async () => {
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('appearance.dockBadgeSource' as any)).toBe('none')
+  })
+
+  it('keeps a valid dock badge source and prunes stale appearance values', async () => {
+    persistedStateByName.preferences = {
+      appearance: {
+        theme: 'dark',
+        dockBadgeSource: 'notesInbox',
+        stale: true,
+      },
+    }
+
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('appearance.dockBadgeSource' as any)).toBe(
+      'notesInbox',
+    )
+    expect(preferences.get('appearance.stale' as any)).toBeUndefined()
+  })
+
+  it('defaults an invalid dock badge source to none', async () => {
+    persistedStateByName.preferences = {
+      appearance: {
+        dockBadgeSource: 'invalid',
+      },
+    }
+
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('appearance.dockBadgeSource' as any)).toBe('none')
+  })
+
   it('migrates legacy keys into grouped preferences schema and prunes stale values', async () => {
     persistedStateByName.preferences = {
       storagePath: '/custom-storage',
@@ -140,6 +236,9 @@ describe('preferences store sanitization', () => {
 
     expect(preferences.get('storage.rootPath' as any)).toBe('/custom-storage')
     expect(preferences.get('api.port' as any)).toBe(9876)
+    expect(preferences.get('api.integrations.enabled' as any)).toBe(false)
+    expect(preferences.get('api.integrations.tokenHash' as any)).toBeNull()
+    expect(preferences.get('api.integrations.tokenPreview' as any)).toBeNull()
     expect(preferences.get('localization.locale' as any)).toBe('ru_RU')
     expect(preferences.get('appearance.theme' as any)).toBe('dark')
     expect(preferences.get('editor.code.fontSize' as any)).toBe(18)
@@ -166,6 +265,81 @@ describe('preferences store sanitization', () => {
       preferences.get('editor.markdown.legacyMarkdownFlag' as any),
     ).toBeUndefined()
   })
+
+  it('keeps persisted http settings and prunes stale values', async () => {
+    persistedStateByName.preferences = {
+      http: {
+        wrapLines: false,
+        defaultPreviewFormat: 'curl',
+        autoSwitchToResponse: false,
+        skipCertificateVerification: true,
+        garbage: 'bad',
+      },
+    }
+
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('http.wrapLines' as any)).toBe(false)
+    expect(preferences.get('http.defaultPreviewFormat' as any)).toBe('curl')
+    expect(preferences.get('http.autoSwitchToResponse' as any)).toBe(false)
+    expect(preferences.get('http.skipCertificateVerification' as any)).toBe(
+      true,
+    )
+    expect(preferences.get('http.garbage' as any)).toBeUndefined()
+  })
+
+  it.each(HTTP_PREVIEW_FORMATS)(
+    'keeps %s as the HTTP preview format',
+    async (format) => {
+      persistedStateByName.preferences = {
+        http: { defaultPreviewFormat: format },
+      }
+      const { default: preferences } = await import('../module/preferences')
+      expect(preferences.get('http.defaultPreviewFormat' as any)).toBe(format)
+    },
+  )
+
+  it('adds sanitized defaults for invalid http settings', async () => {
+    persistedStateByName.preferences = {
+      http: {
+        wrapLines: 'bad',
+        defaultPreviewFormat: 'bad',
+        autoSwitchToResponse: 'bad',
+        skipCertificateVerification: 'bad',
+      },
+    }
+
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('http.wrapLines' as any)).toBe(true)
+    expect(preferences.get('http.defaultPreviewFormat' as any)).toBe('http')
+    expect(preferences.get('http.autoSwitchToResponse' as any)).toBe(true)
+    expect(preferences.get('http.skipCertificateVerification' as any)).toBe(
+      false,
+    )
+  })
+
+  it('keeps sanitized API integration settings', async () => {
+    persistedStateByName.preferences = {
+      api: {
+        integrations: {
+          enabled: true,
+          tokenHash: 'hash',
+          tokenPreview: 'mc_...abcd',
+          stale: true,
+        },
+      },
+    }
+
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('api.integrations.enabled' as any)).toBe(true)
+    expect(preferences.get('api.integrations.tokenHash' as any)).toBe('hash')
+    expect(preferences.get('api.integrations.tokenPreview' as any)).toBe(
+      'mc_...abcd',
+    )
+    expect(preferences.get('api.integrations.stale' as any)).toBeUndefined()
+  })
 })
 
 describe('app store sanitization', () => {
@@ -177,6 +351,13 @@ describe('app store sanitization', () => {
         folderId: 5,
         codeLayoutMode: 'all-panels',
         legacyStateFlag: true,
+      },
+      code: {
+        contentSort: {
+          sort: 'updatedAt',
+          order: 'ASC',
+          garbage: 'bad',
+        },
       },
       compactListMode: true,
       sizes: {
@@ -196,7 +377,13 @@ describe('app store sanitization', () => {
         legacyNotesStateFlag: true,
       },
       notesEditorMode: 'preview',
-      nextDonateNotification: 1_700_000_000_000,
+      notes: {
+        contentSort: {
+          sort: 'name',
+          order: 'DESC',
+          garbage: 'bad',
+        },
+      },
       lastNotifiedUpdateVersion: '4.7.1',
       legacyRootFlag: true,
     }
@@ -212,22 +399,29 @@ describe('app store sanitization', () => {
       folderId: 5,
     })
     expect(app.get('code.layout.mode' as any)).toBe('all-panels')
+    expect(app.get('code.contentSort' as any)).toEqual({
+      sort: 'updatedAt',
+      order: 'ASC',
+    })
+    expect(app.get('code.contentSort.garbage' as any)).toBeUndefined()
     expect(app.get('ui.compactListMode' as any)).toBe(true)
-    expect(app.get('code.layout.tagsListHeight' as any)).toBe(30)
+    expect(app.get('code.layout.tagsListHeight' as any)).toBe(200)
     expect(app.get('code.layout.threePanel' as any)).toEqual([15, 20, 65])
-    expect(app.get('code.layout.twoPanel' as any)).toEqual([35, 65])
+    expect(app.get('code.layout.twoPanel' as any)).toBeUndefined()
     expect(app.get('notes.selection' as any)).toEqual({
       noteId: 20,
       folderId: 7,
     })
     expect(app.get('notes.editorMode' as any)).toBe('preview')
+    expect(app.get('notes.contentSort' as any)).toEqual({
+      sort: 'name',
+      order: 'DESC',
+    })
+    expect(app.get('notes.contentSort.garbage' as any)).toBeUndefined()
     expect(app.get('notes.layout.mode' as any)).toBe('list-editor')
     expect(app.get('notes.layout.threePanel' as any)).toEqual([10, 25, 65])
-    expect(app.get('notes.layout.twoPanel' as any)).toEqual([28, 72])
-    expect(app.get('notes.layout.tagsListHeight' as any)).toBe(40)
-    expect(app.get('notifications.nextDonateAt' as any)).toBe(
-      1_700_000_000_000,
-    )
+    expect(app.get('notes.layout.twoPanel' as any)).toBeUndefined()
+    expect(app.get('notes.layout.tagsListHeight' as any)).toBe(200)
     expect(app.get('notifications.lastNotifiedUpdateVersion' as any)).toBe(
       '4.7.1',
     )
@@ -238,7 +432,6 @@ describe('app store sanitization', () => {
     expect(app.get('sizes' as any)).toBeUndefined()
     expect(app.get('notesState' as any)).toBeUndefined()
     expect(app.get('notesEditorMode' as any)).toBeUndefined()
-    expect(app.get('nextDonateNotification' as any)).toBeUndefined()
     expect(app.get('lastNotifiedUpdateVersion' as any)).toBeUndefined()
     expect(app.get('legacyRootFlag' as any)).toBeUndefined()
     expect(app.get('code.layout.legacySizeFlag' as any)).toBeUndefined()
@@ -246,5 +439,247 @@ describe('app store sanitization', () => {
     expect(
       app.get('notes.selection.legacyNotesStateFlag' as any),
     ).toBeUndefined()
+  })
+
+  it('adds sanitized defaults for notes dashboard widget visibility', async () => {
+    persistedStateByName.app = {
+      notes: {
+        dashboard: {
+          widgets: {
+            stats: false,
+            recent: false,
+            topLinked: true,
+            garbage: 'bad',
+          },
+        },
+      },
+    }
+
+    const { default: app } = await import('../module/app')
+
+    expect(app.get('notes.dashboard.widgets' as any)).toEqual({
+      stats: false,
+      activityHeatmap: true,
+      recent: false,
+      graphPreview: true,
+      topLinked: true,
+    })
+    expect(app.get('notes.dashboard.widgets.garbage' as any)).toBeUndefined()
+  })
+
+  it('keeps valid command palette recent entries and prunes invalid values', async () => {
+    persistedStateByName.app = {
+      commandPalette: {
+        recent: [
+          {
+            id: 'snippet:10',
+            target: 'snippet',
+            targetId: '10',
+            title: 'Fetch user',
+            subtitle: 'TypeScript',
+            spaceId: 'code',
+            openedAt: 1_700_000_000_000,
+          },
+          {
+            id: 'bad-target',
+            target: 'bad',
+            targetId: '10',
+            title: 'Bad',
+            subtitle: 'Bad',
+            spaceId: 'code',
+            openedAt: 1,
+          },
+          {
+            id: 'bad-space',
+            target: 'note',
+            targetId: '11',
+            title: 'Bad',
+            subtitle: 'Bad',
+            spaceId: 'bad',
+            openedAt: 1,
+          },
+        ],
+      },
+    }
+
+    const { default: app } = await import('../module/app')
+
+    expect(app.get('commandPalette.recent' as any)).toEqual([
+      {
+        id: 'snippet:10',
+        target: 'snippet',
+        targetId: '10',
+        title: 'Fetch user',
+        subtitle: 'TypeScript',
+        spaceId: 'code',
+        openedAt: 1_700_000_000_000,
+      },
+    ])
+  })
+
+  it('keeps valid command palette usage entries and prunes invalid values', async () => {
+    persistedStateByName.app = {
+      commandPalette: {
+        usage: [
+          {
+            id: 'snippet:10',
+            target: 'snippet',
+            targetId: '10',
+            openedAt: 1_700_000_000_000,
+            openCount: 3,
+            lastQuery: 'fetch',
+          },
+          {
+            id: 'bad-count',
+            target: 'note',
+            targetId: '11',
+            openedAt: 1_700_000_000_000,
+            openCount: 0,
+          },
+          {
+            id: 'bad-target',
+            target: 'bad',
+            targetId: '12',
+            openedAt: 1_700_000_000_000,
+            openCount: 1,
+          },
+        ],
+      },
+    }
+
+    const { default: app } = await import('../module/app')
+
+    expect(app.get('commandPalette.usage' as any)).toEqual([
+      {
+        id: 'snippet:10',
+        target: 'snippet',
+        targetId: '10',
+        openedAt: 1_700_000_000_000,
+        openCount: 3,
+        lastQuery: 'fetch',
+      },
+    ])
+  })
+
+  it('keeps persisted http layout values', async () => {
+    persistedStateByName.app = {
+      http: {
+        selection: { activePanel: 'folder', folderId: 3, requestId: 7 },
+        contentSort: {
+          sort: 'updatedAt',
+          order: 'ASC',
+          garbage: 'bad',
+        },
+        layout: {
+          mode: 'list-editor',
+          treeWidth: 284,
+          collectionsOpen: false,
+          environmentsOpen: false,
+          trashOpen: true,
+          unfiledOpen: false,
+          favoritesOnly: true,
+          trashHeight: 140,
+          environmentsListHeight: 180,
+          threePanel: [20, 30],
+          twoPanel: 35,
+          responsePanelHeight: 360,
+          garbage: 'bad',
+        },
+      },
+    }
+
+    const { default: app } = await import('../module/app')
+
+    expect(app.get('http.selection' as any)).toEqual({
+      activePanel: 'folder',
+      folderId: 3,
+      requestId: 7,
+    })
+    expect(app.get('http.layout.treeWidth' as any)).toBe(284)
+    expect(app.get('http.layout.collectionsOpen' as any)).toBe(false)
+    expect(app.get('http.layout.environmentsOpen' as any)).toBe(false)
+    expect(app.get('http.layout.trashOpen' as any)).toBe(true)
+    expect(app.get('http.layout.unfiledOpen' as any)).toBe(false)
+    expect(app.get('http.layout.favoritesOnly' as any)).toBe(true)
+    expect(app.get('http.layout.trashHeight' as any)).toBe(140)
+    expect(app.get('http.layout.mode' as any)).toBe('list-editor')
+    expect(app.get('http.contentSort' as any)).toEqual({
+      sort: 'updatedAt',
+      order: 'ASC',
+    })
+    expect(app.get('http.contentSort.garbage' as any)).toBeUndefined()
+    expect(app.get('http.layout.environmentsListHeight' as any)).toBe(180)
+    expect(app.get('http.layout.threePanel' as any)).toEqual([20, 30])
+    expect(app.get('http.layout.twoPanel' as any)).toBe(35)
+    expect(app.get('http.layout.responsePanelHeight' as any)).toBe(360)
+    expect(app.get('http.layout.garbage' as any)).toBeUndefined()
+  })
+
+  it('keeps persisted local-space sort values', async () => {
+    persistedStateByName.app = {
+      math: {
+        contentSort: {
+          sort: 'updatedAt',
+          order: 'ASC',
+          garbage: 'bad',
+        },
+      },
+      drawings: {
+        contentSort: {
+          sort: 'name',
+          order: 'DESC',
+          garbage: 'bad',
+        },
+      },
+    }
+
+    const { default: app } = await import('../module/app')
+
+    expect(app.get('math.contentSort' as any)).toEqual({
+      sort: 'updatedAt',
+      order: 'ASC',
+    })
+    expect(app.get('math.contentSort.garbage' as any)).toBeUndefined()
+    expect(app.get('drawings.contentSort' as any)).toEqual({
+      sort: 'name',
+      order: 'DESC',
+    })
+    expect(app.get('drawings.contentSort.garbage' as any)).toBeUndefined()
+  })
+
+  it('keeps persisted http donation counters', async () => {
+    persistedStateByName.app = {
+      donations: {
+        copies: { http: 12 },
+        created: { http: 7 },
+        sent: { http: 31 },
+        lastShownCopyMilestones: { http: 25 },
+        lastShownCreatedMilestones: { http: 25 },
+        lastShownSentMilestones: { http: 25 },
+      },
+    }
+
+    const { default: app } = await import('../module/app')
+
+    expect(app.get('donations.copies.http' as any)).toBe(12)
+    expect(app.get('donations.created.http' as any)).toBe(7)
+    expect(app.get('donations.sent.http' as any)).toBe(31)
+    expect(app.get('donations.lastShownCopyMilestones.http' as any)).toBe(25)
+    expect(app.get('donations.lastShownCreatedMilestones.http' as any)).toBe(
+      25,
+    )
+    expect(app.get('donations.lastShownSentMilestones.http' as any)).toBe(25)
+  })
+
+  it('keeps persisted notes route when it is a valid string', async () => {
+    persistedStateByName.app = {
+      notes: {
+        route: 'notes-space/dashboard',
+      },
+    }
+
+    const { default: app } = await import('../module/app')
+
+    expect(app.get('notes.route' as any)).toBe('notes-space/dashboard')
   })
 })

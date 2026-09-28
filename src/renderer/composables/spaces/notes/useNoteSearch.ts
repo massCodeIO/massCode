@@ -7,7 +7,8 @@ import {
 } from './useNotes'
 import { useNotesApp } from './useNotesApp'
 
-const { saveNotesStateSnapshot, restoreNotesStateSnapshot } = useNotesApp()
+const { saveNotesStateSnapshot, restoreNotesStateSnapshot, stateSnapshots }
+  = useNotesApp()
 
 // --- Module-level state ---
 
@@ -28,7 +29,7 @@ const displayedNotes = computed(() => {
 
 // --- Search ---
 
-async function search() {
+async function search(current: () => boolean = () => true) {
   if (searchQuery.value) {
     if (!isSearch.value) {
       saveNotesStateSnapshot('beforeSearch')
@@ -37,16 +38,18 @@ async function search() {
     isSearch.value = true
     isRestoreStateBlocked.value = false
 
-    await getNotes({ search: searchQuery.value })
-    selectFirstNote()
+    if (!(await getNotes()) || !current())
+      return false
+    await selectFirstNote()
     searchSelectedIndex.value = 0
   }
   else {
     isSearch.value = false
   }
+  return true
 }
 
-function selectSearchNote(index: number) {
+async function selectSearchNote(index: number) {
   if (
     !displayedNotes.value
     || index < 0
@@ -56,8 +59,11 @@ function selectSearchNote(index: number) {
   }
 
   const note = displayedNotes.value[index]
-  selectNote(note.id)
   searchSelectedIndex.value = index
+  const { useNavigationHistory } = await import(
+    '@/composables/useNavigationHistory'
+  )
+  await useNavigationHistory().recordNavigation(() => selectNote(note.id))
 }
 
 function clearSearch(restoreState = false) {
@@ -70,11 +76,19 @@ function clearSearch(restoreState = false) {
   searchSelectedIndex.value = -1
 }
 
+function resetNoteSearchState() {
+  clearSearch()
+  notesBySearch.value = undefined
+  stateSnapshots.beforeSearch = {}
+  isRestoreStateBlocked.value = false
+}
+
 export function useNoteSearch() {
   return {
     clearSearch,
     displayedNotes,
     isSearch,
+    resetNoteSearchState,
     search,
     searchQuery,
     searchSelectedIndex,

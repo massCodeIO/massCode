@@ -2,110 +2,180 @@
   "label": "首选项",
   "storage": {
     "section": {
-      "main": "Main",
-      "migration": "Migration"
+      "main": "常规"
     },
     "label": "存储",
-    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
-    "count": "数量",
-    "vaultPath": "Vault Path"
+    "moveVault": "移动仓库",
+    "movingVault": "正在移动仓库...",
+    "count": "总计",
+    "vaultPath": "仓库路径",
+    "vaultDoctor": {
+      "label": "仓库医生",
+      "description": "扫描保险库以检查元数据问题、同步冲突并进行安全修复。",
+      "scan": {
+        "label": "检查仓库",
+        "action": "扫描仓库",
+        "scanning": "正在扫描..."
+      },
+      "apply": {
+        "action": "应用修复",
+        "applying": "正在应用..."
+      },
+      "summary": {
+        "safe": "安全修复",
+        "conflicts": "冲突",
+        "blocked": "已阻止",
+        "warnings": "警告"
+      },
+      "conflicts": "需决定",
+      "decisions": {
+        "duplicateId": "重复ID：{{id}}",
+        "files": "文件：{{count}}",
+        "progress": "{{selected}}/{{total}} 已解决",
+        "choose": "选择一个文件保留此ID。其余 {{count}} 个文件将获得新的唯一ID。",
+        "original": "原文件",
+        "copy": "副本",
+        "keepsId": "保留ID {{id}}",
+        "newId": "新ID"
+      },
+      "reason": {
+        "merge-markers": "合并标记",
+        "invalid-frontmatter": "无效的 Frontmatter",
+        "conflicted-copy": "副本冲突"
+      },
+      "assetWarnings": {
+        "NOTES_LEGACY_ASSET": {
+          "message": "{{assetName}} 仍存储在旧版笔记资源目录中。",
+          "recommendation": "保持整个仓库同步，待迁移完成后再次扫描。"
+        },
+        "NOTES_ASSET_MIGRATION_PENDING": {
+          "message": "{{assetName}} 在本地不可用，无法进行迁移检查",
+          "recommendation": "使该资源在本地可用，然后再次扫描仓库"
+        },
+        "NOTES_ASSET_DESTINATION_CONFLICT": {
+          "message": "{{assetName}} 在旧版与当前笔记资源目录中存在差异。",
+          "recommendation": "比较两个文件并留下正确的副本"
+        },
+        "NOTES_ASSET_MISSING": {
+          "message": "{{assetName}} 在旧版与当前笔记资源目录中均缺失。",
+          "recommendation": "将资源恢复到仓库，或从笔记中移除其引用。"
+        }
+      },
+      "moreWarnings": "+{{count}} 个更多警告",
+      "warnings": "警告"
+    }
   },
   "editor": {
-    "label": "编辑器",
+    "label": "代码编辑器",
     "fontSize": {
       "label": "字体大小",
-      "description": "Base font size in pixels for the code editor."
+      "description": "代码编辑器的基本字体大小（以像素为单位）。"
     },
     "fontFamily": {
-      "label": "字体",
-      "description": "Monospace font for the code editor. Use commas for fallbacks."
+      "label": "字体系列",
+      "description": "代码编辑器的等宽字体。请使用半角逗号分隔备用字体。"
     },
     "wrap": {
-      "label": "换行",
-      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
+      "label": "自动换行",
+      "description": "自动换行以适应编辑器宽度，或允许水平滚动。",
       "wordWrap": "自动换行",
       "off": "关闭"
     },
     "tabSize": {
       "label": "缩进大小",
-      "description": "Number of spaces per tab character for indentation."
+      "description": "每个制表符对应的缩进空格数。"
     },
     "showInvisibles": "显示不可见字符",
     "highlightLine": {
-      "label": "高亮当前行",
-      "description": "Visual highlight on the line where the cursor is positioned."
+      "label": "高亮光标所在行",
+      "description": "光标所在行视觉高亮。"
     },
     "highlightGutter": "高亮行号",
     "matchBrackets": {
       "label": "匹配括号",
-      "description": "Matching bracket highlighting near the cursor."
+      "description": "高亮光标附近的匹配括号。"
     },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "尾随逗号",
-        "description": "Trailing commas in multi-line structures when formatting.",
+        "description": "格式化时，在多行结构中添加尾随逗号。",
         "none": "无",
         "all": "全部",
         "es5": "ES5"
       },
       "semi": {
         "label": "分号",
-        "description": "Semicolons at the end of every statement."
+        "description": "在每个语句的末尾添加分号。"
       },
       "singleQuote": {
         "label": "单引号",
-        "description": "Single quotes instead of double quotes."
+        "description": "使用单引号而不是双引号。"
       }
     }
   },
   "notesEditor": {
-    "label": "Note Editor",
+    "label": "笔记编辑器",
     "fontSize": {
-      "label": "Font Size",
-      "description": "Base font size in pixels for the notes editor."
+      "label": "字体大小",
+      "description": "笔记编辑器的基本字体大小（以像素为单位）。"
     },
     "fontFamily": {
-      "label": "Text Font",
-      "description": "CSS font-family value. Use commas to specify fallbacks."
+      "label": "字体系列",
+      "description": "CSS 的 font-family 属性值。请使用半角逗号分隔备用字体。"
     },
     "codeFontFamily": {
-      "label": "Monospace Font",
-      "description": "Font for inline code and fenced code blocks."
+      "label": "等宽字体",
+      "description": "内联代码和围栏代码块的字体。请使用半角逗号分隔备用字体。"
     },
     "lineHeight": {
-      "label": "Line Height",
-      "description": "Spacing between lines. Relaxed is easier to read, compact fits more content.",
-      "compact": "Compact (1.4)",
-      "default": "Default (1.54)",
-      "relaxed": "Relaxed (1.7)"
+      "label": "行高",
+      "description": "行间距。宽松的间距更易于阅读，紧凑的间距可容纳更多内容。",
+      "compact": "紧凑 (1.4)",
+      "default": "默认 (1.54)",
+      "relaxed": "宽松 (1.7)"
     },
     "indentSize": {
-      "label": "Indent Size",
-      "description": "Number of spaces per indent level for lists and nested content."
+      "label": "缩进大小",
+      "description": "列表和嵌套内容中每个缩进级别的空格数。"
     },
     "limitWidth": {
-      "label": "Limit Width",
-      "description": "Constrain content to a comfortable reading width (700px)."
+      "label": "限制宽度",
+      "description": "将内容约束在舒适的阅读宽度（700像素）。"
+    },
+    "wrapTables": {
+      "label": "表格单元格自动换行",
+      "description": "对表格单元格内的文本进行自动换行，以确保超宽表格能够完整显示在编辑器内。较窄的表格则保持其原本宽度。"
     },
     "lineNumbers": {
-      "label": "Line Numbers",
-      "description": "Show line numbers in the gutter. Only available in Raw mode."
+      "label": "行号",
+      "description": "在行号区域显示行号。仅在源码模式下生效。"
     }
   },
   "appearance": {
     "label": "外观",
+    "dockBadge": {
+      "label": "Dock 图标计数器",
+      "none": "不要显示",
+      "codeInbox": "代码收件箱",
+      "notesInbox": "笔记收件箱",
+      "tasksDue": "今日待办任务",
+      "permissionDenied": "macOS 阻止了 Dock 计数器。请在系统设置中允许 massCode 的通知和角标。未签名的开发构建版本可能不支持 Dock 角标。"
+    },
     "theme": {
       "label": "主题",
-      "builtIn": "Built-in",
-      "custom": "Custom",
-      "themesDir": "Themes Directory",
-      "openDir": "Open Themes Directory",
-      "createTemplate": "Create Theme Template",
-      "dirDescription": "Place your JSON theme files in this folder.",
+      "builtIn": "内置",
+      "custom": "自定义",
+      "themesDir": "主题目录",
+      "openDir": "打开主题目录",
+      "createTemplate": "创建主题模板",
+      "creatingTemplate": "正在创建...",
+      "templateCreated": "主题模板已创建。请在主题目录中打开 JSON 文件并进行编辑。",
+      "templateCreateError": "创建主题模板失败",
+      "dirDescription": "将 JSON 格式主题文件放在此目录下",
       "light": "浅色",
       "dark": "深色",
-      "system": "System"
+      "system": "跟随系统"
     }
   },
   "language": {
@@ -115,11 +185,122 @@
     "label": "Markdown",
     "codeRenderer": "代码块渲染器"
   },
+  "math": {
+    "label": "计算草稿本",
+    "locale": {
+      "label": "区域",
+      "description": "数字和日期显示格式。"
+    },
+    "decimalPlaces": {
+      "label": "小数位数",
+      "description": "结果中保留的最大小数位数（0–14）。"
+    },
+    "dateFormat": {
+      "label": "日期格式",
+      "description": "结果中日期的显示格式。"
+    },
+    "currencyRates": {
+      "label": "货币汇率",
+      "description": "缓存 1 小时",
+      "refresh": "刷新",
+      "refreshing": "正在刷新...",
+      "refreshed": "货币汇率已更新",
+      "refreshError": "更新货币汇率失败"
+    },
+    "cryptoRates": {
+      "label": "加密货币汇率",
+      "description": "缓存 1 小时。速率限制：10–30 次请求/分钟。",
+      "refresh": "刷新",
+      "refreshing": "正在刷新...",
+      "refreshed": "加密货币汇率已更新",
+      "rateLimited": "超出速率限制。请稍后再试。"
+    }
+  },
+  "tasks": {
+    "label": "任务",
+    "autoCleanup": {
+      "label": "自动清理已完成任务",
+      "description": "按计划将已完成任务移至回收站。它们会保留在回收站中，直到您清空。",
+      "never": "从不",
+      "1d": "每天",
+      "7d": "每 7 天",
+      "30d": "每 30 天"
+    },
+    "cleanupNow": {
+      "label": "立即清理",
+      "button": "将已完成任务移至回收站",
+      "description": "立即将所有已完成任务移动到回收站。"
+    }
+  },
+  "http": {
+    "label": "HTTP 客户端",
+    "wrapLines": {
+      "label": "自动换行",
+      "description": "对 HTTP 预览、请求体和响应查看器中的长文本行进行自动换行。"
+    },
+    "defaultPreviewFormat": {
+      "label": "默认预览格式",
+      "description": "请求预览面板中默认选择的格式。",
+      "http": "HTTP",
+      "curl": "cURL"
+    },
+    "autoSwitchToResponse": {
+      "label": "发送后显示响应",
+      "description": "当请求开始或完成时，自动将底部面板切换至“响应”标签页。"
+    },
+    "sslCertificateVerification": {
+      "label": "SSL 证书验证",
+      "description": "发送 HTTPS 请求时验证 SSL 证书。关闭此项以允许使用无效或自签名的证书。"
+    }
+  },
   "api": {
-    "label": "API 端口",
+    "label": "API",
     "port": {
       "label": "API 端口",
       "description": "API 服务器的端口号（需要重启应用程序才能生效）。有效范围：1024-65535。"
+    },
+    "integrations": {
+      "label": "外部集成",
+      "enabled": {
+        "label": "启用 API 外部集成",
+        "description": "允许外部本地客户端使用受保护的集成端点。"
+      },
+      "token": {
+        "label": "API 令牌",
+        "description": "在外部客户端中使用此令牌。完整令牌仅在生成后显示一次",
+        "empty": "未生成任何令牌",
+        "generate": "生成令牌",
+        "revoke": "撤销令牌"
+      }
+    }
+  },
+  "supporter": {
+    "label": "支持者",
+    "status": {
+      "label": "状态",
+      "active": "支持者许可证处于激活状态",
+      "activeFor": "支持者许可证已为 {{name}} 激活。",
+      "description": "感谢您支持 massCode！捐赠提示已为您关闭。"
+    },
+    "key": {
+      "label": "许可证密钥",
+      "placeholder": "粘贴您的支持者密钥",
+      "activate": "激活",
+      "description": "粘贴您捐赠后收到的密钥。激活过程可在离线状态下进行，并会移除捐赠提示。"
+    },
+    "request": {
+      "label": "还未获得密钥？",
+      "action": "申请密钥",
+      "description": "如果您曾通过任何渠道向 massCode 捐赠过，请通过邮件发送任意捐赠凭证，您将收到一个密钥。"
+    }
+  },
+  "updates": {
+    "label": "更新",
+    "autoUpdate": {
+      "label": "自动更新"
+    },
+    "version": {
+      "label": "当前版本"
     }
   }
 }

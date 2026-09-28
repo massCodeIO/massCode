@@ -28,10 +28,7 @@
       "gumroad": "Donar vía Gumroad (Visa, Mastercard, etc.)"
     },
     "twitter": "X",
-    "devTools": "Alternar Herramientas de Desarrollo",
-    "links": {
-      "snippets": "Colección de Snippets"
-    }
+    "devTools": "Alternar Herramientas de Desarrollo"
   },
   "view": {
     "label": "Vista",

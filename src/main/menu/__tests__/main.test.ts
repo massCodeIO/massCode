@@ -2,6 +2,7 @@ import type { MainMenuContext } from '../../types/menu'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const buildFromTemplate = vi.fn((template: unknown) => template)
+const send = vi.fn()
 
 vi.mock('electron', () => ({
   app: {
@@ -30,7 +31,7 @@ vi.mock('../../i18n', () => ({
 }))
 
 vi.mock('../../ipc', () => ({
-  send: vi.fn(),
+  send,
 }))
 
 vi.mock('../../updates', () => ({
@@ -41,9 +42,53 @@ vi.mock('../../../../package.json', () => ({
   repository: 'https://example.com/repo',
 }))
 
+function createNotesContext(
+  options: {
+    canToggleMindmap?: boolean
+    isMindmapShown?: boolean
+    isPresentationShown?: boolean
+    noteMode?: MainMenuContext['editor']['noteMode']
+  } = {},
+): MainMenuContext {
+  return {
+    file: {
+      primaryAction: 'new-note',
+      secondaryAction: 'new-folder',
+      canCreateFragment: false,
+      canCreateTask: true,
+    },
+    view: {
+      layoutMode: 'all-panels',
+      layoutModes: ['all-panels', 'list-editor', 'editor-only'],
+      contentSortField: 'updatedAt',
+      contentSortOrder: 'DESC',
+      canToggleCompactMode: true,
+      canToggleHideCompletedTasks: false,
+      isHideCompletedTasksInFolders: false,
+      canToggleMindmap: options.canToggleMindmap ?? true,
+      isCompactMode: false,
+      isMindmapShown: options.isMindmapShown ?? false,
+      canTogglePresentation: true,
+      isPresentationShown: options.isPresentationShown ?? false,
+    },
+    editor: {
+      kind: 'notes',
+      noteMode: options.noteMode ?? 'livePreview',
+      canSendRequest: false,
+      canFormat: false,
+      canPreviewCode: false,
+      isCodePreviewShown: false,
+      canPreviewJson: false,
+      isJsonPreviewShown: false,
+      canAdjustFontSize: true,
+    },
+  }
+}
+
 describe('createMainMenu', () => {
   beforeEach(() => {
     buildFromTemplate.mockClear()
+    send.mockClear()
   })
 
   it('renders file and view actions on the first submenu level', async () => {
@@ -54,11 +99,16 @@ describe('createMainMenu', () => {
         primaryAction: 'new-snippet',
         secondaryAction: 'new-folder',
         canCreateFragment: true,
+        canCreateTask: false,
       },
       view: {
         layoutMode: 'all-panels',
         layoutModes: ['all-panels', 'list-editor', 'editor-only'],
+        contentSortField: 'updatedAt',
+        contentSortOrder: 'DESC',
         canToggleCompactMode: true,
+        canToggleHideCompletedTasks: false,
+        isHideCompletedTasksInFolders: false,
         canToggleMindmap: false,
         isCompactMode: true,
         isMindmapShown: false,
@@ -68,6 +118,7 @@ describe('createMainMenu', () => {
       editor: {
         kind: 'code',
         noteMode: null,
+        canSendRequest: false,
         canFormat: true,
         canPreviewCode: true,
         isCodePreviewShown: false,
@@ -81,11 +132,21 @@ describe('createMainMenu', () => {
 
     const template = buildFromTemplate.mock.calls[0]?.[0] as Array<{
       label?: string
-      submenu?: Array<{ label?: string, submenu?: unknown[] }>
+      role?: string
+      submenu?: Array<{
+        label?: string
+        accelerator?: string
+        submenu?: unknown[]
+        click?: () => void
+      }>
     }>
 
     const fileMenu = template.find(item => item.label === 'menu:file.label')
+    const editMenu = template.find(item => item.role === 'editMenu')
     const viewMenu = template.find(item => item.label === 'menu:view.label')
+    const editorMenu = template.find(
+      item => item.label === 'menu:editor.label',
+    )
 
     expect(fileMenu?.submenu?.map(item => item.label)).toEqual([
       'action.new.snippet',
@@ -97,15 +158,102 @@ describe('createMainMenu', () => {
     )
 
     expect(viewMenu?.submenu?.map(item => item.label)).toEqual([
-      'menu:view.layout.allPanels',
-      'menu:view.layout.listEditor',
-      'menu:view.layout.editorOnly',
+      'menu:view.primarySidebar',
+      'menu:view.secondarySidebar',
+      'ui:ai.title',
+      undefined,
+      'menu:view.sortBy.label',
+      'menu:view.sortBy.dateModified',
+      'menu:view.sortBy.dateCreated',
+      'menu:view.sortBy.name',
+      undefined,
+      'menu:view.sortOrder.label',
+      'menu:view.sortOrder.ascending',
+      'menu:view.sortOrder.descending',
       undefined,
       'menu:view.compactMode',
     ])
     expect(viewMenu?.submenu?.some(item => Array.isArray(item.submenu))).toBe(
       false,
     )
+
+    const editorLabels = editorMenu?.submenu?.map(item => item.label) ?? []
+    const formatIndex = editorLabels.indexOf('menu:editor.format')
+    const formatItem = editorMenu?.submenu?.[formatIndex]
+    const findItem = editMenu?.submenu?.find(
+      item => item.label === 'menu:edit.find',
+    )
+
+    expect(findItem).toMatchObject({ accelerator: 'CommandOrControl+F' })
+    findItem?.click?.()
+    expect(send).toHaveBeenCalledWith('main-menu:find')
+    expect(formatItem).toMatchObject({ accelerator: 'Shift+Alt+F' })
+
+    expect(editorLabels[formatIndex + 1]).toBe(
+      'menu:editor.normalizeTerminalOutput',
+    )
+
+    editorMenu?.submenu
+      ?.find(item => item.label === 'menu:editor.normalizeTerminalOutput')
+      ?.click?.()
+
+    expect(send).toHaveBeenCalledWith('main-menu:normalize-code-line-breaks')
+    expect(
+      editorMenu?.submenu?.find(
+        item => item.label === 'menu:editor.normalizeTerminalOutput',
+      ),
+    ).toMatchObject({ enabled: true })
+  })
+
+  it('enables line break normalization for an editable selected note', async () => {
+    const { createMainMenu } = await import('../main')
+
+    createMainMenu(createNotesContext())
+
+    const template = buildFromTemplate.mock.calls[0]?.[0] as Array<{
+      label?: string
+      submenu?: Array<{
+        label?: string
+        enabled?: boolean
+        click?: () => void
+      }>
+    }>
+    const editorMenu = template.find(
+      item => item.label === 'menu:editor.label',
+    )
+
+    const normalizeItem = editorMenu?.submenu?.find(
+      item => item.label === 'menu:editor.normalizeTerminalOutput',
+    )
+
+    expect(normalizeItem).toMatchObject({ enabled: true })
+    normalizeItem?.click?.()
+    expect(send).toHaveBeenCalledWith('main-menu:normalize-note-line-breaks')
+  })
+
+  it.each([
+    ['preview mode', { noteMode: 'preview' as const }],
+    ['no selected note', { canToggleMindmap: false }],
+    ['mindmap mode', { isMindmapShown: true }],
+    ['presentation mode', { isPresentationShown: true }],
+  ])('disables line break normalization in %s', async (_label, options) => {
+    const { createMainMenu } = await import('../main')
+
+    createMainMenu(createNotesContext(options))
+
+    const template = buildFromTemplate.mock.calls[0]?.[0] as Array<{
+      label?: string
+      submenu?: Array<{ label?: string, enabled?: boolean }>
+    }>
+    const editorMenu = template.find(
+      item => item.label === 'menu:editor.label',
+    )
+
+    expect(
+      editorMenu?.submenu?.find(
+        item => item.label === 'menu:editor.normalizeTerminalOutput',
+      ),
+    ).toMatchObject({ enabled: false })
   })
 
   it('omits compact mode when the current space has no list', async () => {
@@ -116,11 +264,16 @@ describe('createMainMenu', () => {
         primaryAction: null,
         secondaryAction: null,
         canCreateFragment: false,
+        canCreateTask: false,
       },
       view: {
         layoutMode: null,
         layoutModes: [],
+        contentSortField: null,
+        contentSortOrder: null,
         canToggleCompactMode: false,
+        canToggleHideCompletedTasks: false,
+        isHideCompletedTasksInFolders: false,
         canToggleMindmap: false,
         isCompactMode: false,
         isMindmapShown: false,
@@ -130,6 +283,7 @@ describe('createMainMenu', () => {
       editor: {
         kind: null,
         noteMode: null,
+        canSendRequest: false,
         canFormat: false,
         canPreviewCode: false,
         isCodePreviewShown: false,
@@ -153,6 +307,63 @@ describe('createMainMenu', () => {
     expect(compactModeItem).toBeUndefined()
   })
 
+  it('adds a notes task creation shortcut in notes space', async () => {
+    const { createMainMenu } = await import('../main')
+
+    const context: MainMenuContext = {
+      file: {
+        primaryAction: 'new-note',
+        secondaryAction: 'new-folder',
+        canCreateFragment: false,
+        canCreateTask: true,
+      },
+      view: {
+        layoutMode: 'all-panels',
+        layoutModes: ['all-panels', 'list-editor', 'editor-only'],
+        contentSortField: 'createdAt',
+        contentSortOrder: 'DESC',
+        canToggleCompactMode: true,
+        canToggleHideCompletedTasks: false,
+        isHideCompletedTasksInFolders: false,
+        canToggleMindmap: false,
+        isCompactMode: false,
+        isMindmapShown: false,
+        canTogglePresentation: false,
+        isPresentationShown: false,
+      },
+      editor: {
+        kind: 'notes',
+        noteMode: 'livePreview',
+        canSendRequest: false,
+        canFormat: false,
+        canPreviewCode: false,
+        isCodePreviewShown: false,
+        canPreviewJson: false,
+        isJsonPreviewShown: false,
+        canAdjustFontSize: true,
+      },
+    }
+
+    createMainMenu(context)
+
+    const template = buildFromTemplate.mock.calls[0]?.[0] as Array<{
+      label?: string
+      submenu?: Array<{ label?: string, accelerator?: string }>
+    }>
+    const fileMenu = template.find(item => item.label === 'menu:file.label')
+
+    expect(fileMenu?.submenu?.map(item => item.label)).toEqual([
+      'action.new.note',
+      'action.new.task',
+      'action.new.folder',
+    ])
+    expect(
+      fileMenu?.submenu?.find(item => item.label === 'action.new.task'),
+    ).toMatchObject({
+      accelerator: 'CommandOrControl+T',
+    })
+  })
+
   it('marks compact mode as checked when enabled', async () => {
     const { createMainMenu } = await import('../main')
 
@@ -161,11 +372,16 @@ describe('createMainMenu', () => {
         primaryAction: 'new-sheet',
         secondaryAction: null,
         canCreateFragment: false,
+        canCreateTask: false,
       },
       view: {
         layoutMode: null,
         layoutModes: [],
+        contentSortField: null,
+        contentSortOrder: null,
         canToggleCompactMode: true,
+        canToggleHideCompletedTasks: false,
+        isHideCompletedTasksInFolders: false,
         canToggleMindmap: false,
         isCompactMode: true,
         isMindmapShown: false,
@@ -175,6 +391,7 @@ describe('createMainMenu', () => {
       editor: {
         kind: null,
         noteMode: null,
+        canSendRequest: false,
         canFormat: false,
         canPreviewCode: false,
         isCodePreviewShown: false,
@@ -217,4 +434,220 @@ describe('createMainMenu', () => {
     expect(labels).not.toContain('menu:app.devtools')
     expect(labels).not.toContain('menu:app.mathNotebook')
   })
+
+  it('renders send request in the editor menu for http space', async () => {
+    const { createMainMenu } = await import('../main')
+
+    const context: MainMenuContext = {
+      file: {
+        primaryAction: null,
+        secondaryAction: null,
+        canCreateFragment: false,
+        canCreateTask: false,
+      },
+      view: {
+        layoutMode: 'all-panels',
+        layoutModes: ['all-panels', 'list-editor', 'editor-only'],
+        contentSortField: 'createdAt',
+        contentSortOrder: 'ASC',
+        canToggleCompactMode: false,
+        canToggleHideCompletedTasks: false,
+        isHideCompletedTasksInFolders: false,
+        canToggleMindmap: false,
+        isCompactMode: false,
+        isMindmapShown: false,
+        canTogglePresentation: false,
+        isPresentationShown: false,
+      },
+      editor: {
+        kind: 'http',
+        noteMode: null,
+        canSendRequest: true,
+        canFormat: false,
+        canPreviewCode: false,
+        isCodePreviewShown: false,
+        canPreviewJson: false,
+        isJsonPreviewShown: false,
+        canAdjustFontSize: false,
+      },
+    }
+
+    createMainMenu(context)
+
+    const template = buildFromTemplate.mock.calls[0]?.[0] as Array<{
+      label?: string
+      submenu?: Array<{
+        label?: string
+        accelerator?: string
+        enabled?: boolean
+      }>
+    }>
+    const fileMenu = template.find(item => item.label === 'menu:file.label')
+    const editorMenu = template.find(
+      item => item.label === 'menu:editor.label',
+    )
+    const sendRequestItem = editorMenu?.submenu?.find(
+      item => item.label === 'menu:editor.sendRequest',
+    )
+
+    expect(fileMenu).toBeUndefined()
+    expect(sendRequestItem).toMatchObject({
+      accelerator: 'CommandOrControl+Enter',
+      enabled: true,
+    })
+  })
 })
+
+it('renders independent HTTP panel checkboxes and dispatches their actions', async () => {
+  const { createMainMenu } = await import('../main')
+  const context = createNotesContext()
+  context.view.layoutMode = null
+  context.view.layoutModes = []
+  context.view.httpPanels = {
+    sidebar: false,
+    bottom: true,
+    inspector: true,
+    canToggleBottom: false,
+  }
+  buildFromTemplate.mockClear()
+  createMainMenu(context)
+  const template = buildFromTemplate.mock.calls[0]![0] as Array<{
+    label?: string
+    submenu?: Array<{
+      label?: string
+      type?: string
+      checked?: boolean
+      enabled?: boolean
+      click?: () => void
+    }>
+  }>
+  const items = template
+    .find(item => item.label === 'menu:view.label')!
+    .submenu!.slice(0, 3)
+  expect(items.map(item => item.type)).toEqual([
+    'checkbox',
+    'checkbox',
+    'checkbox',
+  ])
+  expect(items.map(item => item.checked)).toEqual([false, true, true])
+  expect(items[1]!.label).toBe('menu:view.secondarySidebar')
+  expect(items[2]!.enabled).toBe(false)
+  items[0]!.click!()
+  expect(send).toHaveBeenLastCalledWith('main-menu:toggle-sidebar')
+  items[1]!.click!()
+  expect(send).toHaveBeenLastCalledWith('main-menu:toggle-secondary-sidebar')
+})
+
+it('renders and dispatches the Notes inspector checkbox', async () => {
+  const { createMainMenu } = await import('../main')
+  const context = createNotesContext()
+  context.view.notesInspector = { open: true, enabled: true }
+  buildFromTemplate.mockClear()
+  createMainMenu(context)
+  const template = buildFromTemplate.mock.calls[0]![0] as Array<{
+    label?: string
+    submenu?: Array<{
+      label?: string
+      type?: string
+      checked?: boolean
+      enabled?: boolean
+      click?: () => void
+    }>
+  }>
+  const item = template
+    .find(item => item.label === 'menu:view.label')!
+    .submenu!.find(item => item.label === 'menu:view.secondarySidebar')!
+  expect(item).toMatchObject({
+    type: 'checkbox',
+    checked: true,
+    accelerator: 'Alt+CommandOrControl+B',
+  })
+  item.click!()
+  expect(send).toHaveBeenLastCalledWith('main-menu:toggle-secondary-sidebar')
+})
+
+it.each(['code', 'notes', 'http', null] as const)(
+  'exposes the AI accelerator for %s',
+  async (kind) => {
+    const { createMainMenu } = await import('../main')
+    const context = createNotesContext()
+    context.editor.kind = kind
+    createMainMenu(context)
+    const template = buildFromTemplate.mock.calls.at(-1)![0] as Array<{
+      label?: string
+      submenu?: unknown
+    }>
+    const view = template.find(item => item.label === 'menu:view.label')!
+    const items = view.submenu as Array<{
+      label?: string
+      enabled?: boolean
+      accelerator?: string
+      click?: () => void
+    }>
+    const assistant = items.find(item => item.label === 'ui:ai.title')!
+    expect(assistant.accelerator).toBe('CommandOrControl+L')
+    expect(assistant.enabled).toBe(kind !== null)
+    if (kind) {
+      assistant.click!()
+      expect(send).toHaveBeenLastCalledWith('main-menu:open-ai')
+    }
+  },
+)
+
+it.each([false, true])(
+  'enables Code Format only when renderer reports canFormat=%s',
+  async (canFormat) => {
+    const { createMainMenu } = await import('../main')
+    const context = createNotesContext()
+    context.editor.kind = 'code'
+    context.editor.canFormat = canFormat
+    buildFromTemplate.mockClear()
+    createMainMenu(context)
+    const template = buildFromTemplate.mock.calls[0]![0] as Array<{
+      submenu?: Array<{ label?: string, enabled?: boolean }>
+    }>
+    const format = template
+      .flatMap(item => item.submenu ?? [])
+      .find(item => item.label === 'menu:editor.format')
+    expect(format?.enabled).toBe(canFormat)
+  },
+)
+
+it.each([true, false])(
+  'uses actual secondary sidebar visibility (%s) for the menu checkbox',
+  async (open) => {
+    const { createMainMenu } = await import('../main')
+    const context = createNotesContext()
+    context.view.notesInspector = { open: !open, enabled: true }
+    context.view.sidebars = {
+      primary: true,
+      secondary: open,
+      secondaryAvailable: true,
+    }
+    buildFromTemplate.mockClear()
+    createMainMenu(context)
+    const template = buildFromTemplate.mock.calls[0]![0] as Array<{
+      label?: string
+      submenu?: Array<{
+        label?: string
+        checked?: boolean
+        accelerator?: string
+      }>
+    }>
+    const items = template.find(
+      item => item.label === 'menu:view.label',
+    )!.submenu!
+    expect(
+      items.find(item => item.label === 'menu:view.secondarySidebar'),
+    ).toMatchObject({
+      checked: open,
+      accelerator: 'Alt+CommandOrControl+B',
+    })
+    expect(
+      items.find(item => item.label === 'menu:view.primarySidebar'),
+    ).toMatchObject({
+      checked: true,
+      accelerator: 'CommandOrControl+B',
+    })
+  },
+)

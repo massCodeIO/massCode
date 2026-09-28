@@ -28,10 +28,7 @@
       "gumroad": "Přispět přes Gumroad (Visa, Mastercard, atd.)"
     },
     "twitter": "X",
-    "devTools": "Přepnout vývojářské nástroje",
-    "links": {
-      "snippets": "Kolekce snippetů"
-    }
+    "devTools": "Přepnout vývojářské nástroje"
   },
   "view": {
     "label": "Zobrazení",

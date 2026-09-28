@@ -10,23 +10,19 @@ import {
   useSnippets,
 } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
-import { scrollToSnippetIndex } from '@/composables/useSnippetScroller'
 import { i18n, store } from '@/electron'
-import { scrollToElement } from '@/utils'
 import { Archive, Inbox, Plus, Star, Trash } from 'lucide-vue-next'
 import { LAYOUT_DEFAULTS } from '~/main/store/constants'
 
-const { state, isAppLoading, isCodeSpaceInitialized } = useApp()
+const { state } = useApp()
 const {
   getSnippets,
   selectFirstSnippet,
   emptyTrash,
   isRestoreStateBlocked,
   clearSearch,
-  displayedSnippets,
 } = useSnippets()
 const {
-  getFolders,
   folders,
   selectFolder,
   createFolderAndSelect,
@@ -76,54 +72,6 @@ const libraryItems = [
   },
   { id: LibraryFilter.Trash, name: i18n.t('common.trash'), icon: Trash },
 ]
-
-async function initGetFolders() {
-  await getFolders()
-
-  nextTick(() => {
-    scrollToElement(`[id="${state.folderId}"]`)
-  })
-}
-
-async function initGetSnippets() {
-  await getSnippets()
-
-  nextTick(() => {
-    const index
-      = displayedSnippets.value?.findIndex(s => s.id === state.snippetId) ?? -1
-    if (index >= 0) {
-      scrollToSnippetIndex(index)
-    }
-  })
-}
-
-async function initApp() {
-  if (isCodeSpaceInitialized.value) {
-    isAppLoading.value = false
-    return
-  }
-
-  isAppLoading.value = true
-
-  const results = await Promise.allSettled([
-    initGetFolders(),
-    initGetSnippets(),
-  ])
-
-  results.forEach((result) => {
-    if (result.status === 'rejected') {
-      console.error('App init error:', result.reason)
-    }
-  })
-
-  isCodeSpaceInitialized.value = results.every(
-    result => result.status === 'fulfilled',
-  )
-
-  isAppLoading.value = false
-}
-
-void initApp()
 
 async function onFolderClick({
   id,
@@ -267,6 +215,7 @@ async function onFolderDrag({
             <template #action>
               <UiActionButton
                 :tooltip="i18n.t('action.new.folder')"
+                shortcut="CommandOrControl+Shift+N"
                 @click="createFolderAndSelect()"
               >
                 <Plus class="h-4 w-4" />
@@ -294,7 +243,7 @@ async function onFolderDrag({
 
       <div
         ref="tagsHandleRef"
-        class="before:bg-border hover:before:bg-primary data-[resizing]:before:bg-primary relative z-10 flex h-px shrink-0 cursor-row-resize items-center justify-center bg-transparent before:absolute before:inset-x-0 before:top-1/2 before:h-px before:-translate-y-1/2 before:transition-[background-color,height] before:duration-150 before:content-[''] after:absolute after:inset-x-0 after:top-1/2 after:h-3 after:-translate-y-1/2 after:content-[''] hover:before:h-0.5 hover:before:delay-200 data-[resizing]:before:h-0.5"
+        class="before:bg-border hover:before:bg-primary data-[resizing]:before:bg-primary relative z-10 -mx-1 flex h-px shrink-0 cursor-row-resize items-center justify-center bg-transparent before:absolute before:inset-x-0 before:top-1/2 before:h-px before:-translate-y-1/2 before:transition-[background-color,height] before:duration-150 before:content-[''] after:absolute after:inset-x-0 after:top-1/2 after:h-3 after:-translate-y-1/2 after:content-[''] hover:before:h-0.5 hover:before:delay-200 data-[resizing]:before:h-0.5"
       />
 
       <div

@@ -26,7 +26,11 @@ const snippetContentsUpdate = t.Object({
   language: t.Optional(t.String()), // TODO: enum
 })
 
-const snippetItem = t.Object({
+const snippetContentsOrder = t.Object({
+  contentIds: t.Array(t.Number({ minimum: 1, multipleOf: 1 })),
+})
+
+const snippetItemBase = {
   id: t.Number(),
   name: t.String(),
   description: t.Union([t.String(), t.Null()]),
@@ -42,6 +46,16 @@ const snippetItem = t.Object({
       name: t.String(),
     }),
   ),
+  isFavorites: t.Number(),
+  isDeleted: t.Number(),
+  createdAt: t.Number(),
+  updatedAt: t.Number(),
+  // Файл сниппета — облачный плейсхолдер, содержимое докачивается в фоне.
+  pendingCloudDownload: t.Optional(t.Boolean()),
+}
+
+const snippetItem = t.Object({
+  ...snippetItemBase,
   contents: t.Array(
     t.Object({
       id: t.Number(),
@@ -50,13 +64,22 @@ const snippetItem = t.Object({
       language: t.String(),
     }),
   ),
-  isFavorites: t.Number(),
-  isDeleted: t.Number(),
-  createdAt: t.Number(),
-  updatedAt: t.Number(),
 })
 
-const snippetsResponse = t.Array(snippetItem)
+// Список не содержит тел фрагментов: контент выбранного сниппета
+// загружается отдельным GET /snippets/:id.
+const snippetListItem = t.Object({
+  ...snippetItemBase,
+  contents: t.Array(
+    t.Object({
+      id: t.Number(),
+      label: t.String(),
+      language: t.String(),
+    }),
+  ),
+})
+
+const snippetsResponse = t.Array(snippetListItem)
 
 const snippetsCountsResponse = t.Object({
   total: t.Number(),
@@ -65,12 +88,15 @@ const snippetsCountsResponse = t.Object({
 
 export const snippetsDTO = new Elysia().model({
   snippetContentsAdd,
+  snippetContentsOrder,
   snippetContentsUpdate,
+  snippetItemResponse: snippetItem,
   snippetsAdd,
   snippetsUpdate,
   snippetsCountsResponse,
   snippetsQuery: t.Object({
     ...commonQuery.properties,
+    searchNameOnly: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
     folderId: t.Optional(t.Number()),
     tagId: t.Optional(t.Number()),
     isFavorites: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
@@ -82,4 +108,6 @@ export const snippetsDTO = new Elysia().model({
 
 export type SnippetsAdd = typeof snippetsAdd.static
 export type SnippetsResponse = typeof snippetsResponse.static
+export type SnippetListItemResponse = typeof snippetListItem.static
 export type SnippetsCountsResponse = typeof snippetsCountsResponse.static
+export type SnippetItemResponse = typeof snippetItem.static

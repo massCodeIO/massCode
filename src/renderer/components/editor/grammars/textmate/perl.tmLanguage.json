@@ -9,6 +9,8 @@
   "scopeName": "source.perl",
   "comment": "\n\tTODO:\tInclude RegExp syntax\n",
   "patterns": [
+    { "match": "\\b(?:0[xX][0-9a-fA-F_]+|0[bB][01_]+|(?:[0-9][0-9_]*(?:\\.[0-9_]+)?)(?:[eE][+-]?[0-9_]+)?)\\b", "name": "constant.numeric.perl" },
+    { "match": "(?:=~|!~|=>|[-+%=<>!&|]+)", "name": "keyword.operator.perl" },
     {
       "include": "#line_comment"
     },

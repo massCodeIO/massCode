@@ -2,11 +2,9 @@
   "label": "Preferencje",
   "storage": {
     "section": {
-      "main": "Main",
-      "migration": "Migration"
+      "main": "Main"
     },
     "label": "Magazyn",
-    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "Liczba",
     "vaultPath": "Vault Path"
   },
@@ -116,7 +114,7 @@
     "codeRenderer": "Renderer bloków kodu"
   },
   "api": {
-    "label": "Port API",
+    "label": "API",
     "port": {
       "label": "Port API",
       "description": "Numer portu dla serwera API (wymaga ponownego uruchomienia aplikacji). Prawidłowy zakres: 1024-65535."

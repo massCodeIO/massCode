@@ -1,3 +1,4 @@
+import { httpRuntimeNavigation } from '@/composables/spaces/http/runtimeNavigation'
 import { createRouter, createWebHashHistory } from 'vue-router'
 
 export const RouterName = {
@@ -9,11 +10,17 @@ export const RouterName = {
   preferencesEditor: 'preferences/editor',
   preferencesNotesEditor: 'preferences/notes-editor',
   preferencesMath: 'preferences/math',
+  preferencesHttp: 'preferences/http',
   preferencesAPI: 'preferences/api',
+  preferencesAI: 'preferences/ai',
+  preferencesUpdates: 'preferences/updates',
+  preferencesSupporter: 'preferences/supporter',
+  preferencesAbout: 'preferences/about',
   devtools: 'devtools',
   devtoolsCaseConverter: 'devtools/case-converter',
   devtoolsTextToUnicode: 'devtools/text-to-unicode',
   devtoolsTextToAscii: 'devtools/text-to-ascii',
+  devtoolsLineBreakNormalizer: 'devtools/line-break-normalizer',
   devtoolsBase64Converter: 'devtools/base64-converter',
   devtoolsJsonToYaml: 'devtools/json-to-yaml',
   devtoolsJsonToToml: 'devtools/json-to-toml',
@@ -28,12 +35,22 @@ export const RouterName = {
   devtoolsColorConverter: 'devtools/color-converter',
   devtoolsJsonGenerator: 'devtools/json-generator',
   devtoolsLoremIpsumGenerator: 'devtools/lorem-ipsum-generator',
+  devtoolsJsonDiff: 'devtools/json-diff',
   mathNotebook: 'math-notebook',
+  httpSpace: 'http-space',
+  drawingsSpace: 'drawings-space',
   notesSpace: 'notes-space',
+  notesDashboard: 'notes-space/dashboard',
+  notesGraph: 'notes-space/graph',
   notesPresentation: 'notes-space/presentation',
 } as const
 
 const routes = [
+  {
+    path: '/http-console',
+    name: 'http-console',
+    component: () => import('@/views/HttpConsole.vue'),
+  },
   {
     path: '/',
     name: RouterName.main,
@@ -43,6 +60,10 @@ const routes = [
     path: '/preferences',
     name: RouterName.preferences,
     component: () => import('@/views/Preferences.vue'),
+    redirect: () => {
+      const saved = sessionStorage.getItem('preferences:lastRoute')
+      return { name: saved || RouterName.preferencesStorage }
+    },
     children: [
       {
         path: 'storage',
@@ -75,9 +96,34 @@ const routes = [
         component: () => import('@/components/preferences/Math.vue'),
       },
       {
+        path: 'http',
+        name: RouterName.preferencesHttp,
+        component: () => import('@/components/preferences/Http.vue'),
+      },
+      {
+        path: 'ai',
+        name: RouterName.preferencesAI,
+        component: () => import('@/components/preferences/AI.vue'),
+      },
+      {
         path: 'api',
         name: RouterName.preferencesAPI,
         component: () => import('@/components/preferences/API.vue'),
+      },
+      {
+        path: 'updates',
+        name: RouterName.preferencesUpdates,
+        component: () => import('@/components/preferences/Updates.vue'),
+      },
+      {
+        path: 'supporter',
+        name: RouterName.preferencesSupporter,
+        component: () => import('@/components/preferences/Supporter.vue'),
+      },
+      {
+        path: 'about',
+        name: RouterName.preferencesAbout,
+        component: () => import('@/components/preferences/About.vue'),
       },
     ],
   },
@@ -85,6 +131,10 @@ const routes = [
     path: '/devtools',
     name: RouterName.devtools,
     component: () => import('@/views/Devtools.vue'),
+    redirect: () => {
+      const saved = sessionStorage.getItem('devtools:lastRoute')
+      return { name: saved || RouterName.devtoolsCaseConverter }
+    },
     children: [
       {
         path: 'text/case-converter',
@@ -103,6 +153,12 @@ const routes = [
         name: RouterName.devtoolsTextToAscii,
         component: () =>
           import('@/components/devtools/converters/TextToAsciiBinary.vue'),
+      },
+      {
+        path: 'text/line-break-normalizer',
+        name: RouterName.devtoolsLineBreakNormalizer,
+        component: () =>
+          import('@/components/devtools/converters/LineBreakNormalizer.vue'),
       },
       {
         path: 'base64-converter',
@@ -181,6 +237,11 @@ const routes = [
         component: () =>
           import('@/components/devtools/generators/LoremIpsumGenerator.vue'),
       },
+      {
+        path: 'compare/json-diff',
+        name: RouterName.devtoolsJsonDiff,
+        component: () => import('@/components/devtools/compare/JsonDiff.vue'),
+      },
     ],
   },
   {
@@ -189,9 +250,31 @@ const routes = [
     component: () => import('@/views/MathNotebook.vue'),
   },
   {
+    path: '/http',
+    name: RouterName.httpSpace,
+    component: () => import('@/views/HttpSpace.vue'),
+  },
+  {
+    path: '/drawings',
+    name: RouterName.drawingsSpace,
+    component: () => import('@/views/DrawingsSpace.vue'),
+  },
+  {
     path: '/notes',
     name: RouterName.notesSpace,
     component: () => import('@/components/notes/NotesSpace.vue'),
+    children: [
+      {
+        path: 'dashboard',
+        name: RouterName.notesDashboard,
+        component: () => import('@/views/NotesDashboard.vue'),
+      },
+      {
+        path: 'graph',
+        name: RouterName.notesGraph,
+        component: () => import('@/views/NotesGraph.vue'),
+      },
+    ],
   },
   {
     path: '/notes/presentation',
@@ -203,4 +286,10 @@ const routes = [
 export const router = createRouter({
   history: createWebHashHistory(),
   routes,
+})
+
+router.beforeEach((to, from) => {
+  if (from.name === RouterName.httpSpace && to.name !== RouterName.httpSpace)
+    return httpRuntimeNavigation.confirmLeave()
+  return true
 })

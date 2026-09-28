@@ -9,6 +9,14 @@ export interface EventCallback {
 declare global {
   interface Window {
     electron: {
+      benchmark: {
+        enabled: boolean
+        record: (event: {
+          name: string
+          durationMs: number
+          status: string
+        }) => Promise<void>
+      }
       ipc: {
         on: (channel: Channel, cb: EventCallback) => void
         send: (channel: Channel, data: any, cb?: EventCallback) => void

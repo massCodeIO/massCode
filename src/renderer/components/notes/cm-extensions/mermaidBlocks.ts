@@ -7,8 +7,9 @@ import {
   EditorView,
   WidgetType,
 } from '@codemirror/view'
-import mermaid from 'mermaid'
+import { renderMermaidSvg } from '../mermaidRenderer'
 import { editorFocusField, setEditorFocusEffect } from './editorFocus'
+import { getRevealSelection, revealSelectionChanged } from './revealSelection'
 import { isSelectionInsideRangeWithFocus } from './selectionRange'
 
 interface MermaidBlocksOptions {
@@ -16,8 +17,6 @@ interface MermaidBlocksOptions {
   isDark?: boolean
   showSourceWhenSelectionInside?: boolean
 }
-
-let mermaidRenderCounter = 0
 
 function extractMermaidCode(text: string): string | null {
   const lines = text.split('\n')
@@ -44,7 +43,7 @@ function isSelectionInsideRange(
 ): boolean {
   const hasFocus = state.field(editorFocusField, false) ?? false
 
-  for (const range of state.selection.ranges) {
+  for (const range of getRevealSelection(state).ranges) {
     if (
       isSelectionInsideRangeWithFocus(
         hasFocus,
@@ -76,22 +75,39 @@ export function applyMermaidRenderFailure(
   container.style.display = 'none'
 }
 
+// Rendered SVG markup keyed by `${code}|${theme}`. mermaid.render is
+// expensive and CodeMirror re-creates widgets every time the selection
+// enters/leaves a block range, so cache aggressively (same pattern as
+// svgCache in drawingEmbed.ts).
+const svgCache = new Map<string, string>()
+const inFlightRenders = new Map<string, Promise<string>>()
 async function renderMermaid(
   container: HTMLElement,
   code: string,
   isDark: boolean,
 ) {
+  const theme = isDark ? 'dark' : 'default'
+  const cacheKey = `${code}|${theme}`
+
   try {
-    const id = `notes-mermaid-${mermaidRenderCounter++}`
+    const cached = svgCache.get(cacheKey)
 
-    mermaid.initialize({
-      startOnLoad: false,
-      securityLevel: 'strict',
-      theme: isDark ? 'dark' : 'default',
-    })
+    if (cached !== undefined) {
+      applyMermaidRenderSuccess(container, cached)
+      return
+    }
 
-    const result = await mermaid.render(id, code)
-    const svg = typeof result === 'string' ? result : result.svg
+    let render = inFlightRenders.get(cacheKey)
+
+    if (!render) {
+      render = renderMermaidSvg(code, theme).finally(() => {
+        inFlightRenders.delete(cacheKey)
+      })
+      inFlightRenders.set(cacheKey, render)
+    }
+
+    const svg = await render
+    svgCache.set(cacheKey, svg)
     applyMermaidRenderSuccess(container, svg)
   }
   catch (error) {
@@ -159,21 +175,33 @@ class MermaidWidget extends WidgetType {
   }
 }
 
+interface MermaidBlocksFieldValue {
+  decorations: DecorationSet
+  blocks: { from: number, to: number }[]
+}
+
 function buildDecorations(
   state: EditorState,
   enabled: boolean,
   isDark: boolean,
   showSourceWhenSelectionInside: boolean,
-) {
+): MermaidBlocksFieldValue {
   if (!enabled)
-    return Decoration.none
+    return { blocks: [], decorations: Decoration.none }
 
   const builder = new RangeSetBuilder<Decoration>()
+  const blocks: { from: number, to: number }[] = []
 
   syntaxTree(state).iterate({
     enter(node) {
       if (node.name !== 'FencedCode')
         return
+
+      const code = extractMermaidCode(state.sliceDoc(node.from, node.to))
+      if (!code)
+        return
+
+      blocks.push({ from: node.from, to: node.to })
 
       if (
         showSourceWhenSelectionInside
@@ -181,10 +209,6 @@ function buildDecorations(
       ) {
         return
       }
-
-      const code = extractMermaidCode(state.sliceDoc(node.from, node.to))
-      if (!code)
-        return
 
       builder.add(
         node.from,
@@ -201,7 +225,7 @@ function buildDecorations(
     },
   })
 
-  return builder.finish()
+  return { blocks, decorations: builder.finish() }
 }
 
 export function createMermaidBlocks(options: MermaidBlocksOptions = {}) {
@@ -211,7 +235,7 @@ export function createMermaidBlocks(options: MermaidBlocksOptions = {}) {
     showSourceWhenSelectionInside = false,
   } = options
 
-  return StateField.define<DecorationSet>({
+  return StateField.define<MermaidBlocksFieldValue>({
     create(state) {
       return buildDecorations(
         state,
@@ -220,15 +244,16 @@ export function createMermaidBlocks(options: MermaidBlocksOptions = {}) {
         showSourceWhenSelectionInside,
       )
     },
-    update(decorations, transaction) {
-      const selectionChanged = !transaction.startState.selection.eq(
-        transaction.state.selection,
-      )
+    update(value, transaction) {
       const focusChanged = transaction.effects.some(e =>
         e.is(setEditorFocusEffect),
       )
+      // The syntax tree can advance asynchronously (without a document
+      // change), so compare tree identity to pick up late-parsed blocks.
+      const treeChanged
+        = syntaxTree(transaction.startState) !== syntaxTree(transaction.state)
 
-      if (transaction.docChanged || selectionChanged || focusChanged) {
+      if (transaction.docChanged || focusChanged || treeChanged) {
         return buildDecorations(
           transaction.state,
           enabled,
@@ -237,9 +262,35 @@ export function createMermaidBlocks(options: MermaidBlocksOptions = {}) {
         )
       }
 
-      return decorations.map(transaction.changes)
+      // A pure selection change only matters when the cursor enters or
+      // leaves one of the current blocks. Unfreezing the reveal selection
+      // (mouseup after a drag) changes the effective selection too.
+      if (
+        showSourceWhenSelectionInside
+        && (revealSelectionChanged(transaction)
+          || !transaction.startState.selection.eq(transaction.state.selection))
+        && value.blocks.some(
+          block =>
+            isSelectionInsideRange(
+              transaction.startState,
+              block.from,
+              block.to,
+            )
+            !== isSelectionInsideRange(transaction.state, block.from, block.to),
+        )
+      ) {
+        return buildDecorations(
+          transaction.state,
+          enabled,
+          isDark,
+          showSourceWhenSelectionInside,
+        )
+      }
+
+      return value
     },
-    provide: field => EditorView.decorations.from(field),
+    provide: field =>
+      EditorView.decorations.from(field, value => value.decorations),
   })
 }
 

@@ -15,16 +15,20 @@ jobs:
   build:
     name: Build for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
     strategy:
       matrix:
         include:
-          - os: macos-15-intel
-            platform: mac
-            arch: x64
+          # Обе архитектуры macOS собираются одной джобой: раздельные джобы
+          # затирали latest-mac.yml друг друга, ломая автообновление.
           - os: macos-15
             platform: mac
-            arch: arm64
-          - os: windows-latest
+          # Закреплено на windows-2022 (VS 2022): на windows-latest приехал
+          # VS 2026 (v18), который приколоченный форк @electron/node-gyp не
+          # распознаёт ("version undefined") и падает при rebuild нативных
+          # модулей. Снять после апдейта electron-rebuild/node-gyp.
+          - os: windows-2022
             platform: win
           - os: ubuntu-latest
             platform: linux
@@ -38,7 +42,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: latest
+          version: 10.29.2
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -46,22 +50,30 @@ jobs:
           node-version: 24.14.1
           cache: pnpm
 
+      # node-gyp внутри electron-builder требует Python с distutils (< 3.12)
+      # для кросс-архитектурной пересборки нативных модулей.
+      - name: Setup Python for node-gyp (macOS)
+        if: matrix.platform == 'mac'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Install dependencies
         run: pnpm install
 
-      - name: Rebuild native dependencies (macOS)
-        if: matrix.platform == 'mac'
-        run: pnpm run rebuild --arch ${{ matrix.arch }}
-
-      - name: Rebuild native dependencies (other platforms)
-        if: matrix.platform != 'mac'
+      - name: Rebuild native dependencies
         run: pnpm run rebuild
 
       - name: Build application (macOS)
         if: matrix.platform == 'mac'
-        run: pnpm run build:${{ matrix.platform }}:${{ matrix.arch }}
+        run: pnpm run build:mac
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Build application (other platforms)
         if: matrix.platform != 'mac'
@@ -72,15 +84,15 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: masscode-${{ matrix.platform }}-${{ matrix.arch }}-${{ github.ref_name || inputs.tag }}
+          name: masscode-${{ matrix.platform }}-${{ github.ref_name || inputs.tag }}
           path: |
             dist/*.dmg
+            dist/*.zip
             dist/*.pkg
             dist/*.exe
             dist/*.msi
             dist/*.AppImage
             dist/*.snap
-            !dist/*-sponsored.*
             !dist/*.yml
             !dist/*.blockmap
           if-no-files-found: warn
@@ -118,5 +130,3 @@ jobs:
           append_body: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-

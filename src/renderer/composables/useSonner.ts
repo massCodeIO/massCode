@@ -4,14 +4,28 @@ import { toast } from 'vue-sonner'
 
 export function useSonner() {
   const sonner = (config: Props) => {
-    toast.custom(markRaw(Sonner), {
-      componentProps: config,
-      duration: config.action ? Infinity : config.duration || 5000,
+    return toast.custom(markRaw(Sonner), {
+      id: config.id,
+      componentProps: { ...config, closeButton: config.closeButton ?? true },
+      duration:
+        config.duration
+        ?? (config.action
+          ? Infinity
+          : config.type === 'success'
+            ? 3000
+            : config.type === 'error'
+              ? 8000
+              : 5000),
       onDismiss: config.onClose,
     })
   }
 
+  const dismiss = (id?: string | number) => {
+    toast.dismiss(id)
+  }
+
   return {
     sonner,
+    dismiss,
   }
 }

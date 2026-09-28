@@ -1,6 +1,10 @@
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
 import { pendingStateWriteByPath, stateContentCacheByPath } from './cache'
+import {
+  isCloudFileNotDownloadedError,
+  readVaultTextFileSync,
+} from './shared/guardedRead'
 import { scheduleStateFlush } from './shared/stateWriter'
 
 export function readSpaceState<T>(statePath: string): T | null {
@@ -31,12 +35,19 @@ export function readSpaceState<T>(statePath: string): T | null {
   }
 
   try {
-    const content = fs.readFileSync(statePath, 'utf8')
+    // Guarded-чтение: недокачанный state-файл прерывает чтение ошибкой,
+    // потому что null здесь означал бы «state нет» и привёл бы к записи
+    // дефолтного state поверх ещё не скачанной облачной версии.
+    const content = readVaultTextFileSync(statePath)
     stateContentCacheByPath.set(statePath, content)
     const parsed = yaml.load(content)
     return parsed && typeof parsed === 'object' ? (parsed as T) : null
   }
-  catch {
+  catch (error) {
+    if (isCloudFileNotDownloadedError(error)) {
+      throw error
+    }
+
     return null
   }
 }

@@ -2,17 +2,18 @@ import type {
   FoldersTreeResponse,
   FoldersUpdate,
 } from '@/services/api/generated'
-import { useApp, useSnippets } from '@/composables'
+import { useApp, useDialog, useSnippets } from '@/composables'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
-import { getContiguousSelection, scrollToElement } from '../utils'
+import { getContiguousSelection } from '../utils'
 
 const { state } = useApp()
 
 const folders = shallowRef<FoldersTreeResponse>()
 
 const renameFolderId = ref<number | null>(null)
+let isApplyingFolderSelection = false
 
 const selectedFolderIds = ref<number[]>(state.folderId ? [state.folderId] : [])
 const lastSelectedFolderId = ref<number | undefined>(state.folderId)
@@ -144,26 +145,31 @@ function syncSelectedFoldersWithTree() {
 watch(
   () => state.folderId,
   (folderId) => {
+    if (isApplyingFolderSelection) {
+      return
+    }
+
     if (folderId === undefined) {
       selectedFolderIds.value = []
       lastSelectedFolderId.value = undefined
       return
     }
 
-    if (!selectedFolderIds.value.includes(folderId)) {
-      selectedFolderIds.value = sortFolderIdsByTreeOrder([
-        folderId,
-        ...selectedFolderIds.value,
-      ])
-    }
+    selectedFolderIds.value = [folderId]
+    lastSelectedFolderId.value = folderId
   },
 )
 
 function clearFolderSelection() {
+  isApplyingFolderSelection = true
   selectedFolderIds.value = []
   state.folderId = undefined
-  state.snippetId = undefined
+  // snippetId намеренно не сбрасывается: иначе заголовок и редактор мигают
+  // пустым состоянием при переходах Library/Tags, пока загружается список.
+  // Вызывающие реселектят через selectFirstSnippet/selectSnippet либо чистят
+  // выбор через clearSnippetsState.
   lastSelectedFolderId.value = undefined
+  isApplyingFolderSelection = false
 }
 
 function setFolderSelection(ids: number[]) {
@@ -173,15 +179,19 @@ function setFolderSelection(ids: number[]) {
   }
 
   const orderedSelection = sortFolderIdsByTreeOrder(ids)
+  isApplyingFolderSelection = true
   selectedFolderIds.value = orderedSelection
   state.folderId = orderedSelection[0]
   lastSelectedFolderId.value = orderedSelection[orderedSelection.length - 1]
+  isApplyingFolderSelection = false
 }
 
 function applySingleFolderSelection(folderId: number) {
+  isApplyingFolderSelection = true
   selectedFolderIds.value = [folderId]
   state.folderId = folderId
   lastSelectedFolderId.value = folderId
+  isApplyingFolderSelection = false
 }
 
 function applyRangeFolderSelection(folderId: number) {
@@ -200,8 +210,10 @@ function applyRangeFolderSelection(folderId: number) {
     return
   }
 
+  isApplyingFolderSelection = true
   selectedFolderIds.value = rangeSelection
   lastSelectedFolderId.value = folderId
+  isApplyingFolderSelection = false
 }
 
 function applyToggleFolderSelection(folderId: number) {
@@ -210,21 +222,25 @@ function applyToggleFolderSelection(folderId: number) {
       return
     }
 
+    isApplyingFolderSelection = true
     selectedFolderIds.value = selectedFolderIds.value.filter(
       id => id !== folderId,
     )
     state.folderId = selectedFolderIds.value[0]
     lastSelectedFolderId.value
       = selectedFolderIds.value[selectedFolderIds.value.length - 1]
+    isApplyingFolderSelection = false
     return
   }
 
+  isApplyingFolderSelection = true
   selectedFolderIds.value = sortFolderIdsByTreeOrder([
     ...selectedFolderIds.value,
     folderId,
   ])
   state.folderId = folderId
   lastSelectedFolderId.value = folderId
+  isApplyingFolderSelection = false
 }
 
 function findParentFolderIds(folderId: number, allFolders: any[]): number[] {
@@ -319,9 +335,11 @@ async function getFolders(shouldEnsureVisibility = true) {
     if (shouldEnsureVisibility) {
       await ensureSelectedFolderIsVisible()
     }
+    return true
   }
   catch (error) {
     console.error(error)
+    return false
   }
 }
 
@@ -355,7 +373,6 @@ async function createFolderAndSelect(parentId?: number) {
   if (id) {
     await selectFolder(Number(id))
     clearSnippetsState()
-    scrollToElement(`[id="${id}"]`)
     renameFolderId.value = Number(id)
   }
 }
@@ -389,6 +406,66 @@ async function deleteFolder(folderId: number, shouldRefresh = true) {
   }
 }
 
+function getDeleteTargetFolderIds(fallbackFolderId?: number) {
+  if (
+    fallbackFolderId !== undefined
+    && selectedFolderIds.value.includes(fallbackFolderId)
+  ) {
+    return [...selectedFolderIds.value]
+  }
+
+  if (fallbackFolderId !== undefined) {
+    return [fallbackFolderId]
+  }
+
+  return [...selectedFolderIds.value]
+}
+
+async function deleteSelectedFolders(fallbackFolderId?: number) {
+  const targetIds = getDeleteTargetFolderIds(fallbackFolderId)
+
+  if (!targetIds.length) {
+    return
+  }
+
+  const { clearSnippetsState } = useSnippets()
+  const { confirm } = useDialog()
+  const activeBeforeDelete = state.folderId
+  const folderName
+    = fallbackFolderId !== undefined
+      ? getFolderByIdFromTree(folders.value, fallbackFolderId)?.name
+      : undefined
+
+  const isConfirmed = await confirm({
+    title:
+      targetIds.length > 1
+        ? i18n.t('messages:confirm.delete', {
+            name: i18n.t('common.folders'),
+          })
+        : i18n.t('messages:confirm.delete', { name: folderName }),
+    description: i18n.t('messages:warning:allSnippetsMoveToTrash'),
+  })
+
+  if (!isConfirmed) {
+    return
+  }
+
+  await Promise.all(targetIds.map(id => deleteFolder(id, false)))
+  await getFolders(false)
+
+  if (activeBeforeDelete && targetIds.includes(activeBeforeDelete)) {
+    clearSnippetsState()
+    const fallbackId = selectedFolderIds.value[0]
+
+    if (fallbackId) {
+      await selectFolder(fallbackId)
+    }
+    else {
+      clearFolderSelection()
+    }
+  }
+}
+
 interface SelectFolderOptions {
   mode?: 'single' | 'range' | 'toggle'
   ensureVisibility?: boolean
@@ -411,7 +488,10 @@ async function selectFolder(
     applySingleFolderSelection(folderId)
     state.libraryFilter = undefined
     state.tagId = undefined
-    state.snippetId = undefined
+    // snippetId намеренно не сбрасывается: иначе заголовок и редактор
+    // мигают пустым состоянием, пока загружается список новой папки.
+    // Все вызывающие либо делают selectFirstSnippet/selectSnippet после
+    // загрузки списка, либо чистят выбор через clearSnippetsState.
   }
 
   if (folders.value?.length && shouldEnsureVisibility) {
@@ -425,6 +505,7 @@ export function useFolders() {
     createFolderAndSelect,
     clearFolderSelection,
     deleteFolder,
+    deleteSelectedFolders,
     folders,
     getFolderByIdFromTree,
     getFolders,

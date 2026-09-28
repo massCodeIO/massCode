@@ -6,9 +6,12 @@ import {
   useNoteSearch,
   useNotesSpaceInitialization,
 } from '@/composables'
+import { readNativeState } from '@/composables/ai/nativeActions'
+import { registerNativeBridge } from '@/composables/ai/nativeBridges'
+import { useNavigationHistory } from '@/composables/useNavigationHistory'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
-import { useFullscreen, useMagicKeys } from '@vueuse/core'
+import { useEventListener, useFullscreen } from '@vueuse/core'
 import {
   ArrowLeft,
   ArrowRight,
@@ -21,7 +24,13 @@ import {
 } from 'lucide-vue-next'
 
 const { displayedNotes } = useNoteSearch()
-const { selectedNote, selectNote, isNotesLoading } = useNotes()
+const {
+  selectedNote,
+  selectNote,
+  isNotesLoading,
+  refreshSelectedNote,
+  selectedNoteRecordStatus,
+} = useNotes()
 const {
   hideNotesViewModes,
   isNotesPresentationShown,
@@ -31,8 +40,7 @@ const {
 const { initNotesSpace } = useNotesSpaceInitialization()
 const { scaleToShow, onZoom } = useMarkdown()
 
-const { isFullscreen, toggle } = useFullscreen()
-const { left, right, escape, meta, ctrl, l } = useMagicKeys()
+const { isFullscreen, toggle, enter, exit } = useFullscreen()
 
 const isLaserPointerActive = ref(false)
 const isClosed = ref(false)
@@ -40,6 +48,24 @@ const isInitCompleted = ref(false)
 
 const noteIds = computed(
   () => displayedNotes.value?.map(note => note.id) ?? [],
+)
+
+// id и контент слайда обновляются атомарно, когда контент заметки загружен:
+// иначе при листании слайд мигает пустым состоянием.
+const presentationNoteId = ref<number | undefined>()
+const presentationContent = ref('')
+
+watch(
+  () => [selectedNote.value?.id, selectedNote.value?.content] as const,
+  ([id, content]) => {
+    if (selectedNote.value && content === undefined) {
+      return
+    }
+
+    presentationNoteId.value = id
+    presentationContent.value = content ?? ''
+  },
+  { immediate: true },
 )
 
 const currentIndex = computed(() => {
@@ -50,7 +76,7 @@ const currentIndex = computed(() => {
   return noteIds.value.findIndex(noteId => noteId === id)
 })
 
-function onClose() {
+async function onClose() {
   if (isClosed.value) {
     return
   }
@@ -59,7 +85,7 @@ function onClose() {
   isNotesPresentationShown.value = false
   isLaserPointerActive.value = false
   showAllNotesPanels()
-  router.push({ name: RouterName.notesSpace })
+  await router.push({ name: RouterName.notesSpace })
 }
 
 function onPrevNext(direction: 'prev' | 'next') {
@@ -72,7 +98,9 @@ function onPrevNext(direction: 'prev' | 'next') {
   const id = noteIds.value[targetIndex]
 
   if (id !== undefined) {
-    selectNote(id)
+    useNavigationHistory().recordNavigation(() => {
+      selectNote(id)
+    })
   }
 }
 
@@ -98,24 +126,32 @@ watch(
   { immediate: true },
 )
 
-watch(left, (value) => {
-  if (value)
+useEventListener('keydown', (event: KeyboardEvent) => {
+  const target = event.target
+  if (
+    event.defaultPrevented
+    || event.isComposing
+    || (target instanceof HTMLElement
+      && (target.isContentEditable
+        || target.closest('input, textarea, select, [role="textbox"]')))
+  ) {
+    return
+  }
+  if (event.key === 'ArrowLeft') {
     onPrevNext('prev')
-})
-
-watch(right, (value) => {
-  if (value)
+  }
+  else if (event.key === 'ArrowRight') {
     onPrevNext('next')
-})
-
-watch(escape, (value) => {
-  if (value)
-    onClose()
-})
-
-watchEffect(() => {
-  if ((meta.value || ctrl.value) && l.value) {
-    isLaserPointerActive.value = !isLaserPointerActive.value
+  }
+  else if (event.key === 'Escape') {
+    void onClose()
+  }
+  else if (
+    (event.metaKey || event.ctrlKey)
+    && event.key.toLowerCase() === 'l'
+    && !event.repeat
+  ) {
+    toggleLaserPointer()
   }
 })
 
@@ -125,6 +161,73 @@ onMounted(async () => {
   isInitCompleted.value = true
 })
 
+let unregisterNative: (() => void) | undefined
+onMounted(() => {
+  unregisterNative = registerNativeBridge(
+    'presentation',
+    async (action, current) => {
+      if (action.action !== 'presentation' || !isInitCompleted.value)
+        return { status: 'unavailable' }
+      if (
+        !current()
+        || selectedNote.value?.id !== action.target.id
+        || isClosed.value
+      ) {
+        return { status: 'stale' }
+      }
+      const command = action.command
+      if (command === 'next' || command === 'previous') {
+        const target
+          = noteIds.value[currentIndex.value + (command === 'next' ? 1 : -1)]
+        if (target === undefined)
+          return { status: 'unavailable' }
+        await useNavigationHistory().recordNavigation(() => selectNote(target))
+        await refreshSelectedNote()
+        if (!current() || selectedNote.value?.id !== target)
+          return { status: 'stale' }
+        if (selectedNoteRecordStatus.value !== 'ready')
+          return { status: 'failed' }
+      }
+      else if (command === 'close') {
+        await onClose()
+        await nextTick()
+        return {
+          status:
+            current()
+            && router.currentRoute.value.name === RouterName.notesSpace
+              ? 'done'
+              : 'stale',
+          state: readNativeState(),
+        }
+      }
+      else if (command === 'fullscreenOn' || command === 'fullscreenOff') {
+        await (command === 'fullscreenOn' ? enter() : exit())
+        if (isFullscreen.value !== (command === 'fullscreenOn'))
+          return { status: 'failed' }
+      }
+      else if (command === 'laserOn' || command === 'laserOff') {
+        isLaserPointerActive.value = command === 'laserOn'
+      }
+      else {
+        onZoom(command === 'zoomIn' ? 'in' : 'out')
+      }
+      await nextTick()
+      return {
+        status: current() ? 'done' : 'stale',
+        state: readNativeState(),
+        presentation: {
+          index: currentIndex.value,
+          count: noteIds.value.length,
+          fullscreen: isFullscreen.value,
+          laser: isLaserPointerActive.value,
+          scale: scaleToShow.value,
+        },
+      }
+    },
+  )
+})
+onBeforeUnmount(() => unregisterNative?.())
+
 onUnmounted(() => {
   isLaserPointerActive.value = false
   hideNotesViewModes()
@@ -132,7 +235,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="relative grid h-screen grid-rows-[1fr_40px] overflow-hidden">
+  <div
+    class="relative grid h-screen grid-rows-[1fr_40px] overflow-hidden [contain:paint]"
+  >
     <UiActionButton
       class="absolute top-2 right-2 z-50"
       @click="onClose"
@@ -141,7 +246,8 @@ onUnmounted(() => {
     </UiActionButton>
     <div class="h-full min-h-0 p-5">
       <NotesEditor
-        :content="selectedNote?.content ?? ''"
+        :note-id="presentationNoteId"
+        :content="presentationContent"
         mode="preview"
         presentation
       />
@@ -163,12 +269,14 @@ onUnmounted(() => {
         </UiActionButton>
         <UiActionButton
           :tooltip="i18n.t('button.prev')"
+          shortcut="ArrowLeft"
           @click="onPrevNext('prev')"
         >
           <ArrowLeft class="h-3 w-3" />
         </UiActionButton>
         <UiActionButton
           :tooltip="i18n.t('button.next')"
+          shortcut="ArrowRight"
           @click="onPrevNext('next')"
         >
           <ArrowRight class="h-3 w-3" />
@@ -176,6 +284,7 @@ onUnmounted(() => {
         <UiActionButton
           :active="isLaserPointerActive"
           :tooltip="i18n.t('button.laserPointer')"
+          shortcut="CommandOrControl+L"
           @click="toggleLaserPointer"
         >
           <Zap class="h-3 w-3" />
@@ -204,6 +313,9 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-    <EditorMarkdownLaserPointer :is-active="isLaserPointerActive" />
+    <EditorMarkdownLaserPointer
+      :key="presentationNoteId"
+      :is-active="isLaserPointerActive"
+    />
   </div>
 </template>

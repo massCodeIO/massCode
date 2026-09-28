@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { getTextStats } from '../textStats'
+import { getTextStats, shouldApplyTextStatsUpdate } from '../textStats'
+
+describe('shouldApplyTextStatsUpdate', () => {
+  it('rejects a stale A update after switching A to B and back to A', () => {
+    expect(shouldApplyTextStatsUpdate(1, 3, 1, 1)).toBe(false)
+  })
+
+  it('accepts an update only for the current note revision', () => {
+    expect(shouldApplyTextStatsUpdate(1, 3, 1, 3)).toBe(true)
+    expect(shouldApplyTextStatsUpdate(2, 3, 1, 3)).toBe(false)
+  })
+})
 
 describe('getTextStats', () => {
   it('returns zero stats for empty text', () => {

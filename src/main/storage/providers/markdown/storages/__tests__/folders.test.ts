@@ -3,12 +3,44 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { enqueueCloudDownload } from '../../cloudDownloads'
 import { getPaths } from '../../runtime/paths'
+import {
+  getFileAvailability,
+  markAppWrittenFileAsLocal,
+  resetCloudFileExemptions,
+  setDatalessProbeForTests,
+} from '../../runtime/shared/cloudFiles'
 import { ensureStateFile } from '../../runtime/state'
 import { resetRuntimeCache } from '../../runtime/sync'
 import { createFoldersStorage } from '../folders'
 
 let tempVaultPath = ''
+
+function makeSparsePlaceholder(absolutePath: string, size = 4096): void {
+  fs.removeSync(absolutePath)
+  const fd = fs.openSync(absolutePath, 'w')
+  fs.ftruncateSync(fd, size)
+  fs.closeSync(fd)
+}
+
+function mockFolderMetadataAsZeroBlocks() {
+  const statSync = fs.statSync.bind(fs)
+
+  return vi.spyOn(fs, 'statSync').mockImplementation((filePath) => {
+    const stats = statSync(filePath)
+
+    if (
+      typeof filePath === 'string'
+      && filePath.endsWith('.meta.yaml')
+      && stats.size > 0
+    ) {
+      return Object.assign(stats, { blocks: 0 })
+    }
+
+    return stats
+  })
+}
 
 vi.mock('electron-store', () => {
   class MockStore {
@@ -60,6 +92,11 @@ vi.mock('electron', () => ({
   },
 }))
 
+vi.mock('../../cloudDownloads', () => ({
+  enqueueCloudDownload: vi.fn(),
+  prioritizeCloudDownload: vi.fn(),
+}))
+
 vi.mock('../../../../../store', () => ({
   store: {
     preferences: {
@@ -84,6 +121,8 @@ describe('code folders storage validations', () => {
   })
 
   afterEach(() => {
+    setDatalessProbeForTests(null)
+    resetCloudFileExemptions()
     resetRuntimeCache()
 
     if (tempVaultPath) {
@@ -135,5 +174,78 @@ describe('code folders storage validations', () => {
     expect(() => storage.createFolder({ name: 'math' })).toThrow(
       'RESERVED_NAME',
     )
+  })
+
+  it('keeps resident zero-block subtree metadata local after parent rename', () => {
+    const paths = getPaths(tempVaultPath)
+    setDatalessProbeForTests(() => true)
+    const statSpy = mockFolderMetadataAsZeroBlocks()
+
+    try {
+      const storage = createFoldersStorage()
+      const parent = storage.createFolder({ name: 'Before' })
+      storage.createFolder({ name: 'Child', parentId: parent.id })
+
+      storage.updateFolder(parent.id, { name: 'After' })
+
+      const parentMetaPath = path.join(paths.vaultPath, 'After', '.meta.yaml')
+      const childMetaPath = path.join(
+        paths.vaultPath,
+        'After',
+        'Child',
+        '.meta.yaml',
+      )
+
+      expect(getFileAvailability(parentMetaPath).isCloudPlaceholder).toBe(
+        false,
+      )
+      expect(getFileAvailability(childMetaPath).isCloudPlaceholder).toBe(false)
+      expect(fs.readFileSync(parentMetaPath, 'utf8')).toContain('name: After')
+    }
+    finally {
+      statSpy.mockRestore()
+    }
+  })
+
+  it('does not exempt or overwrite a moved metadata placeholder', () => {
+    const paths = getPaths(tempVaultPath)
+    setDatalessProbeForTests(() => true)
+    const statSpy = mockFolderMetadataAsZeroBlocks()
+
+    try {
+      const storage = createFoldersStorage()
+      const parent = storage.createFolder({ name: 'Before' })
+      storage.createFolder({ name: 'Child', parentId: parent.id })
+      const parentMetaPath = path.join(paths.vaultPath, 'Before', '.meta.yaml')
+      const childSourcePath = path.join(
+        paths.vaultPath,
+        'Before',
+        'Child',
+        '.meta.yaml',
+      )
+
+      makeSparsePlaceholder(childSourcePath)
+      resetCloudFileExemptions()
+      markAppWrittenFileAsLocal(parentMetaPath)
+      const placeholderBefore = fs.readFileSync(childSourcePath)
+      const childTargetPath = path.join(
+        paths.vaultPath,
+        'After',
+        'Child',
+        '.meta.yaml',
+      )
+      vi.mocked(enqueueCloudDownload).mockClear()
+
+      storage.updateFolder(parent.id, { name: 'After' })
+
+      expect(fs.readFileSync(childTargetPath)).toEqual(placeholderBefore)
+      expect(getFileAvailability(childTargetPath).isCloudPlaceholder).toBe(
+        true,
+      )
+      expect(enqueueCloudDownload).toHaveBeenCalledWith(childTargetPath)
+    }
+    finally {
+      statSpy.mockRestore()
+    }
   })
 })

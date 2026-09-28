@@ -1,17 +1,27 @@
 <script setup lang="ts">
 import type { SnippetsResponse } from '@/services/api/generated'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useApp, useDialog, useSnippets } from '@/composables'
+import {
+  useApp,
+  useDonations,
+  useNavigationHistory,
+  useSnippets,
+} from '@/composables'
 import { LibraryFilter } from '@/composables/types'
-import { i18n } from '@/electron'
-import { onClickOutside, useClipboard } from '@vueuse/core'
-import { format } from 'date-fns'
+import { useDateFormat } from '@/composables/useDateFormat'
+import { i18n, ipc } from '@/electron'
+import { isMac } from '@/utils'
+import { useClipboard } from '@vueuse/core'
+import { CloudDownload } from 'lucide-vue-next'
+import { api } from '~/renderer/services/api'
 
 interface Props {
   snippet: SnippetsResponse[0]
 }
 
 const props = defineProps<Props>()
+
+const { formatDate } = useDateFormat()
 
 const {
   highlightedSnippetIds,
@@ -29,15 +39,11 @@ const {
   selectedSnippetIds,
   updateSnippet,
   updateSnippets,
-  deleteSnippet,
-  deleteSnippets,
-  displayedSnippets,
+  deleteSelectedSnippets,
 } = useSnippets()
+const { recordNavigation } = useNavigationHistory()
 
-const { confirm } = useDialog()
 const { copy } = useClipboard()
-
-const snippetRef = ref<HTMLDivElement>()
 
 const isSelected = computed(() => state.snippetId === props.snippet.id)
 
@@ -64,6 +70,18 @@ const isTrashLibrarySelectd = computed(
   () => state.libraryFilter === LibraryFilter.Trash,
 )
 
+const revealInFileManagerLabel = computed(() =>
+  isMac
+    ? i18n.t('action.reveal.inFinder')
+    : i18n.t('action.reveal.inFileManager'),
+)
+
+// Содержимое ещё в облаке: мутации (запись файла) и копирование тела
+// недоступны до докачки; чтение метаданных и ссылки работают.
+const isCloudPending = computed(
+  () => props.snippet.pendingCloudDownload === true,
+)
+
 const folderName = computed(() => {
   if (props.snippet.folder) {
     return props.snippet.folder.name
@@ -76,8 +94,19 @@ const folderName = computed(() => {
   return i18n.t('common.inbox')
 })
 
+const createdAtFormatted = computed(() =>
+  formatDate(new Date(props.snippet.createdAt)),
+)
+
 function onSnippetClick(id: number, event: MouseEvent) {
-  selectSnippet(id, event.shiftKey)
+  if (event.shiftKey) {
+    selectSnippet(id, true)
+  }
+  else {
+    recordNavigation(() => {
+      selectSnippet(id)
+    })
+  }
   focusedSnippetId.value = id
 }
 
@@ -114,57 +143,7 @@ async function onAddFavorites() {
 }
 
 async function onDelete() {
-  if (selectedSnippetIds.value.length > 1) {
-    const isAllSoftDeleted = displayedSnippets.value?.every(s => s.isDeleted)
-
-    if (isAllSoftDeleted) {
-      const isConfirmed = await confirm({
-        title: i18n.t('messages:confirm.deleteConfirmMultipleSnippets', {
-          count: selectedSnippetIds.value.length,
-        }),
-        content: i18n.t('messages:warning.noUndo'),
-      })
-
-      if (isConfirmed) {
-        await deleteSnippets(selectedSnippetIds.value)
-      }
-    }
-    else {
-      // Мягкое удаление
-      const snippetsData = selectedSnippetIds.value?.map(() => ({
-        folderId: null,
-        isDeleted: 1,
-      }))
-
-      await updateSnippets(selectedSnippetIds.value, snippetsData)
-    }
-  }
-  else if (props.snippet.isDeleted) {
-    const isConfirmed = await confirm({
-      title: i18n.t('messages:confirm.deletePermanently', {
-        name: props.snippet.name,
-      }),
-      content: i18n.t('messages:warning.noUndo'),
-    })
-
-    if (isConfirmed) {
-      await deleteSnippet(props.snippet.id)
-    }
-  }
-  else {
-    // Мягкое удаление
-    await updateSnippet(props.snippet.id, {
-      folderId: null,
-      isDeleted: 1,
-    })
-  }
-
-  if (
-    selectedSnippetIds.value.length > 1
-    || state.snippetId === props.snippet.id
-  ) {
-    selectFirstSnippet()
-  }
+  await deleteSelectedSnippets(props.snippet)
 }
 
 async function onRestore() {
@@ -190,11 +169,26 @@ async function onDuplicate() {
   isFocusedSnippetName.value = true
 }
 
+function onRevealInFileManager() {
+  void ipc.invoke('system:show-snippet-in-file-manager', props.snippet.id)
+}
+
 function onCopySnippetLink() {
-  // copy(`masscode://folder/${state.folderId}/snippet/${props.snippet.id}`)
-  copy(
-    `masscode://goto?folderId=${state.folderId}&snippetId=${props.snippet.id}`,
-  )
+  copy(`masscode://goto?snippetId=${props.snippet.id}`)
+}
+
+async function onCopySnippetContent() {
+  try {
+    // Список не содержит тел фрагментов — контент загружается по id.
+    const { data } = await api.snippets.getSnippetsById(
+      String(props.snippet.id),
+    )
+    copy(data.contents[0]?.value || '')
+    useDonations().incrementCopy('code')
+  }
+  catch (error) {
+    console.error(error)
+  }
 }
 
 function onDragStart(event: DragEvent) {
@@ -228,16 +222,10 @@ function onDragStart(event: DragEvent) {
 
   setTimeout(() => el.remove(), 0)
 }
-
-onClickOutside(snippetRef, () => {
-  focusedSnippetId.value = undefined
-  highlightedSnippetIds.value.clear()
-})
 </script>
 
 <template>
   <div
-    ref="snippetRef"
     data-snippet-item
     class="border-border relative border-b px-1 focus-visible:outline-none"
     :class="{
@@ -246,7 +234,7 @@ onClickOutside(snippetRef, () => {
       'is-focused': isFocused,
       'is-highlighted': isHighlighted,
     }"
-    draggable="true"
+    :draggable="!isCloudPending"
     @click="(event) => onSnippetClick(snippet.id, event)"
     @contextmenu="onClickContextMenu"
     @dragstart.stop="onDragStart"
@@ -262,10 +250,19 @@ onClickOutside(snippetRef, () => {
           "
         >
           <div
-            class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+            class="flex min-w-0 items-center gap-1.5"
             :class="isCompactListMode ? 'flex-1' : 'mb-2'"
           >
-            {{ snippet.name || i18n.t("snippet.untitled") }}
+            <span
+              class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+            >
+              {{ snippet.name || i18n.t("snippet.untitled") }}
+            </span>
+            <CloudDownload
+              v-if="snippet.pendingCloudDownload"
+              class="text-muted-foreground h-3.5 w-3.5 shrink-0"
+              :aria-label="i18n.t('cloudDownloads.label')"
+            />
           </div>
           <UiText
             v-if="isCompactListMode"
@@ -274,7 +271,7 @@ onClickOutside(snippetRef, () => {
             muted
             class="meta shrink-0"
           >
-            {{ format(new Date(snippet.createdAt), "dd.MM.yyyy") }}
+            {{ createdAtFormatted }}
           </UiText>
           <UiText
             v-else
@@ -287,14 +284,17 @@ onClickOutside(snippetRef, () => {
               {{ folderName }}
             </div>
             <div>
-              {{ format(new Date(snippet.createdAt), "dd.MM.yyyy") }}
+              {{ createdAtFormatted }}
             </div>
           </UiText>
         </div>
       </ContextMenu.ContextMenuTrigger>
       <ContextMenu.ContextMenuContent>
         <template v-if="!isTrashLibrarySelectd">
-          <ContextMenu.ContextMenuItem @click="onAddFavorites">
+          <ContextMenu.ContextMenuItem
+            :disabled="isCloudPending"
+            @click="onAddFavorites"
+          >
             {{
               isFavoritesLibrarySelected
                 ? i18n.t("action.remove.fromFavorites")
@@ -302,18 +302,30 @@ onClickOutside(snippetRef, () => {
             }}
           </ContextMenu.ContextMenuItem>
           <ContextMenu.ContextMenuSeparator />
+          <ContextMenu.ContextMenuItem @click="onRevealInFileManager">
+            {{ revealInFileManagerLabel }}
+          </ContextMenu.ContextMenuItem>
+          <ContextMenu.ContextMenuItem
+            :disabled="isCloudPending"
+            @click="onCopySnippetContent"
+          >
+            {{ i18n.t("action.copy.snippet") }}
+          </ContextMenu.ContextMenuItem>
           <ContextMenu.ContextMenuItem @click="onCopySnippetLink">
             {{ i18n.t("action.copy.snippetLink") }}
           </ContextMenu.ContextMenuItem>
           <ContextMenu.ContextMenuSeparator />
           <ContextMenu.ContextMenuItem
-            :disabled="isDuplicateDisabled"
+            :disabled="isDuplicateDisabled || isCloudPending"
             @click="onDuplicate"
           >
             {{ i18n.t("action.duplicate") }}
           </ContextMenu.ContextMenuItem>
         </template>
-        <ContextMenu.ContextMenuItem @click="onDelete">
+        <ContextMenu.ContextMenuItem
+          :disabled="isCloudPending"
+          @click="onDelete"
+        >
           {{
             state.libraryFilter === LibraryFilter.Trash
               ? i18n.t("action.delete.common")
@@ -322,6 +334,7 @@ onClickOutside(snippetRef, () => {
         </ContextMenu.ContextMenuItem>
         <ContextMenu.ContextMenuItem
           v-if="isTrashLibrarySelectd"
+          :disabled="isCloudPending"
           @click="onRestore"
         >
           {{ i18n.t("action.restore") }}

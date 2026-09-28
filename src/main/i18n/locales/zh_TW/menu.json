@@ -28,10 +28,7 @@
       "gumroad": "通過 Gumroad 贊助（Visa、Mastercard 等）"
     },
     "twitter": "X",
-    "devTools": "切換開發者工具",
-    "links": {
-      "snippets": "程式碼片段集合"
-    }
+    "devTools": "切換開發者工具"
   },
   "view": {
     "label": "檢視",

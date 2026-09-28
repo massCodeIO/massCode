@@ -1,0 +1,686 @@
+diff --git a/dist/targets/c/libcurl/client.js b/dist/targets/c/libcurl/client.js
+index 8cae3203d8e2794353cba814d7d2546f7b84d987..98902c363c45cfcb2b1e039099a5ad64a91050e7 100644
+--- a/dist/targets/c/libcurl/client.js
++++ b/dist/targets/c/libcurl/client.js
+@@ -33,7 +33,7 @@ exports.libcurl = {
+             blank();
+             push("curl_easy_setopt(hnd, CURLOPT_COOKIE, \"".concat(allHeaders.cookie, "\");"));
+         }
+-        if (postData.text) {
++        if (postData.text !== undefined) {
+             blank();
+             push("curl_easy_setopt(hnd, CURLOPT_POSTFIELDS, ".concat(JSON.stringify(postData.text), ");"));
+         }
+diff --git a/dist/targets/clojure/clj_http/client.js b/dist/targets/clojure/clj_http/client.js
+index b600dfd41a37eb2cceeec4c424d9c467d3b81120..9d816128f410fc0d110dd375c4c57d3687ca902e 100644
+--- a/dist/targets/clojure/clj_http/client.js
++++ b/dist/targets/clojure/clj_http/client.js
+@@ -60,7 +60,7 @@ var padBlock = function (padSize, input) {
+ var jsToEdn = function (js) {
+     switch (jsType(js)) {
+         case 'string':
+-            return "\"".concat(js.replace(/"/g, '\\"'), "\"");
++            return JSON.stringify(js);
+         case 'file':
+             return js.toString();
+         case 'keyword':
+@@ -133,10 +133,6 @@ exports.clj_http = {
+             case 'text/plain':
+                 {
+                     params.body = postData.text;
+-                    var header = (0, headers_1.getHeaderName)(params.headers, 'content-type');
+-                    if (header) {
+-                        delete params.headers[header];
+-                    }
+                 }
+                 break;
+             case 'multipart/form-data': {
+@@ -174,12 +170,12 @@ exports.clj_http = {
+         }
+         push("(require '[clj-http.client :as client])\n");
+         if (objEmpty(filterEmpty(params))) {
+-            push("(client/".concat(method, " \"").concat(url, "\")"));
++            push("(client/".concat(method, " \"").concat(JSON.stringify(url).slice(1, -1), "\")"));
+         }
+         else {
+             var padding = 11 + method.length + url.length;
+             var formattedParams = padBlock(padding, jsToEdn(filterEmpty(params)));
+-            push("(client/".concat(method, " \"").concat(url, "\" ").concat(formattedParams, ")"));
++            push("(client/".concat(method, " \"").concat(JSON.stringify(url).slice(1, -1), "\" ").concat(formattedParams, ")"));
+         }
+         return join();
+     }
+diff --git a/dist/targets/crystal/native/client.js b/dist/targets/crystal/native/client.js
+index 7a79e2170434b4a269ea50f50f2d8d88d87d6127..a797867e199a48be863ac0b5779563c2e0b0f861 100644
+--- a/dist/targets/crystal/native/client.js
++++ b/dist/targets/crystal/native/client.js
+@@ -12,6 +12,7 @@ exports.native = void 0;
+  */
+ var code_builder_1 = require("../../../helpers/code-builder");
+ var escape_1 = require("../../../helpers/escape");
++var literal = function (value) { return JSON.stringify(value).replace(/#(?=\{)/g, '\\#'); };
+ exports.native = {
+     info: {
+         key: 'native',
+@@ -26,23 +27,23 @@ exports.native = {
+         var _c = new code_builder_1.CodeBuilder(), push = _c.push, blank = _c.blank, join = _c.join;
+         push('require "http/client"');
+         blank();
+-        push("url = \"".concat(fullUrl, "\""));
++        push("url = \"".concat(literal(fullUrl).slice(1, -1), "\""));
+         var headers = Object.keys(allHeaders);
+         if (headers.length) {
+             push('headers = HTTP::Headers{');
+             headers.forEach(function (key) {
+-                push("  \"".concat(key, "\" => \"").concat((0, escape_1.escapeForDoubleQuotes)(allHeaders[key]), "\""));
++                push("  " + literal(key) + " => " + literal(allHeaders[key]) + ",");
+             });
+             push('}');
+         }
+-        if (postData.text) {
+-            push("reqBody = ".concat(JSON.stringify(postData.text)));
++        if (postData.text !== undefined) {
++            push("reqBody = ".concat(literal(postData.text)));
+         }
+         blank();
+         var method = rawMethod.toUpperCase();
+         var methods = ['GET', 'POST', 'HEAD', 'DELETE', 'PATCH', 'PUT', 'OPTIONS'];
+         var headersContext = headers.length ? ', headers: headers' : '';
+-        var bodyContext = postData.text ? ', body: reqBody' : '';
++        var bodyContext = postData.text !== undefined ? ', body: reqBody' : '';
+         var sslContext = insecureSkipVerify ? ', tls: OpenSSL::SSL::Context::Client.insecure' : '';
+         if (methods.includes(method)) {
+             push("response = HTTP::Client.".concat(method.toLowerCase(), " url").concat(headersContext).concat(bodyContext).concat(sslContext));
+diff --git a/dist/targets/csharp/httpclient/client.js b/dist/targets/csharp/httpclient/client.js
+index c230d5e67643966b47872263bccc0ce1cc9c1ade..fd3b90a68606b5e3cb38790b4bc1cf259b77ebfc 100644
+--- a/dist/targets/csharp/httpclient/client.js
++++ b/dist/targets/csharp/httpclient/client.js
+@@ -85,7 +85,7 @@ exports.httpclient = {
+             method = "new HttpMethod(\"".concat(method, "\")");
+         }
+         push("Method = ".concat(method, ","), 1);
+-        push("RequestUri = new Uri(\"".concat(fullUrl, "\"),"), 1);
++        push("RequestUri = new Uri(\"".concat(JSON.stringify(fullUrl).slice(1, -1), "\"),"), 1);
+         var headers = Object.keys(allHeaders).filter(function (header) {
+             switch (header.toLowerCase()) {
+                 case 'content-type':
+@@ -101,11 +101,11 @@ exports.httpclient = {
+             push('Headers =', 1);
+             push('{', 1);
+             headers.forEach(function (key) {
+-                push("{ \"".concat(key, "\", \"").concat((0, escape_1.escapeForDoubleQuotes)(allHeaders[key]), "\" },"), 2);
++                push("{ \"".concat(key, "\", \"").concat(JSON.stringify(allHeaders[key]).slice(1, -1), "\" },"), 2);
+             });
+             push('},', 1);
+         }
+-        if (postData.text) {
++        if (postData.text !== undefined) {
+             var contentType = postData.mimeType;
+             switch (contentType) {
+                 case 'application/x-www-form-urlencoded':
+@@ -144,7 +144,7 @@ exports.httpclient = {
+                     push('{', 1);
+                     push('Headers =', 2);
+                     push('{', 2);
+-                    push("ContentType = new MediaTypeHeaderValue(\"".concat(contentType, "\")"), 3);
++                    push("ContentType = MediaTypeHeaderValue.Parse(\"".concat(JSON.stringify((0, headers_1.getHeader)(allHeaders, 'content-type') || contentType).slice(1, -1), "\")"), 3);
+                     push('}', 2);
+                     push('}', 1);
+                     break;
+diff --git a/dist/targets/csharp/restsharp/client.js b/dist/targets/csharp/restsharp/client.js
+index ee98d302101881a6eaef87194d9494b0adf86962..fbce5bb07cc744dc36cc4216784e8fd10a362d81 100644
+--- a/dist/targets/csharp/restsharp/client.js
++++ b/dist/targets/csharp/restsharp/client.js
+@@ -31,7 +31,7 @@ exports.restsharp = {
+             var name = _a.name, value = _a.value;
+             push("request.AddCookie(\"".concat(name, "\", \"").concat(value, "\");"));
+         });
+-        if (postData.text) {
++        if (postData.text !== undefined) {
+             var header = (0, headers_1.getHeader)(allHeaders, 'content-type');
+             var text = JSON.stringify(postData.text);
+             push("request.AddParameter(\"".concat(header, "\", ").concat(text, ", ParameterType.RequestBody);"));
+diff --git a/dist/targets/go/native/client.js b/dist/targets/go/native/client.js
+index 0704efd0f4b5067b7fb0f83b625991a4dbaa49a9..ce2514462baf7c2e64816baae142420f89ea830b 100644
+--- a/dist/targets/go/native/client.js
++++ b/dist/targets/go/native/client.js
+@@ -45,7 +45,7 @@ exports.native = {
+             if (insecureSkipVerify) {
+                 push('"crypto/tls"', indent);
+             }
+-            if (postData.text) {
++            if (postData.text !== undefined) {
+                 push('"strings"', indent);
+             }
+             push('"net/http"', indent);
+@@ -80,7 +80,7 @@ exports.native = {
+         push("url := \"".concat(fullUrl, "\""), indent);
+         blank();
+         // If we have body content or not create the var and reader or nil
+-        if (postData.text) {
++        if (postData.text !== undefined) {
+             push("payload := strings.NewReader(".concat(JSON.stringify(postData.text), ")"), indent);
+             blank();
+             push("req, ".concat(errorPlaceholder, " := http.NewRequest(\"").concat(method, "\", url, payload)"), indent);
+diff --git a/dist/targets/java/nethttp/client.js b/dist/targets/java/nethttp/client.js
+index b7a310889f6dc87d727630a6954812d9fe880aaf..e5d2219dcd471da90fb7d44a0d35138f38456184 100644
+--- a/dist/targets/java/nethttp/client.js
++++ b/dist/targets/java/nethttp/client.js
+@@ -39,7 +39,7 @@ exports.nethttp = {
+         Object.keys(allHeaders).forEach(function (key) {
+             push(".header(\"".concat(key, "\", \"").concat((0, escape_1.escapeForDoubleQuotes)(allHeaders[key]), "\")"), 2);
+         });
+-        if (postData.text) {
++        if (postData.text !== undefined) {
+             push(".method(\"".concat(method.toUpperCase(), "\", HttpRequest.BodyPublishers.ofString(").concat(JSON.stringify(postData.text), "))"), 2);
+         }
+         else {
+diff --git a/dist/targets/java/okhttp/client.js b/dist/targets/java/okhttp/client.js
+index c4cc84aa564c1f2e6359504a77b796056838ab8f..bfaf86f41f03983f1fbc99fb2f2058966112be6a 100644
+--- a/dist/targets/java/okhttp/client.js
++++ b/dist/targets/java/okhttp/client.js
+@@ -23,6 +23,7 @@ exports.__esModule = true;
+ exports.okhttp = void 0;
+ var code_builder_1 = require("../../../helpers/code-builder");
+ var escape_1 = require("../../../helpers/escape");
++var headers_1 = require("../../../helpers/headers");
+ exports.okhttp = {
+     info: {
+         key: 'okhttp',
+@@ -38,19 +39,19 @@ exports.okhttp = {
+         var methodsWithBody = ['POST', 'PUT', 'DELETE', 'PATCH'];
+         push('OkHttpClient client = new OkHttpClient();');
+         blank();
+-        if (postData.text) {
++        if (postData.text !== undefined) {
+             if (postData.boundary) {
+                 push("MediaType mediaType = MediaType.parse(\"".concat(postData.mimeType, "; boundary=").concat(postData.boundary, "\");"));
+             }
+             else {
+-                push("MediaType mediaType = MediaType.parse(\"".concat(postData.mimeType, "\");"));
++                push("MediaType mediaType = MediaType.parse(\"".concat(JSON.stringify((0, headers_1.getHeader)(allHeaders, 'content-type') || postData.mimeType).slice(1, -1), "\");"));
+             }
+             push("RequestBody body = RequestBody.create(mediaType, ".concat(JSON.stringify(postData.text), ");"));
+         }
+         push('Request request = new Request.Builder()');
+         push(".url(\"".concat(fullUrl, "\")"), 1);
+         if (!methods.includes(method.toUpperCase())) {
+-            if (postData.text) {
++            if (postData.text !== undefined) {
+                 push(".method(\"".concat(method.toUpperCase(), "\", body)"), 1);
+             }
+             else {
+@@ -58,7 +59,7 @@ exports.okhttp = {
+             }
+         }
+         else if (methodsWithBody.includes(method.toUpperCase())) {
+-            if (postData.text) {
++            if (postData.text !== undefined) {
+                 push(".".concat(method.toLowerCase(), "(body)"), 1);
+             }
+             else {
+diff --git a/dist/targets/javascript/axios/client.js b/dist/targets/javascript/axios/client.js
+index e969d77fbe8e78d57d9fad571660f96e522c35bc..69a8b1c6558af98540bd56fd504743991b4693f6 100644
+--- a/dist/targets/javascript/axios/client.js
++++ b/dist/targets/javascript/axios/client.js
+@@ -78,7 +78,7 @@ exports.axios = {
+                 requestOptions.data = '[form]';
+                 break;
+             default:
+-                if (postData.text) {
++                if (postData.text !== undefined) {
+                     requestOptions.data = postData.text;
+                 }
+         }
+diff --git a/dist/targets/javascript/fetch/client.js b/dist/targets/javascript/fetch/client.js
+index c6bc6f4d63e76737c2b229994962525af090dc99..9b0e165e2fe7c8ac61556163e864266d87e4854e 100644
+--- a/dist/targets/javascript/fetch/client.js
++++ b/dist/targets/javascript/fetch/client.js
+@@ -72,7 +72,7 @@ exports.fetch = {
+                 blank();
+                 break;
+             default:
+-                if (postData.text) {
++                if (postData.text !== undefined) {
+                     options.body = postData.text;
+                 }
+         }
+diff --git a/dist/targets/kotlin/okhttp/client.js b/dist/targets/kotlin/okhttp/client.js
+index 61d2e5a33b5fb675cfd6f8edb934e3e7cb817143..32573a559054e0cc0d33377c7978b05d0b634700 100644
+--- a/dist/targets/kotlin/okhttp/client.js
++++ b/dist/targets/kotlin/okhttp/client.js
+@@ -23,6 +23,8 @@ exports.__esModule = true;
+ exports.okhttp = void 0;
+ var code_builder_1 = require("../../../helpers/code-builder");
+ var escape_1 = require("../../../helpers/escape");
++var headers_1 = require("../../../helpers/headers");
++var literal = function (value) { return JSON.stringify(value).replace(/\$/g, '\\$'); };
+ exports.okhttp = {
+     info: {
+         key: 'okhttp',
+@@ -38,19 +40,19 @@ exports.okhttp = {
+         var methodsWithBody = ['POST', 'PUT', 'DELETE', 'PATCH'];
+         push('val client = OkHttpClient()');
+         blank();
+-        if (postData.text) {
++        if (postData.text !== undefined) {
+             if (postData.boundary) {
+-                push("val mediaType = MediaType.parse(\"".concat(postData.mimeType, "; boundary=").concat(postData.boundary, "\")"));
++                push("val mediaType = MediaType.parse(\"".concat(literal(postData.mimeType).slice(1, -1), "; boundary=").concat(postData.boundary, "\")"));
+             }
+             else {
+-                push("val mediaType = MediaType.parse(\"".concat(postData.mimeType, "\")"));
++                push("val mediaType = MediaType.parse(\"".concat(literal((0, headers_1.getHeader)(allHeaders, "content-type") || postData.mimeType).slice(1, -1), "\")"));
+             }
+-            push("val body = RequestBody.create(mediaType, ".concat(JSON.stringify(postData.text), ")"));
++            push("val body = RequestBody.create(mediaType, ".concat(literal(postData.text), ")"));
+         }
+         push('val request = Request.Builder()');
+-        push(".url(\"".concat(fullUrl, "\")"), 1);
++        push(".url(\"".concat(literal(fullUrl).slice(1, -1), "\")"), 1);
+         if (!methods.includes(method.toUpperCase())) {
+-            if (postData.text) {
++            if (postData.text !== undefined) {
+                 push(".method(\"".concat(method.toUpperCase(), "\", body)"), 1);
+             }
+             else {
+@@ -58,7 +60,7 @@ exports.okhttp = {
+             }
+         }
+         else if (methodsWithBody.includes(method.toUpperCase())) {
+-            if (postData.text) {
++            if (postData.text !== undefined) {
+                 push(".".concat(method.toLowerCase(), "(body)"), 1);
+             }
+             else {
+@@ -70,7 +72,7 @@ exports.okhttp = {
+         }
+         // Add headers, including the cookies
+         Object.keys(allHeaders).forEach(function (key) {
+-            push(".addHeader(\"".concat(key, "\", \"").concat((0, escape_1.escapeForDoubleQuotes)(allHeaders[key]), "\")"), 1);
++            push(".addHeader(\"".concat(key, "\", \"").concat(literal(allHeaders[key]).slice(1, -1), "\")"), 1);
+         });
+         push('.build()', 1);
+         blank();
+diff --git a/dist/targets/objc/helpers.js b/dist/targets/objc/helpers.js
+index ab740b24693a99dc0d9403fa29c51e8b613dd16d..6424fe7b39935d9db7dfca0b3367d13e8b2a6f90 100644
+--- a/dist/targets/objc/helpers.js
++++ b/dist/targets/objc/helpers.js
+@@ -53,7 +53,10 @@ var literalRepresentation = function (value, indentation) {
+             if (value === null || value === undefined) {
+                 return '';
+             }
+-            return "@\"".concat(value.toString().replace(/"/g, '\\"'), "\"");
++            return '@"' + String(value).replace(/[\\"\x00-\x1f]/g, function (char) {
++                if (char === '\\' || char === '"') return '\\' + char;
++                return '\\' + char.charCodeAt(0).toString(8).padStart(3, '0');
++            }) + '"';
+     }
+ };
+ exports.literalRepresentation = literalRepresentation;
+diff --git a/dist/targets/objc/nsurlsession/client.js b/dist/targets/objc/nsurlsession/client.js
+index 3adb7679431668dda749294f1ecaa7f65ff873e8..31fadb1143564db249dce43966f11c3cab5652d8 100644
+--- a/dist/targets/objc/nsurlsession/client.js
++++ b/dist/targets/objc/nsurlsession/client.js
+@@ -63,7 +63,7 @@ exports.nsurlsession = {
+             blank();
+             push((0, helpers_1.nsDeclaration)('NSDictionary', 'headers', allHeaders, opts.pretty));
+         }
+-        if (postData.text || postData.jsonObj || postData.params) {
++        if (postData.text !== undefined || postData.jsonObj || postData.params) {
+             req.hasBody = true;
+             switch (postData.mimeType) {
+                 case 'application/x-www-form-urlencoded':
+@@ -118,11 +118,11 @@ exports.nsurlsession = {
+                     break;
+                 default:
+                     blank();
+-                    push("NSData *postData = [[NSData alloc] initWithData:[@\"".concat(postData.text, "\" dataUsingEncoding:NSUTF8StringEncoding]];"));
++                    push("NSData *postData = [[NSData alloc] initWithData:[@\"".concat((0, helpers_1.literalRepresentation)(postData.text).slice(2, -1), "\" dataUsingEncoding:NSUTF8StringEncoding]];"));
+             }
+         }
+         blank();
+-        push("NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@\"".concat(fullUrl, "\"]"));
++        push("NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@\"".concat((0, helpers_1.literalRepresentation)(fullUrl).slice(2, -1), "\"]"));
+         // NSURLRequestUseProtocolCachePolicy is the default policy, let's just always set it to avoid confusion.
+         push('                                                       cachePolicy:NSURLRequestUseProtocolCachePolicy');
+         push("                                                   timeoutInterval:".concat(opts.timeout.toFixed(1), "];"));
+diff --git a/dist/targets/ocaml/cohttp/client.js b/dist/targets/ocaml/cohttp/client.js
+index 461268f5cc6a7d37e215247eaafe6239cafa97fc..5ac0a037d3abdd1ff888947dcd9b819a56dcd2e6 100644
+--- a/dist/targets/ocaml/cohttp/client.js
++++ b/dist/targets/ocaml/cohttp/client.js
+@@ -53,14 +53,14 @@ exports.cohttp = {
+             push('] in');
+         }
+         // Add body
+-        if (postData.text) {
++        if (postData.text !== undefined) {
+             // Just text
+             push("let body = Cohttp_lwt_body.of_string ".concat(JSON.stringify(postData.text), " in"));
+         }
+         // Do the request
+         blank();
+         var h = headers.length ? '~headers ' : '';
+-        var b = postData.text ? '~body ' : '';
++        var b = postData.text !== undefined ? '~body ' : '';
+         var m = methods.includes(method.toLowerCase())
+             ? "`".concat(method.toUpperCase())
+             : "(Code.method_of_string \"".concat(method, "\")");
+diff --git a/dist/targets/php/curl/client.js b/dist/targets/php/curl/client.js
+index 3fa38d50e76e79173952e27612ea28d6a3d53fbf..d521838998103a0dbc728ef48112650cae1ebd3a 100644
+--- a/dist/targets/php/curl/client.js
++++ b/dist/targets/php/curl/client.js
+@@ -13,6 +13,12 @@ exports.curl = void 0;
+ var code_builder_1 = require("../../../helpers/code-builder");
+ var escape_1 = require("../../../helpers/escape");
+ var helpers_1 = require("../helpers");
++var literal = function (value) {
++    return '"' + String(value).replace(/[\\"$\x00-\x1f]/g, function (char) {
++        if (char === '\\' || char === '"' || char === '$') return '\\' + char;
++        return '\\x' + char.charCodeAt(0).toString(16).padStart(2, '0');
++    }) + '"';
++};
+ exports.curl = {
+     info: {
+         key: 'curl',
+@@ -87,7 +93,7 @@ exports.curl = {
+         curlOptions.forEach(function (_a) {
+             var value = _a.value, name = _a.name, escape = _a.escape;
+             if (value !== null && value !== undefined) {
+-                curlopts.push("".concat(name, " => ").concat(escape ? JSON.stringify(value) : value, ","));
++                curlopts.push("".concat(name, " => ").concat(escape ? literal(value) : value, ","));
+             }
+         });
+         // construct cookies
+@@ -98,7 +104,7 @@ exports.curl = {
+         // construct cookies
+         var headers = Object.keys(headersObj)
+             .sort()
+-            .map(function (key) { return "\"".concat(key, ": ").concat((0, escape_1.escapeForDoubleQuotes)(headersObj[key]), "\""); });
++            .map(function (key) { return literal(key + ": " + headersObj[key]); });
+         if (headers.length) {
+             curlopts.push('CURLOPT_HTTPHEADER => [');
+             curlopts.push(headers.join(",\n".concat(indent).concat(indent)), 1);
+diff --git a/dist/targets/php/guzzle/client.js b/dist/targets/php/guzzle/client.js
+index cce0638550b7c92a1ddc004ba3bf581a0a539c27..285a4384628f281517337d264940135fef4af9f1 100644
+--- a/dist/targets/php/guzzle/client.js
++++ b/dist/targets/php/guzzle/client.js
+@@ -84,7 +84,7 @@ exports.guzzle = {
+                 break;
+             }
+             default:
+-                if (postData.text) {
++                if (postData.text !== undefined) {
+                     requestPush("'body' => ".concat((0, helpers_1.convertType)(postData.text), ","), 1);
+                 }
+         }
+@@ -92,14 +92,14 @@ exports.guzzle = {
+         var headers = Object.keys(headersObj)
+             .sort()
+             .map(function (key) {
+-            return "".concat(opts.indent).concat(opts.indent, "'").concat(key, "' => '").concat((0, escape_1.escapeForSingleQuotes)(headersObj[key]), "',");
++            return "".concat(opts.indent).concat(opts.indent, "'").concat(key, "' => '").concat((0, helpers_1.convertType)(headersObj[key]).slice(1, -1), "',");
+         });
+         // construct cookies
+         var cookieString = cookies
+             .map(function (cookie) { return "".concat(encodeURIComponent(cookie.name), "=").concat(encodeURIComponent(cookie.value)); })
+             .join('; ');
+         if (cookieString.length) {
+-            headers.push("".concat(opts.indent).concat(opts.indent, "'cookie' => '").concat((0, escape_1.escapeForSingleQuotes)(cookieString), "',"));
++            headers.push("".concat(opts.indent).concat(opts.indent, "'cookie' => '").concat((0, helpers_1.convertType)(cookieString).slice(1, -1), "',"));
+         }
+         if (headers.length) {
+             requestPush("'headers' => [", 1);
+@@ -109,12 +109,12 @@ exports.guzzle = {
+         push('$client = new \\GuzzleHttp\\Client();');
+         blank();
+         if (requestCode.length) {
+-            push("$response = $client->request('".concat(method, "', '").concat(fullUrl, "', ["));
++            push("$response = $client->request('".concat(method, "', '").concat((0, helpers_1.convertType)(fullUrl).slice(1, -1), "', ["));
+             push(requestJoin());
+             push(']);');
+         }
+         else {
+-            push("$response = $client->request('".concat(method, "', '").concat(fullUrl, "');"));
++            push("$response = $client->request('".concat(method, "', '").concat((0, helpers_1.convertType)(fullUrl).slice(1, -1), "');"));
+         }
+         blank();
+         push('echo $response->getBody();');
+diff --git a/dist/targets/php/helpers.js b/dist/targets/php/helpers.js
+index 4b6faa76f705616b4aa1a57b370bc0eeb3d2c745..e7f502afe21bfbdeb034a39742fb3fdbec7d676e 100644
+--- a/dist/targets/php/helpers.js
++++ b/dist/targets/php/helpers.js
+@@ -11,7 +11,7 @@ var convertType = function (obj, indent, lastIndent) {
+         case '[object Undefined]':
+             return 'null';
+         case '[object String]':
+-            return "'".concat((0, escape_1.escapeString)(obj, { delimiter: "'", escapeNewlines: false }), "'");
++            return "'" + obj.replace(/[\\']/g, function (char) { return '\\' + char; }) + "'";
+         case '[object Number]':
+             return obj.toString();
+         case '[object Array]': {
+diff --git a/dist/targets/powershell/common.js b/dist/targets/powershell/common.js
+index 236faeb5bcbe2b92bfb60949f931b4f3797d00e6..1eefb938330c7cc7d3f6e553e02651b592dfeb3b 100644
+--- a/dist/targets/powershell/common.js
++++ b/dist/targets/powershell/common.js
+@@ -4,6 +4,7 @@ exports.generatePowershellConvert = void 0;
+ var code_builder_1 = require("../../helpers/code-builder");
+ var escape_1 = require("../../helpers/escape");
+ var headers_1 = require("../../helpers/headers");
++var literal = function (value) { return "'" + String(value).replace(/'/g, "''") + "'"; };
+ var generatePowershellConvert = function (command) {
+     var convert = function (_a) {
+         var method = _a.method, headersObj = _a.headersObj, cookies = _a.cookies, uriObj = _a.uriObj, fullUrl = _a.fullUrl, postData = _a.postData, allHeaders = _a.allHeaders;
+@@ -30,7 +31,7 @@ var generatePowershellConvert = function (command) {
+             headers.forEach(function (key) {
+                 if (key !== 'connection') {
+                     // Not allowed
+-                    push("$headers.Add(\"".concat(key, "\", \"").concat((0, escape_1.escapeString)(headersObj[key], { escapeChar: '`' }), "\")"));
++                    push("$headers.Add(" + literal(key) + ", " + literal(headersObj[key]) + ")");
+                 }
+             });
+             commandOptions.push('-Headers $headers');
+@@ -47,14 +48,11 @@ var generatePowershellConvert = function (command) {
+             });
+             commandOptions.push('-WebSession $session');
+         }
+-        if (postData.text) {
+-            commandOptions.push("-ContentType '".concat((0, escape_1.escapeString)((0, headers_1.getHeader)(allHeaders, 'content-type'), {
+-                delimiter: "'",
+-                escapeChar: '`'
+-            }), "'"));
+-            commandOptions.push("-Body '".concat(postData.text, "'"));
++        if (postData.text !== undefined) {
++            commandOptions.push("-ContentType " + literal((0, headers_1.getHeader)(allHeaders, 'content-type') || postData.mimeType));
++            commandOptions.push("-Body " + literal(postData.text));
+         }
+-        push("$response = ".concat(command, " -Uri '").concat(fullUrl, "' ").concat(methodArg, " ").concat(method, " ").concat(commandOptions.join(' ')));
++        push("$response = ".concat(command, " -Uri ").concat(literal(fullUrl), " ").concat(methodArg, " ").concat(method, " ").concat(commandOptions.join(' ')));
+         return join();
+     };
+     return convert;
+diff --git a/dist/targets/r/httr/client.js b/dist/targets/r/httr/client.js
+index 1ee9e32ddf230a00baef3cdb5bfb2d96a074f96d..9b507d771f7fcc11c4ee64ba8f40937f25129207 100644
+--- a/dist/targets/r/httr/client.js
++++ b/dist/targets/r/httr/client.js
+@@ -48,7 +48,7 @@ exports.httr = {
+         push('library(httr)');
+         blank();
+         // Set URL
+-        push("url <- \"".concat(url, "\""));
++        push("url <- \"".concat(JSON.stringify(url).slice(1, -1), "\""));
+         blank();
+         // Construct query string
+         var qs = queryObj;
+@@ -78,7 +78,7 @@ exports.httr = {
+             blank();
+         }
+         // Define encode
+-        if (postData.text || postData.jsonObj || postData.params) {
++        if (postData.text !== undefined || postData.jsonObj || postData.params) {
+             switch (postData.mimeType) {
+                 case 'application/x-www-form-urlencoded':
+                     push('encode <- "form"');
+@@ -107,8 +107,8 @@ exports.httr = {
+                 .replace(/` /g, '`')
+                 .replace(/[=]/g, '` = "'), "\")")
+             : undefined;
+-        var setAccept = acceptHeader ? "accept(\"".concat((0, escape_1.escapeForDoubleQuotes)(acceptHeader), "\")") : undefined;
+-        var setContentType = "content_type(\"".concat((0, escape_1.escapeForDoubleQuotes)(postData.mimeType), "\")");
++        var setAccept = acceptHeader ? "accept(\"".concat(JSON.stringify(acceptHeader).slice(1, -1), "\")") : undefined;
++        var setContentType = "content_type(\"".concat(JSON.stringify((0, headers_1.getHeader)(allHeaders, 'content-type') || postData.mimeType).slice(1, -1), "\")");
+         var otherHeaders = Object.entries(allHeaders)
+             // These headers are all handled separately:
+             .filter(function (_a) {
+@@ -117,7 +117,7 @@ exports.httr = {
+         })
+             .map(function (_a) {
+             var _b = __read(_a, 2), key = _b[0], value = _b[1];
+-            return "'".concat(key, "' = '").concat((0, escape_1.escapeForSingleQuotes)(value), "'");
++            return JSON.stringify(key) + " = " + JSON.stringify(value);
+         })
+             .join(', ');
+         var setHeaders = otherHeaders ? "add_headers(".concat(otherHeaders, ")") : undefined;
+@@ -135,7 +135,7 @@ exports.httr = {
+         if (headerAdditions) {
+             request += ", ".concat(headerAdditions);
+         }
+-        if (postData.text || postData.jsonObj || postData.params) {
++        if (postData.text !== undefined || postData.jsonObj || postData.params) {
+             request += ', encode = encode';
+         }
+         request += ')';
+diff --git a/dist/targets/ruby/native/client.js b/dist/targets/ruby/native/client.js
+index 0bff106ae45f4fb9ad340f4a0a487f64c6c73435..a32e21cde45f4395733217dfc357dd2bf931127e 100644
+--- a/dist/targets/ruby/native/client.js
++++ b/dist/targets/ruby/native/client.js
+@@ -3,6 +3,7 @@ exports.__esModule = true;
+ exports.native = void 0;
+ var code_builder_1 = require("../../../helpers/code-builder");
+ var escape_1 = require("../../../helpers/escape");
++var literal = function (value) { return JSON.stringify(value).replace(/#(?=[{@$])/g, '\\#'); };
+ exports.native = {
+     info: {
+         key: 'native',
+@@ -39,30 +40,28 @@ exports.native = {
+         if (!methods.includes(method)) {
+             push("class Net::HTTP::".concat(capMethod, " < Net::HTTPRequest"));
+             push("  METHOD = '".concat(method.toUpperCase(), "'"));
+-            push("  REQUEST_HAS_BODY = '".concat(postData.text ? 'true' : 'false', "'"));
++            push("  REQUEST_HAS_BODY = '".concat(postData.text !== undefined ? 'true' : 'false', "'"));
+             push('  RESPONSE_HAS_BODY = true');
+             push('end');
+             blank();
+         }
+-        push("url = URI(\"".concat(fullUrl, "\")"));
++        push("url = URI(\"".concat(literal(fullUrl).slice(1, -1), "\")"));
+         blank();
+         push('http = Net::HTTP.new(url.host, url.port)');
+-        if (uriObj.protocol === 'https:') {
+-            push('http.use_ssl = true');
+-            if (insecureSkipVerify) {
+-                push('http.verify_mode = OpenSSL::SSL::VERIFY_NONE');
+-            }
++        push('http.use_ssl = url.scheme == "https"');
++        if (insecureSkipVerify) {
++            push('http.verify_mode = OpenSSL::SSL::VERIFY_NONE');
+         }
+         blank();
+         push("request = Net::HTTP::".concat(capMethod, ".new(url)"));
+         var headers = Object.keys(allHeaders);
+         if (headers.length) {
+             headers.forEach(function (key) {
+-                push("request[\"".concat(key, "\"] = '").concat((0, escape_1.escapeForSingleQuotes)(allHeaders[key]), "'"));
++                push("request[" + literal(key) + "] = " + literal(allHeaders[key]));
+             });
+         }
+-        if (postData.text) {
+-            push("request.body = ".concat(JSON.stringify(postData.text)));
++        if (postData.text !== undefined) {
++            push("request.body = ".concat(literal(postData.text)));
+         }
+         blank();
+         push('response = http.request(request)');
+diff --git a/dist/targets/rust/helpers.js b/dist/targets/rust/helpers.js
+index e2b1ad39fa7a66f7a53b27c5e51f964d4ae03b37..fe323881620fa0123f2da27142fe0e96fcaaff61 100644
+--- a/dist/targets/rust/helpers.js
++++ b/dist/targets/rust/helpers.js
+@@ -55,7 +55,11 @@ var literalRepresentation = function (value, opts, indentLevel) {
+             if (value === null || value === undefined) {
+                 return '';
+             }
+-            return "\"".concat(value.toString().replace(/"/g, '\\"'), "\"");
++            return '"' + String(value).replace(/[\\"\x00-\x1f]/g, function (char) {
++                if (char === '\\') return '\\\\';
++                if (char === '"') return '\\"';
++                return '\\u{' + char.charCodeAt(0).toString(16) + '}';
++            }) + '"';
+     }
+ };
+ exports.literalRepresentation = literalRepresentation;
+diff --git a/dist/targets/rust/reqwest/client.js b/dist/targets/rust/reqwest/client.js
+index c4a64ff262e8a6e4e3bde0de5012d286bdc2b1c9..cbc8f9a0bb6c847f6c96867e1bb2eae7db7bbb0b 100644
+--- a/dist/targets/rust/reqwest/client.js
++++ b/dist/targets/rust/reqwest/client.js
+@@ -72,7 +72,7 @@ exports.reqwest = {
+         push('pub async fn main() {', indentLevel);
+         indentLevel += 1;
+         // add url
+-        push("let url = \"".concat(url, "\";"), indentLevel);
++        push("let url = \"".concat((0, helpers_1.literalRepresentation)(url, opts).slice(1, -1), "\";"), indentLevel);
+         blank();
+         var hasQuery = false;
+         // construct query string
+@@ -180,7 +180,7 @@ exports.reqwest = {
+                     hasForm = true;
+                     break;
+                 }
+-                if (postData.text) {
++                if (postData.text !== undefined) {
+                     push("let payload = ".concat((0, helpers_1.literalRepresentation)(postData.text, opts, indentLevel), ";"), indentLevel);
+                     hasBody = true;
+                     break;
+diff --git a/dist/targets/shell/curl/client.js b/dist/targets/shell/curl/client.js
+index 45b185f8bc046ff7c988707c97dd539ae937a30b..207ccc35d43797992a030cf6acfdb2292194c89b 100644
+--- a/dist/targets/shell/curl/client.js
++++ b/dist/targets/shell/curl/client.js
+@@ -137,7 +137,7 @@ exports.curl = {
+                 break;
+             default: {
+                 // raw request body
+-                if (!postData.text) {
++                if (postData.text === undefined) {
+                     break;
+                 }
+                 var flag = binary ? '--data-binary' : arg('data');
+diff --git a/dist/targets/shell/httpie/client.js b/dist/targets/shell/httpie/client.js
+index f0a007b1ca42c4e1406a8a653fe98924705fd87c..fad7d21d79d33a79693c339e381dcb25d68ed471 100644
+--- a/dist/targets/shell/httpie/client.js
++++ b/dist/targets/shell/httpie/client.js
+@@ -102,9 +102,9 @@ exports.httpie = {
+         var cliFlags = flags.length ? "".concat(flags.join(' '), " ") : '';
+         url = (0, shell_1.quote)(opts.queryParams ? url : fullUrl);
+         unshift("http ".concat(cliFlags).concat(method, " ").concat(url));
+-        if (raw && postData.text) {
++        if (raw && postData.text !== undefined) {
+             var postDataText = (0, shell_1.quote)(postData.text);
+-            unshift("echo ".concat(postDataText, " | "));
++            unshift("printf '%s' ".concat(postDataText, " | "));
+         }
+         return join();
+     }
+diff --git a/dist/targets/shell/wget/client.js b/dist/targets/shell/wget/client.js
+index 08e161eb0aaea5ab9b253a0a9be155ee130997dd..17b0b5b72568113aaaf660cdda978640aec87992 100644
+--- a/dist/targets/shell/wget/client.js
++++ b/dist/targets/shell/wget/client.js
+@@ -49,8 +49,8 @@ exports.wget = {
+             var header = "".concat(key, ": ").concat(allHeaders[key]);
+             push("--header ".concat((0, shell_1.quote)(header)));
+         });
+-        if (postData.text) {
+-            push("--body-data ".concat((0, shell_1.escape)((0, shell_1.quote)(postData.text))));
++        if (postData.text !== undefined) {
++            push("--body-data ".concat((0, shell_1.quote)(postData.text)));
+         }
+         push(opts.short ? '-O' : '--output-document');
+         push("- ".concat((0, shell_1.quote)(fullUrl)));

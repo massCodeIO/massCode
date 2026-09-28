@@ -1,3 +1,4 @@
+import type { ButtonVariants } from '@/components/ui/shadcn/button'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Dialog from '@/components/ui/shadcn/dialog'
 import { i18n } from '@/electron'
@@ -14,6 +15,7 @@ import {
 export interface DialogOptions {
   title?: string
   description?: string
+  confirmVariant?: ButtonVariants['variant']
   confirmText?: string
   cancelText?: string
   content?: string | Component
@@ -27,7 +29,14 @@ export function useDialog() {
   }
 
   const showDialog = (options: DialogOptions = {}) => {
-    const { title, description, confirmText, cancelText, content } = options
+    const {
+      title,
+      description,
+      confirmText,
+      cancelText,
+      content,
+      confirmVariant,
+    } = options
 
     const container = createDialogContainer()
 
@@ -101,7 +110,7 @@ export function useDialog() {
                       default: () => [
                         h(
                           Dialog.DialogHeader,
-                          {},
+                          { class: 'min-w-0 pr-6 break-words' },
                           {
                             default: () => [
                               h(
@@ -141,6 +150,7 @@ export function useDialog() {
                                   h(
                                     Button,
                                     {
+                                      variant: confirmVariant,
                                       onClick: onConfirm,
                                     },
                                     { default: () => confirmText },

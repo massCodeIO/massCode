@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { useSpacePanels } from '@/composables/useSpacePanels'
 import { i18n } from '@/electron'
+import { getActiveSpaceId } from '@/spaceDefinitions'
 import { ArrowLeft } from 'lucide-vue-next'
-import { computed } from 'vue'
 
 interface Props {
   title: string
@@ -26,7 +27,12 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
+const { primaryOpen } = useSpacePanels()
+const sidebarShown = computed(() => !getActiveSpaceId() || primaryOpen.value)
+
 const gridTemplateColumns = computed(() => {
+  if (!sidebarShown.value)
+    return '1fr'
   return `${props.leftSize} 1px ${props.rightSize}`
 })
 
@@ -43,7 +49,10 @@ const leftHeaderStyle = computed(() => {
     class="relative grid h-screen flex-1 overflow-hidden"
     :style="{ gridTemplateColumns }"
   >
-    <div class="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden">
+    <div
+      v-show="sidebarShown"
+      class="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden"
+    >
       <slot name="leftHeader">
         <div
           class="flex items-center justify-between gap-2 px-2"
@@ -66,7 +75,10 @@ const leftHeaderStyle = computed(() => {
         <slot name="left" />
       </div>
     </div>
-    <div class="bg-border" />
+    <div
+      v-show="sidebarShown"
+      class="bg-border"
+    />
     <div class="h-full min-h-0 overflow-auto pt-[var(--content-top-offset)]">
       <slot name="right" />
     </div>

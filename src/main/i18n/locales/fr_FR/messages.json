@@ -3,15 +3,10 @@
     "delete": "Êtes-vous sûr de vouloir supprimer \"{{name}}\" ?",
     "deletePermanently": "Êtes-vous sûr de vouloir supprimer définitivement \"{{name}}\" ?",
     "deleteConfirmMultipleSnippets": "Êtes-vous sûr de vouloir supprimer définitivement les {{count}} snippets sélectionnés ?",
-    "emptyTrash": "Êtes-vous sûr de vouloir supprimer définitivement tous les snippets de la Corbeille ?",
-    "migrateToMarkdown": [
-      "Migrez vers le coffre-fort Markdown ?",
-      "Le coffre-fort choisi sera écrasé par la bibliothèque SQLite actuelle."
-    ]
+    "emptyTrash": "Êtes-vous sûr de vouloir supprimer définitivement tous les snippets de la Corbeille ?"
   },
   "success": {
     "copied": "Copié dans le presse-papiers",
-    "migrateToMarkdown": "Migrated to Markdown Vault. Folders: {{folders}}, snippets: {{snippets}}, tags: {{tags}}.",
     "vaultLoaded": "Vault successfully loaded."
   },
   "warning": {
@@ -26,15 +21,11 @@
     ]
   },
   "error": {
-    "migration": "La migration automatique depuis SQLite a échoué : {{error}}"
-  },
   "description": {
     "storageVault": "Choisissez le répertoire du coffre-fort. Pour synchroniser entre les appareils, sélectionnez un dossier dans  iCloud Drive, Google Drive ou Dropbox.",
     "language": "Pour appliquer les changements de langue, Vous devez relancer l'application.",
-    "migrateSqliteUtility": "Si vous avez un fichier massCode.db d'une version précédente, utilisez cet utilitaire pour importer vos données dans le coffre-fort Markdown courant."
   },
   "special": {
-    "supportMessage": "Salut, c'est Anton 👋<br><br>\nMerci d'utiliser massCode. Si vous trouvez cette application utile, veuillez {{-tagStart}}faire un don{{-tagEnd}}. Cela m'inspirera à continuer le développement du projet.",
     "unsponsored": "Non sponsorisé"
   },
   "release": {},

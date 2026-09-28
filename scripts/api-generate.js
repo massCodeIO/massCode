@@ -15,8 +15,8 @@ const appDataDir = path.join(
   'v2',
 )
 const store = new Store({ name: 'preferences', cwd: appDataDir })
-const apiPort = store.get('apiPort', 4321)
-const url = `http://localhost:${apiPort}/swagger/json`
+const apiPort = store.get('api.port', store.get('apiPort', 4321))
+const url = `http://127.0.0.1:${apiPort}/swagger/json`
 
 async function generateApi() {
   try {

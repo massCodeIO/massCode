@@ -122,7 +122,7 @@
     },
     "enum-name": {
       "begin": "\\b(enum)\\b",
-      "endCaptures": { "1": { "name": "entity.name.type.class.hx" } },
+      "endCaptures": { "1": { "name": "entity.name.type.hx" } },
       "end": "([_A-Za-z]\\w*)",
       "patterns": [{ "include": "#global" }],
       "beginCaptures": { "1": { "name": "storage.type.class.hx" } }
@@ -316,7 +316,7 @@
     },
     "interface-name": {
       "begin": "\\b(interface)\\b",
-      "endCaptures": { "1": { "name": "entity.name.type.class.hx" } },
+      "endCaptures": { "1": { "name": "entity.name.type.hx" } },
       "end": "([_A-Za-z]\\w*)",
       "patterns": [{ "include": "#global" }],
       "beginCaptures": { "1": { "name": "storage.type.class.hx" } }
@@ -331,7 +331,7 @@
     },
     "typedef-name": {
       "begin": "\\b(typedef)\\b",
-      "endCaptures": { "1": { "name": "entity.name.type.class.hx" } },
+      "endCaptures": { "1": { "name": "entity.name.type.hx" } },
       "end": "([_A-Za-z]\\w*)",
       "patterns": [{ "include": "#global" }],
       "beginCaptures": { "1": { "name": "storage.type.class.hx" } }
@@ -361,7 +361,7 @@
     },
     "abstract-name": {
       "begin": "\\b(abstract)\\b",
-      "endCaptures": { "1": { "name": "entity.name.type.class.hx" } },
+      "endCaptures": { "1": { "name": "entity.name.type.hx" } },
       "end": "([_A-Za-z]\\w*)",
       "patterns": [{ "include": "#global" }],
       "beginCaptures": { "1": { "name": "storage.type.class.hx" } }
@@ -376,7 +376,7 @@
     },
     "class-name": {
       "begin": "\\b(class)\\b",
-      "endCaptures": { "1": { "name": "entity.name.type.class.hx" } },
+      "endCaptures": { "1": { "name": "entity.name.type.hx" } },
       "end": "([_A-Za-z]\\w*)",
       "patterns": [{ "include": "#global" }],
       "name": "meta.class.identifier.hx",

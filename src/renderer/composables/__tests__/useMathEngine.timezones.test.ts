@@ -103,6 +103,14 @@ describe('time zones', () => {
     expectDateWithYear('2026-03-06 2:30 pm PST in Berlin', '2026')
   })
 
+  it('uses locale-aware full slash date in zoned expressions', () => {
+    setFormatSettings('en-GB', 6, 'numeric')
+
+    const result = evalLine('22/11/2005 PST in Berlin')
+    expect(result.type).toBe('date')
+    expect(result.value).toContain('2005')
+  })
+
   it('Mar 6 2026 PST in Berlin', () => {
     expectDateWithYear('Mar 6 2026 PST in Berlin', '2026')
   })

@@ -1,3 +1,5 @@
+import { assertVaultNotHydrating } from '../validation'
+
 export interface TagLike {
   createdAt: number
   id: number
@@ -9,6 +11,7 @@ export interface TagStateLike<TTag extends TagLike> {
   counters: {
     tagId: number
   }
+  provisional?: boolean
   tags: TTag[]
 }
 
@@ -35,6 +38,8 @@ export function createTagInState<
   name: string,
   createTag: (input: { id: number, name: string, now: number }) => TTag,
 ): { id: number } {
+  assertVaultNotHydrating(state)
+
   state.counters.tagId += 1
   const id = state.counters.tagId
   const now = Date.now()

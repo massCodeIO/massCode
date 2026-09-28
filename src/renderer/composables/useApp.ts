@@ -1,12 +1,13 @@
 import type { SavedState, StateAction } from './types'
 import { store } from '@/electron'
+import { watchDebounced } from '@vueuse/core'
 import {
   getCodeLayoutModeFromLegacyState,
   getNextLayoutModeForSidebarToggle,
   type LayoutMode,
 } from './layoutModes'
 
-const isSponsored = import.meta.env.VITE_SPONSORED === 'true'
+const isSponsored = ref(Boolean(store.app.get('license.key')))
 
 const stateSnapshots = reactive<Record<StateAction, SavedState>>({
   beforeSearch: {},
@@ -37,6 +38,7 @@ const focusedSnippetId = ref<number | undefined>()
 
 const isAppLoading = ref(true)
 const isCodeSpaceInitialized = ref(false)
+const pendingCodeNavigation = ref(false)
 const isCompactListMode = ref(
   (store.app.get('ui.compactListMode') as boolean | undefined) ?? false,
 )
@@ -45,6 +47,12 @@ const isFocusedSearch = ref(false)
 const isShowCodePreview = ref(false)
 const isShowCodeImage = ref(false)
 const isShowJsonVisualizer = ref(false)
+
+async function focusSnippetNameInput() {
+  isFocusedSnippetName.value = false
+  await nextTick()
+  isFocusedSnippetName.value = true
+}
 
 function saveStateSnapshot(action: StateAction): void {
   stateSnapshots[action] = {
@@ -80,13 +88,17 @@ function restoreStateSnapshot(action: StateAction): void {
   }
 }
 
-watch(
-  state,
-  () => {
-    store.app.set('code.selection', JSON.parse(JSON.stringify(state)))
-  },
-  { deep: true },
-)
+function persistCodeSelectionState() {
+  store.app.set('code.selection', JSON.parse(JSON.stringify(state)))
+}
+
+// store.app.set — синхронная запись файла на диск: без debounce каждая смена
+// выбранного сниппета/папки блокирует main thread renderer.
+watchDebounced(state, persistCodeSelectionState, { debounce: 300, deep: true })
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', persistCodeSelectionState)
+}
 
 watch(codeLayoutMode, (value) => {
   store.app.set('code.layout.mode', value)
@@ -117,11 +129,13 @@ export function useApp() {
     focusedSnippetId,
     isAppLoading,
     isCodeSpaceInitialized,
+    pendingCodeNavigation,
     highlightedFolderIds,
     highlightedSnippetIds,
     highlightedTagId,
     isCompactListMode,
     isFocusedSnippetName,
+    focusSnippetNameInput,
     isFocusedSearch,
     isShowCodeImage,
     isShowCodePreview,

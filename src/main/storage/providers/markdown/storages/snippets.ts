@@ -8,11 +8,17 @@ import type {
   SnippetTagRelationResult,
   SnippetUpdateResult,
 } from '../../../contracts'
+import type { MarkdownRuntimeCache } from '../runtime/types'
 import path from 'node:path'
+import { scheduleDockBadgeRefresh } from '../../../../dockBadge'
+import { PartialCreateError } from '../../../partialCreateError'
+import { prioritizeCloudDownload } from '../cloudDownloads'
 import {
+  assertUniqueSiblingEntryName,
+  assertVaultNotHydrating,
   createSnippetRecord,
+  ensureSnippetContentLoaded,
   findFolderById,
-  findSnippetByContentId,
   findSnippetById,
   getPaths,
   getRuntimeCache,
@@ -28,10 +34,16 @@ import {
   writeSnippetToFile,
 } from '../runtime'
 import {
-  createNestedContent,
-  deleteNestedContent,
-  updateNestedContent,
-} from '../runtime/shared/entityContent'
+  getSnippetSearchText,
+  prepareSnippetSearchAsync,
+} from '../runtime/search'
+import {
+  assertEntityFileWritable,
+  markEntityPendingIfEvicted,
+  markEntityPendingIfFileExists,
+  throwCloudContentUnavailable,
+} from '../runtime/shared/cloudGuards'
+import { createNestedContent } from '../runtime/shared/entityContent'
 import { filterAndSortByQuery } from '../runtime/shared/entityQuery'
 import {
   addTagToEntity,
@@ -42,34 +54,124 @@ import {
   emptyEntityTrashFromStateAndDisk,
   getEntityDeleteCounts,
 } from '../runtime/shared/entityStorage'
+import { querySearchIndex } from '../runtime/shared/searchEngine'
+
+function findContentIndexById(
+  snippet: MarkdownSnippet,
+  contentId: number,
+): number {
+  return snippet.contents.findIndex(content => content.id === contentId)
+}
 
 export function createSnippetsStorage(): SnippetsStorage {
+  function assembleSnippets(
+    { state, snippets }: Pick<MarkdownRuntimeCache, 'state' | 'snippets'>,
+    query: SnippetsQueryInput,
+    searchSnippetIds: Set<number> | null,
+  ) {
+    const search = query.search?.trim().toLowerCase()
+    const result = filterAndSortByQuery({
+      entities: snippets,
+      filters: [
+        snippet =>
+          !search
+          || !query.searchNameOnly
+          || snippet.name.toLowerCase().includes(search),
+        snippet => !searchSnippetIds || searchSnippetIds.has(snippet.id),
+        (snippet, query) =>
+          !query.folderId || snippet.folderId === query.folderId,
+        (snippet, query) => !query.isInbox || snippet.folderId === null,
+        (snippet, query) => !query.tagId || snippet.tags.includes(query.tagId),
+        (snippet, query) => !query.isFavorites || snippet.isFavorites === 1,
+        (snippet, query) =>
+          query.isDeleted ? snippet.isDeleted === 1 : snippet.isDeleted === 0,
+      ],
+      getSortValue: (snippet, sort) => {
+        if (sort === 'name') {
+          return snippet.name.toLowerCase()
+        }
+
+        if (sort === 'updatedAt') {
+          return snippet.updatedAt
+        }
+
+        return snippet.createdAt
+      },
+      query,
+    }).map(snippet => createSnippetRecord(snippet, state))
+
+    return result
+  }
+
   return {
     getSnippets: (query: SnippetsQueryInput) => {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
 
-      const searchSnippetIds = query.search?.trim()
-        ? getSnippetIdsBySearchQuery(snippets, query.search)
-        : null
-      const result = filterAndSortByQuery({
-        entities: snippets,
-        filters: [
-          snippet => !searchSnippetIds || searchSnippetIds.has(snippet.id),
-          (snippet, query) =>
-            !query.folderId || snippet.folderId === query.folderId,
-          (snippet, query) => !query.isInbox || snippet.folderId === null,
-          (snippet, query) =>
-            !query.tagId || snippet.tags.includes(query.tagId),
-          (snippet, query) => !query.isFavorites || snippet.isFavorites === 1,
-          (snippet, query) =>
-            query.isDeleted ? snippet.isDeleted === 1 : snippet.isDeleted === 0,
-        ],
-        getSortValue: snippet => snippet.createdAt,
-        query,
-      }).map(snippet => createSnippetRecord(snippet, state))
+      const search = query.search?.trim().toLowerCase()
+      const searchSnippetIds
+        = search && !query.searchNameOnly
+          ? getSnippetIdsBySearchQuery(snippets, search)
+          : null
+      return assembleSnippets({ state, snippets }, query, searchSnippetIds)
+    },
+    getSnippetsAsync: async (query) => {
+      const search = query.search?.trim().toLowerCase()
+      if (!search || query.searchNameOnly) {
+        return assembleSnippets(
+          getRuntimeCache(getPaths(getVaultPath())),
+          query,
+          null,
+        )
+      }
+      while (true) {
+        const prepared = await prepareSnippetSearchAsync(() =>
+          getRuntimeCache(getPaths(getVaultPath())),
+        )
+        if (!prepared.isCurrent())
+          continue
+        const ids = querySearchIndex(
+          prepared.items,
+          search,
+          prepared.index,
+          getSnippetSearchText,
+        )
+        return assembleSnippets(prepared.cache, query, ids)
+      }
+    },
+    getSnippetById: (id: number) => {
+      const paths = getPaths(getVaultPath())
+      const { state, snippets } = getRuntimeCache(paths)
+      const snippet = findSnippetById(snippets, id)
 
-      return result
+      // Пользователь открыл ещё не докачанный сниппет: его файл поднимается
+      // в начало очереди фоновой докачки, ответ при этом не блокируется.
+      if (snippet?.pendingCloudDownload) {
+        prioritizeCloudDownload(path.join(paths.vaultPath, snippet.filePath))
+      }
+
+      // Запись из индекса без тел: контент дочитывается по первому запросу.
+      // Сбой дочитки (файл выгружен после скана, флаг ещё не обновился)
+      // помечает запись pending: успешный ответ с пустыми телами без флага
+      // открыл бы редактируемый пустой редактор, и набранный текст потерялся
+      // бы на 503 при сохранении. Для уже гидрированной записи eviction
+      // ловится свежим stat. Флаг снимет ресинк после докачки.
+      if (snippet) {
+        if (!ensureSnippetContentLoaded(paths, snippet)) {
+          markEntityPendingIfFileExists(
+            path.join(paths.vaultPath, snippet.filePath),
+            snippet,
+          )
+        }
+        else {
+          markEntityPendingIfEvicted(
+            path.join(paths.vaultPath, snippet.filePath),
+            snippet,
+          )
+        }
+      }
+
+      return snippet ? createSnippetRecord(snippet, state) : null
     },
     getSnippetsCounts: (): SnippetsCount => {
       const paths = getPaths(getVaultPath())
@@ -81,8 +183,10 @@ export function createSnippetsStorage(): SnippetsStorage {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
 
+      assertVaultNotHydrating(state)
       const name = validateEntryName(input.name, 'snippet')
       const folderId = input.folderId ?? null
+      assertUniqueSiblingEntryName(snippets, folderId, name, 'snippet')
       const result = createEntityInStateAndDisk<MarkdownSnippet>({
         createEntity: ({ folderId, id, name, now }) => ({
           contents: [],
@@ -110,7 +214,13 @@ export function createSnippetsStorage(): SnippetsStorage {
         persistEntity: snippet => persistSnippet(paths, state, snippet),
       })
 
-      saveState(paths, state)
+      try {
+        saveState(paths, state)
+        scheduleDockBadgeRefresh()
+      }
+      catch (error) {
+        throw new PartialCreateError(result.id, error)
+      }
 
       return result
     },
@@ -118,6 +228,16 @@ export function createSnippetsStorage(): SnippetsStorage {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
       const snippet = findSnippetById(snippets, snippetId)
+
+      // Проверка до мутации: createNestedContent пушит фрагмент в runtime
+      // до записи файла.
+      if (snippet) {
+        assertEntityFileWritable(
+          path.join(paths.vaultPath, snippet.filePath),
+          snippet,
+        )
+      }
+
       const result = createNestedContent({
         createContent: contentId => ({
           id: contentId,
@@ -151,7 +271,15 @@ export function createSnippetsStorage(): SnippetsStorage {
         }
       }
 
+      // Проверка до мутации: иначе rename/move уже переместил бы файл и
+      // изменил runtime, а запись frontmatter отклонилась.
+      assertEntityFileWritable(
+        path.join(paths.vaultPath, snippet.filePath),
+        snippet,
+      )
+
       const previousPath = snippet.filePath
+      const previousFolderId = snippet.folderId
       const updateResult = applyEntityUpdateFields({
         entity: snippet,
         fieldPresence: 'in',
@@ -160,8 +288,25 @@ export function createSnippetsStorage(): SnippetsStorage {
         normalizeFlag: value => value || 0,
         onMissingFolder: () =>
           throwStorageError('FOLDER_NOT_FOUND', 'Folder not found'),
-        resolveName: (inputName, currentName) =>
-          validateEntryName(inputName || currentName, 'snippet'),
+        resolveName: (inputName, currentName) => {
+          const next = validateEntryName(inputName || currentName, 'snippet')
+          const isFolderChanging
+            = 'folderId' in input
+              && (input.folderId ?? null) !== previousFolderId
+          if (
+            !isFolderChanging
+            && next.toLowerCase() !== currentName.toLowerCase()
+          ) {
+            assertUniqueSiblingEntryName(
+              snippets,
+              previousFolderId,
+              next,
+              'snippet',
+              snippet.id,
+            )
+          }
+          return next
+        },
       })
       if (!updateResult.hasAnyField) {
         return {
@@ -181,13 +326,62 @@ export function createSnippetsStorage(): SnippetsStorage {
       snippet.updatedAt = Date.now()
       persistSnippet(paths, state, snippet, previousPath, {
         allowRenameOnConflict: movedToTrash || movedBetweenDirectories,
+        // assertEntityFileWritable выше уже проверил source до mutation.
+        sourceFileVerifiedLocal: true,
+        // Перенос в trash не требует перезаписи frontmatter (isDeleted
+        // выводится из trash-каталога), поэтому недокачанный файл не должен
+        // блокировать удаление.
+        skipWriteIfUnavailable: movedToTrash,
       })
       saveState(paths, state)
+      scheduleDockBadgeRefresh()
 
       return {
         invalidInput: false,
         notFound: false,
       }
+    },
+    reorderSnippetContents: (snippetId, contentIds) => {
+      const paths = getPaths(getVaultPath())
+      const { state, snippets } = getRuntimeCache(paths)
+      assertVaultNotHydrating(state)
+      const snippet = findSnippetById(snippets, snippetId)
+      if (!snippet) {
+        throwStorageError('SNIPPET_NOT_FOUND', 'Snippet not found')
+      }
+      const contentsById = new Map(
+        snippet.contents.map(content => [content.id, content]),
+      )
+      if (
+        contentIds.length !== snippet.contents.length
+        || new Set(contentIds).size !== contentIds.length
+        || contentIds.some(
+          id => !Number.isInteger(id) || id <= 0 || !contentsById.has(id),
+        )
+      ) {
+        throwStorageError(
+          'INVALID_CONTENT_ORDER',
+          'Expected all snippet content IDs exactly once',
+        )
+      }
+
+      assertEntityFileWritable(
+        path.join(paths.vaultPath, snippet.filePath),
+        snippet,
+      )
+      // Lazy loading assigns bodies by position, so hydrate before changing order.
+      if (!ensureSnippetContentLoaded(paths, snippet)) {
+        throwCloudContentUnavailable()
+      }
+      const reordered = {
+        ...snippet,
+        contents: contentIds.map(id => contentsById.get(id)!),
+        updatedAt: Date.now(),
+      }
+      writeSnippetToFile(paths, reordered)
+      snippet.contents = reordered.contents
+      snippet.updatedAt = reordered.updatedAt
+      saveState(paths, state)
     },
     updateSnippetContent: (
       snippetId,
@@ -196,45 +390,81 @@ export function createSnippetsStorage(): SnippetsStorage {
     ): SnippetContentUpdateResult => {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
-      const ownedContent = findSnippetByContentId(snippets, contentId)
-      const result = updateNestedContent({
-        applyPatch: (content, patch) => {
-          if ('label' in patch) {
-            content.label = patch.label || content.label
-          }
 
-          if ('value' in patch) {
-            content.value = patch.value ?? null
-          }
-
-          if ('language' in patch) {
-            content.language = patch.language || content.language
-          }
-        },
-        findTargetOwnerById: id => findSnippetById(snippets, id),
-        hasAnyField: patch =>
-          'label' in patch || 'value' in patch || 'language' in patch,
-        ownerId: snippetId,
-        ownedContent: ownedContent
-          ? {
-              contentIndex: ownedContent.contentIndex,
-              owner: ownedContent.snippet,
-            }
-          : undefined,
-        patch: input,
-        persistOwner: snippet => writeSnippetToFile(paths, snippet),
-      })
-      if (!result.invalidInput && !result.notFound) {
-        saveState(paths, state)
+      if (!('label' in input || 'value' in input || 'language' in input)) {
+        return {
+          invalidInput: true,
+          notFound: false,
+          parentNotFound: false,
+        }
       }
 
-      return result
+      const snippet = findSnippetById(snippets, snippetId)
+      if (!snippet) {
+        return {
+          invalidInput: false,
+          notFound: false,
+          parentNotFound: true,
+        }
+      }
+
+      const contentIndex = findContentIndexById(snippet, contentId)
+      if (contentIndex === -1) {
+        return {
+          invalidInput: false,
+          notFound: true,
+          parentNotFound: false,
+        }
+      }
+
+      // Проверка и дочитка тел до мутации: иначе патч частично применился
+      // бы в памяти, а запись на диск отклонилась.
+      assertEntityFileWritable(
+        path.join(paths.vaultPath, snippet.filePath),
+        snippet,
+      )
+      if (!ensureSnippetContentLoaded(paths, snippet)) {
+        throwCloudContentUnavailable()
+      }
+
+      const content = snippet.contents[contentIndex]
+
+      if ('label' in input) {
+        content.label = input.label || content.label
+      }
+
+      if ('value' in input) {
+        content.value = input.value ?? null
+      }
+
+      if ('language' in input) {
+        content.language = input.language || content.language
+      }
+
+      snippet.updatedAt = Date.now()
+      writeSnippetToFile(paths, snippet)
+      saveState(paths, state, { searchIndexUpdate: snippet })
+
+      return {
+        invalidInput: false,
+        notFound: false,
+        parentNotFound: false,
+      }
     },
     addTagToSnippet: (snippetId, tagId): SnippetTagRelationResult => {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
       const snippet = findSnippetById(snippets, snippetId)
       const tag = state.tags.find(item => item.id === tagId)
+
+      // Проверка до мутации: addTagToEntity меняет runtime до записи файла.
+      if (snippet && tag) {
+        assertEntityFileWritable(
+          path.join(paths.vaultPath, snippet.filePath),
+          snippet,
+        )
+      }
+
       const result = addTagToEntity({
         entity: snippet,
         onUpdated: snippet => writeSnippetToFile(paths, snippet),
@@ -259,6 +489,16 @@ export function createSnippetsStorage(): SnippetsStorage {
       const { state, snippets } = getRuntimeCache(paths)
       const snippet = findSnippetById(snippets, snippetId)
       const tag = state.tags.find(item => item.id === tagId)
+
+      // Проверка до мутации: deleteTagFromEntity меняет runtime до записи
+      // файла.
+      if (snippet && tag) {
+        assertEntityFileWritable(
+          path.join(paths.vaultPath, snippet.filePath),
+          snippet,
+        )
+      }
+
       const result = deleteTagFromEntity({
         entity: snippet,
         missingRelationFound: true,
@@ -292,6 +532,7 @@ export function createSnippetsStorage(): SnippetsStorage {
       }
 
       saveState(paths, state)
+      scheduleDockBadgeRefresh()
 
       return result
     },
@@ -309,29 +550,41 @@ export function createSnippetsStorage(): SnippetsStorage {
       }
 
       saveState(paths, state)
+      scheduleDockBadgeRefresh()
 
       return result
     },
-    deleteSnippetContent: (contentId) => {
+    deleteSnippetContent: (snippetId, contentId) => {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
-      const ownedContent = findSnippetByContentId(snippets, contentId)
-      const result = deleteNestedContent({
-        ownedContent: ownedContent
-          ? {
-              contentIndex: ownedContent.contentIndex,
-              owner: ownedContent.snippet,
-            }
-          : undefined,
-        persistOwner: snippet => writeSnippetToFile(paths, snippet),
-      })
-      if (!result.deleted) {
-        return result
+      const snippet = findSnippetById(snippets, snippetId)
+
+      if (!snippet) {
+        return { deleted: false }
       }
 
+      const contentIndex = findContentIndexById(snippet, contentId)
+      if (contentIndex === -1) {
+        return { deleted: false }
+      }
+
+      // Проверка и дочитка тел ДО удаления: доливка null-value в guard'e
+      // записи идёт по позициям против ещё полного файла, и после splice
+      // каждый следующий фрагмент получил бы тело соседа.
+      assertEntityFileWritable(
+        path.join(paths.vaultPath, snippet.filePath),
+        snippet,
+      )
+      if (!ensureSnippetContentLoaded(paths, snippet)) {
+        throwCloudContentUnavailable()
+      }
+
+      snippet.contents.splice(contentIndex, 1)
+      snippet.updatedAt = Date.now()
+      writeSnippetToFile(paths, snippet)
       saveState(paths, state)
 
-      return result
+      return { deleted: true }
     },
   }
 }

@@ -1,39 +1,69 @@
 ---
 title: Documentation Overview
-description: "Explore the massCode documentation for code snippets, markdown notes, math notebook, storage, sync, themes, and built-in developer tools."
+description: "Explore the massCode documentation for code snippets, markdown notes, HTTP requests, math notebook, storage, sync, themes, JSON Diff, and built-in developer tools."
 ---
 
 # Overview
 
-massCode is a free and open source developer workspace for code snippets, markdown notes, calculations, and quick developer utilities. Instead of scattering everyday work across an editor, a notes app, a calculator, and a handful of websites, you keep it in four focused Spaces inside one local-first desktop app.
+massCode is a free and open source developer workspace for code snippets, markdown notes, HTTP requests, calculations, and quick developer utilities. Instead of scattering everyday work across an editor, a notes app, an HTTP client, a calculator, and a handful of websites, you keep it in focused Spaces inside one local-first desktop app.
 
-Switch between Spaces using the rail on the left side of the app.
+Switch between Spaces using the rail on the left side of the app, or use the [Command Palette](/documentation/command-palette) to jump to spaces, content, and actions from the keyboard.
+
+Use [Search](/documentation/search) to narrow the current list in Code, Notes, or HTTP, or to build filtered searches from the Command Palette.
 
 <img :src="withBase('/preview.png')">
 
 ## Code
 
-Use Code to build a reusable snippet library across projects and languages. The three-column layout keeps organization, search, and editing in one place: Library on the left, snippet list in the middle, editor on the right.
+Use [Code](/documentation/code/) to build a reusable snippet library across projects and languages. The three-column layout keeps organization, search, and editing in one place: Library on the left, snippet list in the middle, editor on the right.
 
 ## Notes
 
-Use Notes for longer markdown documents that do not fit well into snippets: project notes, drafts, technical docs, meeting notes, and personal knowledge bases. It uses the same three-column layout as Code and adds live preview, mindmaps, and fullscreen presentation mode.
+Use [Notes](/documentation/notes/) for longer markdown documents that do not fit well into snippets: project notes, [task notes](/documentation/notes/tasks) with status, priority, due dates, cleanup controls, drafts, technical docs, meeting notes, and personal knowledge bases. It uses the same three-column layout as Code and adds a Notes Dashboard, live preview with editable tables, a notes graph, mindmaps, and fullscreen presentation mode.
+
+Use [Note inspector](/documentation/notes/inspector) to navigate and reorder sections, inspect links, and find callouts. [Planned links](/documentation/notes/internal-links#plan-notes-snippets-and-requests) let you leave placeholders for notes, snippets, and HTTP requests, then create them when ready. <AppVersion text=">=5.12" />
+
+## HTTP
+
+Use [HTTP](/documentation/http/) as a local API workspace inside massCode. Organize collections, import requests from OpenAPI, Postman, or Bruno, manage environments, and work with HTTP, GraphQL, and WebSocket. Add scripts and tests, run saved requests in sequence, and inspect responses and request history without leaving your workspace.
 
 ## Math
 
-Math is a calculator-style notebook for quick development math without leaving massCode. Use it for currency conversion, unit conversion, date math, finance, and natural-language calculations with instant results on every line.
+[Math](/documentation/math/) is a calculator-style notebook for quick development math without leaving massCode. Use it for currency conversion, unit conversion, date math, finance, and natural-language calculations with instant results on every line.
+
+## Drawings
+
+Use [Drawings](/documentation/drawings/) for diagrams, sketches, and whiteboard-style visuals on an Excalidraw-powered canvas. Keep a searchable list of drawings next to your snippets and notes, export them as images, and embed them directly in markdown notes.
 
 ## Tools
 
-Tools covers the small one-off tasks that usually send you to a browser tab: encoders, decoders, generators, hash utilities, and text converters. Categories are listed on the left, and the active tool opens on the right.
+[Tools](/documentation/tools/) covers the small one-off tasks that usually send you to a browser tab: JSON comparison, encoders, decoders, generators, hash utilities, and text converters. Categories are listed on the left, and the active tool opens on the right.
+
+## Clipper
+
+Use [Clipper](/documentation/clipper) to save selected text, readable page content, and links from your browser into Code, Notes, or HTTP. Install the Chrome version from the [Chrome Web Store](https://chromewebstore.google.com/detail/masscode-clipper/fkaaogdifollkhjbfoabbiocecehaaii), or use a local build for other browsers.
+
+## AI Assistant
+
+Use [AI Assistant](/documentation/ai) with your own provider or local model to edit snippets, organize notes and tasks, run HTTP workflows, and find records across your vault. Ask for a preview before edits or let it apply them directly.
+
+## MCP
+
+Connect a coding agent through [MCP](/documentation/mcp) to search, read, and save snippets, notes, and HTTP requests. Create HTTP collections, edit and move requests, preview and send them, and inspect saved execution history.
 
 ## General Settings
 
-### Sidebar Toggle
+### Sidebars
 
-Hide or show the Library sidebar in Code and Notes:
+Use the **View** menu or the panel buttons to show and hide sidebars. A checkmark means the panel is visible, including when it contains AI chat.
 
-- Select **"View"** > **"Toggle Sidebar"** from the menu bar or press <kbd>Alt+Cmd+B</kbd> on macOS or <kbd>Alt+Ctrl+B</kbd> on Windows or Linux.
+| Action | macOS | Windows / Linux |
+| --- | --- | --- |
+| Toggle **Primary Side Bar** | <kbd>Cmd+B</kbd> | <kbd>Ctrl+B</kbd> |
+| Toggle **Secondary Side Bar** | <kbd>Cmd+Option+B</kbd> | <kbd>Ctrl+Alt+B</kbd> |
+| Open, focus, or close **AI assistant** | <kbd>Cmd+L</kbd> | <kbd>Ctrl+L</kbd> |
+
+The primary sidebar contains navigation in Code, Notes, HTTP, Math, Drawings, and Tools. In Code and Notes, hiding it leaves the record list visible. The secondary sidebar is available in Code, Notes, and HTTP and contains AI chat or the space's inspector. Its shortcut closes the whole panel regardless of the selected tab. **AI assistant** opens the chat or focuses it when focus is elsewhere. Press its shortcut while focus is inside AI chat to close the whole secondary sidebar and return focus to the editor.
 
 ### Font Size
 

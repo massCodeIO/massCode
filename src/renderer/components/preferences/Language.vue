@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
-import { i18n, ipc, store } from '@/electron'
+import { useLocalePreference } from '@/composables/useLocalePreference'
+import { i18n, ipc } from '@/electron'
 import { language } from '~/main/i18n/language'
 
 const languageOptions = Object.entries(language).map(([key, value]) => ({
@@ -9,13 +10,7 @@ const languageOptions = Object.entries(language).map(([key, value]) => ({
   value: key,
 }))
 
-const selectedLanguage = ref<string>(
-  store.preferences.get('localization.locale') as string,
-)
-
-watch(selectedLanguage, (value) => {
-  store.preferences.set('localization.locale', value)
-})
+const { locale: selectedLanguage } = useLocalePreference()
 </script>
 
 <template>

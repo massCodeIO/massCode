@@ -1,3 +1,19 @@
+import type { HttpCollectionConfig } from '../../shared/httpCollection'
+import type { HttpHistorySnapshot } from '../../shared/httpHistory'
+import type { HttpRuntime, HttpRuntimeRead } from '../../shared/httpRuntime'
+import type {
+  HttpAuth,
+  HttpBodyType,
+  HttpEnvironmentRecord,
+  HttpFolderRecord,
+  HttpFolderTreeRecord,
+  HttpFormDataEntry,
+  HttpHeaderEntry,
+  HttpHistoryRecord,
+  HttpMethod,
+  HttpQueryEntry,
+  HttpRequestRecord,
+} from './providers/markdown/http/runtime/types'
 import type {
   NotesFolderRecord,
   NotesFolderTreeRecord,
@@ -79,10 +95,14 @@ export interface SnippetRecord {
   isDeleted: number
   createdAt: number
   updatedAt: number
+  /** Содержимое файла ещё не скачано облачным провайдером. */
+  pendingCloudDownload?: boolean
 }
 
 export interface SnippetsQueryInput {
   search?: string
+  searchNameOnly?: number
+  sort?: string
   order?: 'ASC' | 'DESC'
   folderId?: number
   tagId?: number
@@ -156,14 +176,20 @@ export interface SnippetsStorage {
     input: SnippetContentCreateInput,
   ) => { id: number }
   deleteSnippet: (id: number) => { deleted: boolean }
-  deleteSnippetContent: (contentId: number) => { deleted: boolean }
+  deleteSnippetContent: (
+    snippetId: number,
+    contentId: number,
+  ) => { deleted: boolean }
   deleteTagFromSnippet: (
     snippetId: number,
     tagId: number,
   ) => SnippetTagDeleteRelationResult
   emptyTrash: () => { deletedCount: number }
+  getSnippetById: (id: number) => SnippetRecord | null
   getSnippets: (query: SnippetsQueryInput) => SnippetRecord[]
+  getSnippetsAsync?: (query: SnippetsQueryInput) => Promise<SnippetRecord[]>
   getSnippetsCounts: () => SnippetsCount
+  reorderSnippetContents: (snippetId: number, contentIds: number[]) => void
   updateSnippet: (id: number, input: SnippetUpdateInput) => SnippetUpdateResult
   updateSnippetContent: (
     snippetId: number,
@@ -191,12 +217,15 @@ export interface NoteRecord {
   name: string
   description: string | null
   content: string
+  properties: Record<string, unknown>
   tags: NoteTagRecord[]
   folder: NoteFolderInfo | null
   isFavorites: number
   isDeleted: number
   createdAt: number
   updatedAt: number
+  /** Содержимое файла ещё не скачано облачным провайдером. */
+  pendingCloudDownload?: boolean
 }
 
 export interface NoteTagRecord {
@@ -211,17 +240,29 @@ export interface NoteFolderInfo {
 
 export interface NotesQueryInput {
   search?: string
+  searchNameOnly?: number
+  sort?: string
   order?: 'ASC' | 'DESC'
   folderId?: number
   tagId?: number
   isFavorites?: number
   isDeleted?: number
   isInbox?: number
+  propertyDue?: 'today' | 'upcoming'
+  propertyStatus?: string
+  propertyStatusNot?: string
+  propertyType?: string
+  hideCompletedTasks?: number
+  // Server-only флаг (не HTTP-параметр): дочитать тела заметок перед
+  // построением records — для потоков, которым нужен content (graph,
+  // dashboard). Список работает без тел.
+  withContent?: boolean
 }
 
 export interface NoteCreateInput {
   name: string
   folderId?: number | null
+  properties?: Record<string, unknown>
 }
 
 export interface NoteUpdateInput {
@@ -235,6 +276,11 @@ export interface NoteUpdateInput {
 export interface NoteUpdateResult {
   invalidInput: boolean
   notFound: boolean
+}
+
+export interface NotePropertiesUpdateInput {
+  properties?: Record<string, unknown>
+  unset?: string[]
 }
 
 export interface NoteTagRelationResult {
@@ -299,10 +345,16 @@ export interface NotesStorage {
     tagId: number,
   ) => NoteTagDeleteRelationResult
   emptyTrash: () => { deletedCount: number }
+  getNoteById: (id: number) => NoteRecord | null
   getNotes: (query: NotesQueryInput) => NoteRecord[]
+  getNotesAsync?: (query: NotesQueryInput) => Promise<NoteRecord[]>
   getNotesCounts: () => NotesCount
   updateNote: (id: number, input: NoteUpdateInput) => NoteUpdateResult
   updateNoteContent: (id: number, content: string) => NoteUpdateResult
+  updateNoteProperties: (
+    id: number,
+    input: NotePropertiesUpdateInput,
+  ) => NoteUpdateResult
 }
 
 export interface NoteTagsStorage {
@@ -310,4 +362,164 @@ export interface NoteTagsStorage {
   deleteTag: (id: number) => { deleted: boolean }
   getTags: () => NoteTagRecord[]
   updateTag: (id: number, name: string) => { notFound: boolean }
+}
+
+// --- HTTP Space Contracts ---
+
+export interface HttpFolderCreateInput {
+  name: string
+  icon?: string | null
+  parentId?: number | null
+}
+
+export interface HttpFolderUpdateInput {
+  collectionConfig?: HttpCollectionConfig | null
+  name?: string
+  icon?: string | null
+  parentId?: number | null
+  isOpen?: number
+  orderIndex?: number
+}
+
+export interface HttpFolderUpdateResult {
+  invalidInput: boolean
+  notFound: boolean
+}
+
+export interface HttpRequestsQueryInput {
+  search?: string
+  searchNameOnly?: number
+  sort?: string
+  order?: 'ASC' | 'DESC'
+  folderId?: number
+  isFavorites?: number
+  isDeleted?: number
+  isInbox?: number
+}
+
+export interface HttpRequestCreateInput {
+  protocol?: 'http' | 'websocket'
+  name: string
+  folderId?: number | null
+  method?: HttpMethod
+  url?: string
+}
+
+export interface HttpRequestUpdateInput {
+  expectedRevision?: string
+  protocol?: 'http' | 'websocket'
+  name?: string
+  folderId?: number | null
+  isDeleted?: number
+  isFavorites?: number
+  method?: HttpMethod
+  url?: string
+  headers?: HttpHeaderEntry[]
+  query?: HttpQueryEntry[]
+  bodyType?: HttpBodyType
+  body?: string | null
+  formData?: HttpFormDataEntry[]
+  auth?: HttpAuth
+  description?: string
+}
+
+export interface HttpRequestUpdateResult {
+  contentRevision?: string
+  invalidInput: boolean
+  notFound: boolean
+}
+
+export interface HttpEnvironmentCreateInput {
+  name: string
+  variables?: Record<string, string>
+}
+
+export interface HttpEnvironmentUpdateInput {
+  name?: string
+  variables?: Record<string, string>
+}
+
+export interface HttpEnvironmentUpdateResult {
+  invalidInput: boolean
+  notFound: boolean
+}
+
+export interface HttpHistoryAppendInput {
+  snapshot?: HttpHistorySnapshot
+  requestId: number | null
+  method: HttpMethod
+  url: string
+  status: number | null
+  durationMs: number
+  sizeBytes: number
+  requestedAt: number
+  error?: string
+}
+
+export interface HttpFoldersStorage {
+  createFolder: (input: HttpFolderCreateInput) => { id: number }
+  deleteFolder: (id: number) => { deleted: boolean }
+  getFolders: () => HttpFolderRecord[]
+  getFoldersTree: () => HttpFolderTreeRecord[]
+  updateFolder: (
+    id: number,
+    input: HttpFolderUpdateInput,
+  ) => HttpFolderUpdateResult
+}
+
+export interface HttpRequestsStorage {
+  createRequest: (input: HttpRequestCreateInput) => { id: number }
+  deleteRequest: (id: number) => { deleted: boolean }
+  emptyTrash: () => { deletedCount: number }
+  getRequestById: (
+    id: number,
+  ) =>
+    | (HttpRequestRecord & HttpRuntimeRead & { contentRevision: string | null })
+    | null
+  updateRuntime: (
+    id: number,
+    runtime: HttpRuntime,
+    expectedRevision: string,
+  ) => { notFound: boolean, runtimeRevision?: string }
+  getRequests: (query?: HttpRequestsQueryInput) => HttpRequestRecord[]
+  updateRequest: (
+    id: number,
+    input: HttpRequestUpdateInput,
+  ) => HttpRequestUpdateResult
+}
+
+export interface HttpEnvironmentsStorage {
+  addSecretKey: (id: number, key: string) => { notFound: boolean }
+  createEnvironment: (input: HttpEnvironmentCreateInput) => { id: number }
+  deleteEnvironment: (id: number) => {
+    deleted: boolean
+    secretScopeId?: string
+  }
+  getActiveEnvironmentId: () => number | null
+  getEnvironments: () => HttpEnvironmentRecord[]
+  removeSecretKey: (id: number, key: string) => { notFound: boolean }
+  unprotectSecret: (
+    id: number,
+    key: string,
+    value: string,
+  ) => { notFound: boolean }
+  setActiveEnvironment: (id: number | null) => { notFound: boolean }
+  updateEnvironment: (
+    id: number,
+    input: HttpEnvironmentUpdateInput,
+  ) => HttpEnvironmentUpdateResult
+}
+
+export interface HttpHistoryStorage {
+  getSnapshot: (id: number) => HttpHistorySnapshot | null
+  appendEntry: (input: HttpHistoryAppendInput) => { id: number }
+  clear: () => void
+  getEntries: () => HttpHistoryRecord[]
+}
+
+export interface HttpStorageProvider {
+  environments: HttpEnvironmentsStorage
+  folders: HttpFoldersStorage
+  history: HttpHistoryStorage
+  requests: HttpRequestsStorage
 }

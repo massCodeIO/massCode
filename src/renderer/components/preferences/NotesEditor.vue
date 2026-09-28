@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import { Switch } from '@/components/ui/shadcn/switch'
-import { useNotesEditor } from '@/composables'
+import { useNotes, useNotesEditor } from '@/composables'
+import { useTaskPreferences } from '@/composables/useTaskPreferences'
 import { i18n } from '@/electron'
 
 const { settings } = useNotesEditor()
+const { cleanupCompletedTasks } = useNotes()
 
 watch(
   settings,
@@ -16,6 +19,27 @@ watch(
   },
   { deep: true },
 )
+
+const { settings: tasksSettings } = useTaskPreferences()
+
+const autoCleanupOptions = [
+  { label: i18n.t('preferences:tasks.autoCleanup.never'), value: 'never' },
+  { label: i18n.t('preferences:tasks.autoCleanup.1d'), value: '1d' },
+  { label: i18n.t('preferences:tasks.autoCleanup.7d'), value: '7d' },
+  { label: i18n.t('preferences:tasks.autoCleanup.30d'), value: '30d' },
+]
+
+const isCleaningUp = ref(false)
+
+async function onCleanupNow() {
+  isCleaningUp.value = true
+  try {
+    await cleanupCompletedTasks()
+  }
+  finally {
+    isCleaningUp.value = false
+  }
+}
 </script>
 
 <template>
@@ -100,6 +124,17 @@ watch(
         </template>
       </UiMenuFormItem>
       <UiMenuFormItem
+        :label="i18n.t('preferences:notesEditor.wrapTables.label')"
+      >
+        <Switch
+          :checked="settings.wrapTables"
+          @update:checked="settings.wrapTables = $event"
+        />
+        <template #description>
+          {{ i18n.t("preferences:notesEditor.wrapTables.description") }}
+        </template>
+      </UiMenuFormItem>
+      <UiMenuFormItem
         :label="i18n.t('preferences:notesEditor.lineNumbers.label')"
       >
         <Switch
@@ -108,6 +143,39 @@ watch(
         />
         <template #description>
           {{ i18n.t("preferences:notesEditor.lineNumbers.description") }}
+        </template>
+      </UiMenuFormItem>
+    </UiMenuFormSection>
+    <UiMenuFormSection :label="i18n.t('preferences:tasks.label')">
+      <UiMenuFormItem :label="i18n.t('preferences:tasks.autoCleanup.label')">
+        <Select.Select v-model="tasksSettings.autoCleanupCompleted">
+          <Select.SelectTrigger class="w-64">
+            <Select.SelectValue />
+          </Select.SelectTrigger>
+          <Select.SelectContent>
+            <Select.SelectItem
+              v-for="option in autoCleanupOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </Select.SelectItem>
+          </Select.SelectContent>
+        </Select.Select>
+        <template #description>
+          {{ i18n.t("preferences:tasks.autoCleanup.description") }}
+        </template>
+      </UiMenuFormItem>
+      <UiMenuFormItem :label="i18n.t('preferences:tasks.cleanupNow.label')">
+        <Button
+          variant="destructive"
+          :disabled="isCleaningUp"
+          @click="onCleanupNow"
+        >
+          {{ i18n.t("preferences:tasks.cleanupNow.button") }}
+        </Button>
+        <template #description>
+          {{ i18n.t("preferences:tasks.cleanupNow.description") }}
         </template>
       </UiMenuFormItem>
     </UiMenuFormSection>

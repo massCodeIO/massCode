@@ -2,11 +2,9 @@
   "label": "Προτιμήσεις",
   "storage": {
     "section": {
-      "main": "Main",
-      "migration": "Migration"
+      "main": "Main"
     },
     "label": "Storage",
-    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "Πλήθος",
     "vaultPath": "Vault Path"
   },
@@ -116,7 +114,7 @@
     "codeRenderer": "Code block Renderer"
   },
   "api": {
-    "label": "Θύρα API",
+    "label": "API",
     "port": {
       "label": "Θύρα API",
       "description": "Αριθμός θύρας για τον διακομιστή API (απαιτείται επανεκκίνηση της εφαρμογής). Έγκυρο εύρος: 1024-65535."

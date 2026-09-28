@@ -28,10 +28,7 @@
       "gumroad": "Doar via Gumroad (Visa, Mastercard, etc.)"
     },
     "twitter": "X",
-    "devTools": "Alternar Ferramentas de Desenvolvedor",
-    "links": {
-      "snippets": "Coleção de Snippets"
-    }
+    "devTools": "Alternar Ferramentas de Desenvolvedor"
   },
   "view": {
     "label": "Visualizar",

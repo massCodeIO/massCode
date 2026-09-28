@@ -28,16 +28,15 @@
       "gumroad": "Donate via Gumroad (Visa, Mastercard, etc.)"
     },
     "twitter": "X",
-    "devTools": "Toggle Developer Tools",
-    "links": {
-      "snippets": "Snippet Collection"
-    }
+    "devTools": "Toggle Developer Tools"
   },
   "file": {
     "label": "File",
     "new": "New"
   },
   "view": {
+    "primarySidebar": "Primary Side Bar",
+    "secondarySidebar": "Secondary Side Bar",
     "label": "View",
     "showSidebar": "Show/Hide Sidebar",
     "layout": {
@@ -47,21 +46,36 @@
       "editorOnly": "Editor Only"
     },
     "sortBy": {
-      "label": "Sort Snippets By",
+      "label": "Sort By",
       "dateModified": "Date Modified",
       "dateCreated": "Date Created",
       "name": "Name"
     },
-    "compactMode": "Compact List"
+    "sortOrder": {
+      "label": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending"
+    },
+    "compactMode": "Compact List",
+    "hideCompletedTasks": "Hide Completed Tasks"
   },
   "edit": {
     "label": "Edit",
+    "undo": "Undo",
+    "redo": "Redo",
+    "cut": "Cut",
+    "copy": "Copy",
+    "paste": "Paste",
+    "delete": "Delete",
+    "selectAll": "Select All",
     "find": "Find"
   },
   "editor": {
     "label": "Editor",
-    "copy": "Copy Snippet to Clipboard",
+    "copySnippet": "Copy Snippet",
+    "copyNote": "Copy Note",
     "format": "Format",
+    "normalizeTerminalOutput": "Normalize Line Breaks",
     "mode": "Mode",
     "modeRaw": "Raw",
     "modeLivePreview": "Live Preview",
@@ -69,6 +83,7 @@
     "previewCode": "Preview Code",
     "previewScreenshot": "Preview Screenshot",
     "previewJson": "Preview JSON",
+    "sendRequest": "Send Request",
     "fontSizeIncrease": "Font Size Increase",
     "fontSizeDecrease": "Font Size Decrease",
     "fontSizeReset": "Font Size Reset"
@@ -89,6 +104,9 @@
   },
   "window": {
     "label": "Window",
-    "minimize": "Minimize"
+    "minimize": "Minimize",
+    "zoom": "Zoom",
+    "front": "Bring All to Front",
+    "close": "Close"
   }
 }

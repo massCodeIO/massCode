@@ -40,12 +40,12 @@
         {
           "comment": "handles hexadecimal numbers",
           "match": "(0x)[0-9a-fA-f]*",
-          "name": "constant.hex.numeric.json5"
+          "name": "constant.numeric.hex.json5"
         },
         {
           "comment": "handles integer and decimal numbers",
           "match": "[+-.]?(?=[1-9]|0(?!\\d))\\d+(\\.\\d+)?([eE][+-]?\\d+)?",
-          "name": "constant.dec.numeric.json5"
+          "name": "constant.numeric.dec.json5"
         }
       ]
     },

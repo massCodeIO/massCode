@@ -1,7 +1,9 @@
 dist
 build/main
 build/renderer
-scripts/build-sponsored.sh
+build/shared
+build/src
+build/package.json
 
 node_modules
 .DS_Store
@@ -10,7 +12,8 @@ auto-imports.d.ts
 .github/*-instructions.md
 .env
 .env.*
-docs/superpowers
-docs/website/.vitepress/cache
-docs/website/.vitepress/dist
+electron-builder.env
 
+docs/*
+!docs/website/
+docs/website/.vitepress/cache/

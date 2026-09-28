@@ -67,6 +67,8 @@ Use one of these methods:
 - XML
 - YAML
 
+Use **Editor** > **Normalize Line Breaks** to remove hard terminal wraps from the selection or the whole snippet. <AppVersion text=">=5.9" />
+
 ## Real-time Render HTML & CSS
 
 <AppVersion text=">=2.9" />

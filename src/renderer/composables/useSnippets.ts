@@ -1,20 +1,55 @@
 import type {
   SnippetContentsUpdate,
+  SnippetItemResponse,
   SnippetsQuery,
   SnippetsResponse,
   SnippetsUpdate,
 } from '~/renderer/services/api/generated'
+import { useContentSort } from '@/composables/useContentSort'
+import { useDonations } from '@/composables/useDonations'
+import { useSonner } from '@/composables/useSonner'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { getContiguousSelection } from '@/utils'
+import { benchmarkStart } from '@/utils/benchmark'
+import { HTTPError } from 'ky'
 import { api } from '~/renderer/services/api'
 import { useApp, useDialog, useFolders } from '.'
 import { LibraryFilter } from './types'
 import { scrollToSnippetIndex } from './useSnippetScroller'
 
-const { state, saveStateSnapshot, restoreStateSnapshot, isFocusedSnippetName }
-  = useApp()
+interface CreateSnippetPayload {
+  name?: string
+}
+
+// Список содержит фрагменты без тел, полная запись выбранного сниппета —
+// с телами: value отсутствует, пока полная запись загружается.
+interface SnippetContentView {
+  id: number
+  label: string
+  language: string
+  value?: string | null
+}
+
+type SnippetView = Omit<SnippetItemResponse, 'contents'> & {
+  contents: SnippetContentView[]
+}
+
+export type SelectedSnippetRecordStatus =
+  | 'idle'
+  | 'loading'
+  | 'ready'
+  | 'error'
+
+const {
+  state,
+  saveStateSnapshot,
+  restoreStateSnapshot,
+  stateSnapshots,
+  focusSnippetNameInput,
+} = useApp()
 const { folders, getFolderByIdFromTree } = useFolders()
+const { getContentSortQuery } = useContentSort()
 
 const selectedSnippetIds = ref<number[]>(
   state.snippetId ? [state.snippetId] : [],
@@ -23,6 +58,17 @@ const lastSelectedSnippetId = ref<number | undefined>()
 
 const snippets = shallowRef<SnippetsResponse>()
 const snippetsBySearch = shallowRef<SnippetsResponse>()
+
+// Список отдаёт только метаданные, поэтому полная запись выбранного
+// сниппета (с телами фрагментов) загружается отдельно по id.
+const selectedSnippetRecord = shallowRef<SnippetItemResponse | undefined>()
+const displayedSnippetRecord = shallowRef<SnippetItemResponse | undefined>()
+const displayedSnippetContent = shallowRef<SnippetContentView | undefined>()
+const pendingContentReorders = reactive(new Set<number>())
+const selectedSnippetRecordStatus = ref<SelectedSnippetRecordStatus>('idle')
+let selectedSnippetRequestToken = 0
+let contentOrderRevision = 0
+let snippetsRequestToken = 0
 
 const searchQuery = ref('')
 const isSearch = ref(false)
@@ -60,13 +106,18 @@ function getNextIndexedName(baseName: string, existingNames: string[]): string {
 async function getSnippetNamesForCreate(
   folderId: number | null,
 ): Promise<string[]> {
-  const query: SnippetsQuery
-    = folderId !== null
-      ? { folderId, isDeleted: 0 }
-      : { isInbox: 1, isDeleted: 0 }
+  const query: SnippetsQuery = { isDeleted: 0 }
+  if (folderId !== null) {
+    query.folderId = folderId
+  }
+  else {
+    query.isInbox = 1
+  }
   const { data } = await api.snippets.getSnippets(query)
 
-  return data.map(snippet => snippet.name)
+  return data
+    .filter(snippet => (snippet.folder?.id ?? null) === folderId)
+    .map(snippet => snippet.name)
 }
 
 const displayedSnippets = computed(() => {
@@ -77,29 +128,188 @@ const displayedSnippets = computed(() => {
   return snippets.value
 })
 
-const selectedSnippet = computed(() => {
-  if (isSearch.value) {
-    return snippetsBySearch.value?.find(s => s.id === state.snippetId)
+const selectedSnippet = computed<SnippetView | undefined>(() => {
+  if (selectedSnippetRecord.value?.id === state.snippetId) {
+    return selectedSnippetRecord.value
   }
 
-  return snippets.value?.find(s => s.id === state.snippetId)
+  // Пока полная запись загружается, метаданные берутся из списка,
+  // чтобы заголовок и layout не мигали.
+  const source = isSearch.value ? snippetsBySearch.value : snippets.value
+  return source?.find(s => s.id === state.snippetId)
 })
 
-const selectedSnippetContent = computed(() => {
+const selectedSnippetContent = computed<SnippetContentView | undefined>(() => {
+  // Метаданные фрагмента (label, language) доступны сразу из списка, чтобы
+  // топбар и селектор языка не мигали; value появляется, когда загрузится
+  // полная запись.
   return selectedSnippet.value?.contents[state.snippetContentIndex || 0]
 })
 
+const displayedSnippet = computed<SnippetView | undefined>(
+  () => displayedSnippetRecord.value,
+)
+
 const selectedSnippets = computed(() => {
   const source = isSearch.value ? snippetsBySearch.value : snippets.value
-  return source?.filter(s => selectedSnippetIds.value.includes(s.id)) || []
+  if (!source?.length || !selectedSnippetIds.value.length) {
+    return []
+  }
+
+  const targetIds = new Set(selectedSnippetIds.value)
+  return source.filter(s => targetIds.has(s.id))
 })
+
+async function refreshSelectedSnippet(
+  canApply?: () => boolean,
+): Promise<boolean | undefined> {
+  const snippetId = state.snippetId
+  const requestToken = ++selectedSnippetRequestToken
+  const requestOrderRevision = contentOrderRevision
+
+  if (snippetId === undefined) {
+    selectedSnippetRecord.value = undefined
+    displayedSnippetRecord.value = undefined
+    displayedSnippetContent.value = undefined
+    selectedSnippetRecordStatus.value = 'idle'
+    return
+  }
+
+  if (
+    !canApply
+    || selectedSnippetRecord.value?.id !== snippetId
+    || selectedSnippetRecordStatus.value !== 'ready'
+  ) {
+    selectedSnippetRecordStatus.value = 'loading'
+  }
+
+  const finishBenchmark = benchmarkStart('code', 'open')
+  try {
+    const { data } = await api.snippets.getSnippetsById(String(snippetId))
+
+    if (
+      requestToken === selectedSnippetRequestToken
+      && state.snippetId === snippetId
+      && data.id === snippetId
+    ) {
+      if (canApply && !canApply()) {
+        selectedSnippetRecordStatus.value = 'ready'
+        finishBenchmark('superseded')
+        return false
+      }
+      // A GET started before a successful reorder may still contain the old order.
+      if (requestOrderRevision !== contentOrderRevision) {
+        finishBenchmark('superseded')
+        return refreshSelectedSnippet(canApply)
+      }
+      const maxContentIndex = Math.max(0, data.contents.length - 1)
+      const currentContentId
+        = selectedSnippetRecord.value?.id === snippetId
+          ? selectedSnippetRecord.value.contents[state.snippetContentIndex || 0]
+            ?.id
+          : undefined
+      const currentContentIndex = data.contents.findIndex(
+        content => content.id === currentContentId,
+      )
+      const contentIndex
+        = currentContentIndex >= 0
+          ? currentContentIndex
+          : Math.min(
+              Math.max(0, state.snippetContentIndex || 0),
+              maxContentIndex,
+            )
+      state.snippetContentIndex = contentIndex
+      selectedSnippetRecord.value = data
+      displayedSnippetRecord.value = data
+      displayedSnippetContent.value = data.contents[contentIndex]
+      selectedSnippetRecordStatus.value = 'ready'
+      finishBenchmark()
+      return true
+    }
+    else {
+      finishBenchmark('superseded')
+    }
+  }
+  catch (error) {
+    finishBenchmark('error')
+    if (
+      requestToken === selectedSnippetRequestToken
+      && state.snippetId === snippetId
+    ) {
+      selectedSnippetRecordStatus.value = 'error'
+    }
+    console.error(error)
+  }
+}
+
+function retrySelectedSnippet() {
+  return refreshSelectedSnippet()
+}
+
+watch(
+  () => state.snippetId,
+  () => {
+    void refreshSelectedSnippet()
+  },
+  { flush: 'sync' },
+)
+
+watch(
+  () => state.snippetContentIndex,
+  (index) => {
+    if (
+      selectedSnippetRecordStatus.value === 'ready'
+      && displayedSnippetRecord.value?.id === state.snippetId
+    ) {
+      displayedSnippetContent.value
+        = displayedSnippetRecord.value.contents[index || 0]
+    }
+  },
+  { flush: 'sync' },
+)
+
+function getActionTargetIds(fallbackSnippetId?: number) {
+  if (fallbackSnippetId !== undefined && selectedSnippetIds.value.length > 1) {
+    return [...selectedSnippetIds.value]
+  }
+
+  if (fallbackSnippetId !== undefined) {
+    return [fallbackSnippetId]
+  }
+
+  if (selectedSnippetIds.value.length) {
+    return [...selectedSnippetIds.value]
+  }
+
+  return state.snippetId !== undefined ? [state.snippetId] : []
+}
+
+function getActionTargetSnippets(
+  targetIds: number[],
+  fallbackSnippet?: SnippetsResponse[0],
+) {
+  const source = displayedSnippets.value || []
+  const targetIdSet = new Set(targetIds)
+  const targetSnippets = source.filter(snippet =>
+    targetIdSet.has(snippet.id),
+  )
+
+  if (
+    fallbackSnippet
+    && targetIds.includes(fallbackSnippet.id)
+    && !targetSnippets.some(snippet => snippet.id === fallbackSnippet.id)
+  ) {
+    targetSnippets.push(fallbackSnippet)
+  }
+
+  return targetSnippets
+}
 
 const queryByLibraryOrFolderOrSearch = computed(() => {
   const query: SnippetsQuery = {}
 
-  if (isSearch.value) {
+  if (isSearch.value && searchQuery.value) {
     query.search = searchQuery.value
-    return query
   }
 
   if (state.tagId) {
@@ -136,31 +346,58 @@ const isEmpty = computed(() => {
 
 const isAvailableToCodePreview = computed(() => {
   const langAvailable = ['html', 'css', 'javascript']
-  return langAvailable.includes(selectedSnippetContent.value?.language || '')
+  return langAvailable.includes(displayedSnippetContent.value?.language || '')
 })
 
 async function getSnippets(query?: SnippetsQuery) {
-  const { data } = await api.snippets.getSnippets(
-    query || queryByLibraryOrFolderOrSearch.value,
-  )
-
-  if (isSearch.value) {
-    snippetsBySearch.value = data
+  // Защита от гонки ответов: применяется только самый свежий запрос.
+  const requestToken = ++snippetsRequestToken
+  const forSearch = isSearch.value
+  const resolvedQuery = {
+    ...(query || queryByLibraryOrFolderOrSearch.value),
+    ...getContentSortQuery('code'),
   }
-  else {
-    snippets.value = data
+
+  const finishBenchmark = benchmarkStart('code', 'list', resolvedQuery.search)
+  try {
+    const { data } = await api.snippets.getSnippets(resolvedQuery)
+
+    if (requestToken !== snippetsRequestToken) {
+      finishBenchmark('superseded')
+      return false
+    }
+
+    if (forSearch) {
+      snippetsBySearch.value = data
+    }
+    else {
+      snippets.value = data
+    }
+    finishBenchmark()
+    return true
+  }
+  catch (error) {
+    finishBenchmark('error')
+    throw error
   }
 }
 
-async function createSnippet() {
+async function createSnippet(payload?: CreateSnippetPayload) {
   try {
     const targetFolderId = state.folderId || null
     const folder = getFolderByIdFromTree(folders.value, targetFolderId)
     const existingNames = await getSnippetNamesForCreate(targetFolderId)
-    const nextSnippetName = getNextIndexedName(
-      i18n.t('snippet.untitled'),
-      existingNames,
+    const requestedName = payload?.name?.trim()
+    const hasRequestedName = existingNames.some(
+      name => name.trim().toLowerCase() === requestedName?.toLowerCase(),
     )
+    const nextSnippetName
+      = requestedName && !hasRequestedName
+        ? requestedName
+        : getNextIndexedName(
+            requestedName || i18n.t('snippet.untitled'),
+            existingNames,
+          )
 
     markPersistedStorageMutation()
     const { data } = await api.snippets.postSnippets({
@@ -174,6 +411,8 @@ async function createSnippet() {
       language: folder?.defaultLanguage || 'plain_text',
     })
 
+    useDonations().incrementCreated('code')
+
     if (
       state.libraryFilter === LibraryFilter.Trash
       || state.libraryFilter === LibraryFilter.Favorites
@@ -182,26 +421,34 @@ async function createSnippet() {
     }
 
     await getSnippets(queryByLibraryOrFolderOrSearch.value)
+
+    return Number(data.id)
   }
   catch (error) {
     console.error(error)
   }
 }
 
-async function createSnippetAndSelect() {
-  await createSnippet()
-  selectFirstSnippet()
-  isFocusedSnippetName.value = true
+async function createSnippetAndSelect(payload?: CreateSnippetPayload) {
+  const id = await createSnippet(payload)
+
+  if (id) {
+    selectSnippet(id)
+  }
+  else {
+    selectFirstSnippet()
+  }
+
+  await focusSnippetNameInput()
 }
 
 async function duplicateSnippet(snippetId: number) {
-  const snippet = snippets.value?.find(s => s.id === snippetId)
-
-  if (!snippet) {
-    return
-  }
-
   try {
+    // Список не содержит тел фрагментов — источник копии загружается по id.
+    const { data: snippet } = await api.snippets.getSnippetsById(
+      String(snippetId),
+    )
+
     const { data } = await api.snippets.postSnippets({
       name: `${snippet.name} - copy`,
       folderId: snippet.folder?.id || null,
@@ -243,7 +490,8 @@ async function createSnippetContent(snippetId: number) {
       language: folder?.defaultLanguage || 'plain_text',
     })
 
-    await getSnippets(queryByLibraryOrFolderOrSearch.value)
+    // Состав списка не меняется — достаточно обновить выбранную запись.
+    await refreshSelectedSnippet()
 
     return lastContentIndex
   }
@@ -257,24 +505,208 @@ async function addFragment() {
     return
   }
 
-  const index = await createSnippetContent(selectedSnippet.value.id)
+  const snippetId = selectedSnippet.value.id
+  const index = await createSnippetContent(snippetId)
 
-  if (index) {
+  if (
+    index !== undefined
+    && selectedSnippetRecordStatus.value === 'ready'
+    && state.snippetId === snippetId
+    && selectedSnippet.value?.id === snippetId
+  ) {
     state.snippetContentIndex = index
+  }
+}
+
+// Поля, влияющие на состав текущего списка: после их изменения нужен refetch.
+function isSnippetListMembershipAffecting(data: SnippetsUpdate) {
+  return (
+    data.folderId !== undefined
+    || data.isDeleted !== undefined
+    || data.isFavorites !== undefined
+  )
+}
+
+function patchSnippetInCollections(snippetId: number, data: SnippetsUpdate) {
+  const now = Date.now()
+
+  function apply(collection?: SnippetsResponse) {
+    if (!collection) {
+      return collection
+    }
+
+    const index = collection.findIndex(s => s.id === snippetId)
+    if (index === -1) {
+      return collection
+    }
+
+    const next = [...collection]
+    next[index] = {
+      ...next[index],
+      ...(data.name !== undefined ? { name: data.name } : {}),
+      ...(data.description !== undefined
+        ? { description: data.description }
+        : {}),
+      updatedAt: now,
+    }
+    return next
+  }
+
+  snippets.value = apply(snippets.value)
+  snippetsBySearch.value = apply(snippetsBySearch.value)
+
+  const record = selectedSnippetRecord.value
+  if (record?.id === snippetId) {
+    const updatedRecord = {
+      ...record,
+      ...(data.name !== undefined ? { name: data.name } : {}),
+      ...(data.description !== undefined
+        ? { description: data.description }
+        : {}),
+      updatedAt: now,
+    }
+    selectedSnippetRecord.value = updatedRecord
+    if (displayedSnippetRecord.value?.id === snippetId) {
+      displayedSnippetRecord.value = updatedRecord
+      displayedSnippetContent.value
+        = updatedRecord.contents[state.snippetContentIndex || 0]
+    }
   }
 }
 
 async function updateSnippet(snippetId: number, data: SnippetsUpdate) {
   markPersistedStorageMutation()
   await api.snippets.patchSnippetsById(String(snippetId), data)
-  await getSnippets(queryByLibraryOrFolderOrSearch.value)
+
+  if (isSnippetListMembershipAffecting(data)) {
+    await getSnippets(queryByLibraryOrFolderOrSearch.value)
+    await refreshSelectedSnippet()
+    return
+  }
+
+  // Полную запись обновляем без loading, чтобы не сбрасывать фокус редактора.
+  patchSnippetInCollections(snippetId, data)
+  // Название/описание влияют на поиск, а сохранение — на порядок updatedAt.
+  await getSnippets()
 }
 
 async function updateSnippets(snippetIds: number[], data: SnippetsUpdate[]) {
-  for (const [index, snippetId] of snippetIds.entries()) {
-    await api.snippets.patchSnippetsById(String(snippetId), data[index])
-  }
+  markPersistedStorageMutation()
+  // Ошибка одного элемента (например 503 на pending-записи) не прерывает
+  // batch: остальные применяются, список обновляется в любом случае, о
+  // пропуске сообщает общий 503-тост API-клиента.
+  const results = await Promise.allSettled(
+    snippetIds.map((snippetId, index) =>
+      api.snippets.patchSnippetsById(String(snippetId), data[index]),
+    ),
+  )
+  results.forEach((result) => {
+    if (result.status === 'rejected') {
+      console.error(result.reason)
+    }
+  })
   await getSnippets(queryByLibraryOrFolderOrSearch.value)
+  await refreshSelectedSnippet()
+}
+
+async function reorderSnippetContents(snippetId: number, contentIds: number[]) {
+  const record = selectedSnippetRecord.value
+  if (
+    pendingContentReorders.has(snippetId)
+    || selectedSnippetRecordStatus.value !== 'ready'
+    || state.snippetId !== snippetId
+    || record?.id !== snippetId
+    || displayedSnippetRecord.value?.id !== snippetId
+    || record.pendingCloudDownload
+    || contentIds.length !== record.contents.length
+    || new Set(contentIds).size !== contentIds.length
+    || contentIds.some(
+      id => !record.contents.some(content => content.id === id),
+    )
+    || contentIds.every((id, index) => record.contents[index].id === id)
+  ) {
+    return
+  }
+
+  pendingContentReorders.add(snippetId)
+  try {
+    markPersistedStorageMutation()
+    await api.snippets.patchSnippetsByIdContentsOrder(String(snippetId), {
+      contentIds,
+    })
+    contentOrderRevision++
+
+    // Use current records: text edits and navigation can occur during the request.
+    function reorder<T extends SnippetView>(snippet: T): T {
+      if (
+        snippet.id !== snippetId
+        || snippet.contents.length !== contentIds.length
+        || snippet.contents.some(content => !contentIds.includes(content.id))
+      ) {
+        return snippet
+      }
+      const byId = new Map(
+        snippet.contents.map(content => [content.id, content]),
+      )
+      return { ...snippet, contents: contentIds.map(id => byId.get(id)!) }
+    }
+
+    const current = selectedSnippetRecord.value
+    const displayed = displayedSnippetRecord.value
+    const activeId = displayedSnippetContent.value?.id
+    const next = current ? reorder(current) : undefined
+    const nextDisplayed = displayed ? reorder(displayed) : undefined
+    const snapshot = stateSnapshots.beforeSearch
+    const snapshotRecord = [
+      current,
+      displayed,
+      ...(snippets.value || []),
+      ...(snippetsBySearch.value || []),
+    ].find(snippet => snippet?.id === snippetId)
+    if (
+      snapshot.snippetId === snippetId
+      && snapshotRecord
+      && reorder(snapshotRecord) !== snapshotRecord
+    ) {
+      const snapshotContentId
+        = snapshotRecord.contents[snapshot.snippetContentIndex || 0]?.id
+      const index = contentIds.indexOf(snapshotContentId!)
+      if (index >= 0) {
+        snapshot.snippetContentIndex = index
+      }
+    }
+
+    selectedSnippetRecord.value = next
+    displayedSnippetRecord.value = nextDisplayed
+    if (
+      state.snippetId === snippetId
+      && next?.id === snippetId
+      && nextDisplayed?.id === snippetId
+      && next !== current
+      && nextDisplayed !== displayed
+      && activeId !== undefined
+    ) {
+      const index = contentIds.indexOf(activeId)
+      if (index >= 0) {
+        state.snippetContentIndex = index
+      }
+    }
+    snippets.value = snippets.value?.map(reorder)
+    snippetsBySearch.value = snippetsBySearch.value?.map(reorder)
+  }
+  catch (error) {
+    console.error(error)
+    // The API transport already reports unavailable cloud content.
+    if (!(error instanceof HTTPError && error.response.status === 503)) {
+      useSonner().sonner({
+        type: 'error',
+        message: i18n.t('messages:error.fragmentOrderFailed'),
+      })
+    }
+  }
+  finally {
+    pendingContentReorders.delete(snippetId)
+  }
 }
 
 async function updateSnippetContent(
@@ -288,7 +720,25 @@ async function updateSnippetContent(
     String(contentId),
     data,
   )
-  await getSnippets(queryByLibraryOrFolderOrSearch.value)
+
+  // Тел фрагментов в списке нет — обновляется только выбранная запись,
+  // без перезагрузки списка на каждое сохранение при наборе текста.
+  const record = selectedSnippetRecord.value
+  if (record?.id === snippetId) {
+    const updatedRecord = {
+      ...record,
+      contents: record.contents.map(content =>
+        content.id === contentId ? { ...content, ...data } : content,
+      ),
+      updatedAt: Date.now(),
+    }
+    selectedSnippetRecord.value = updatedRecord
+    if (displayedSnippetRecord.value?.id === snippetId) {
+      displayedSnippetRecord.value = updatedRecord
+      displayedSnippetContent.value
+        = updatedRecord.contents[state.snippetContentIndex || 0]
+    }
+  }
 }
 
 async function deleteSnippet(snippetId: number) {
@@ -298,10 +748,100 @@ async function deleteSnippet(snippetId: number) {
 }
 
 async function deleteSnippets(snippetIds: number[]) {
-  for (const snippetId of snippetIds) {
-    await api.snippets.deleteSnippetsById(String(snippetId))
-  }
+  markPersistedStorageMutation()
+  // Ошибка одного элемента не прерывает batch: остальные применяются,
+  // список обновляется в любом случае.
+  const results = await Promise.allSettled(
+    snippetIds.map(snippetId =>
+      api.snippets.deleteSnippetsById(String(snippetId)),
+    ),
+  )
+  results.forEach((result) => {
+    if (result.status === 'rejected') {
+      console.error(result.reason)
+    }
+  })
   await getSnippets(queryByLibraryOrFolderOrSearch.value)
+}
+
+async function deleteSelectedSnippets(fallbackSnippet?: SnippetsResponse[0]) {
+  const { confirm } = useDialog()
+  const targetIds = getActionTargetIds(fallbackSnippet?.id)
+
+  if (!targetIds.length) {
+    return
+  }
+
+  const targetSnippets = getActionTargetSnippets(targetIds, fallbackSnippet)
+
+  if (targetIds.length > 1) {
+    const isAllSoftDeleted
+      = targetSnippets.length === targetIds.length
+        && targetSnippets.every(snippet => snippet.isDeleted)
+
+    if (isAllSoftDeleted) {
+      const isConfirmed = await confirm({
+        title: i18n.t('messages:confirm.deleteConfirmMultipleSnippets', {
+          count: targetIds.length,
+        }),
+        content: i18n.t('messages:warning.noUndo'),
+      })
+
+      if (isConfirmed) {
+        await deleteSnippets(targetIds)
+        selectFirstSnippet()
+      }
+    }
+    else {
+      const snippetsData = targetIds.map(() => ({
+        folderId: null,
+        isDeleted: 1,
+      }))
+
+      await updateSnippets(targetIds, snippetsData)
+      selectFirstSnippet()
+    }
+
+    return
+  }
+
+  const targetSnippet = targetSnippets[0]
+
+  if (!targetSnippet) {
+    return
+  }
+
+  if (!targetSnippet.isDeleted) {
+    await updateSnippet(targetSnippet.id, {
+      folderId: null,
+      isDeleted: 1,
+    })
+
+    if (state.snippetId === targetSnippet.id) {
+      selectFirstSnippet()
+    }
+
+    return
+  }
+
+  const isConfirmed = await confirm({
+    title: i18n.t('messages:confirm.deletePermanently', {
+      name: targetSnippet.name,
+    }),
+    content: i18n.t('messages:warning.noUndo'),
+  })
+
+  if (!isConfirmed) {
+    return
+  }
+
+  const wasSelected = state.snippetId === targetSnippet.id
+
+  await deleteSnippet(targetSnippet.id)
+
+  if (wasSelected) {
+    selectFirstSnippet()
+  }
 }
 
 async function deleteSnippetContent(snippetId: number, contentId: number) {
@@ -311,7 +851,8 @@ async function deleteSnippetContent(snippetId: number, contentId: number) {
       String(contentId),
     )
 
-    await getSnippets(queryByLibraryOrFolderOrSearch.value)
+    // Состав списка не меняется — достаточно обновить выбранную запись.
+    await refreshSelectedSnippet()
   }
   catch (error) {
     console.error(error)
@@ -325,6 +866,7 @@ async function addTagToSnippet(tagId: number, snippetId: number) {
       String(tagId),
     )
     await getSnippets(queryByLibraryOrFolderOrSearch.value)
+    await refreshSelectedSnippet()
   }
   catch (error) {
     console.error(error)
@@ -338,6 +880,7 @@ async function deleteTagFromSnippet(tagId: number, snippetId: number) {
       String(tagId),
     )
     await getSnippets(queryByLibraryOrFolderOrSearch.value)
+    await refreshSelectedSnippet()
   }
   catch (error) {
     console.error(error)
@@ -422,11 +965,15 @@ function clearSnippets() {
 function clearSnippetsState() {
   clearSnippets()
   selectedSnippetIds.value = []
+  selectedSnippetRecord.value = undefined
+  displayedSnippetRecord.value = undefined
+  displayedSnippetContent.value = undefined
+  selectedSnippetRecordStatus.value = 'idle'
   state.snippetId = undefined
   state.snippetContentIndex = 0
 }
 
-async function search() {
+async function search(current: () => boolean = () => true) {
   if (searchQuery.value) {
     if (!isSearch.value) {
       saveStateSnapshot('beforeSearch')
@@ -436,17 +983,19 @@ async function search() {
     isSearch.value = true
     isRestoreStateBlocked.value = false
 
-    await getSnippets({ search: searchQuery.value })
-    selectFirstSnippet()
+    if (!(await getSnippets()) || !current())
+      return false
+    await selectFirstSnippet()
     searchSelectedIndex.value = 0
     nextTick(() => scrollToSnippetIndex(0))
   }
   else {
     isSearch.value = false
   }
+  return true
 }
 
-function selectSearchSnippet(index: number) {
+async function selectSearchSnippet(index: number) {
   if (
     !displayedSnippets.value
     || index < 0
@@ -456,8 +1005,13 @@ function selectSearchSnippet(index: number) {
   }
 
   const snippet = displayedSnippets.value[index]
-  selectSnippet(snippet.id)
   searchSelectedIndex.value = index
+  const { useNavigationHistory } = await import(
+    '@/composables/useNavigationHistory'
+  )
+  await useNavigationHistory().recordNavigation(() =>
+    selectSnippet(snippet.id),
+  )
   nextTick(() => scrollToSnippetIndex(index))
 }
 
@@ -471,6 +1025,13 @@ function clearSearch(restoreState = false) {
   searchSelectedIndex.value = -1
 }
 
+function resetSnippetSearchState() {
+  clearSearch()
+  snippetsBySearch.value = undefined
+  stateSnapshots.beforeSearch = {}
+  isRestoreStateBlocked.value = false
+}
+
 export function useSnippets() {
   return {
     addTagToSnippet,
@@ -482,7 +1043,11 @@ export function useSnippets() {
     deleteSnippet,
     deleteSnippetContent,
     deleteSnippets,
+    deleteSelectedSnippets,
     deleteTagFromSnippet,
+    displayedSnippet,
+    displayedSnippetContent,
+    displayedSnippetRecord,
     displayedSnippets,
     duplicateSnippet,
     emptyTrash,
@@ -493,18 +1058,24 @@ export function useSnippets() {
     lastSelectedSnippetId,
     addFragment,
     createSnippetAndSelect,
+    refreshSelectedSnippet,
+    retrySelectedSnippet,
+    resetSnippetSearchState,
     search,
     searchQuery,
     searchSelectedIndex,
     selectedSnippet,
     selectedSnippetContent,
     selectedSnippetIds,
+    selectedSnippetRecordStatus,
     selectedSnippets,
     selectFirstSnippet,
     selectSearchSnippet,
     selectSnippet,
     updateSnippet,
     updateSnippetContent,
+    reorderSnippetContents,
+    pendingContentReorders,
     updateSnippets,
     isAvailableToCodePreview,
   }

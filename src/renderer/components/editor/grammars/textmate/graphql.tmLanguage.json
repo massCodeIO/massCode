@@ -201,7 +201,7 @@
       ]
     },
     "graphql-ignore-spaces": {
-      "match": "\\s*"
+      "match": "\\s+"
     },
     "graphql-type-object": {
       "name": "meta.type.object.graphql",

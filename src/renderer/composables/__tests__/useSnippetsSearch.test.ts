@@ -1,0 +1,639 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { computed, nextTick, reactive, ref, shallowRef, watch } from 'vue'
+
+globalThis.computed = computed
+globalThis.nextTick = nextTick
+globalThis.reactive = reactive
+globalThis.ref = ref
+globalThis.shallowRef = shallowRef
+globalThis.watch = watch
+
+interface SetupOptions {
+  folderId?: number
+  libraryFilter?: string
+  snippetId?: number
+  sort?: 'name' | 'updatedAt'
+  order?: 'ASC' | 'DESC'
+  tagId?: number
+}
+
+async function setup(options: SetupOptions = {}) {
+  vi.resetModules()
+
+  const state = reactive<{
+    folderId?: number
+    libraryFilter?: string
+    snippetContentIndex?: number
+    snippetId?: number
+    tagId?: number
+  }>({
+    folderId: options.folderId,
+    libraryFilter: options.libraryFilter,
+    snippetContentIndex: 0,
+    snippetId: options.snippetId,
+    tagId: options.tagId,
+  })
+
+  const stateSnapshots = { beforeSearch: {} }
+
+  const getSnippets = vi.fn(async () => ({
+    data: [{ contents: [], id: 1, name: 'Search result', tags: [] }],
+  }))
+  const getSnippetsById = vi.fn(async (id: string) => ({
+    data: {
+      contents: [
+        {
+          id: Number(id) * 10,
+          label: 'Fragment 1',
+          language: 'text',
+          value: `Content ${id}`,
+        },
+      ],
+      id: Number(id),
+      name: 'Selected snippet',
+      tags: [],
+    },
+  }))
+  const postSnippetsByIdContents = vi.fn()
+  const patchSnippetsByIdContentsOrder = vi.fn(async () => ({}))
+
+  // useContentSort читает store.app при импорте модуля: мокается целиком,
+  // чтобы не тянуть electron store в тест.
+  vi.doMock('@/composables/useContentSort', () => ({
+    useContentSort: () => ({
+      getContentSortQuery: () =>
+        options.sort ? { sort: options.sort, order: options.order } : {},
+    }),
+  }))
+
+  vi.doMock('@/composables/useDonations', () => ({
+    useDonations: () => ({
+      incrementCopy: vi.fn(),
+      incrementCreated: vi.fn(),
+    }),
+  }))
+
+  vi.doMock('@/composables/useSonner', () => ({
+    useSonner: () => ({ sonner: vi.fn() }),
+  }))
+
+  vi.doMock('@/composables/useStorageMutation', () => ({
+    markPersistedStorageMutation: vi.fn(),
+  }))
+
+  vi.doMock('@/electron', () => ({
+    i18n: {
+      t: (key: string) => key,
+    },
+  }))
+
+  vi.doMock('@/utils', () => ({
+    getContiguousSelection: vi.fn(() => []),
+  }))
+
+  vi.doMock('~/renderer/services/api', () => ({
+    api: {
+      snippets: {
+        deleteSnippetsById: vi.fn(),
+        deleteSnippetsByIdContentsByContentId: vi.fn(),
+        deleteSnippetsByIdTagsByTagId: vi.fn(),
+        deleteSnippetsTrash: vi.fn(),
+        getSnippets,
+        // refreshSelectedSnippet дёргает загрузку полной записи по id:
+        // отсутствие метода давало «зелёные» тесты с TypeError в stderr.
+        getSnippetsById,
+        patchSnippetsByIdContentsOrder,
+        patchSnippetsById: vi.fn(),
+        patchSnippetsByIdContentsByContentId: vi.fn(),
+        postSnippets: vi.fn(),
+        postSnippetsByIdContents,
+        postSnippetsByIdTagsByTagId: vi.fn(),
+      },
+    },
+  }))
+
+  vi.doMock('../index', () => ({
+    useApp: () => ({
+      focusSnippetNameInput: vi.fn(),
+      isFocusedSearch: ref(false),
+      restoreStateSnapshot: vi.fn(() =>
+        Object.assign(state, stateSnapshots.beforeSearch),
+      ),
+      saveStateSnapshot: vi.fn(() => {
+        stateSnapshots.beforeSearch = { ...state }
+      }),
+      stateSnapshots,
+      state,
+    }),
+    useDialog: () => ({
+      confirm: vi.fn(async () => true),
+    }),
+    useFolders: () => ({
+      folders: ref([]),
+      getFolderByIdFromTree: vi.fn(() => null),
+    }),
+  }))
+
+  vi.doMock('../useSnippetScroller', () => ({
+    scrollToSnippetIndex: vi.fn(),
+  }))
+
+  const { useSnippets } = await import('../useSnippets')
+  const snippets = useSnippets()
+
+  return {
+    getSnippets,
+    getSnippetsById,
+    postSnippetsByIdContents,
+    patchSnippetsByIdContentsOrder,
+    stateSnapshots,
+    snippets,
+    state,
+  }
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+})
+
+describe('useSnippets search', () => {
+  it('discards the previous vault search and selection snapshot on reset', async () => {
+    const { snippets, state, getSnippets } = await setup({
+      folderId: 7,
+      snippetId: 1,
+    })
+    snippets.searchQuery.value = 'old vault'
+    await snippets.search()
+
+    snippets.resetSnippetSearchState()
+    Object.assign(state, { folderId: 20, snippetId: 2 })
+    snippets.clearSearch(true)
+
+    expect(snippets.searchQuery.value).toBe('')
+    expect(snippets.isSearch.value).toBe(false)
+    expect(snippets.searchSelectedIndex.value).toBe(-1)
+    expect(state.folderId).toBe(20)
+    expect(state.snippetId).toBe(2)
+    await snippets.getSnippets()
+    expect(getSnippets).toHaveBeenLastCalledWith({ folderId: 20 })
+
+    snippets.searchQuery.value = 'new vault'
+    await snippets.search()
+    snippets.clearSearch(true)
+    expect(state.snippetId).toBe(2)
+  })
+
+  it('combines search with the selected tag context', async () => {
+    const context = await setup({ tagId: 12 })
+
+    context.snippets.searchQuery.value = 'migration'
+    await context.snippets.search()
+
+    expect(context.getSnippets).toHaveBeenCalledWith({
+      search: 'migration',
+      tagId: 12,
+    })
+  })
+
+  it('combines search with the selected folder context', async () => {
+    const context = await setup({ folderId: 7 })
+
+    context.snippets.searchQuery.value = 'compose'
+    await context.snippets.search()
+
+    expect(context.getSnippets).toHaveBeenCalledWith({
+      folderId: 7,
+      search: 'compose',
+    })
+  })
+
+  it('combines search with library filters', async () => {
+    const context = await setup({ libraryFilter: 'favorites' })
+
+    context.snippets.searchQuery.value = 'token'
+    await context.snippets.search()
+
+    expect(context.getSnippets).toHaveBeenCalledWith({
+      isFavorites: 1,
+      search: 'token',
+    })
+  })
+})
+
+describe('selected snippet full record', () => {
+  it('normalizes a stale fragment index when the selected snippet is ready', async () => {
+    const context = await setup({ snippetId: 5 })
+    context.getSnippetsById.mockResolvedValueOnce({
+      data: {
+        contents: [
+          {
+            id: 50,
+            label: 'Fragment 1',
+            language: 'text',
+            value: 'First',
+          },
+          {
+            id: 51,
+            label: 'Fragment 2',
+            language: 'text',
+            value: 'Second',
+          },
+        ],
+        id: 5,
+        name: 'Selected snippet',
+        tags: [],
+      },
+    })
+    context.state.snippetContentIndex = 1
+    await context.snippets.refreshSelectedSnippet()
+
+    expect(context.snippets.displayedSnippetContent.value?.id).toBe(51)
+
+    context.state.snippetId = 1
+    await vi.waitFor(() => {
+      expect(context.snippets.selectedSnippetRecordStatus.value).toBe('ready')
+    })
+
+    expect(context.state.snippetContentIndex).toBe(0)
+    expect(context.snippets.displayedSnippetContent.value?.id).toBe(10)
+  })
+
+  it('does not select a newly added fragment after switching snippets', async () => {
+    const context = await setup({ snippetId: 5 })
+    await context.snippets.refreshSelectedSnippet()
+
+    let resolveCreate!: () => void
+    context.postSnippetsByIdContents.mockImplementationOnce(
+      () => new Promise<void>(resolve => (resolveCreate = resolve)),
+    )
+
+    const addRequest = context.snippets.addFragment()
+    context.state.snippetId = 1
+    await vi.waitFor(() => {
+      expect(context.snippets.selectedSnippetRecordStatus.value).toBe('ready')
+      expect(context.snippets.selectedSnippet.value?.id).toBe(1)
+    })
+
+    resolveCreate()
+    await addRequest
+
+    expect(context.state.snippetId).toBe(1)
+    expect(context.state.snippetContentIndex).toBe(0)
+    expect(context.snippets.displayedSnippetContent.value?.id).toBe(10)
+  })
+
+  it('clears both domain and display records when selection is cleared', async () => {
+    const context = await setup({ snippetId: 5 })
+    await context.snippets.refreshSelectedSnippet()
+
+    context.state.snippetId = undefined
+    await nextTick()
+
+    expect(context.snippets.selectedSnippet.value).toBeUndefined()
+    expect(context.snippets.displayedSnippet.value).toBeUndefined()
+    expect(context.snippets.displayedSnippetContent.value).toBeUndefined()
+    expect(context.snippets.selectedSnippetRecordStatus.value).toBe('idle')
+  })
+
+  it('keeps the previous display record until the current snippet is ready', async () => {
+    const context = await setup({ snippetId: 5 })
+    await context.snippets.refreshSelectedSnippet()
+    await context.snippets.getSnippets()
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+
+    expect(context.snippets.selectedSnippet.value?.id).toBe(5)
+    expect(context.snippets.displayedSnippet.value?.id).toBe(5)
+    expect(context.snippets.displayedSnippetContent.value?.value).toBe(
+      'Content 5',
+    )
+
+    let rejectRequest!: (reason: Error) => void
+    context.getSnippetsById.mockImplementationOnce(
+      () => new Promise((_resolve, reject) => (rejectRequest = reject)),
+    )
+
+    context.state.snippetId = 1
+    await nextTick()
+
+    expect(context.snippets.selectedSnippetRecordStatus.value).toBe('loading')
+    expect(context.snippets.selectedSnippet.value?.id).toBe(1)
+    expect(context.snippets.displayedSnippet.value?.id).toBe(5)
+    expect(context.snippets.displayedSnippetContent.value?.value).toBe(
+      'Content 5',
+    )
+
+    rejectRequest(new Error('network'))
+    await vi.waitFor(() => {
+      expect(context.snippets.selectedSnippetRecordStatus.value).toBe('error')
+    })
+    expect(context.snippets.selectedSnippet.value?.id).toBe(1)
+    expect(context.snippets.displayedSnippet.value?.id).toBe(5)
+    expect(context.snippets.displayedSnippetContent.value?.value).toBe(
+      'Content 5',
+    )
+
+    await context.snippets.retrySelectedSnippet()
+
+    expect(context.snippets.selectedSnippetRecordStatus.value).toBe('ready')
+    expect(context.snippets.selectedSnippet.value?.id).toBe(1)
+    expect(context.snippets.displayedSnippet.value?.id).toBe(1)
+    expect(context.snippets.displayedSnippetContent.value?.value).toBe(
+      'Content 1',
+    )
+    consoleError.mockRestore()
+  })
+
+  it('keeps selected snippet aligned while loading and after an error', async () => {
+    const context = await setup({ snippetId: 5 })
+    await context.snippets.refreshSelectedSnippet()
+    await context.snippets.getSnippets()
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+
+    let rejectRequest!: (reason: Error) => void
+    context.getSnippetsById.mockImplementationOnce(
+      () => new Promise((_resolve, reject) => (rejectRequest = reject)),
+    )
+
+    context.state.snippetId = 1
+    await nextTick()
+
+    expect(context.snippets.selectedSnippetRecordStatus.value).toBe('loading')
+    expect(context.snippets.selectedSnippet.value?.id).toBe(1)
+
+    rejectRequest(new Error('network'))
+    await vi.waitFor(() => {
+      expect(context.snippets.selectedSnippetRecordStatus.value).toBe('error')
+      expect(context.snippets.selectedSnippet.value?.id).toBe(1)
+    })
+    consoleError.mockRestore()
+  })
+
+  it('exposes loading, error and ready states with retry', async () => {
+    const context = await setup({ snippetId: 5 })
+    const error = new Error('network')
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+    context.getSnippetsById.mockRejectedValueOnce(error)
+
+    const request = context.snippets.refreshSelectedSnippet()
+
+    expect(context.snippets.selectedSnippetRecordStatus.value).toBe('loading')
+    await request
+    expect(context.snippets.selectedSnippetRecordStatus.value).toBe('error')
+
+    await context.snippets.retrySelectedSnippet()
+
+    expect(context.getSnippetsById).toHaveBeenCalledTimes(2)
+    expect(context.snippets.selectedSnippetRecordStatus.value).toBe('ready')
+    consoleError.mockRestore()
+  })
+})
+
+describe('snippet rename refresh', () => {
+  it.each(['name', 'updatedAt'] as const)(
+    'refreshes %s order without reloading the selected record',
+    async (sort) => {
+      const context = await setup({ snippetId: 1, sort, order: 'ASC' })
+      await context.snippets.refreshSelectedSnippet()
+      await context.snippets.getSnippets()
+      const fullRecordCalls = context.getSnippetsById.mock.calls.length
+      context.getSnippets.mockResolvedValueOnce({
+        data: [
+          { id: 2, name: 'B', contents: [], tags: [] },
+          { id: 1, name: 'Z', contents: [], tags: [] },
+        ],
+      })
+
+      await context.snippets.updateSnippet(1, { name: 'Z' })
+
+      expect(context.getSnippets).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sort, order: 'ASC' }),
+      )
+      expect(
+        context.snippets.displayedSnippets.value?.map(item => item.id),
+      ).toEqual([2, 1])
+      expect(context.snippets.selectedSnippet.value?.name).toBe('Z')
+      expect(context.snippets.displayedSnippetContent.value?.value).toBe(
+        'Content 1',
+      )
+      expect(context.snippets.selectedSnippetRecordStatus.value).toBe('ready')
+      expect(context.getSnippetsById).toHaveBeenCalledTimes(fullRecordCalls)
+    },
+  )
+
+  it('removes and restores a search result while retaining the open record', async () => {
+    const context = await setup({ snippetId: 1 })
+    context.snippets.searchQuery.value = 'needle'
+    await context.snippets.search()
+    await context.snippets.refreshSelectedSnippet()
+    const fullRecordCalls = context.getSnippetsById.mock.calls.length
+    context.getSnippets.mockResolvedValueOnce({ data: [] })
+
+    await context.snippets.updateSnippet(1, { name: 'Renamed' })
+
+    expect(context.getSnippets).toHaveBeenLastCalledWith({ search: 'needle' })
+    expect(context.snippets.displayedSnippets.value).toEqual([])
+    expect(context.state.snippetId).toBe(1)
+    expect(context.state.snippetContentIndex).toBe(0)
+    expect(context.snippets.displayedSnippet.value?.name).toBe('Renamed')
+    expect(context.snippets.displayedSnippetContent.value?.value).toBe(
+      'Content 1',
+    )
+    expect(context.snippets.selectedSnippetRecordStatus.value).toBe('ready')
+
+    context.getSnippets.mockResolvedValueOnce({
+      data: [{ id: 1, name: 'needle again', contents: [], tags: [] }],
+    })
+    await context.snippets.updateSnippet(1, { name: 'needle again' })
+
+    expect(
+      context.snippets.displayedSnippets.value?.map(item => item.id),
+    ).toEqual([1])
+    expect(context.getSnippetsById).toHaveBeenCalledTimes(fullRecordCalls)
+  })
+})
+
+it('keeps the mounted Code record when typing invalidates a guarded refresh during GET', async () => {
+  const { snippets, getSnippetsById } = await setup({ snippetId: 1 })
+  await snippets.refreshSelectedSnippet()
+  const before = snippets.selectedSnippet.value
+  expect(before?.contents[0]?.value).toBe('Content 1')
+  let accept = true
+  let finish!: (value: Awaited<ReturnType<typeof getSnippetsById>>) => void
+  getSnippetsById.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve
+      }),
+  )
+  const refreshing = snippets.refreshSelectedSnippet(() => accept)
+  expect(snippets.selectedSnippet.value).toEqual(before)
+  expect(snippets.selectedSnippetRecordStatus.value).toBe('ready')
+  accept = false
+  finish({
+    data: {
+      id: 1,
+      name: 'Stale GET',
+      tags: [],
+      contents: [
+        {
+          id: 10,
+          label: 'Fragment 1',
+          language: 'text',
+          value: 'stale persisted text',
+        },
+      ],
+    },
+  })
+  expect(await refreshing).toBe(false)
+  expect(snippets.selectedSnippet.value).toEqual(before)
+})
+
+describe('snippet fragment order', () => {
+  async function setupFragments() {
+    const context = await setup({ snippetId: 1 })
+    context.getSnippetsById.mockResolvedValue({
+      data: {
+        id: 1,
+        name: 'Snippet',
+        tags: [],
+        contents: [
+          { id: 10, label: 'One', language: 'text', value: 'one' },
+          { id: 11, label: 'Two', language: 'text', value: 'two' },
+        ],
+      },
+    })
+    await context.snippets.refreshSelectedSnippet()
+    return context
+  }
+
+  it('keeps the active object and search snapshot on successful reorder', async () => {
+    const { snippets, state, stateSnapshots, patchSnippetsByIdContentsOrder }
+      = await setupFragments()
+    state.snippetContentIndex = 1
+    stateSnapshots.beforeSearch = { snippetId: 1, snippetContentIndex: 0 }
+    const active = snippets.displayedSnippetContent.value
+    const displayed: unknown[] = []
+    watch(snippets.displayedSnippetContent, value => displayed.push(value), {
+      flush: 'sync',
+    })
+    await snippets.reorderSnippetContents(1, [11, 10])
+    expect(patchSnippetsByIdContentsOrder).toHaveBeenCalledWith('1', {
+      contentIds: [11, 10],
+    })
+    expect(state.snippetContentIndex).toBe(0)
+    expect(snippets.displayedSnippetContent.value).toBe(active)
+    expect(displayed).toEqual([])
+    expect(stateSnapshots.beforeSearch).toEqual({
+      snippetId: 1,
+      snippetContentIndex: 1,
+    })
+  })
+
+  it('preserves text edits during pending save and ignores repeated requests', async () => {
+    const { snippets, patchSnippetsByIdContentsOrder } = await setupFragments()
+    let resolve!: (value: object) => void
+    patchSnippetsByIdContentsOrder.mockReturnValueOnce(
+      new Promise((done) => {
+        resolve = done
+      }),
+    )
+    const pending = snippets.reorderSnippetContents(1, [11, 10])
+    await snippets.reorderSnippetContents(1, [11, 10])
+    expect(patchSnippetsByIdContentsOrder).toHaveBeenCalledTimes(1)
+    snippets.displayedSnippetContent.value!.value = 'unsaved edit'
+    resolve({})
+    await pending
+    expect(snippets.displayedSnippet.value?.contents[1].value).toBe(
+      'unsaved edit',
+    )
+    expect(snippets.pendingContentReorders.has(1)).toBe(false)
+  })
+
+  it.each([true, false])(
+    'reloads concurrent GET after reorder without restoring stale order (new order: %s)',
+    async (newOrder) => {
+      const {
+        snippets,
+        state,
+        getSnippetsById,
+        patchSnippetsByIdContentsOrder,
+      } = await setupFragments()
+      const record = snippets.displayedSnippetRecord.value!
+      let finishPatch!: (value: object) => void
+      let finishGet!: (
+        value: Awaited<ReturnType<typeof getSnippetsById>>,
+      ) => void
+      patchSnippetsByIdContentsOrder.mockReturnValueOnce(
+        new Promise((resolve) => {
+          finishPatch = resolve
+        }),
+      )
+      getSnippetsById.mockReturnValueOnce(
+        new Promise((resolve) => {
+          finishGet = resolve
+        }),
+      )
+      getSnippetsById.mockResolvedValueOnce({
+        data: {
+          ...record,
+          name: 'Fresh metadata',
+          contents: [...record.contents].reverse(),
+        },
+      })
+      const reorder = snippets.reorderSnippetContents(1, [11, 10])
+      const refresh = snippets.refreshSelectedSnippet()
+      expect(snippets.selectedSnippetRecordStatus.value).toBe('loading')
+      finishPatch({})
+      await reorder
+      expect(state.snippetContentIndex).toBe(1)
+      finishGet({
+        data: {
+          ...record,
+          contents: newOrder ? [...record.contents].reverse() : record.contents,
+        },
+      })
+      await refresh
+      expect(snippets.displayedSnippetContent.value?.id).toBe(10)
+      expect(state.snippetContentIndex).toBe(1)
+      expect(
+        snippets.displayedSnippet.value?.contents.map(content => content.id),
+      ).toEqual([11, 10])
+      expect(snippets.displayedSnippet.value?.name).toBe('Fresh metadata')
+    },
+  )
+
+  it('keeps old order on failure and releases the pending guard', async () => {
+    const { snippets, patchSnippetsByIdContentsOrder } = await setupFragments()
+    patchSnippetsByIdContentsOrder.mockRejectedValueOnce(new Error('failure'))
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    await snippets.reorderSnippetContents(1, [11, 10])
+    log.mockRestore()
+    expect(
+      snippets.displayedSnippet.value?.contents.map(content => content.id),
+    ).toEqual([10, 11])
+    expect(snippets.pendingContentReorders.has(1)).toBe(false)
+  })
+
+  it('does not change another snippet selection after navigation', async () => {
+    const { snippets, state, patchSnippetsByIdContentsOrder }
+      = await setupFragments()
+    let resolve!: (value: object) => void
+    patchSnippetsByIdContentsOrder.mockReturnValueOnce(
+      new Promise((done) => {
+        resolve = done
+      }),
+    )
+    const pending = snippets.reorderSnippetContents(1, [11, 10])
+    state.snippetId = 2
+    state.snippetContentIndex = 1
+    resolve({})
+    await pending
+    expect(state.snippetContentIndex).toBe(1)
+  })
+})

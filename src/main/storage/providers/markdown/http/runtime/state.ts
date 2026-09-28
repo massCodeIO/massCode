@@ -1,0 +1,186 @@
+import type {
+  HttpCounters,
+  HttpEnvironmentRecord,
+  HttpFolderRecord,
+  HttpPaths,
+  HttpState,
+  HttpStateFile,
+} from './types'
+import fs from 'fs-extra'
+import { pendingStateWriteByPath } from '../../runtime/cache'
+import {
+  readSpaceState,
+  writeSpaceState,
+  writeSpaceStateImmediate,
+} from '../../runtime/spaceState'
+
+// Версия 2: записи requests несут денормализованные метаданные списка и
+// stat-сигнатуру (`meta`). Записи без meta (v1) дозаполняются организно:
+// файл читается один раз при первом скане и метаданные попадают в индекс.
+const STATE_VERSION = 2
+
+export function createDefaultHttpState(): HttpState {
+  return {
+    version: STATE_VERSION,
+    counters: {
+      folderId: 0,
+      requestId: 0,
+      environmentId: 0,
+    },
+    folders: [],
+    requests: [],
+    environments: [],
+    activeEnvironmentId: null,
+  }
+}
+
+function normalizeCounters(
+  raw: Partial<HttpCounters> | undefined,
+): HttpCounters {
+  const defaults = createDefaultHttpState().counters
+  return {
+    folderId:
+      typeof raw?.folderId === 'number' ? raw.folderId : defaults.folderId,
+    requestId:
+      typeof raw?.requestId === 'number' ? raw.requestId : defaults.requestId,
+    environmentId:
+      typeof raw?.environmentId === 'number'
+        ? raw.environmentId
+        : defaults.environmentId,
+  }
+}
+
+function normalizeFolders(raw: HttpStateFile['folders']): HttpFolderRecord[] {
+  if (!Array.isArray(raw))
+    return []
+
+  return raw.map(folder => ({
+    ...folder,
+    icon:
+      folder.icon === null
+        ? null
+        : typeof folder.icon === 'string'
+          ? folder.icon
+          : null,
+  }))
+}
+
+function normalizeEnvironments(
+  raw: HttpStateFile['environments'],
+): HttpEnvironmentRecord[] {
+  if (!Array.isArray(raw))
+    return []
+
+  return raw.map((env) => {
+    const secretKeys = Array.isArray(env.secretKeys)
+      ? [
+          ...new Set(
+            env.secretKeys.filter(
+              (key): key is string => typeof key === 'string' && !!key.trim(),
+            ),
+          ),
+        ]
+      : []
+
+    return {
+      ...env,
+      ...(typeof env.secretStorageId === 'string' && env.secretStorageId.trim()
+        ? { secretStorageId: env.secretStorageId }
+        : { secretStorageId: undefined }),
+      variables: Object.fromEntries(
+        Object.entries(env.variables ?? {}).filter(
+          ([key]) => !secretKeys.includes(key),
+        ),
+      ),
+      ...(secretKeys.length > 0 ? { secretKeys } : {}),
+    }
+  })
+}
+
+export function ensureHttpStateFile(paths: HttpPaths): void {
+  fs.ensureDirSync(paths.httpRoot)
+
+  // Ожидающая debounce-запись уже содержит актуальный state: перезапись
+  // дефолтом потеряла бы индекс и environments, записанные за последние
+  // мгновения до того, как файл впервые доехал до диска.
+  if (pendingStateWriteByPath.has(paths.statePath)) {
+    return
+  }
+
+  if (!fs.pathExistsSync(paths.statePath)) {
+    writeSpaceState(paths.statePath, createDefaultHttpState())
+  }
+}
+
+export function loadHttpState(paths: HttpPaths): HttpState {
+  ensureHttpStateFile(paths)
+
+  const raw = readSpaceState<HttpStateFile>(paths.statePath)
+  const defaults = createDefaultHttpState()
+
+  if (!raw) {
+    return defaults
+  }
+
+  return {
+    version: typeof raw.version === 'number' ? raw.version : defaults.version,
+    ...('history' in raw ? { history: raw.history } : {}),
+    counters: normalizeCounters(raw.counters),
+    folders: normalizeFolders(raw.folders),
+    requests: Array.isArray(raw.requests) ? raw.requests : [],
+    environments: normalizeEnvironments(raw.environments),
+    activeEnvironmentId:
+      typeof raw.activeEnvironmentId === 'number'
+        ? raw.activeEnvironmentId
+        : null,
+  }
+}
+
+function serializeHttpState(state: HttpState) {
+  // Provisional state существует только пока .state.yaml не докачан из
+  // облака: записать его — значит затереть настоящий индекс и environments
+  // почти пустым состоянием.
+  if (state.provisional) {
+    return
+  }
+
+  state.version = Math.max(state.version, STATE_VERSION)
+
+  // Персистится явная схема: .state.yaml синхронизируется между
+  // устройствами и не должен накапливать посторонние и runtime-поля.
+  return {
+    version: state.version,
+    ...('history' in state ? { history: state.history } : {}),
+    counters: state.counters,
+    folders: state.folders,
+    requests: state.requests.map(({ filePath, id, meta }) => ({
+      filePath,
+      id,
+      ...(meta ? { meta } : {}),
+    })),
+    environments: state.environments,
+    activeEnvironmentId: state.activeEnvironmentId,
+  }
+}
+
+export function saveHttpState(paths: HttpPaths, state: HttpState): void {
+  if (state.provisional) {
+    return
+  }
+
+  writeSpaceState(paths.statePath, serializeHttpState(state))
+}
+
+export function saveHttpStateImmediate(
+  paths: HttpPaths,
+  state: HttpState,
+): void {
+  if (state.provisional) {
+    throw new Error('VAULT_HYDRATING: HTTP state is not available yet')
+  }
+
+  writeSpaceStateImmediate(paths.statePath, serializeHttpState(state))
+  if (pendingStateWriteByPath.has(paths.statePath)) {
+    throw new Error(`HTTP_STATE_FLUSH_UNRESOLVED: ${paths.statePath}`)
+  }
+}

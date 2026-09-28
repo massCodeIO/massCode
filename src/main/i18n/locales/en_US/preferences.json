@@ -2,13 +2,68 @@
   "label": "Preferences",
   "storage": {
     "section": {
-      "main": "Main",
-      "migration": "Migration"
+      "main": "Main"
     },
     "label": "Storage",
-    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
+    "moveVault": "Move Vault",
+    "movingVault": "Moving vault...",
     "count": "Count",
-    "vaultPath": "Vault Path"
+    "vaultPath": "Vault Path",
+    "vaultDoctor": {
+      "label": "Vault Doctor",
+      "description": "Scan the vault for metadata issues, sync conflicts, and safe repairs.",
+      "scan": {
+        "label": "Check vault",
+        "action": "Scan vault",
+        "scanning": "Scanning..."
+      },
+      "apply": {
+        "action": "Apply fixes",
+        "applying": "Applying..."
+      },
+      "summary": {
+        "safe": "Safe fixes",
+        "conflicts": "Conflicts",
+        "blocked": "Blocked",
+        "warnings": "Warnings"
+      },
+      "conflicts": "Needs decision",
+      "decisions": {
+        "duplicateId": "Duplicate id: {{id}}",
+        "files": "Files: {{count}}",
+        "progress": "{{selected}}/{{total}} resolved",
+        "choose": "Choose one file to keep this id. The other {{count}} will get new unique ids.",
+        "original": "Original",
+        "copy": "Copy",
+        "keepsId": "keeps id {{id}}",
+        "newId": "new id"
+      },
+      "reason": {
+        "merge-markers": "Merge markers",
+        "invalid-frontmatter": "Invalid frontmatter",
+        "conflicted-copy": "Conflicted copy"
+      },
+      "assetWarnings": {
+        "NOTES_LEGACY_ASSET": {
+          "message": "{{assetName}} is still stored in the legacy Notes assets folder.",
+          "recommendation": "Keep the whole vault synchronized and scan again after migration completes."
+        },
+        "NOTES_ASSET_MIGRATION_PENDING": {
+          "message": "{{assetName}} is not available locally for migration inspection.",
+          "recommendation": "Make the asset available locally, then scan the vault again."
+        },
+        "NOTES_ASSET_DESTINATION_CONFLICT": {
+          "message": "{{assetName}} differs between the legacy and current Notes assets folders.",
+          "recommendation": "Compare both files and keep the correct copy before removing either one."
+        },
+        "NOTES_ASSET_MISSING": {
+          "message": "{{assetName}} is missing from both Notes assets folders.",
+          "recommendation": "Restore the asset to the vault or remove its reference from the note."
+        }
+      },
+      "moreWarnings": "+{{count}} more warnings",
+      "warnings": "Warnings"
+    }
   },
   "editor": {
     "label": "Code Editor",
@@ -60,7 +115,7 @@
     }
   },
   "notesEditor": {
-    "label": "Note Editor",
+    "label": "Notes",
     "fontSize": {
       "label": "Font Size",
       "description": "Base font size in pixels for the notes editor."
@@ -88,6 +143,10 @@
       "label": "Limit Width",
       "description": "Maximum content width for comfortable reading (700px)."
     },
+    "wrapTables": {
+      "label": "Wrap Table Cells",
+      "description": "Wrap text in table cells to keep wide tables within the editor. Narrow tables keep their natural width."
+    },
     "lineNumbers": {
       "label": "Line Numbers",
       "description": "Line numbers in the gutter. Only available in Raw mode."
@@ -95,6 +154,14 @@
   },
   "appearance": {
     "label": "Appearance",
+    "dockBadge": {
+      "label": "Dock Icon Counter",
+      "none": "Don't Show",
+      "codeInbox": "Code Inbox",
+      "notesInbox": "Notes Inbox",
+      "tasksDue": "Tasks Due Today",
+      "permissionDenied": "macOS blocked the Dock counter. Allow notifications and badges for massCode in System Settings. Unsigned development builds may not support Dock badges."
+    },
     "theme": {
       "label": "Theme",
       "builtIn": "Built-in",
@@ -102,10 +169,24 @@
       "themesDir": "Themes Directory",
       "openDir": "Open Themes Directory",
       "createTemplate": "Create Theme Template",
+      "creatingTemplate": "Creating...",
+      "templateCreated": "Theme template created. Open the JSON file in the themes directory and edit it.",
+      "templateCreateError": "Failed to create theme template",
       "dirDescription": "Directory for custom JSON theme files.",
       "light": "Light",
       "dark": "Dark",
       "system": "System"
+    },
+    "dateFormat": {
+      "label": "Date format",
+      "preview": "Example: {{date}}. Applies throughout the interface.",
+      "options": {
+        "0": "By app language (default)",
+        "1": "DD.MM.YYYY",
+        "2": "MM/DD/YYYY",
+        "3": "DD/MM/YYYY",
+        "4": "YYYY-MM-DD"
+      }
     }
   },
   "language": {
@@ -123,7 +204,7 @@
     },
     "decimalPlaces": {
       "label": "Decimal Places",
-      "description": "Maximum decimal places in results (0\u201314)."
+      "description": "Maximum decimal places in results (0–14)."
     },
     "dateFormat": {
       "label": "Date Format",
@@ -146,11 +227,172 @@
       "rateLimited": "Rate limit exceeded. Try again later."
     }
   },
+  "tasks": {
+    "label": "Tasks",
+    "autoCleanup": {
+      "label": "Auto-clean completed",
+      "description": "Move completed tasks to trash on a schedule. They stay in trash until you empty it.",
+      "never": "Never",
+      "1d": "Every day",
+      "7d": "Every 7 days",
+      "30d": "Every 30 days"
+    },
+    "cleanupNow": {
+      "label": "Clean up now",
+      "button": "Move completed to trash",
+      "description": "Move all completed tasks to trash right now."
+    }
+  },
+  "http": {
+    "history": {
+      "label": "History entries per request",
+      "off": "Do not save",
+      "description": "Keep 10–100 executions per request. Lowering the limit trims older entries on the next history load or send. Disabling stops new entries and keeps existing history.",
+      "section": "History"
+    },
+    "label": "HTTP Client",
+    "wrapLines": {
+      "label": "Wrap Lines",
+      "description": "Wrap long lines in HTTP preview, request body, and response viewers."
+    },
+    "defaultPreviewFormat": {
+      "label": "Default Preview Format",
+      "description": "Format selected by default in the request preview panel.",
+      "http": "HTTP",
+      "curl": "cURL",
+      "fetch": "fetch",
+      "axios": "axios"
+    },
+    "autoSwitchToResponse": {
+      "label": "Show Response After Send",
+      "description": "Switch the bottom panel to Response when a request starts or finishes."
+    },
+    "sslCertificateVerification": {
+      "label": "SSL Certificate Verification",
+      "description": "Verify SSL certificates when sending HTTPS requests. Turn off to allow invalid or self-signed certificates."
+    },
+    "transport": {
+      "label": "Transport",
+      "timeoutMs": "Request timeout",
+      "maxResponseBytes": "Maximum response size",
+      "maxRedirects": "Maximum redirects",
+      "followRedirects": "Automatically follow redirects",
+      "skipCertificateVerification": "Skip SSL certificate verification",
+      "inherit": "Use application setting",
+      "legacy": "Default",
+      "on": "On",
+      "off": "Off",
+      "timeoutMsHint": "Set how long a request should wait for a response before timing out. To never time out, set to 0.",
+      "maxResponseBytesHint": "Set the maximum size of a response to download. To download a response of any size, set to 0.",
+      "maxRedirectsHint": "Set the maximum number of redirects to follow. To prevent redirects, set to 0.",
+      "followRedirectsHint": "Follow redirects automatically. By default, this is off for requests with scripts and GraphQL.",
+      "skipCertificateVerificationHint": "Allow requests to servers with invalid or self-signed SSL certificates.",
+      "invalid": "Value not applied. Enter a valid non-negative number. Timeout and redirects must be whole numbers; redirects cannot exceed 100.",
+      "ms": "ms",
+      "mb": "MB",
+      "protocolVersion": "HTTP version",
+      "http1": "HTTP/1.1",
+      "http2": "HTTP/2",
+      "auto": "Auto",
+      "protocolVersionHint": "Choose the HTTP version. Auto negotiates HTTP/2 over HTTPS with HTTP/1.1 fallback. HTTP/2 requires HTTPS and server support. Default: HTTP/1.1.",
+      "encodeUrl": "Encode URL automatically",
+      "encodeUrlHint": "Encode spaces and special characters in the URL. When off, enter an already encoded URL and query parameters. Default: on.",
+      "followOriginalHttpMethod": "Follow original HTTP method",
+      "followOriginalHttpMethodHint": "Keep the method and body when following redirects. When off, use GET after POST 301/302 and non-HEAD 303. Default: switch to GET only on 303.",
+      "followAuthorizationHeader": "Forward Authorization header",
+      "followAuthorizationHeaderHint": "Forward Authorization when a redirect points to another origin. Enable only for trusted destinations. Default: off.",
+      "removeRefererHeaderOnRedirect": "Remove Referer on redirect",
+      "removeRefererHeaderOnRedirectHint": "Remove the Referer header when following redirects. Default: off.",
+      "HTTP2_HTTPS_REQUIRED": "HTTP/2 requires an HTTPS URL.",
+      "HTTP2_NOT_NEGOTIATED": "The server did not negotiate HTTP/2. Choose Auto or HTTP/1.1.",
+      "HTTP_URL_ENCODING_REQUIRED": "URL encoding is off. Enter an already encoded URL and query parameters, or enable automatic encoding.",
+      "HTTP_REDIRECT_PROTOCOL": "The redirect URL must use HTTP or HTTPS.",
+      "HTTP_REDIRECT_LIMIT": "Redirect limit exceeded"
+    },
+    "interface": "Interface"
+  },
   "api": {
-    "label": "API Port",
+    "label": "API",
+    "mcp": {
+      "label": "MCP",
+      "enabled": {
+        "label": "Enable MCP access",
+        "description": "Allow agents with your API token to read and create snippets, notes, and HTTP requests, and send saved requests using the active environment. Requires API integrations to be enabled."
+      },
+      "endpoint": {
+        "label": "Server URL",
+        "description": "Connect your MCP client using this URL and the API token above. Keep massCode running. Restart the app after changing the API port."
+      },
+      "setup": "Setup guide"
+    },
     "port": {
       "label": "API Port",
       "description": "Port number for the API server (requires app restart to take effect). Valid range: 1024-65535."
+    },
+    "integrations": {
+      "label": "Integrations",
+      "enabled": {
+        "label": "Enable API integrations",
+        "description": "Allow external local clients to use protected integration endpoints."
+      },
+      "token": {
+        "label": "API token",
+        "description": "Use this token in external clients. The full token is shown only after generation.",
+        "empty": "No token generated",
+        "generate": "Generate token",
+        "replace": "Replace token",
+        "replaceConfirm": "The current token will stop working immediately. Update all connected clients with the new token.",
+        "revoke": "Revoke token"
+      }
+    }
+  },
+  "supporter": {
+    "label": "Supporter",
+    "status": {
+      "label": "Status",
+      "active": "Supporter license is active.",
+      "activeFor": "Supporter license is active for {{name}}.",
+      "description": "Thank you for supporting massCode! Donation prompts are turned off."
+    },
+    "key": {
+      "label": "License key",
+      "placeholder": "Paste your supporter key",
+      "activate": "Activate",
+      "description": "Paste the key you received after donating. Activation works offline and removes donation prompts."
+    },
+    "request": {
+      "label": "No key yet?",
+      "action": "Request a key",
+      "description": "If you have ever donated to massCode through any channel, send any proof of donation by email and you will receive a key."
+    }
+  },
+  "updates": {
+    "label": "Updates",
+    "autoUpdate": {
+      "label": "Automatic updates",
+      "description": "Download updates in the background and install on restart. When off, only notify about new versions. Major upgrades require manual installation."
+    },
+    "version": {
+      "label": "Current version"
+    }
+  },
+  "about": {
+    "label": "About",
+    "copyVersion": "Copy version",
+    "checkUpdates": "Check for updates",
+    "checkingUpdates": "Checking…",
+    "website": "Website",
+    "sourceCode": "Source code",
+    "reportIssue": "Report an issue",
+    "license": "License",
+    "support": "Support the project",
+    "checkUpdatesFailed": "Could not check for updates. Please restart massCode and try again.",
+    "runtime": {
+      "electron": "Electron",
+      "chrome": "Chrome",
+      "node": "Node.js",
+      "v8": "V8",
+      "os": "OS"
     }
   }
 }

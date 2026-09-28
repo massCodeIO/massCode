@@ -8,9 +8,14 @@ import type {
 } from './types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { enqueueCloudDownload } from '../cloudDownloads'
 import { runtimeRef } from './cache'
 import { INBOX_DIR_NAME, META_DIR_NAME, TRASH_DIR_NAME } from './constants'
-import { readFolderMetadata, writeFolderMetadataFile } from './parser'
+import {
+  isFolderMetadataInSync,
+  readFolderMetadata,
+  writeFolderMetadataFile,
+} from './parser'
 import {
   buildFolderPathMap,
   buildPathToFolderIdMap,
@@ -19,12 +24,17 @@ import {
   toPosixPath,
 } from './paths'
 import { buildSearchIndex, getSnippetSearchText } from './search'
+import { getFileAvailability, primeDatalessChecks } from './shared/cloudFiles'
 import {
   syncFolderMetadataFilesByPathMap,
   syncFoldersStateFromDiskAtRoot,
 } from './shared/folderSync'
+import { isCloudFileNotDownloadedError } from './shared/guardedRead'
 import { syncFolderUiWithFolders } from './shared/stateUtils'
+import { flushPendingStateWritesOrThrow } from './shared/stateWriter'
+import { createVaultReconciler } from './shared/vaultReconcile'
 import {
+  buildSnippetIndexMetadata,
   getStateSnippetIndexByFilePath,
   isInboxSnippetDirectory,
   isTrashSnippetDirectory,
@@ -34,8 +44,8 @@ import {
   readSnippetFromFile,
 } from './snippets'
 import {
+  createDefaultState,
   flushPendingStateWrite,
-  flushPendingStateWrites,
   loadState,
   saveState,
 } from './state'
@@ -46,14 +56,19 @@ function isTechnicalRootFolder(name: string): boolean {
   )
 }
 
-function syncFoldersWithDisk(paths: Paths, state: MarkdownState): void {
-  syncFoldersStateFromDiskAtRoot<FolderRecord, MarkdownFolderMetadataFile>({
+function syncFoldersWithDisk(
+  paths: Paths,
+  state: MarkdownState,
+): Map<string, MarkdownFolderMetadataFile> {
+  const diskFolders = syncFoldersStateFromDiskAtRoot<
+    FolderRecord,
+    MarkdownFolderMetadataFile
+  >({
     buildFolder: ({ base, metadata, previousFolder }) => {
       const defaultLanguage
         = typeof metadata.defaultLanguage === 'string'
-          && metadata.defaultLanguage.trim()
           ? metadata.defaultLanguage
-          : previousFolder?.defaultLanguage || 'plain_text'
+          : (previousFolder?.defaultLanguage ?? 'plain_text')
       const icon
         = metadata.icon === null
           ? null
@@ -74,11 +89,14 @@ function syncFoldersWithDisk(paths: Paths, state: MarkdownState): void {
     state,
   })
   syncFolderUiWithFolders(state)
+
+  return new Map(diskFolders.map(entry => [entry.path, entry.metadata]))
 }
 
 export function syncFolderMetadataFiles(
   paths: Paths,
   state: MarkdownState,
+  scannedMetadataByPath?: ReadonlyMap<string, MarkdownFolderMetadataFile>,
 ): void {
   const folderPathMap = buildFolderPathMap(state)
   syncFolderMetadataFilesByPathMap(
@@ -86,9 +104,19 @@ export function syncFolderMetadataFiles(
     folderPathMap,
     (folderPath, folder) => {
       const syncedFolder = findFolderById(state, folder.id)
-      if (syncedFolder) {
-        writeFolderMetadataFile(paths, folderPath, syncedFolder)
+      if (!syncedFolder) {
+        return
       }
+
+      const scannedMetadata = scannedMetadataByPath?.get(folderPath)
+      if (
+        scannedMetadata
+        && isFolderMetadataInSync(scannedMetadata, syncedFolder)
+      ) {
+        return
+      }
+
+      writeFolderMetadataFile(paths, folderPath, syncedFolder)
     },
   )
 }
@@ -124,28 +152,52 @@ export function syncCounters(
   state.counters.contentId = Math.max(state.counters.contentId, maxContentId)
 }
 
-export function syncStateWithDisk(paths: Paths): MarkdownState {
+function syncStateAndSnippetsWithDisk(
+  paths: Paths,
+  options?: { rewriteRecoveredLegacyFences?: boolean },
+): { snippets: MarkdownSnippet[], state: MarkdownState } {
   flushPendingStateWrite(paths)
 
   const state = loadState(paths)
-  syncFoldersWithDisk(paths, state)
+  const scannedFolderMetadataByPath = syncFoldersWithDisk(paths, state)
 
   const relativeSnippetFiles = listMarkdownFiles(paths.vaultPath)
+
+  // Один batch-вызов точной проверки dataless на весь список вместо
+  // отдельного системного вызова на каждый подозрительный файл.
+  primeDatalessChecks(
+    relativeSnippetFiles.map(filePath =>
+      path.join(paths.vaultPath, filePath),
+    ),
+  )
+
   const fileSet = new Set(relativeSnippetFiles)
   const existingIdSet = new Set<number>(state.snippets.map(item => item.id))
 
   state.snippets = state.snippets.filter(item => fileSet.has(item.filePath))
 
+  const knownSnippetFilePaths = new Set(
+    state.snippets.map(item => item.filePath),
+  )
+
   relativeSnippetFiles.forEach((filePath) => {
-    const knownSnippet = state.snippets.find(
-      item => item.filePath === filePath,
-    )
-    if (knownSnippet) {
+    if (knownSnippetFilePaths.has(filePath)) {
       return
     }
 
     const snippetAbsolutePath = path.join(paths.vaultPath, filePath)
-    let snippetId = readFrontmatterIdFromSnippetFile(snippetAbsolutePath)
+    const frontmatterId = readFrontmatterIdFromSnippetFile(snippetAbsolutePath)
+
+    // Неизвестный файл, содержимое которого сейчас недоступно (облачный
+    // плейсхолдер или сбой чтения): его frontmatter-id неизвестен, а
+    // чеканка нового id дала бы расходящиеся id после докачки. Файл
+    // появится в индексе после фоновой докачки через инкрементальный sync.
+    if (frontmatterId === 'unreadable') {
+      enqueueCloudDownload(snippetAbsolutePath)
+      return
+    }
+
+    let snippetId = frontmatterId
 
     if (!snippetId || existingIdSet.has(snippetId)) {
       snippetId = state.counters.snippetId + 1
@@ -156,12 +208,16 @@ export function syncStateWithDisk(paths: Paths): MarkdownState {
     state.snippets.push({ filePath, id: snippetId })
   })
 
-  const snippets = loadSnippets(paths, state)
+  const snippets = loadSnippets(paths, state, options)
   syncCounters(state, snippets)
-  syncFolderMetadataFiles(paths, state)
+  syncFolderMetadataFiles(paths, state, scannedFolderMetadataByPath)
   saveState(paths, state, { immediate: true })
 
-  return state
+  return { snippets, state }
+}
+
+export function syncStateWithDisk(paths: Paths): MarkdownState {
+  return syncStateAndSnippetsWithDisk(paths).state
 }
 
 export function setRuntimeCache(
@@ -205,16 +261,130 @@ export function setRuntimeCache(
   return runtimeRef.cache
 }
 
+const vaultReconciler = createVaultReconciler('markdown')
+
 export function resetRuntimeCache(): void {
-  flushPendingStateWrites()
+  flushPendingStateWritesOrThrow()
+  // Смена vault: ретраи сверки брошенного корня останавливаются, иначе они
+  // продолжили бы попытки по неактивному пути и слали storage-synced.
+  const previousVaultPath = runtimeRef.cache?.paths.vaultPath
+  if (previousVaultPath) {
+    vaultReconciler.abandon(previousVaultPath)
+  }
   runtimeRef.cache = null
 }
 
-export function syncRuntimeWithDisk(paths: Paths): MarkdownRuntimeCache {
-  const state = syncStateWithDisk(paths)
-  const snippets = loadSnippets(paths, state)
+// Полные обходы диска (например, Vault Doctor) допустимы только после
+// фоновой сверки: до неё листинги каталогов могут блокироваться сетью.
+export function isCodeVaultDiskReady(paths: Paths): boolean {
+  return vaultReconciler.isReconciled(paths.vaultPath)
+}
+
+// Пустой временный кэш на период фоновой сверки: обход диска опасен
+// синхронно (листинги dataless-каталогов материализуются сетью), поэтому
+// первый доступ отдаёт пустой список, а настоящий — согласованный с диском
+// и с getById — приходит после реконсиляции. Список из state-индекса тут
+// не строится намеренно: он бы содержал записи, чьи файлы ещё не подтянуты
+// из облака, и клик по такой записи давал бы 404. Сам state при этом
+// читается с диска: мутации в этот период работают с настоящими счётчиками
+// и тегами, а не чеканят id заново поверх существующего индекса.
+function buildProvisionalRuntimeCache(paths: Paths): MarkdownRuntimeCache {
+  if (
+    runtimeRef.cache
+    && runtimeRef.cache.paths.vaultPath === paths.vaultPath
+  ) {
+    return runtimeRef.cache
+  }
+
+  // state.json сам может быть облачным плейсхолдером: тогда loadState
+  // бросает, а кэш строится на неперсистируемом дефолтном state (флаг
+  // provisional блокирует запись и мутации до докачки).
+  let state: MarkdownState
+  try {
+    state = loadState(paths)
+  }
+  catch (error) {
+    if (!isCloudFileNotDownloadedError(error)) {
+      throw error
+    }
+
+    state = createDefaultState()
+    state.provisional = true
+  }
+
+  return setRuntimeCache(paths, state, [])
+}
+
+// Настоящая сверка с диском: читает state и файлы. Может бросить, если
+// state.json сам недокачан из облака (reconciler ретраит по этой ошибке).
+function performFullRuntimeSync(paths: Paths): MarkdownRuntimeCache {
+  const { snippets, state } = syncStateAndSnippetsWithDisk(paths, {
+    rewriteRecoveredLegacyFences: true,
+  })
 
   return setRuntimeCache(paths, state, snippets)
+}
+
+export function syncRuntimeWithDisk(paths: Paths): MarkdownRuntimeCache {
+  // Первый доступ к vault: обход диска опасен синхронно (листинги
+  // dataless-каталогов материализуются сетью), поэтому мгновенно отдаётся
+  // provisional-кэш, а настоящая сверка выполняется в фоне. Настоящая
+  // сверка вызывается напрямую (не через syncRuntimeWithDisk), иначе до
+  // пометки reconciled она снова ушла бы в provisional-ветку.
+  if (!vaultReconciler.isReconciled(paths.vaultPath)) {
+    const provisionalCache = buildProvisionalRuntimeCache(paths)
+
+    vaultReconciler.begin(paths.vaultPath, () => {
+      if (
+        runtimeRef.cache
+        && runtimeRef.cache.paths.vaultPath !== paths.vaultPath
+      ) {
+        return
+      }
+
+      performFullRuntimeSync(paths)
+    })
+
+    return provisionalCache
+  }
+
+  return performFullRuntimeSync(paths)
+}
+
+// Перепроверка недокачанных записей независимо от fs-событий: облачный
+// провайдер (особенно iCloud) материализует файл, НЕ меняя mtime/size,
+// поэтому chokidar не присылает `change` и флаг pendingCloudDownload иначе
+// висел бы вечно. Возвращает, сколько записей всё ещё недокачано.
+export function refreshPendingSnippetFiles(paths: Paths): {
+  changed: boolean
+  remaining: number
+} {
+  const cache = runtimeRef.cache
+  if (!cache || cache.paths.vaultPath !== paths.vaultPath) {
+    return { changed: false, remaining: 0 }
+  }
+
+  const pendingFilePaths = cache.snippets
+    .filter(snippet => snippet.pendingCloudDownload)
+    .map(snippet => snippet.filePath)
+
+  let changed = false
+  for (const filePath of pendingFilePaths) {
+    const absolutePath = path.join(paths.vaultPath, filePath)
+    if (getFileAvailability(absolutePath).isCloudPlaceholder) {
+      continue
+    }
+
+    if (syncSnippetFileWithDisk(paths, filePath)) {
+      changed = true
+    }
+  }
+
+  const remaining
+    = runtimeRef.cache?.snippets.filter(snippet => snippet.pendingCloudDownload)
+      .length ?? 0
+
+  return { changed, remaining }
 }
 
 export function getRuntimeCache(paths: Paths): MarkdownRuntimeCache {
@@ -228,15 +398,59 @@ export function getRuntimeCache(paths: Paths): MarkdownRuntimeCache {
   return runtimeRef.cache
 }
 
+function removeSnippetFromRuntimeMaps(
+  cache: MarkdownRuntimeCache,
+  snippet: MarkdownSnippet,
+): void {
+  cache.snippetById.delete(snippet.id)
+
+  snippet.contents.forEach((content) => {
+    const owner = cache.contentOwnerByContentId.get(content.id)
+    if (owner && owner.snippet === snippet) {
+      cache.contentOwnerByContentId.delete(content.id)
+    }
+  })
+}
+
+function upsertSnippetInRuntimeMaps(
+  cache: MarkdownRuntimeCache,
+  previousSnippet: MarkdownSnippet | null,
+  snippet: MarkdownSnippet,
+): void {
+  if (previousSnippet) {
+    removeSnippetFromRuntimeMaps(cache, previousSnippet)
+  }
+
+  cache.snippetById.set(snippet.id, snippet)
+  snippet.contents.forEach((content, contentIndex) => {
+    cache.contentOwnerByContentId.set(content.id, {
+      contentIndex,
+      snippet,
+    })
+  })
+}
+
+function commitRuntimeCache(cache: MarkdownRuntimeCache): MarkdownRuntimeCache {
+  // A new object identity signals watcher consumers that data changed,
+  // while built maps and the lazily rebuilt search index are reused.
+  runtimeRef.cache = { ...cache }
+  return runtimeRef.cache
+}
+
 export function syncSnippetFileWithDisk(
   paths: Paths,
   changedFilePath: string,
 ): MarkdownRuntimeCache | null {
-  if (
-    !runtimeRef.cache
-    || runtimeRef.cache.paths.vaultPath !== paths.vaultPath
-  ) {
+  const cache = runtimeRef.cache
+  if (!cache || cache.paths.vaultPath !== paths.vaultPath) {
     return null
+  }
+
+  // Provisional state (state.json ещё не докачан из облака) не может
+  // регистрировать файлы: id выдавались бы с дефолтных счётчиков. Событие
+  // не теряется — файл подберёт полная сверка после докачки.
+  if (cache.state.provisional) {
+    return cache
   }
 
   const normalizedFilePath = toPosixPath(changedFilePath).trim()
@@ -247,8 +461,8 @@ export function syncSnippetFileWithDisk(
     return null
   }
 
-  const state = runtimeRef.cache.state
-  const snippets = runtimeRef.cache.snippets
+  const state = cache.state
+  const snippets = cache.snippets
   const snippetAbsolutePath = path.join(paths.vaultPath, normalizedFilePath)
   const normalizedFileDirectory = normalizeDirectoryPath(
     path.posix.dirname(normalizedFilePath),
@@ -272,7 +486,7 @@ export function syncSnippetFileWithDisk(
 
   if (!snippetExistsOnDisk) {
     if (snippetIndexInState === -1) {
-      return runtimeRef.cache
+      return cache
     }
 
     const removedSnippetId = state.snippets[snippetIndexInState].id
@@ -282,71 +496,107 @@ export function syncSnippetFileWithDisk(
       snippet => snippet.id === removedSnippetId,
     )
     if (snippetIndexInRuntime !== -1) {
-      snippets.splice(snippetIndexInRuntime, 1)
+      const [removedSnippet] = snippets.splice(snippetIndexInRuntime, 1)
+      removeSnippetFromRuntimeMaps(cache, removedSnippet)
     }
 
     saveState(paths, state)
-    return setRuntimeCache(paths, state, snippets)
+    return commitRuntimeCache(cache)
   }
 
   let snippetIndexItem
     = snippetIndexInState !== -1 ? state.snippets[snippetIndexInState] : null
 
   if (!snippetIndexItem) {
-    const existingSnippetIds = new Set<number>(
-      state.snippets.map(item => item.id),
-    )
-    let snippetId = readFrontmatterIdFromSnippetFile(snippetAbsolutePath)
+    const frontmatterId = readFrontmatterIdFromSnippetFile(snippetAbsolutePath)
 
-    if (!snippetId || existingSnippetIds.has(snippetId)) {
-      snippetId = state.counters.snippetId + 1
-      state.counters.snippetId = snippetId
+    // Неизвестный файл, содержимое которого сейчас недоступно (облачный
+    // плейсхолдер или сбой чтения): регистрировать его нельзя, иначе id
+    // был бы отчеканен вслепую и разошёлся бы с frontmatter-id после
+    // докачки. Файл появится в индексе после фоновой докачки.
+    if (frontmatterId === 'unreadable') {
+      enqueueCloudDownload(snippetAbsolutePath)
+      return cache
     }
 
-    snippetIndexItem = {
-      filePath: normalizedFilePath,
-      id: snippetId,
+    let snippetId = frontmatterId
+
+    // Внешнее перемещение (mv A.md → B.md) может прислать add нового пути
+    // раньше unlink старого: если frontmatter-id принадлежит записи, файла
+    // которой уже нет на диске, это тот же сниппет — перенацеливаем запись,
+    // сохраняя id, вместо аллокации нового.
+    if (snippetId) {
+      const ownerEntry = state.snippets.find(item => item.id === snippetId)
+
+      if (
+        ownerEntry
+        && !fs.pathExistsSync(path.join(paths.vaultPath, ownerEntry.filePath))
+      ) {
+        ownerEntry.filePath = normalizedFilePath
+        snippetIndexItem = ownerEntry
+      }
     }
-    state.snippets.push(snippetIndexItem)
+
+    if (!snippetIndexItem) {
+      const existingSnippetIds = new Set<number>(
+        state.snippets.map(item => item.id),
+      )
+
+      if (!snippetId || existingSnippetIds.has(snippetId)) {
+        snippetId = state.counters.snippetId + 1
+        state.counters.snippetId = snippetId
+      }
+
+      snippetIndexItem = {
+        filePath: normalizedFilePath,
+        id: snippetId,
+      }
+      state.snippets.push(snippetIndexItem)
+    }
   }
   else {
     snippetIndexItem.filePath = normalizedFilePath
   }
 
+  const changedFileAvailability = getFileAvailability(snippetAbsolutePath)
   const syncedSnippet = readSnippetFromFile(
     paths,
     snippetIndexItem,
     pathToFolderIdMap,
+    changedFileAvailability,
   )
 
   if (!syncedSnippet) {
     return null
   }
 
+  // Индекс метаданных обновляется по реально прочитанному файлу, чтобы
+  // следующий холодный старт собрал запись без чтения.
+  if (!syncedSnippet.pendingCloudDownload && changedFileAvailability.stats) {
+    snippetIndexItem.meta = buildSnippetIndexMetadata(
+      syncedSnippet,
+      changedFileAvailability.stats,
+    )
+  }
+
   const snippetIndexInRuntime = snippets.findIndex(
     snippet => snippet.id === syncedSnippet.id,
   )
+  let previousSnippet: MarkdownSnippet | null = null
   if (snippetIndexInRuntime === -1) {
     snippets.push(syncedSnippet)
   }
   else {
+    previousSnippet = snippets[snippetIndexInRuntime]
     snippets[snippetIndexInRuntime] = syncedSnippet
   }
 
-  const maxSnippetContentId = syncedSnippet.contents.reduce(
-    (maxId, content) => Math.max(maxId, content.id),
-    0,
-  )
-  state.counters.snippetId = Math.max(
-    state.counters.snippetId,
-    syncedSnippet.id,
-  )
-  state.counters.contentId = Math.max(
-    state.counters.contentId,
-    maxSnippetContentId,
-  )
+  upsertSnippetInRuntimeMaps(cache, previousSnippet, syncedSnippet)
+  syncCounters(state, snippets)
 
+  // saveState marks the runtime search index dirty, so it is rebuilt
+  // lazily on the next search instead of eagerly on every file change.
   saveState(paths, state)
 
-  return setRuntimeCache(paths, state, snippets)
+  return commitRuntimeCache(cache)
 }

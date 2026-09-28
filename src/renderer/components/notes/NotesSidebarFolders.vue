@@ -3,6 +3,7 @@ import type { TreeNode as TreeNodeType } from '@/components/ui/tree/types'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { Tree as UiTree } from '@/components/ui/tree'
 import {
+  useDeleteShortcut,
   useNoteFolderDragDrop,
   useNoteFolders,
   useNotes,
@@ -11,8 +12,18 @@ import {
   useResizeHandle,
 } from '@/composables'
 import { i18n, store } from '@/electron'
+import { router, RouterName } from '@/router'
+import {
+  getEntryNameConflictMessage,
+  getEntryNameValidationMessage,
+} from '@/utils'
 import { Folder, Plus } from 'lucide-vue-next'
+import { useRoute } from 'vue-router'
 import { LAYOUT_DEFAULTS } from '~/main/store/constants'
+import {
+  getVisibleSelectedFolderIds,
+  shouldHandleFolderClick,
+} from './notesSidebarSelection'
 
 const tagsHandleRef = ref<HTMLElement>()
 
@@ -52,15 +63,18 @@ const {
 const {
   createNoteFolderAndSelect,
   folders,
+  deleteSelectedNoteFolders,
   updateNoteFolder,
   getFolderByIdFromTree,
   selectedFolderIds,
+  renameFolderId,
   selectNoteFolder,
 } = useNoteFolders()
 const { getNotes, withNotesLoading, selectFirstNote, isRestoreStateBlocked }
   = useNotes()
 const { clearSearch } = useNoteSearch()
 const { onDragNode, onExternalDrop } = useNoteFolderDragDrop()
+const route = useRoute()
 
 // --- Data mapping ---
 
@@ -75,14 +89,33 @@ function mapToTreeNode(folder: any): TreeNodeType {
 
 const treeData = computed(() => folders.value?.map(mapToTreeNode) || [])
 
+const foldersById = computed(() => {
+  const map = new Map<number, any>()
+  for (const folder of flattenFolders(folders.value || [])) {
+    map.set(folder.id, folder)
+  }
+  return map
+})
+
 const selectedIds = computed({
-  get: () => selectedFolderIds.value as (string | number)[],
+  get: () =>
+    getVisibleSelectedFolderIds(
+      typeof route.name === 'string' ? route.name : undefined,
+      selectedFolderIds.value,
+    ) as (string | number)[],
   set: (val) => {
     selectedFolderIds.value = val as number[]
   },
 })
 
 const editableId = ref<string | number | null>(null)
+
+watch(renameFolderId, (id) => {
+  if (id !== null) {
+    editableId.value = id
+    renameFolderId.value = null
+  }
+})
 
 const focusedId = computed({
   get: () => focusedFolderId.value as string | number | undefined,
@@ -102,6 +135,51 @@ const highlightedIds = computed({
 // --- Context menu state ---
 
 const contextNode = ref<any>(null)
+
+function flattenFolders(nodes: any[], acc: any[] = []): any[] {
+  for (const folder of nodes) {
+    acc.push(folder)
+    if (folder.children?.length) {
+      flattenFolders(folder.children, acc)
+    }
+  }
+
+  return acc
+}
+
+function hasSiblingFolderConflict(node: TreeNodeType, value: string): boolean {
+  const folderId = Number(node.id)
+  const folder = getFolderByIdFromTree(folders.value, folderId)
+  if (!folder) {
+    return false
+  }
+
+  const normalized = value.trim().toLowerCase()
+  if (!normalized || normalized === folder.name.toLowerCase()) {
+    return false
+  }
+
+  const parentId = folder.parentId ?? null
+  return flattenFolders(folders.value || []).some(
+    sibling =>
+      sibling.id !== folderId
+      && (sibling.parentId ?? null) === parentId
+      && sibling.name.toLowerCase() === normalized,
+  )
+}
+
+function getFolderValidationMessage(node: TreeNodeType, value: string) {
+  const message = getEntryNameValidationMessage(value, i18n.t.bind(i18n))
+  if (message) {
+    return message
+  }
+
+  if (hasSiblingFolderConflict(node, value)) {
+    return getEntryNameConflictMessage('folder', i18n.t.bind(i18n))
+  }
+
+  return ''
+}
 
 // --- Event handlers ---
 
@@ -128,9 +206,20 @@ async function onClickNode({
     return
   }
 
-  if (notesState.folderId !== id || selectedFolderIds.value.length > 1) {
+  if (
+    shouldHandleFolderClick(
+      typeof route.name === 'string' ? route.name : undefined,
+      notesState.folderId,
+      id,
+      selectedFolderIds.value.length,
+    )
+  ) {
     isRestoreStateBlocked.value = true
     clearSearch()
+
+    if (route.name !== RouterName.notesSpace) {
+      await router.push({ name: RouterName.notesSpace })
+    }
 
     await withNotesLoading(async () => {
       await selectNoteFolder(id)
@@ -173,6 +262,12 @@ function onUpdateLabel({ node, value }: { node: TreeNodeType, value: string }) {
 function onCancelEdit() {
   editableId.value = null
 }
+
+useDeleteShortcut({
+  rootSelector: '[data-notes-folders-tree]',
+  isEnabled: () => focusedFolderId.value !== undefined,
+  onDelete: () => deleteSelectedNoteFolders(focusedFolderId.value),
+})
 </script>
 
 <template>
@@ -180,6 +275,7 @@ function onCancelEdit() {
     <template #action>
       <UiActionButton
         :tooltip="i18n.t('action.new.folder')"
+        shortcut="CommandOrControl+Shift+N"
         @click="createNoteFolderAndSelect()"
       >
         <Plus class="h-4 w-4" />
@@ -187,17 +283,23 @@ function onCancelEdit() {
     </template>
   </SidebarSectionHeader>
   <div class="flex min-h-0 flex-1 flex-col">
-    <div class="min-h-0 flex-1">
-      <div class="min-h-0 flex-1 overflow-y-auto">
+    <div class="min-h-0 flex-1 overflow-hidden">
+      <div
+        data-notes-folders-tree
+        class="h-full min-h-0"
+      >
         <ContextMenu.ContextMenu>
           <ContextMenu.ContextMenuTrigger as-child>
             <UiTree
               v-if="treeData.length"
+              virtual
+              :active-id="selectedIds.length === 1 ? selectedIds[0] : undefined"
               :model-value="treeData"
               :selected-ids="selectedIds"
               :editable-id="editableId"
               :focused-id="focusedId"
               :highlighted-ids="highlightedIds"
+              :get-validation-message="getFolderValidationMessage"
               class="h-full px-0.5 pb-1"
               @click-node="onClickNode"
               @dblclick-node="onDblclickNode"
@@ -215,10 +317,10 @@ function onCancelEdit() {
               <template #icon="{ node }">
                 <div class="mr-1.5 flex flex-shrink-0 items-center">
                   <UiFolderIcon
-                    v-if="getFolderByIdFromTree(folders, Number(node.id))?.icon"
-                    :name="
-                      getFolderByIdFromTree(folders, Number(node.id))!.icon!
-                    "
+                    v-if="foldersById.get(Number(node.id))?.icon"
+                    :folder-id="Number(node.id)"
+                    :name="foldersById.get(Number(node.id))!.icon!"
+                    space-id="notes"
                   />
                   <Folder
                     v-else
@@ -242,7 +344,7 @@ function onCancelEdit() {
     </div>
     <div
       ref="tagsHandleRef"
-      class="before:bg-border hover:before:bg-primary data-[resizing]:before:bg-primary relative z-10 flex h-px shrink-0 cursor-row-resize items-center justify-center bg-transparent before:absolute before:inset-x-0 before:top-1/2 before:h-px before:-translate-y-1/2 before:transition-[background-color,height] before:duration-150 before:content-[''] after:absolute after:inset-x-0 after:top-1/2 after:h-3 after:-translate-y-1/2 after:content-[''] hover:before:h-0.5 hover:before:delay-200 data-[resizing]:before:h-0.5"
+      class="before:bg-border hover:before:bg-primary data-[resizing]:before:bg-primary relative z-10 -mx-1 flex h-px shrink-0 cursor-row-resize items-center justify-center bg-transparent before:absolute before:inset-x-0 before:top-1/2 before:h-px before:-translate-y-1/2 before:transition-[background-color,height] before:duration-150 before:content-[''] after:absolute after:inset-x-0 after:top-1/2 after:h-3 after:-translate-y-1/2 after:content-[''] hover:before:h-0.5 hover:before:delay-200 data-[resizing]:before:h-0.5"
     />
     <div
       :style="{ height: `${tagsHeight}px` }"

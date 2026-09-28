@@ -100,48 +100,52 @@
       }
     },
     "textToUnicode": {
-      "label": "文本转Unicode",
-      "description": "将文本转换为Unicode，反之亦然",
+      "label": "文本转 Unicode",
+      "description": "将文本转换为 Unicode，反之亦然",
       "modes": {
         "textToUnicode": "文本 → Unicode",
         "unicodeToText": "Unicode → 文本"
       }
     },
     "textToAscii": {
-      "label": "文本转ASCII Binary",
-      "description": "将文本转换为ASCII binary，反之亦然",
+      "label": "文本转 ASCII 二进制",
+      "description": "将文本转换为 ASCII 二进制，反之亦然",
       "modes": {
         "textToAscii": "文本 → ASCII",
         "asciiToText": "ASCII → 文本"
       }
     },
+    "lineBreakNormalizer": {
+      "label": "换行符规范化",
+      "description": "移除硬换行并对粘贴的终端文本进行规范化处理"
+    },
     "base64": {
-      "label": "Base64 Encoder / Decoder",
-      "description": "将文本编码或解码为Base64",
+      "label": "Base64 编解码器",
+      "description": "将文本编码或解码为 Base64",
       "modes": {
         "textToBase64": "文本 → Base64",
         "base64ToText": "Base64 → 文本"
       }
     },
     "jsonToYaml": {
-      "label": "JSON转YAML",
-      "description": "将JSON转换为YAML，反之亦然",
+      "label": "JSON 转 YAML",
+      "description": "将 JSON 转换为 YAML，反之亦然",
       "modes": {
         "jsonToYaml": "JSON → YAML",
         "yamlToJson": "YAML → JSON"
       }
     },
     "jsonToToml": {
-      "label": "JSON转TOML",
-      "description": "将JSON转换为TOML，反之亦然",
+      "label": "JSON 转 TOML",
+      "description": "将 JSON 转换为 TOML，反之亦然",
       "modes": {
         "jsonToToml": "JSON → TOML",
         "tomlToJson": "TOML → JSON"
       }
     },
     "jsonToXml": {
-      "label": "JSON转XML",
-      "description": "将JSON转换为XML，反之亦然",
+      "label": "JSON 转 XML",
+      "description": "将 JSON 转换为 XML，反之亦然",
       "modes": {
         "jsonToXml": "JSON → XML",
         "xmlToJson": "XML → JSON"
@@ -159,7 +163,7 @@
       "description": "从文本生成哈希值"
     },
     "hmac": {
-      "label": "HMAC生成器",
+      "label": "HMAC 生成器",
       "description": "生成由密钥和消息组成的基于哈希的消息认证码（HMAC）"
     },
     "password": {
@@ -167,27 +171,46 @@
       "description": "生成安全密码"
     },
     "uuid": {
-      "label": "UUID生成器",
+      "label": "UUID 生成器",
       "description": "生成通用唯一标识符（UUID）"
     }
   },
   "web": {
     "label": "网络",
     "urlParser": {
-      "label": "URL解析器",
-      "description": "将URL解析为其组件"
+      "label": "URL 解析器",
+      "description": "将 URL 解析为其组件"
     },
     "urlEncoder": {
-      "label": "URL Encoder / Decoder",
-      "description": "编码或解码URL",
+      "label": "URL 编解码器",
+      "description": "编码或解码 URL",
       "modes": {
-        "urlEncode": "URL Encode",
-        "urlDecode": "URL Decode"
+        "urlEncode": "URL 编码",
+        "urlDecode": "URL 解码"
       }
     },
     "slugify": {
       "label": "Slugify",
-      "description": "将文本转换为URL友好的slug"
+      "description": "将文本转换为 URL 友好的 slug"
+    }
+  },
+  "compare": {
+    "label": "比较",
+    "jsonDiff": {
+      "label": "JSON 差异对比",
+      "description": "比较并可视化两个 JSON 文本之间的差异",
+      "original": "原始",
+      "modified": "修改后",
+      "filters": {
+        "added": "新增",
+        "removed": "删除",
+        "modified": "修改"
+      },
+      "empty": "在两个文本区域内粘贴 JSON 即可查看差异",
+      "errors": {
+        "invalidJson": "无效的 JSON",
+        "diffFailed": "差异检查失败"
+      }
     }
   },
   "form": {
@@ -198,7 +221,7 @@
     "inputUrl": "输入URL",
     "outputUrl": "输出URL",
     "parsedUrl": "解析的URL",
-    "splitQueryString": "分割Query String",
+    "splitQueryString": "分割查询字符串",
     "key": "键",
     "value": "值",
     "component": "组件",
@@ -218,7 +241,7 @@
       "text": "输入文本",
       "value": "输入值",
       "secretKey": "输入密钥",
-      "url": "输入URL"
+      "url": "输入 URL"
     }
   }
 }

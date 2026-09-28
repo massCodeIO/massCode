@@ -7,7 +7,7 @@ type Position = 'after' | 'before' | 'center'
 
 export function useNoteFolderDragDrop() {
   const { folders, updateNoteFolder, getFolderByIdFromTree } = useNoteFolders()
-  const { getNotes, selectFirstNote, updateNote } = useNotes()
+  const { selectFirstNote, updateNotes } = useNotes()
   const { displayedNotes } = useNoteSearch()
 
   async function onDragNode({
@@ -109,11 +109,12 @@ export function useNoteFolderDragDrop() {
     if (matchedNotes.every(n => n.folder?.id === folderId && !n.isDeleted))
       return
 
-    for (const note of matchedNotes) {
-      await updateNote(note.id, { folderId, isDeleted: 0 })
-    }
-
-    await getNotes()
+    // Один bulk-вызов: PATCH выполняются параллельно, список
+    // перезагружается один раз, а не на каждую заметку.
+    await updateNotes(
+      matchedNotes.map(note => note.id),
+      matchedNotes.map(() => ({ folderId, isDeleted: 0 })),
+    )
     selectFirstNote()
   }
 

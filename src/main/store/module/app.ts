@@ -1,7 +1,16 @@
 import type {
   AppStore,
   CodeState,
+  CommandPaletteRecentEntry,
+  CommandPaletteRecentTarget,
+  CommandPaletteUsageEntry,
+  CommandPaletteUsageTarget,
+  ContentSortState,
+  DonationsState,
+  DrawingViewportState,
+  HttpState,
   NotesEditorMode,
+  NotesRouteName,
   NotesState,
   SpaceId,
   SpaceLayoutMode,
@@ -15,33 +24,138 @@ import {
   readNumber,
   readOptionalNumber,
   readOptionalNumberArray,
+  readString,
   replaceStoreIfChanged,
 } from '../sanitize'
 
 const APP_STORE_DEFAULTS: AppStore = {
+  aiPromptHistory: [],
   window: {
     bounds: {},
+    devToolsOpen: true,
   },
   ui: {
     compactListMode: false,
   },
   code: {
     selection: {},
+    contentSort: {
+      sort: 'createdAt',
+      order: 'DESC',
+    },
     layout: {
       mode: 'all-panels',
+      inspectorOpen: false,
+      inspectorWidth: 340,
       tagsListHeight: LAYOUT_DEFAULTS.tags.height,
+    },
+  },
+  http: {
+    selection: {},
+    contentSort: {
+      sort: 'createdAt',
+      order: 'DESC',
+    },
+    layout: {
+      mode: 'all-panels',
+      inspectorOpen: false,
+      inspectorWidth: 340,
+      bottomOpen: true,
+      environmentsListHeight: LAYOUT_DEFAULTS.http.environmentsPanel.height,
     },
   },
   notes: {
     selection: {},
+    contentSort: {
+      sort: 'createdAt',
+      order: 'DESC',
+    },
+    route: 'notes-space',
     editorMode: 'livePreview',
+    hideCompletedTasksInFolders: false,
+    lastTasksCleanupAt: 0,
+    dashboard: {
+      widgets: {
+        stats: true,
+        activityHeatmap: true,
+        recent: true,
+        graphPreview: true,
+        topLinked: true,
+      },
+    },
     layout: {
       mode: 'all-panels',
       tagsListHeight: LAYOUT_DEFAULTS.tags.height,
     },
   },
+  math: {
+    contentSort: {
+      sort: 'createdAt',
+      order: 'DESC',
+    },
+  },
   notifications: {
     lastNotifiedUpdateVersion: '',
+    lastWhatsNewVersion: '',
+  },
+  license: {
+    key: null,
+    name: null,
+    email: null,
+  },
+  commandPalette: {
+    recent: [],
+    usage: [],
+  },
+  donations: {
+    lastActiveDay: '',
+    currentStreak: 0,
+    copies: {
+      code: 0,
+      http: 0,
+      notes: 0,
+      math: 0,
+      tools: 0,
+      drawings: 0,
+    },
+    created: {
+      code: 0,
+      http: 0,
+      notes: 0,
+      math: 0,
+      drawings: 0,
+    },
+    sent: {
+      http: 0,
+    },
+    lastShownCopyMilestones: {
+      code: 0,
+      http: 0,
+      notes: 0,
+      math: 0,
+      tools: 0,
+      drawings: 0,
+    },
+    lastShownCreatedMilestones: {
+      code: 0,
+      http: 0,
+      notes: 0,
+      math: 0,
+      drawings: 0,
+    },
+    lastShownSentMilestones: {
+      http: 0,
+    },
+    shownStreakMilestones: [],
+    lastGreetingDay: '',
+  },
+  drawings: {
+    contentSort: {
+      sort: 'createdAt',
+      order: 'DESC',
+    },
+    activeDrawingId: null,
+    viewport: {},
   },
   activeSpaceId: 'code',
 }
@@ -58,6 +172,28 @@ function sanitizeCodeState(value: unknown): CodeState {
     state.folderId = source.folderId
   if (typeof source.tagId === 'number')
     state.tagId = source.tagId
+  if (typeof source.libraryFilter === 'string')
+    state.libraryFilter = source.libraryFilter
+  return state
+}
+
+function sanitizeHttpState(value: unknown): HttpState {
+  const source = asRecord(value)
+  const state: HttpState = {}
+
+  if (
+    source.activePanel === 'request'
+    || source.activePanel === 'folder'
+    || source.activePanel === 'environments'
+    || source.activePanel === 'runner'
+  ) {
+    state.activePanel = source.activePanel
+  }
+
+  if (typeof source.requestId === 'number')
+    state.requestId = source.requestId
+  if (typeof source.folderId === 'number')
+    state.folderId = source.folderId
   if (typeof source.libraryFilter === 'string')
     state.libraryFilter = source.libraryFilter
   return state
@@ -102,18 +238,305 @@ function getLegacyNotesLayoutMode(
   return source.isListHidden === true ? 'editor-only' : 'list-editor'
 }
 
+function sanitizeDonations(value: unknown): DonationsState {
+  const source = asRecord(value)
+  const copiesSource = asRecord(source.copies)
+  const createdSource = asRecord(source.created)
+  const sentSource = asRecord(source.sent)
+  const copyMilestonesSource = asRecord(source.lastShownCopyMilestones)
+  const createdMilestonesSource = asRecord(source.lastShownCreatedMilestones)
+  const sentMilestonesSource = asRecord(source.lastShownSentMilestones)
+  const defaults = APP_STORE_DEFAULTS.donations
+  const shownStreaks = readOptionalNumberArray(source, 'shownStreakMilestones')
+
+  return {
+    lastActiveDay: readString(source, 'lastActiveDay', defaults.lastActiveDay),
+    currentStreak: readNumber(source, 'currentStreak', defaults.currentStreak),
+    copies: {
+      code: readNumber(copiesSource, 'code', defaults.copies.code),
+      http: readNumber(copiesSource, 'http', defaults.copies.http),
+      notes: readNumber(copiesSource, 'notes', defaults.copies.notes),
+      math: readNumber(copiesSource, 'math', defaults.copies.math),
+      tools: readNumber(copiesSource, 'tools', defaults.copies.tools),
+      drawings: readNumber(copiesSource, 'drawings', defaults.copies.drawings),
+    },
+    created: {
+      code: readNumber(createdSource, 'code', defaults.created.code),
+      http: readNumber(createdSource, 'http', defaults.created.http),
+      notes: readNumber(createdSource, 'notes', defaults.created.notes),
+      math: readNumber(createdSource, 'math', defaults.created.math),
+      drawings: readNumber(
+        createdSource,
+        'drawings',
+        defaults.created.drawings,
+      ),
+    },
+    sent: {
+      http: readNumber(sentSource, 'http', defaults.sent.http),
+    },
+    lastShownCopyMilestones: {
+      code: readNumber(
+        copyMilestonesSource,
+        'code',
+        defaults.lastShownCopyMilestones.code,
+      ),
+      http: readNumber(
+        copyMilestonesSource,
+        'http',
+        defaults.lastShownCopyMilestones.http,
+      ),
+      notes: readNumber(
+        copyMilestonesSource,
+        'notes',
+        defaults.lastShownCopyMilestones.notes,
+      ),
+      math: readNumber(
+        copyMilestonesSource,
+        'math',
+        defaults.lastShownCopyMilestones.math,
+      ),
+      tools: readNumber(
+        copyMilestonesSource,
+        'tools',
+        defaults.lastShownCopyMilestones.tools,
+      ),
+      drawings: readNumber(
+        copyMilestonesSource,
+        'drawings',
+        defaults.lastShownCopyMilestones.drawings,
+      ),
+    },
+    lastShownCreatedMilestones: {
+      code: readNumber(
+        createdMilestonesSource,
+        'code',
+        defaults.lastShownCreatedMilestones.code,
+      ),
+      http: readNumber(
+        createdMilestonesSource,
+        'http',
+        defaults.lastShownCreatedMilestones.http,
+      ),
+      notes: readNumber(
+        createdMilestonesSource,
+        'notes',
+        defaults.lastShownCreatedMilestones.notes,
+      ),
+      math: readNumber(
+        createdMilestonesSource,
+        'math',
+        defaults.lastShownCreatedMilestones.math,
+      ),
+      drawings: readNumber(
+        createdMilestonesSource,
+        'drawings',
+        defaults.lastShownCreatedMilestones.drawings,
+      ),
+    },
+    lastShownSentMilestones: {
+      http: readNumber(
+        sentMilestonesSource,
+        'http',
+        defaults.lastShownSentMilestones.http,
+      ),
+    },
+    shownStreakMilestones: shownStreaks ?? [...defaults.shownStreakMilestones],
+    lastGreetingDay: readString(
+      source,
+      'lastGreetingDay',
+      defaults.lastGreetingDay,
+    ),
+  }
+}
+
+function sanitizeContentSort(value: unknown): ContentSortState {
+  const source = asRecord(value)
+
+  return {
+    sort: readEnum(
+      source,
+      'sort',
+      ['createdAt', 'updatedAt', 'name'] as const,
+      'createdAt',
+    ),
+    order: readEnum(source, 'order', ['ASC', 'DESC'] as const, 'DESC'),
+  }
+}
+
+function sanitizeCommandPaletteRecent(
+  value: unknown,
+): CommandPaletteRecentEntry[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  const allowedTargets = [
+    'space',
+    'snippet',
+    'note',
+    'http-request',
+  ] satisfies CommandPaletteRecentTarget[]
+  const allowedSpaces = [
+    'code',
+    'tools',
+    'math',
+    'notes',
+    'http',
+    'drawings',
+  ] satisfies SpaceId[]
+  const entries: CommandPaletteRecentEntry[] = []
+  const seen = new Set<string>()
+
+  for (const rawEntry of value) {
+    const entry = asRecord(rawEntry)
+    const id = entry.id
+    const target = entry.target
+    const targetId = entry.targetId
+    const title = entry.title
+    const subtitle = entry.subtitle
+    const spaceId = entry.spaceId
+    const openedAt = entry.openedAt
+
+    if (
+      typeof id !== 'string'
+      || seen.has(id)
+      || typeof target !== 'string'
+      || !allowedTargets.includes(target as CommandPaletteRecentTarget)
+      || typeof targetId !== 'string'
+      || typeof title !== 'string'
+      || typeof subtitle !== 'string'
+      || typeof spaceId !== 'string'
+      || !allowedSpaces.includes(spaceId as SpaceId)
+      || typeof openedAt !== 'number'
+      || !Number.isFinite(openedAt)
+    ) {
+      continue
+    }
+
+    seen.add(id)
+    entries.push({
+      id,
+      target: target as CommandPaletteRecentTarget,
+      targetId,
+      title,
+      subtitle,
+      spaceId: spaceId as SpaceId,
+      openedAt,
+    })
+  }
+
+  return entries.slice(0, 30)
+}
+
+function sanitizeCommandPaletteUsage(
+  value: unknown,
+): CommandPaletteUsageEntry[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  const allowedTargets = [
+    'space',
+    'snippet',
+    'note',
+    'http-request',
+    'command',
+  ] satisfies CommandPaletteUsageTarget[]
+  const entries: CommandPaletteUsageEntry[] = []
+  const seen = new Set<string>()
+
+  for (const rawEntry of value) {
+    const entry = asRecord(rawEntry)
+    const id = entry.id
+    const target = entry.target
+    const targetId = entry.targetId
+    const openedAt = entry.openedAt
+    const openCount = entry.openCount
+    const lastQuery = entry.lastQuery
+
+    if (
+      typeof id !== 'string'
+      || seen.has(id)
+      || typeof target !== 'string'
+      || !allowedTargets.includes(target as CommandPaletteUsageTarget)
+      || typeof targetId !== 'string'
+      || typeof openedAt !== 'number'
+      || !Number.isFinite(openedAt)
+      || typeof openCount !== 'number'
+      || !Number.isFinite(openCount)
+      || openCount < 1
+      || (lastQuery !== undefined && typeof lastQuery !== 'string')
+    ) {
+      continue
+    }
+
+    seen.add(id)
+    entries.push({
+      id,
+      target: target as CommandPaletteUsageTarget,
+      targetId,
+      openedAt,
+      openCount,
+      ...(lastQuery ? { lastQuery } : {}),
+    })
+  }
+
+  return entries.slice(0, 100)
+}
+
+function sanitizeDrawingViewports(
+  value: unknown,
+): Record<string, DrawingViewportState> {
+  const source = asRecord(value)
+  const result: Record<string, DrawingViewportState> = {}
+
+  for (const [drawingId, rawViewport] of Object.entries(source)) {
+    const viewport = asRecord(rawViewport)
+
+    if (
+      typeof viewport.scrollX === 'number'
+      && typeof viewport.scrollY === 'number'
+      && typeof viewport.zoom === 'number'
+      && viewport.zoom > 0
+    ) {
+      result[drawingId] = {
+        scrollX: viewport.scrollX,
+        scrollY: viewport.scrollY,
+        zoom: viewport.zoom,
+      }
+    }
+  }
+
+  return result
+}
+
 function sanitizeAppStore(value: unknown): AppStore {
   const source = asRecord(value)
   const windowSource = asRecord(source.window)
   const codeSource = asRecord(source.code)
+  const httpSource = asRecord(source.http)
   const notesSource = asRecord(source.notes)
   const notificationsSource = asRecord(source.notifications)
+  const commandPaletteSource = asRecord(source.commandPalette)
   const legacySizes = asRecord(source.sizes)
   const codeLayoutSource = asRecord(codeSource.layout)
+  const httpLayoutSource = asRecord(httpSource.layout)
   const notesLayoutSource = asRecord(notesSource.layout)
 
   return {
+    aiPromptHistory: Array.isArray(source.aiPromptHistory)
+      ? source.aiPromptHistory
+          .filter(
+            (value): value is string =>
+              typeof value === 'string' && Boolean(value.trim()),
+          )
+          .slice(-100)
+      : [],
     window: {
+      devToolsOpen:
+        typeof windowSource.devToolsOpen === 'boolean'
+          ? windowSource.devToolsOpen
+          : APP_STORE_DEFAULTS.window.devToolsOpen,
       bounds: isRecord(windowSource.bounds)
         ? windowSource.bounds
         : isRecord(source.bounds)
@@ -134,12 +557,18 @@ function sanitizeAppStore(value: unknown): AppStore {
           ? codeSource.selection
           : source.state,
       ),
+      contentSort: sanitizeContentSort(codeSource.contentSort),
       layout: {
         mode: readEnum(
           codeLayoutSource,
           'mode',
           ['all-panels', 'list-editor', 'editor-only'] as const,
           getLegacyCodeLayoutMode(asRecord(source.state)),
+        ),
+        inspectorOpen: codeLayoutSource.inspectorOpen === true,
+        inspectorWidth: Math.max(
+          240,
+          readNumber(codeLayoutSource, 'inspectorWidth', 340),
         ),
         tagsListHeight: (() => {
           const raw = readNumber(
@@ -162,12 +591,81 @@ function sanitizeAppStore(value: unknown): AppStore {
           ?? undefined,
       },
     },
+    http: {
+      selection: sanitizeHttpState(httpSource.selection),
+      contentSort: sanitizeContentSort(httpSource.contentSort),
+      layout: {
+        mode: readEnum(
+          httpLayoutSource,
+          'mode',
+          ['all-panels', 'list-editor', 'editor-only'] as const,
+          APP_STORE_DEFAULTS.http.layout.mode,
+        ),
+        environmentsListHeight: (() => {
+          const raw = readNumber(
+            httpLayoutSource,
+            'environmentsListHeight',
+            LAYOUT_DEFAULTS.http.environmentsPanel.height,
+          )
+          return raw < LAYOUT_DEFAULTS.http.environmentsPanel.min
+            ? LAYOUT_DEFAULTS.http.environmentsPanel.height
+            : raw
+        })(),
+        inspectorOpen: httpLayoutSource.inspectorOpen === true,
+        bottomOpen: httpLayoutSource.bottomOpen !== false,
+        inspectorWidth: Math.max(
+          260,
+          readNumber(
+            httpLayoutSource,
+            'inspectorWidth',
+            APP_STORE_DEFAULTS.http.layout.inspectorWidth ?? 340,
+          ),
+        ),
+        collectionsOpen: httpLayoutSource.collectionsOpen !== false,
+        environmentsOpen: httpLayoutSource.environmentsOpen !== false,
+        trashOpen: httpLayoutSource.trashOpen === true,
+        unfiledOpen: httpLayoutSource.unfiledOpen !== false,
+        favoritesOnly: httpLayoutSource.favoritesOnly === true,
+        trashHeight: readOptionalNumber(httpLayoutSource, 'trashHeight'),
+        treeWidth: readOptionalNumber(httpLayoutSource, 'treeWidth'),
+        threePanel: readOptionalNumberArray(httpLayoutSource, 'threePanel'),
+        twoPanel: readOptionalNumber(httpLayoutSource, 'twoPanel') ?? undefined,
+        responsePanelHeight: (() => {
+          const raw = readOptionalNumber(
+            httpLayoutSource,
+            'responsePanelHeight',
+          )
+          if (raw === undefined) {
+            return undefined
+          }
+          return raw < LAYOUT_DEFAULTS.http.responsePanel.min
+            ? LAYOUT_DEFAULTS.http.responsePanel.height
+            : raw
+        })(),
+      },
+    },
     notes: {
       selection: sanitizeNotesState(
         Object.keys(asRecord(notesSource.selection)).length > 0
           ? notesSource.selection
           : source.notesState,
       ),
+      contentSort: sanitizeContentSort(notesSource.contentSort),
+      route: readEnum(
+        notesSource,
+        'route',
+        ['notes-space', 'notes-space/dashboard', 'notes-space/graph'] as const,
+        readEnum(
+          source,
+          'notesRoute',
+          [
+            'notes-space',
+            'notes-space/dashboard',
+            'notes-space/graph',
+          ] as const,
+          APP_STORE_DEFAULTS.notes.route,
+        ) as NotesRouteName,
+      ) as NotesRouteName,
       editorMode: readEnum(
         notesSource,
         'editorMode',
@@ -179,7 +677,56 @@ function sanitizeAppStore(value: unknown): AppStore {
           APP_STORE_DEFAULTS.notes.editorMode,
         ) as NotesEditorMode,
       ),
+      hideCompletedTasksInFolders:
+        typeof notesSource.hideCompletedTasksInFolders === 'boolean'
+          ? notesSource.hideCompletedTasksInFolders
+          : APP_STORE_DEFAULTS.notes.hideCompletedTasksInFolders,
+      lastTasksCleanupAt: readNumber(
+        notesSource,
+        'lastTasksCleanupAt',
+        APP_STORE_DEFAULTS.notes.lastTasksCleanupAt,
+      ),
+      dashboard: {
+        widgets: (() => {
+          const dashSource = asRecord(asRecord(notesSource.dashboard).widgets)
+          const defaults = APP_STORE_DEFAULTS.notes.dashboard.widgets
+
+          return {
+            stats:
+              typeof dashSource.stats === 'boolean'
+                ? dashSource.stats
+                : defaults.stats,
+            activityHeatmap:
+              typeof dashSource.activityHeatmap === 'boolean'
+                ? dashSource.activityHeatmap
+                : defaults.activityHeatmap,
+            recent:
+              typeof dashSource.recent === 'boolean'
+                ? dashSource.recent
+                : defaults.recent,
+            graphPreview:
+              typeof dashSource.graphPreview === 'boolean'
+                ? dashSource.graphPreview
+                : defaults.graphPreview,
+            topLinked:
+              typeof dashSource.topLinked === 'boolean'
+                ? dashSource.topLinked
+                : defaults.topLinked,
+          }
+        })(),
+      },
       layout: {
+        inspectorTab: readEnum(
+          notesLayoutSource,
+          'inspectorTab',
+          ['outline', 'links', 'annotations'] as const,
+          'links',
+        ),
+        inspectorOpen: notesLayoutSource.inspectorOpen === true,
+        inspectorWidth: Math.max(
+          240,
+          readNumber(notesLayoutSource, 'inspectorWidth', 300),
+        ),
         mode: readEnum(
           notesLayoutSource,
           'mode',
@@ -214,14 +761,49 @@ function sanitizeAppStore(value: unknown): AppStore {
           : typeof source.lastNotifiedUpdateVersion === 'string'
             ? source.lastNotifiedUpdateVersion
             : APP_STORE_DEFAULTS.notifications.lastNotifiedUpdateVersion,
-      nextDonateAt:
-        readOptionalNumber(notificationsSource, 'nextDonateAt')
-        ?? readOptionalNumber(source, 'nextDonateNotification'),
+      lastWhatsNewVersion:
+        typeof notificationsSource.lastWhatsNewVersion === 'string'
+          ? notificationsSource.lastWhatsNewVersion
+          : APP_STORE_DEFAULTS.notifications.lastWhatsNewVersion,
+    },
+    license: (() => {
+      const licenseSource = asRecord(source.license)
+
+      return {
+        key:
+          typeof licenseSource.key === 'string' && licenseSource.key
+            ? licenseSource.key
+            : null,
+        name:
+          typeof licenseSource.name === 'string' && licenseSource.name
+            ? licenseSource.name
+            : null,
+        email:
+          typeof licenseSource.email === 'string' && licenseSource.email
+            ? licenseSource.email
+            : null,
+      }
+    })(),
+    commandPalette: {
+      recent: sanitizeCommandPaletteRecent(commandPaletteSource.recent),
+      usage: sanitizeCommandPaletteUsage(commandPaletteSource.usage),
+    },
+    donations: sanitizeDonations(source.donations),
+    math: {
+      contentSort: sanitizeContentSort(asRecord(source.math).contentSort),
+    },
+    drawings: {
+      contentSort: sanitizeContentSort(asRecord(source.drawings).contentSort),
+      activeDrawingId:
+        typeof asRecord(source.drawings).activeDrawingId === 'string'
+          ? String(asRecord(source.drawings).activeDrawingId)
+          : APP_STORE_DEFAULTS.drawings.activeDrawingId,
+      viewport: sanitizeDrawingViewports(asRecord(source.drawings).viewport),
     },
     activeSpaceId: readEnum(
       source,
       'activeSpaceId',
-      ['code', 'tools', 'math', 'notes'] as const,
+      ['code', 'tools', 'math', 'notes', 'http', 'drawings'] as const,
       APP_STORE_DEFAULTS.activeSpaceId,
     ) as SpaceId,
   }

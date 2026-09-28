@@ -1,0 +1,83 @@
+import type { HttpTreeNode } from '../types'
+
+export function createFixtures(): HttpTreeNode[] {
+  return [
+    { id: 'payments', parentId: null, kind: 'collection', name: 'Payments' },
+    { id: 'accounts', parentId: 'payments', kind: 'folder', name: 'Accounts' },
+    {
+      id: 'list',
+      parentId: 'accounts',
+      kind: 'request',
+      name: 'List accounts',
+      method: 'GET',
+      url: 'https://example.invalid/accounts',
+    },
+    {
+      id: 'create',
+      parentId: 'accounts',
+      kind: 'request',
+      name: 'Create account',
+      method: 'POST',
+      url: 'https://example.invalid/accounts',
+    },
+    { id: 'admin', parentId: 'accounts', kind: 'folder', name: 'Admin' },
+    {
+      id: 'archive',
+      parentId: 'admin',
+      kind: 'request',
+      name: 'Archive account',
+      method: 'DELETE',
+      url: 'https://example.invalid/accounts/123',
+    },
+    { id: 'billing', parentId: 'payments', kind: 'folder', name: 'Billing' },
+    {
+      id: 'invoices',
+      parentId: 'billing',
+      kind: 'request',
+      name: 'List invoices',
+      method: 'GET',
+      url: 'https://example.invalid/invoices',
+    },
+    {
+      id: 'health',
+      parentId: 'payments',
+      kind: 'request',
+      name: 'Health check',
+      method: 'GET',
+      url: 'https://example.invalid/health',
+    },
+    { id: 'personal', parentId: null, kind: 'collection', name: 'Personal' },
+    { id: 'sandbox', parentId: 'personal', kind: 'folder', name: 'Sandbox' },
+    {
+      id: 'conflict',
+      parentId: 'sandbox',
+      kind: 'request',
+      name: 'List accounts',
+      method: 'GET',
+      url: 'https://example.invalid/demo',
+    },
+    {
+      id: 'profile',
+      parentId: 'personal',
+      kind: 'request',
+      name: 'Profile',
+      method: 'POST',
+      url: 'https://example.invalid/graphql',
+    },
+    {
+      id: 'events',
+      parentId: 'personal',
+      kind: 'request',
+      name: 'Events',
+      method: 'GET',
+      protocol: 'websocket',
+      url: 'wss://example.invalid/events',
+    },
+    {
+      id: 'empty',
+      parentId: null,
+      kind: 'collection',
+      name: 'Empty collection',
+    },
+  ]
+}

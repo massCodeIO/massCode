@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import type { Node } from '@vue-flow/core'
 import type { NodeData } from './types'
-import { useClipboard, useDark, useDebounceFn } from '@vueuse/core'
-import CodeMirror from 'codemirror'
+import { createCodeHighlight } from '@/components/cm-extensions/codeHighlight'
+import { useTheme } from '@/composables'
+import { json } from '@codemirror/lang-json'
+import { Compartment, EditorState } from '@codemirror/state'
+import { EditorView, lineNumbers } from '@codemirror/view'
+import { useClipboard } from '@vueuse/core'
 import { Copy } from 'lucide-vue-next'
-import { onMounted, watch } from 'vue'
-import 'codemirror/lib/codemirror.css'
-import 'codemirror/theme/neo.css'
-import 'codemirror/theme/oceanic-next.css'
 
 interface Props {
   node: Node<NodeData>
@@ -16,67 +16,54 @@ interface Props {
 const props = defineProps<Props>()
 
 const { copy } = useClipboard()
-const isDark = useDark()
-
-let editor: CodeMirror.Editor | null = null
+const { isDark } = useTheme()
+let editor: EditorView | null = null
 const editorRef = useTemplateRef('editorRef')
-
-const scrollBarOpacity = ref('1')
-const theme = computed(() => (isDark.value ? 'oceanic-next' : 'neo'))
-
-const hideScrollbar = useDebounceFn(() => {
-  scrollBarOpacity.value = '0'
-}, 1000)
-
-function toJsonString(value: any) {
+const theme = new Compartment()
+function toJsonString(value: unknown) {
   return JSON.stringify(value, null, 2) || '{}'
 }
-
 function init() {
-  if (!editorRef.value) {
+  if (!editorRef.value)
     return
-  }
-
-  editor = CodeMirror(editorRef.value, {
-    value: toJsonString(props.node.data?.value),
-    mode: 'json',
-    lineNumbers: true,
-    theme: theme.value,
-    readOnly: true,
-    lineWrapping: true,
-    scrollbarStyle: 'null',
-  })
-
-  editor.on('scroll', () => {
-    scrollBarOpacity.value = '1'
-    editor?.setOption('scrollbarStyle', 'overlay')
-  })
-
-  editor.on('scroll', hideScrollbar)
-
-  watch(
-    () => props.node,
-    (newNode) => {
-      if (editor && newNode.data?.value !== undefined) {
-        const jsonString = toJsonString(newNode.data.value)
-        editor.setValue(jsonString)
-      }
-    },
-    { deep: true },
-  )
-
-  watch(isDark, (v) => {
-    if (v) {
-      editor?.setOption('theme', 'oceanic-next')
-    }
-    else {
-      editor?.setOption('theme', 'neo')
-    }
+  editor = new EditorView({
+    parent: editorRef.value,
+    state: EditorState.create({
+      doc: toJsonString(props.node.data?.value),
+      extensions: [
+        json(),
+        lineNumbers(),
+        EditorView.lineWrapping,
+        EditorState.readOnly.of(true),
+        EditorView.editable.of(false),
+        theme.of(createCodeHighlight(isDark.value)),
+      ],
+    }),
   })
 }
+watch(
+  () => props.node,
+  () => {
+    if (editor) {
+      editor.dispatch({
+        changes: {
+          from: 0,
+          to: editor.state.doc.length,
+          insert: toJsonString(props.node.data?.value),
+        },
+      })
+    }
+  },
+  { deep: true },
+)
+watch(isDark, () =>
+  editor?.dispatch({
+    effects: theme.reconfigure(createCodeHighlight(isDark.value)),
+  }))
+onBeforeUnmount(() => editor?.destroy())
 
 function onCopy() {
-  copy(editor?.getValue() || '')
+  copy(editor?.state.doc.toString() || '')
   editorRef.value?.dispatchEvent(
     new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
   )
@@ -112,11 +99,17 @@ html.dark [data-dialog-info] {
   --dialog-info-bg: oklch(22% 0 0);
 }
 
-[data-dialog-info] .CodeMirror {
+[data-dialog-info] .cm-editor {
   background: var(--dialog-info-bg) !important;
 }
 
-[data-dialog-info] .CodeMirror-gutters {
+[data-dialog-info] .cm-gutters {
   background: var(--dialog-info-bg) !important;
+}
+[data-dialog-info] .cm-editor {
+  height: 100%;
+}
+[data-dialog-info] .cm-scroller {
+  overflow: auto;
 }
 </style>

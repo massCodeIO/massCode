@@ -1,12 +1,35 @@
 <script setup lang="ts">
+import type { EditSnapshot } from '@/composables/ai/edit'
 import type { NotesEditorMode } from '@/composables/spaces/notes/useNotesApp'
-import { useNotesEditor, useTheme } from '@/composables'
-import { ipc } from '@/electron'
+import type { NoteAnnotation } from './inspector/annotations'
+import type { ExternalLinkMatch } from './inspector/externalLinks'
+import type { OutlineHeading, OutlineMove } from './inspector/outline'
+import type { EditorMenuCommand } from './NotesEditorContextMenu.vue'
+import type { AiNativeAction } from '~/shared/aiNativeActions'
+import type { InternalLinkMatch } from '~/shared/notes/internalLinks'
+import { createCodeHighlight } from '@/components/cm-extensions/codeHighlight'
+import { editorScrollbarTheme } from '@/components/cm-extensions/scrollbarTheme'
+import * as ContextMenu from '@/components/ui/shadcn/context-menu'
+import {
+  applyPendingNavigationUIStateForNote,
+  registerNavigationNoteUIState,
+  useCopyToClipboard,
+  useNoteSearch,
+  useNotesEditor,
+  useTheme,
+} from '@/composables'
+import {
+  applyNotesEditor,
+  readNotesEditor,
+} from '@/composables/ai/notesEditor'
+import { i18n, ipc } from '@/electron'
+import { isWindows } from '@/utils'
+import { getContentSearchMatches } from '@/utils/contentSearch'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { indentUnit } from '@codemirror/language'
+import { indentUnit, syntaxTree } from '@codemirror/language'
 import { languages } from '@codemirror/language-data'
-import { EditorState, type Extension } from '@codemirror/state'
+import { EditorState, type Extension, Prec } from '@codemirror/state'
 import {
   EditorView,
   type KeyBinding,
@@ -14,99 +37,112 @@ import {
   lineNumbers as lineNumbersExtension,
   placeholder,
 } from '@codemirror/view'
-import { GFM } from '@lezer/markdown'
-import { createCodeHighlight } from './cm-extensions/codeHighlight'
+import { GFM, type MarkdownConfig } from '@lezer/markdown'
+import { createClipboardOutput } from './cm-extensions/clipboardOutput'
+import {
+  createContentSearch,
+  setContentSearchMatches,
+} from './cm-extensions/contentSearch'
+import {
+  clearInlineFormatting,
+  getHeadingLevel,
+  insertCallout,
+  insertCodeBlock,
+  insertHorizontalRule,
+  insertLink,
+  insertTable,
+  normalizeLineBreaks,
+  setBody,
+  setHeading,
+  toggleBold,
+  toggleBulletList,
+  toggleHighlight,
+  toggleInlineCode,
+  toggleItalic,
+  toggleOrderedList,
+  toggleQuote,
+  toggleStrikethrough,
+  toggleTaskList,
+} from './cm-extensions/editorCommands'
 import { editorFocusExtension } from './cm-extensions/editorFocus'
+import { createExternalLinksNavigation } from './cm-extensions/externalLinks'
+import { fencedCodePairInput } from './cm-extensions/fencedCodeInput'
 import { createHideMarkup } from './cm-extensions/hideMarkup'
 import {
   createImageBlocks,
   getImageBlockRanges,
 } from './cm-extensions/imageBlocks'
 import { createImageInsert } from './cm-extensions/imageInsert'
-import { listIndent } from './cm-extensions/listIndent'
+import { createInternalLinks } from './cm-extensions/internalLinks'
+import { activatePlannedLink } from './cm-extensions/internalLinks/activatePlannedLink'
+import { getPlannedLinkActions } from './cm-extensions/internalLinks/trigger'
+import { createListIndent } from './cm-extensions/listIndent'
+import { createListLineIndent } from './cm-extensions/listLineIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
+import { Highlight } from './cm-extensions/markdownHighlight'
+import { markdownShortcuts } from './cm-extensions/markdownShortcuts'
 import { createMermaidBlocks } from './cm-extensions/mermaidBlocks'
 import { moveSelectionToAdjacentMermaidSource } from './cm-extensions/mermaidNavigation'
-import { notesEditorScrollbarTheme } from './cm-extensions/scrollbarTheme'
-import { createTableBlocks } from './cm-extensions/tableBlocks'
-import { moveSelectionToAdjacentTableSource } from './cm-extensions/tableNavigation'
+import { revealSelectionFreeze } from './cm-extensions/revealSelection'
+import {
+  createTableBlocks,
+  getActiveTableCellContext,
+  getActiveTableCellEditor,
+  requestTableCellFocus,
+  revealTableSearchHighlight,
+  runActiveTableCellCommand,
+  type TableCellMenuCommand,
+  type TableCellMenuContext,
+  updateTableSearchHighlights,
+} from './cm-extensions/tableBlocks'
+import { moveSelectionToAdjacentTableCell } from './cm-extensions/tableNavigation'
+import { isOwnNoteContentEcho } from './editorSync'
+import { resolveNativeNoteTarget } from './inspector/nativeTarget'
+import { createOutlineMove, getOutline } from './inspector/outline'
 import { createNotesEditTheme } from './theme'
 
 interface Props {
+  disabled?: boolean
   mode?: NotesEditorMode
+  noteId?: number
   presentation?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  disabled: false,
   mode: 'livePreview',
   presentation: false,
 })
+const emit = defineEmits<{ cursor: [position: number] }>()
 const content = defineModel<string>('content', { default: '' })
 const { isDark } = useTheme()
 const { settings: notesSettings } = useNotesEditor()
+const { searchQuery: spaceSearchQuery } = useNoteSearch()
+const copyToClipboard = useCopyToClipboard()
 const isRawMode = computed(() => props.mode === 'raw')
 const isPreviewMode = computed(() => props.mode === 'preview')
 
 const editorContainer = ref<HTMLElement>()
+const contentSearchPanelRef = useTemplateRef('contentSearchPanelRef')
+const isContentSearchOpen = ref(false)
+const contentSearchQuery = ref('')
+const contentSearchMatches = ref<{ from: number, to: number }[]>([])
+const contentSearchIndex = ref(-1)
 let view: EditorView | null = null
 let isApplyingExternalContent = false
-
-const markdownLinkRegExp = /\[[^\]]+\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g
-const autolinkRegExp = /<(https?:\/\/[^>\s]+|masscode:\/\/[^>\s]+)>/g
-const plainUrlRegExp = /(https?:\/\/[^\s)]+)/g
-
-function extractUrlAtOffset(lineText: string, offset: number): string | null {
-  for (const pattern of [markdownLinkRegExp, autolinkRegExp, plainUrlRegExp]) {
-    pattern.lastIndex = 0
-    let match = pattern.exec(lineText)
-
-    while (match) {
-      const from = match.index
-      const to = from + match[0].length
-      if (offset >= from && offset <= to) {
-        return match[1] ?? match[0]
-      }
-
-      match = pattern.exec(lineText)
-    }
-  }
-
-  return null
-}
-
-function createLinkClickHandler() {
-  return EditorView.domEventHandlers({
-    click(event, view) {
-      const target = event.target
-      if (!(target instanceof HTMLElement))
-        return false
-
-      const pos = view.posAtCoords({
-        x: event.clientX,
-        y: event.clientY,
-      })
-      if (pos === null)
-        return false
-
-      const line = view.state.doc.lineAt(pos)
-      const url = extractUrlAtOffset(line.text, pos - line.from)
-      if (!url)
-        return false
-
-      if (
-        !url.startsWith('http://')
-        && !url.startsWith('https://')
-        && !url.startsWith('masscode://')
-      ) {
-        return false
-      }
-
-      event.preventDefault()
-      void ipc.invoke('system:open-external', url)
-      return true
-    },
-  })
-}
+let unregisterNavigationNoteUIState: (() => void) | undefined
+let contentSearchRevision = 0
+let tableSearchFrame: number | undefined
+let pendingTableSearchReveal:
+  | { revision: number, matchFrom: number }
+  | undefined
+// Последняя строка, отправленная редактором в модель: позволяет пропускать
+// echo-обновления без материализации всего документа на каждый keystroke.
+let lastEmittedContent:
+  | { noteId: number | undefined, value: string }
+  | undefined
+let lastAppliedNoteId: number | undefined
+let noteGeneration = 0
 
 function moveSelectionToAdjacentImageSource(
   view: EditorView,
@@ -165,14 +201,14 @@ const navigationKeymap: KeyBinding[] = [
     key: 'ArrowDown',
     run: view =>
       moveSelectionToAdjacentMermaidSource(view, 'down')
-      || moveSelectionToAdjacentTableSource(view, 'down')
+      || moveSelectionToAdjacentTableCell(view, 'down')
       || moveSelectionToAdjacentImageSource(view, 'down'),
   },
   {
     key: 'ArrowUp',
     run: view =>
       moveSelectionToAdjacentMermaidSource(view, 'up')
-      || moveSelectionToAdjacentTableSource(view, 'up')
+      || moveSelectionToAdjacentTableCell(view, 'up')
       || moveSelectionToAdjacentImageSource(view, 'up'),
   },
 ]
@@ -190,11 +226,14 @@ const presentationTheme = EditorView.theme({
     lineHeight: '1.58',
     maxWidth: '980px',
     margin: '0 auto',
+    // Широкий блок-виджет не должен распирать контент и давать редактору
+    // горизонтальную прокрутку (см. minWidth в createNotesEditThemeStyles).
+    minWidth: '0',
   },
   '.cm-gutters': {
     display: 'none',
   },
-  ...notesEditorScrollbarTheme,
+  ...editorScrollbarTheme,
   '.cm-line': {
     padding: '0',
   },
@@ -212,29 +251,39 @@ const presentationTheme = EditorView.theme({
   },
 })
 
+const NoSetextHeading: MarkdownConfig = {
+  remove: ['SetextHeading'],
+}
+
 function createEditorState(doc: string): EditorState {
   const raw = isRawMode.value
   const preview = isPreviewMode.value
   const editable = !preview
+  const notesIndentUnit = ' '.repeat(Math.max(1, notesSettings.indentSize))
 
   const extensions: Extension[] = [
     props.presentation
       ? presentationTheme
       : createNotesEditTheme(raw, notesSettings),
     EditorView.lineWrapping,
+    createClipboardOutput(isWindows),
+    createContentSearch(),
     history(),
+    Prec.highest(
+      keymap.of(editable ? createListIndent({ indent: notesIndentUnit }) : []),
+    ),
     keymap.of([
+      ...(editable ? markdownShortcuts : []),
       ...(editable && !raw ? navigationKeymap : []),
-      ...(editable && !raw ? listIndent : []),
       ...defaultKeymap,
       ...historyKeymap,
     ]),
     editorFocusExtension,
-    indentUnit.of(' '.repeat(notesSettings.indentSize)),
+    indentUnit.of(notesIndentUnit),
     markdown({
       base: markdownLanguage,
       codeLanguages: languages,
-      extensions: GFM,
+      extensions: [GFM, Highlight, NoSetextHeading],
     }),
     createCodeHighlight(isDark.value),
   ]
@@ -243,8 +292,13 @@ function createEditorState(doc: string): EditorState {
     extensions.push(lineNumbersExtension())
   }
 
+  if (editable && !raw) {
+    extensions.push(fencedCodePairInput)
+  }
+
   if (!raw) {
     extensions.push(
+      revealSelectionFreeze,
       createMermaidBlocks({
         enabled: true,
         isDark: isDark.value,
@@ -252,25 +306,44 @@ function createEditorState(doc: string): EditorState {
       }),
       createTableBlocks({
         enabled: true,
-        showSourceWhenSelectionInside: editable,
+        editable,
+        isDark: isDark.value,
+        wrapCells: notesSettings.wrapTables,
       }),
       createImageBlocks({
         enabled: true,
+        isDark: isDark.value,
         showSourceWhenSelectionInside: editable,
       }),
       createMarkdownDecorations({
         interactiveTaskMarkers: editable,
         calloutTitleMode: preview ? 'replace' : 'smart',
+        codeBlockCopy: {
+          label: i18n.t('button.copy'),
+          copy: copyToClipboard,
+        },
       }),
       createHideMarkup({ alwaysHide: preview }),
+      createListLineIndent({ interactiveTaskMarkers: editable }),
     )
   }
+
+  extensions.push(
+    ...createInternalLinks({
+      editable,
+      mode: props.mode,
+      sourceIdentity: () =>
+        props.noteId === undefined
+          ? undefined
+          : { id: props.noteId, generation: noteGeneration },
+      activatePlannedLink: props.presentation ? undefined : activatePlannedLink,
+    }),
+  )
 
   if (preview) {
     extensions.push(
       EditorState.readOnly.of(true),
       EditorView.editable.of(false),
-      createLinkClickHandler(),
     )
 
     if (!props.presentation) {
@@ -289,13 +362,48 @@ function createEditorState(doc: string): EditorState {
   }
   else {
     extensions.push(placeholder('Start typing...'))
-    extensions.push(createImageInsert())
+    extensions.push(createImageInsert(() => props.noteId))
+  }
+
+  if (!raw) {
+    extensions.push(createExternalLinksNavigation())
   }
 
   extensions.push(
     EditorView.updateListener.of((update) => {
+      if (update.selectionSet || update.docChanged)
+        emit('cursor', update.state.selection.main.head)
       if (update.docChanged && !isApplyingExternalContent) {
-        content.value = update.state.doc.toString()
+        const value = update.state.doc.toString()
+        lastEmittedContent = { noteId: props.noteId, value }
+        content.value = value
+      }
+
+      if (
+        update.docChanged
+        && !isApplyingExternalContent
+        && getVisibleSearchQuery()
+      ) {
+        const revision = ++contentSearchRevision
+        const expectedState = update.state
+        pendingTableSearchReveal = undefined
+        nextTick(() => {
+          if (
+            revision === contentSearchRevision
+            && view?.state === expectedState
+          ) {
+            refreshVisibleSearch(false)
+          }
+        })
+      }
+
+      if (
+        getVisibleSearchQuery()
+        && (update.viewportChanged
+          || update.focusChanged
+          || syntaxTree(update.startState) !== syntaxTree(update.state))
+      ) {
+        scheduleTableSearchHighlights(update.state)
       }
     }),
   )
@@ -306,48 +414,697 @@ function createEditorState(doc: string): EditorState {
   })
 }
 
-watch(content, (val) => {
+function applyExternalState(doc: string, selectFirstMatch = false) {
   if (!view)
     return
+
+  contentSearchRevision += 1
+  pendingTableSearchReveal = undefined
+  isApplyingExternalContent = true
+  view.setState(createEditorState(doc))
+  emit('cursor', view.state.selection.main.head)
+  isApplyingExternalContent = false
+  refreshVisibleSearch(selectFirstMatch)
+}
+
+function getVisibleSearchQuery() {
+  return isContentSearchOpen.value
+    ? contentSearchQuery.value
+    : spaceSearchQuery.value
+}
+
+function refreshVisibleSearch(selectFirst = true) {
+  if (isContentSearchOpen.value) {
+    refreshContentSearch(selectFirst)
+    return
+  }
+
+  refreshSpaceSearchHighlights()
+}
+
+function refreshSpaceSearchHighlights() {
+  if (!view || isContentSearchOpen.value)
+    return
+
+  contentSearchRevision += 1
+  pendingTableSearchReveal = undefined
+  const query = spaceSearchQuery.value
+  const matches = getContentSearchMatches(view.state.doc.toString(), query)
+
+  view.dispatch({
+    effects: setContentSearchMatches.of({
+      matches,
+      currentIndex: -1,
+    }),
+  })
+  updateTableSearchHighlights(view, query)
+}
+
+function refreshContentSearch(selectFirst = true) {
+  if (!view)
+    return
+
+  contentSearchRevision += 1
+  pendingTableSearchReveal = undefined
+  contentSearchMatches.value = getContentSearchMatches(
+    view.state.doc.toString(),
+    contentSearchQuery.value,
+  )
+
+  if (!contentSearchMatches.value.length) {
+    contentSearchIndex.value = -1
+  }
+  else if (selectFirst || contentSearchIndex.value < 0) {
+    contentSearchIndex.value = 0
+  }
+  else {
+    contentSearchIndex.value = Math.min(
+      contentSearchIndex.value,
+      contentSearchMatches.value.length - 1,
+    )
+  }
+
+  if (selectFirst && contentSearchIndex.value >= 0) {
+    selectContentSearchMatch(contentSearchIndex.value, false)
+    return
+  }
+
+  view.dispatch({
+    effects: setContentSearchMatches.of({
+      matches: contentSearchMatches.value,
+      currentIndex: contentSearchIndex.value,
+    }),
+  })
+  updateTableSearchHighlights(
+    view,
+    contentSearchQuery.value,
+    contentSearchMatches.value[contentSearchIndex.value]?.from,
+  )
+}
+
+function selectContentSearchMatch(index: number, explicitNavigation = true) {
+  if (!view || !contentSearchMatches.value.length)
+    return
+
+  const normalizedIndex
+    = (index + contentSearchMatches.value.length)
+      % contentSearchMatches.value.length
+  const match = contentSearchMatches.value[normalizedIndex]
+  if (match.to > view.state.doc.length)
+    return
+
+  const revision = ++contentSearchRevision
+  const targetView = view
+  contentSearchIndex.value = normalizedIndex
+  pendingTableSearchReveal = explicitNavigation
+    ? { revision, matchFrom: match.from }
+    : undefined
+  targetView.dispatch({
+    selection: { anchor: match.from, head: match.to },
+    effects: setContentSearchMatches.of({
+      matches: contentSearchMatches.value,
+      currentIndex: normalizedIndex,
+    }),
+  })
+  const tableMarker = updateTableSearchHighlights(
+    targetView,
+    contentSearchQuery.value,
+    match.from,
+  )
+  if (tableMarker) {
+    pendingTableSearchReveal = undefined
+    revealTableSearchHighlight(targetView, tableMarker)
+  }
+  else {
+    targetView.dispatch({
+      effects: EditorView.scrollIntoView(match.from, { y: 'center' }),
+    })
+  }
+  scheduleTableSearchHighlights(targetView.state)
+}
+
+function scheduleTableSearchHighlights(expectedState: EditorState) {
+  if (tableSearchFrame !== undefined)
+    cancelAnimationFrame(tableSearchFrame)
+
+  const revision = contentSearchRevision
+  tableSearchFrame = requestAnimationFrame(() => {
+    tableSearchFrame = undefined
+    const query = getVisibleSearchQuery()
+    if (
+      !view
+      || view.state !== expectedState
+      || revision !== contentSearchRevision
+      || !query
+    ) {
+      return
+    }
+
+    const matchFrom = isContentSearchOpen.value
+      ? contentSearchMatches.value[contentSearchIndex.value]?.from
+      : undefined
+    const tableMarker = updateTableSearchHighlights(view, query, matchFrom)
+    if (
+      tableMarker
+      && pendingTableSearchReveal?.revision === revision
+      && pendingTableSearchReveal.matchFrom === matchFrom
+    ) {
+      pendingTableSearchReveal = undefined
+      revealTableSearchHighlight(view, tableMarker)
+    }
+  })
+}
+
+function openContentSearch(focus = true) {
+  isContentSearchOpen.value = true
+  refreshContentSearch()
+  if (!focus)
+    return
+
+  const revision = ++contentSearchRevision
+  nextTick(() => {
+    if (!isContentSearchOpen.value || revision !== contentSearchRevision)
+      return
+    view?.requestMeasure()
+    contentSearchPanelRef.value?.focusInput()
+  })
+}
+
+function closeContentSearch(focus = true) {
+  contentSearchRevision += 1
+  pendingTableSearchReveal = undefined
+  isContentSearchOpen.value = false
+  contentSearchQuery.value = ''
+  refreshSpaceSearchHighlights()
+  if (focus)
+    focusEditor()
+}
+
+function onContentSearchPanelFocus() {
+  const revision = contentSearchRevision
+  const expectedState = view?.state
+  queueMicrotask(() => {
+    if (
+      expectedState
+      && revision === contentSearchRevision
+      && view?.state === expectedState
+    ) {
+      scheduleTableSearchHighlights(expectedState)
+    }
+  })
+}
+
+watch(contentSearchQuery, () => {
+  if (isContentSearchOpen.value)
+    refreshContentSearch()
+})
+watch(spaceSearchQuery, () => {
+  if (!isContentSearchOpen.value)
+    refreshSpaceSearchHighlights()
+})
+
+// noteId и content меняются согласованно (NotesEditorPane обновляет их
+// вместе, когда контент заметки загружен), поэтому один watcher.
+watch([() => props.noteId, content], ([noteId, val]) => {
+  if (!view)
+    return
+
+  // Смена заметки: пересоздание EditorState сбрасывает undo-историю,
+  // но переиспользует EditorView и DOM (раньше компонент пересоздавался
+  // целиком через :key).
+  if (noteId !== lastAppliedNoteId) {
+    noteGeneration++
+    lastEmittedContent = undefined
+    lastAppliedNoteId = noteId
+    applyExternalState(val, true)
+    return
+  }
+
+  // Echo собственного ввода: материализовать документ не нужно.
+  if (isOwnNoteContentEcho(lastEmittedContent, noteId, val)) {
+    return
+  }
 
   const currentValue = view.state.doc.toString()
   if (currentValue === val)
     return
 
+  // Внешнее обновление той же заметки: dispatch вместо пересоздания
+  // состояния — сохраняет undo-историю, selection и расширения.
   isApplyingExternalContent = true
-  view.setState(createEditorState(val))
+  view.dispatch({
+    changes: { from: 0, to: view.state.doc.length, insert: val },
+  })
   isApplyingExternalContent = false
+  if (getVisibleSearchQuery())
+    refreshVisibleSearch(false)
 })
 
 watch(
   () => props.mode,
   () => {
-    if (!view)
-      return
-
-    isApplyingExternalContent = true
-    view.setState(createEditorState(content.value))
-    isApplyingExternalContent = false
+    applyExternalState(content.value)
   },
 )
 
 watch(notesSettings, () => {
-  if (!view)
-    return
-
-  isApplyingExternalContent = true
-  view.setState(createEditorState(content.value))
-  isApplyingExternalContent = false
+  applyExternalState(content.value)
 })
 
 watch(isDark, () => {
+  applyExternalState(content.value)
+})
+
+function focusEditor() {
+  nextTick(() => {
+    view?.focus()
+  })
+}
+
+function revealLink(match: InternalLinkMatch | ExternalLinkMatch) {
+  if (
+    !view
+    || props.disabled
+    || view.state.doc.sliceString(match.from, match.to) !== match.raw
+  ) {
+    return
+  }
+  view.dispatch({
+    selection: { anchor: 'cursor' in match ? match.cursor : match.to - 2 },
+    effects: EditorView.scrollIntoView(match.from, { y: 'center' }),
+  })
+  view.focus()
+}
+function activateLink(match: InternalLinkMatch) {
+  if (view && !props.disabled)
+    getPlannedLinkActions(view, match)?.create()
+}
+
+function revealHeading(heading: OutlineHeading) {
+  if (!view || props.disabled)
+    return
+  const current = getOutline(view.state.doc.toString()).find(
+    item => item.from === heading.from && item.title === heading.title,
+  )
+  if (!current)
+    return
+  view.dispatch({
+    selection: { anchor: current.from },
+    effects: EditorView.scrollIntoView(current.from, { y: 'center' }),
+  })
+  view.focus()
+}
+
+function moveSection(move: OutlineMove) {
+  if (!view || props.disabled || isPreviewMode.value)
+    return
+  const transaction = createOutlineMove(view.state.doc.toString(), move)
+  if (!transaction)
+    return
+  view.dispatch(transaction)
+  view.dispatch({
+    effects: EditorView.scrollIntoView(view.state.selection.main.head, {
+      y: 'center',
+    }),
+  })
+  view.focus()
+}
+
+function revealAnnotation(annotation: NoteAnnotation) {
+  if (
+    !view
+    || props.disabled
+    || view.state.doc.sliceString(annotation.from, annotation.to)
+    !== annotation.raw
+  ) {
+    return
+  }
+  view.dispatch({
+    selection: {
+      anchor: annotation.from + annotation.raw.split('\n')[0]!.length,
+    },
+    effects: EditorView.scrollIntoView(annotation.from, { y: 'center' }),
+  })
+  view.focus()
+}
+
+function readAiContext() {
+  return readNotesEditor(view, props.noteId, props.disabled)
+}
+function applyAiEdit(
+  snapshot: EditSnapshot,
+  replacement: string,
+  vault: string,
+) {
+  return applyNotesEditor(
+    view,
+    props.noteId,
+    props.disabled,
+    snapshot,
+    replacement,
+    vault,
+  )
+}
+function findNativeContent(
+  action: Extract<AiNativeAction, { action: 'findInContent' }>,
+) {
+  if (!view || props.disabled)
+    return
+  if (!action.command || action.command === 'search') {
+    if (!action.query)
+      return
+    openContentSearch(false)
+    contentSearchQuery.value = action.query
+    refreshContentSearch()
+  }
+  else if (action.command === 'close') {
+    closeContentSearch(false)
+  }
+  else {
+    if (!isContentSearchOpen.value)
+      return
+    selectContentSearchMatch(
+      contentSearchIndex.value + (action.command === 'next' ? 1 : -1),
+    )
+  }
+  return {
+    open: isContentSearchOpen.value,
+    index: isContentSearchOpen.value ? contentSearchIndex.value : -1,
+    count: isContentSearchOpen.value ? contentSearchMatches.value.length : 0,
+  }
+}
+
+function nativeCommand(
+  action: Extract<AiNativeAction, { action: 'editorCommand' }>,
+) {
+  if (
+    !view
+    || props.disabled
+    || isPreviewMode.value
+    || (action.command === 'normalizeLineBreaks'
+      && action.location.kind !== 'document')
+  ) {
+    return false
+  }
+  const text = view.state.doc.toString()
+  const location = action.location
+  let from = location.kind === 'end' ? text.length : 0
+  let to = location.kind === 'document' ? text.length : from
+  if (location.kind === 'text') {
+    from = text.indexOf(location.text)
+    if (from < 0 || text.includes(location.text, from + 1))
+      return false
+    to = from + location.text.length
+  }
+  view.dispatch({ selection: { anchor: from, head: to } })
+  if (action.command === 'normalizeLineBreaks')
+    normalizeLineBreaks(view)
+  else onMenuCommand(action.command, true)
+  return true
+}
+
+function nativeSection(
+  action: Extract<AiNativeAction, { action: 'notesSection' }>,
+) {
+  if (!view || props.disabled || (action.destination && isPreviewMode.value))
+    return false
+  const content = view.state.doc.toString()
+  const outline = getOutline(content)
+  const sources = outline.filter(heading => heading.title === action.heading)
+  if (sources.length !== 1)
+    return false
+  const source = sources[0]!
+  if (!action.destination) {
+    revealHeading(source)
+    return true
+  }
+  const targets = outline.filter(
+    heading => heading.title === action.destination!.heading,
+  )
+  if (targets.length !== 1)
+    return false
+  const transaction = createOutlineMove(content, {
+    content,
+    from: source.from,
+    target: targets[0]!.from,
+    after: action.destination.placement === 'after',
+    inside: action.destination.placement === 'inside',
+  })
+  if (!transaction)
+    return false
+  view.dispatch(transaction)
+  view.dispatch({
+    effects: EditorView.scrollIntoView(view.state.selection.main.head, {
+      y: 'center',
+    }),
+  })
+  return true
+}
+
+function nativeReveal(
+  action: Extract<AiNativeAction, { action: 'notesReveal' }>,
+) {
+  if (!view || props.disabled)
+    return false
+  const target = resolveNativeNoteTarget(view.state.doc.toString(), action)
+  if (!target)
+    return false
+  if (target.kind === 'heading')
+    revealHeading(target.match)
+  else if (target.kind === 'annotation')
+    revealAnnotation(target.match)
+  else revealLink(target.match)
+  return true
+}
+
+defineExpose({
+  nativeReveal,
+  nativeSection,
+  nativeCommand,
+  findNativeContent,
+  readAiContext,
+  applyAiEdit,
+  revealAnnotation,
+  revealHeading,
+  moveSection,
+  revealLink,
+  activateLink,
+  closeContentSearch,
+  focusEditor,
+  openContentSearch,
+})
+
+async function syncNavigationNoteUIStateRegistration(noteId = props.noteId) {
+  unregisterNavigationNoteUIState?.()
+  unregisterNavigationNoteUIState = undefined
+
+  if (!view || noteId === undefined) {
+    return
+  }
+
+  let restored = false
+  unregisterNavigationNoteUIState = registerNavigationNoteUIState(noteId, {
+    getScrollTop: () => view?.scrollDOM.scrollTop ?? 0,
+    getScrollSnapshot: () => {
+      if (!view)
+        return
+      const anchor = view.lineBlockAtHeight(view.scrollDOM.scrollTop).from
+      const coordinates = view.coordsAtPos(anchor)
+      if (!coordinates)
+        return
+      return {
+        effect: markRaw(view.scrollSnapshot()),
+        anchor,
+        offset: coordinates.top - view.scrollDOM.getBoundingClientRect().top,
+      }
+    },
+    setScrollTop: (scrollTop, snapshot) => {
+      restored = true
+      if (snapshot && view) {
+        const editor = view
+        editor.dispatch({ effects: snapshot.effect })
+        // Preview decorations change line heights when the restored viewport is built.
+        requestAnimationFrame(() =>
+          editor.requestMeasure({
+            read: () => {
+              if (view !== editor || props.noteId !== noteId)
+                return 0
+              const coordinates = editor.coordsAtPos(
+                Math.min(snapshot.anchor, editor.state.doc.length),
+              )
+              return coordinates
+                ? coordinates.top
+                - editor.scrollDOM.getBoundingClientRect().top
+                - snapshot.offset
+                : 0
+            },
+            write: (delta) => {
+              if (view === editor && props.noteId === noteId)
+                editor.scrollDOM.scrollTop += delta
+            },
+          }),
+        )
+      }
+      else {
+        view?.scrollDOM.scrollTo({ top: scrollTop })
+      }
+    },
+  })
+
+  await nextTick()
+
+  // Пока ожидали обновление DOM, пользователь мог выбрать другую заметку.
+  if (!view || props.noteId !== noteId) {
+    return
+  }
+
+  // Back/Forward восстанавливает сохранённую позицию. При обычном выборе
+  // новая заметка открывается сверху. Эффект CodeMirror также пересчитывает
+  // viewport, чтобы preview-декорации сразу построились для начала документа.
+  if (!applyPendingNavigationUIStateForNote(noteId) && !restored) {
+    view.dispatch({
+      effects: EditorView.scrollIntoView(0, { y: 'start', yMargin: 0 }),
+    })
+  }
+}
+
+watch(
+  () => props.noteId,
+  noteId => syncNavigationNoteUIStateRegistration(noteId),
+)
+
+// Контекст контекстного меню форматирования, снимается на правый клик.
+const menuHasSelection = ref(false)
+const menuHeadingLevel = ref(0)
+const menuTable = shallowRef<TableCellMenuContext | null>(null)
+let pendingInsertedTableStart: number | null = null
+
+function onEditorContextMenu() {
   if (!view)
     return
 
-  isApplyingExternalContent = true
-  view.setState(createEditorState(content.value))
-  isApplyingExternalContent = false
-})
+  // Правый клик в ячейке таблицы: меню работает с вложенным редактором.
+  const cellEditor = getActiveTableCellEditor()
+  const target = cellEditor ?? view
+
+  menuHasSelection.value = !target.state.selection.main.empty
+  menuHeadingLevel.value = cellEditor ? 0 : getHeadingLevel(view)
+  menuTable.value = getActiveTableCellContext()
+}
+
+function onContextMenuCloseAutoFocus(event: Event) {
+  // Фокус должен вернуться во вложенный редактор ячейки (а не на контейнер):
+  // после команды он уже там, а при закрытии меню без команды возвращаем сами.
+  const cellEditor = getActiveTableCellEditor()
+  if (cellEditor) {
+    event.preventDefault()
+    cellEditor.focus()
+    return
+  }
+
+  if (pendingInsertedTableStart === null || !view)
+    return
+
+  event.preventDefault()
+  requestTableCellFocus(view, {
+    tableFrom: pendingInsertedTableStart,
+    selector: 'thead th:first-child',
+    mode: 'select',
+  })
+  pendingInsertedTableStart = null
+}
+
+function onMenuCommand(command: EditorMenuCommand, rootOnly = false) {
+  if (!view)
+    return
+
+  if (command.startsWith('table-')) {
+    runActiveTableCellCommand(command as TableCellMenuCommand)
+    return
+  }
+
+  // Внутри ячейки таблицы inline-команды идут во вложенный редактор, а
+  // блочные (заголовки, списки, вставка) не имеют смысла — игнорируем.
+  const cellEditor = rootOnly ? null : getActiveTableCellEditor()
+  const inlineTarget = cellEditor ?? view
+  const isInlineCommand = [
+    'bold',
+    'italic',
+    'strikethrough',
+    'highlight',
+    'code',
+    'link',
+    'clear-formatting',
+  ].includes(command)
+
+  if (cellEditor && !isInlineCommand)
+    return
+
+  if (command.startsWith('heading-')) {
+    setHeading(view, Number(command.slice('heading-'.length)))
+    return
+  }
+
+  switch (command) {
+    case 'bold':
+      toggleBold(inlineTarget)
+      break
+    case 'italic':
+      toggleItalic(inlineTarget)
+      break
+    case 'strikethrough':
+      toggleStrikethrough(inlineTarget)
+      break
+    case 'highlight':
+      toggleHighlight(inlineTarget)
+      break
+    case 'code':
+      toggleInlineCode(inlineTarget)
+      break
+    case 'link':
+      insertLink(inlineTarget)
+      break
+    case 'clear-formatting':
+      clearInlineFormatting(inlineTarget)
+      break
+    case 'bullet-list':
+      toggleBulletList(view)
+      break
+    case 'numbered-list':
+      toggleOrderedList(view)
+      break
+    case 'task-list':
+      toggleTaskList(view)
+      break
+    case 'body':
+      setBody(view)
+      break
+    case 'quote':
+      toggleQuote(view)
+      break
+    case 'table':
+      pendingInsertedTableStart = insertTable(view)
+      break
+    case 'callout':
+      insertCallout(view)
+      break
+    case 'horizontal-rule':
+      insertHorizontalRule(view)
+      break
+    case 'code-block':
+      insertCodeBlock(view)
+      break
+  }
+}
+
+function onNormalizeLineBreaks() {
+  if (!view || props.disabled || isPreviewMode.value)
+    return
+
+  normalizeLineBreaks(view)
+}
+
+ipc.on('main-menu:normalize-note-line-breaks', onNormalizeLineBreaks)
 
 onMounted(() => {
   if (!editorContainer.value)
@@ -357,9 +1114,20 @@ onMounted(() => {
     state: createEditorState(content.value),
     parent: editorContainer.value,
   })
+  lastAppliedNoteId = props.noteId
+  refreshVisibleSearch(false)
+
+  void syncNavigationNoteUIStateRegistration()
 })
 
 onUnmounted(() => {
+  contentSearchRevision += 1
+  if (tableSearchFrame !== undefined)
+    cancelAnimationFrame(tableSearchFrame)
+  unregisterNavigationNoteUIState?.()
+  unregisterNavigationNoteUIState = undefined
+  ipc.removeListeners('main-menu:normalize-note-line-breaks')
+
   if (view) {
     view.destroy()
     view = null
@@ -368,8 +1136,37 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div
-    ref="editorContainer"
-    class="h-full overflow-hidden"
-  />
+  <div class="grid h-full grid-rows-[auto_1fr] overflow-hidden">
+    <ContentSearchPanel
+      v-if="isContentSearchOpen"
+      ref="contentSearchPanelRef"
+      v-model="contentSearchQuery"
+      :count="contentSearchMatches.length"
+      :current-index="contentSearchIndex"
+      @close="closeContentSearch"
+      @focusin="onContentSearchPanelFocus"
+      @next="selectContentSearchMatch(contentSearchIndex + 1)"
+      @previous="selectContentSearchMatch(contentSearchIndex - 1)"
+    />
+    <ContextMenu.ContextMenu>
+      <ContextMenu.ContextMenuTrigger
+        as-child
+        :disabled="isPreviewMode"
+      >
+        <div
+          ref="editorContainer"
+          class="h-full min-h-0 overflow-hidden"
+          @contextmenu="onEditorContextMenu"
+        />
+      </ContextMenu.ContextMenuTrigger>
+      <NotesEditorContextMenu
+        :has-selection="menuHasSelection"
+        :heading-level="menuHeadingLevel"
+        :table="menuTable"
+        @close-auto-focus="onContextMenuCloseAutoFocus"
+        @command="onMenuCommand"
+      />
+    </ContextMenu.ContextMenu>
+    <NotesInternalLinksOverlay />
+  </div>
 </template>

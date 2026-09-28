@@ -2,11 +2,9 @@
   "label": "تنظیمات",
   "storage": {
     "section": {
-      "main": "Main",
-      "migration": "Migration"
+      "main": "Main"
     },
     "label": "ذخیره‌سازی",
-    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "تعداد",
     "vaultPath": "Vault Path"
   },
@@ -116,7 +114,7 @@
     "codeRenderer": "رندرکننده بلوک کد"
   },
   "api": {
-    "label": "پورت API",
+    "label": "API",
     "port": {
       "label": "پورت API",
       "description": "شماره پورت برای سرور API (نیاز به راه‌اندازی مجدد برنامه دارد). محدوده معتبر: 1024-65535."

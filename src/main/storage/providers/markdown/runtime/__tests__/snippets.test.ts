@@ -4,6 +4,7 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { readSnippetFromFile } from '../snippets'
+import { resetRuntimeCache, syncRuntimeWithDisk } from '../sync'
 
 vi.mock('electron-store', () => {
   class MockStore {
@@ -80,6 +81,8 @@ function createPaths(): Paths {
 }
 
 afterEach(() => {
+  resetRuntimeCache()
+
   for (const dirPath of tempDirs.splice(0)) {
     fs.removeSync(dirPath)
   }
@@ -170,5 +173,87 @@ describe('readSnippetFromFile', () => {
     finally {
       vi.useRealTimers()
     }
+  })
+
+  it('recovers legacy triple-backtick snippets without rewriting on direct read', () => {
+    const paths = createPaths()
+    const relativePath = '.masscode/inbox/legacy-fence-snippet.md'
+    const absolutePath = path.join(paths.vaultPath, relativePath)
+    const source = [
+      '---',
+      'id: 12',
+      'name: Legacy Fence Snippet',
+      'contents:',
+      '  - id: 1',
+      '    label: Fragment 1',
+      '    language: markdown',
+      '---',
+      '',
+      '## Fragment: Fragment 1',
+      '```markdown',
+      'Before',
+      '```',
+      'inner block',
+      '```',
+      'After',
+      '```',
+      '',
+    ].join('\n')
+
+    fs.ensureDirSync(path.dirname(absolutePath))
+    fs.writeFileSync(absolutePath, source, 'utf8')
+
+    const snippet = readSnippetFromFile(
+      paths,
+      { filePath: relativePath, id: 12 },
+      new Map(),
+    )
+
+    expect(snippet?.contents[0].value).toBe(
+      ['Before', '```', 'inner block', '```', 'After'].join('\n'),
+    )
+    expect(fs.readFileSync(absolutePath, 'utf8')).toBe(source)
+  })
+
+  it('rewrites recovered legacy snippets during primary runtime sync', () => {
+    const paths = createPaths()
+    const relativePath = '.masscode/inbox/legacy-fence-snippet.md'
+    const absolutePath = path.join(paths.vaultPath, relativePath)
+    const source = [
+      '---',
+      'id: 13',
+      'name: Legacy Fence Snippet',
+      'createdAt: 1',
+      'updatedAt: 1',
+      'contents:',
+      '  - id: 1',
+      '    label: Fragment 1',
+      '    language: markdown',
+      '---',
+      '',
+      '## Fragment: Fragment 1',
+      '```markdown',
+      'Before',
+      '```',
+      'inner block',
+      '```',
+      'After',
+      '```',
+      '',
+    ].join('\n')
+
+    fs.ensureDirSync(path.dirname(absolutePath))
+    fs.writeFileSync(absolutePath, source, 'utf8')
+
+    const cache = syncRuntimeWithDisk(paths)
+    const rewrittenSource = fs.readFileSync(absolutePath, 'utf8')
+
+    expect(cache.snippets[0].contents[0].value).toBe(
+      ['Before', '```', 'inner block', '```', 'After'].join('\n'),
+    )
+    expect(rewrittenSource).toContain('````markdown')
+    expect(rewrittenSource).toContain(
+      ['Before', '```', 'inner block', '```', 'After'].join('\n'),
+    )
   })
 })

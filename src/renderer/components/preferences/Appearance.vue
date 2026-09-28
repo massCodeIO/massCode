@@ -1,10 +1,46 @@
 <script setup lang="ts">
+import type { AcceptableValue } from 'reka-ui'
+import type { DockBadgeSource } from '~/main/store/types'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
-import { useTheme } from '@/composables'
+import { useSonner, useTheme } from '@/composables'
+import { useDateFormat } from '@/composables/useDateFormat'
+import { useDockBadgePreference } from '@/composables/useDockBadgePreference'
 import { i18n, ipc } from '@/electron'
+import { isMac } from '@/utils'
+import { DATE_FORMATS } from '~/shared/dateFormat'
+
+const { dateFormat, setDateFormat, formatDate } = useDateFormat()
+const datePreview = new Date(2026, 10, 23)
 
 const { currentThemeId, customThemes, loadCustomThemes, setTheme } = useTheme()
+const { sonner } = useSonner()
+const isCreatingThemeTemplate = ref(false)
+
+const { source: dockBadgeSource, setSource: setDockBadgeSource }
+  = useDockBadgePreference()
+
+const dockBadgeOptions: Array<{ id: DockBadgeSource, label: string }> = [
+  {
+    id: 'none',
+    label: i18n.t('preferences:appearance.dockBadge.none'),
+  },
+  {
+    id: 'codeInbox',
+    label: i18n.t('preferences:appearance.dockBadge.codeInbox'),
+  },
+  {
+    id: 'notesInbox',
+    label: i18n.t('preferences:appearance.dockBadge.notesInbox'),
+  },
+  {
+    id: 'tasksDue',
+    label: i18n.t('preferences:appearance.dockBadge.tasksDue'),
+  },
+]
+const dockBadgeSources = new Set<DockBadgeSource>(
+  dockBadgeOptions.map(option => option.id),
+)
 
 const builtInThemes = [
   {
@@ -29,8 +65,29 @@ const customLightThemes = computed(() => {
   return customThemes.value.filter(theme => theme.type === 'light')
 })
 
-async function onThemeChange(id: string) {
-  await setTheme(id)
+async function onThemeChange(value: AcceptableValue) {
+  if (typeof value === 'string') {
+    await setTheme(value)
+  }
+}
+
+async function onDockBadgeSourceChange(value: AcceptableValue) {
+  if (
+    typeof value !== 'string'
+    || !dockBadgeSources.has(value as DockBadgeSource)
+  ) {
+    return
+  }
+
+  const source = value as DockBadgeSource
+  const result = await setDockBadgeSource(source)
+
+  if (source !== 'none' && !result.applied) {
+    sonner({
+      message: i18n.t('preferences:appearance.dockBadge.permissionDenied'),
+      type: 'warning',
+    })
+  }
 }
 
 async function openThemesDir() {
@@ -38,8 +95,29 @@ async function openThemesDir() {
 }
 
 async function createThemeTemplate() {
-  await ipc.invoke('theme:create-template', null)
-  await loadCustomThemes()
+  if (isCreatingThemeTemplate.value) {
+    return
+  }
+
+  isCreatingThemeTemplate.value = true
+
+  try {
+    await ipc.invoke('theme:create-template', null)
+    await loadCustomThemes()
+    sonner({
+      message: i18n.t('preferences:appearance.theme.templateCreated'),
+      type: 'success',
+    })
+  }
+  catch {
+    sonner({
+      message: i18n.t('preferences:appearance.theme.templateCreateError'),
+      type: 'error',
+    })
+  }
+  finally {
+    isCreatingThemeTemplate.value = false
+  }
 }
 
 void loadCustomThemes()
@@ -107,6 +185,59 @@ void loadCustomThemes()
         </Select.Select>
       </UiMenuFormItem>
 
+      <UiMenuFormItem
+        :label="i18n.t('preferences:appearance.dateFormat.label')"
+      >
+        <Select.Select
+          :model-value="dateFormat"
+          @update:model-value="setDateFormat"
+        >
+          <Select.SelectTrigger class="w-64">
+            <Select.SelectValue />
+          </Select.SelectTrigger>
+          <Select.SelectContent>
+            <Select.SelectItem
+              v-for="(option, index) in DATE_FORMATS"
+              :key="option"
+              :value="option"
+            >
+              {{ i18n.t(`preferences:appearance.dateFormat.options.${index}`) }}
+            </Select.SelectItem>
+          </Select.SelectContent>
+        </Select.Select>
+        <template #description>
+          {{
+            i18n.t("preferences:appearance.dateFormat.preview", {
+              date: formatDate(datePreview),
+              interpolation: { escapeValue: false },
+            })
+          }}
+        </template>
+      </UiMenuFormItem>
+
+      <UiMenuFormItem
+        v-if="isMac"
+        :label="i18n.t('preferences:appearance.dockBadge.label')"
+      >
+        <Select.Select
+          :model-value="dockBadgeSource"
+          @update:model-value="onDockBadgeSourceChange"
+        >
+          <Select.SelectTrigger class="w-64">
+            <Select.SelectValue />
+          </Select.SelectTrigger>
+          <Select.SelectContent>
+            <Select.SelectItem
+              v-for="option in dockBadgeOptions"
+              :key="option.id"
+              :value="option.id"
+            >
+              {{ option.label }}
+            </Select.SelectItem>
+          </Select.SelectContent>
+        </Select.Select>
+      </UiMenuFormItem>
+
       <UiMenuFormItem :label="i18n.t('preferences:appearance.theme.themesDir')">
         <template #description>
           {{ i18n.t("preferences:appearance.theme.dirDescription") }}
@@ -119,8 +250,15 @@ void loadCustomThemes()
             >
               {{ i18n.t("preferences:appearance.theme.openDir") }}
             </Button>
-            <Button @click="createThemeTemplate">
-              {{ i18n.t("preferences:appearance.theme.createTemplate") }}
+            <Button
+              :disabled="isCreatingThemeTemplate"
+              @click="createThemeTemplate"
+            >
+              {{
+                isCreatingThemeTemplate
+                  ? i18n.t("preferences:appearance.theme.creatingTemplate")
+                  : i18n.t("preferences:appearance.theme.createTemplate")
+              }}
             </Button>
           </div>
         </template>

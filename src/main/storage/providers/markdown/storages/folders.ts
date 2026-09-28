@@ -1,6 +1,7 @@
 import type { FoldersStorage, FolderUpdateResult } from '../../../contracts'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { scheduleDockBadgeRefresh } from '../../../../dockBadge'
 import {
   assertDirectoryNameAvailable,
   assertNotReservedRootFolderName,
@@ -14,6 +15,8 @@ import {
   getPaths,
   getRuntimeCache,
   getVaultPath,
+  isCodeVaultDiskReady,
+  META_FILE_NAME,
   normalizeDirectoryPath,
   normalizeFlag,
   persistSnippet,
@@ -24,8 +27,13 @@ import {
   validateEntryName,
 } from '../runtime'
 import {
+  getFileAvailability,
+  markAppWrittenFileAsLocal,
+} from '../runtime/shared/cloudFiles'
+import {
   applyFolderParentAndOrder,
   assertFolderMoveTargetValid,
+  assertNoUnknownDomainFiles,
   createFolderInStateAndDisk,
   getFolderPathsByDepth,
   getFoldersSortedByCreatedAt,
@@ -96,6 +104,20 @@ export function createFoldersStorage(): FoldersStorage {
     },
     updateFolder: (id, input): FolderUpdateResult => {
       const paths = getPaths(getVaultPath())
+
+      // Rename/move каталога до завершения фоновой сверки работал бы по
+      // пустому provisional-списку записей: файлы переместились бы на диске,
+      // а index paths и связи остались бы старыми.
+      if (
+        ('name' in input || 'parentId' in input)
+        && !isCodeVaultDiskReady(paths)
+      ) {
+        throwStorageError(
+          'VAULT_HYDRATING',
+          'Vault is still syncing, folder rename or move is not available yet',
+        )
+      }
+
       const { state, snippets } = getRuntimeCache(paths)
 
       const folder = findFolderById(state, id)
@@ -170,7 +192,7 @@ export function createFoldersStorage(): FoldersStorage {
 
       if ('defaultLanguage' in input) {
         folder.defaultLanguage
-          = input.defaultLanguage || folder.defaultLanguage
+          = input.defaultLanguage ?? folder.defaultLanguage
       }
 
       if ('isOpen' in input) {
@@ -193,14 +215,40 @@ export function createFoldersStorage(): FoldersStorage {
           oldFolderPath,
         )
 
+        const affectedFolderIds = collectDescendantIds(state.folders, id)
+        affectedFolderIds.add(id)
+        const localMetadataTargetPaths: string[] = []
+
+        for (const folderId of affectedFolderIds) {
+          const oldPath = oldFolderPathMap.get(folderId)
+          const newPath = newFolderPathMap.get(folderId)
+          if (!oldPath || !newPath || oldPath === newPath) {
+            continue
+          }
+
+          const sourceMetadataPath = path.join(
+            paths.vaultPath,
+            oldPath,
+            META_FILE_NAME,
+          )
+          const sourceAvailability = getFileAvailability(sourceMetadataPath)
+          if (
+            sourceAvailability.exists
+            && !sourceAvailability.isCloudPlaceholder
+          ) {
+            localMetadataTargetPaths.push(
+              path.join(paths.vaultPath, newPath, META_FILE_NAME),
+            )
+          }
+        }
+
         moveFolderDirectoryOnDisk(
           paths.vaultPath,
           oldFolderPath,
           newFolderPath,
         )
 
-        const affectedFolderIds = collectDescendantIds(state.folders, id)
-        affectedFolderIds.add(id)
+        localMetadataTargetPaths.forEach(markAppWrittenFileAsLocal)
 
         updateChildEntityPaths({
           entries: snippets,
@@ -242,6 +290,17 @@ export function createFoldersStorage(): FoldersStorage {
     },
     deleteFolder: (id) => {
       const paths = getPaths(getVaultPath())
+
+      // До завершения фоновой сверки runtime-кэш provisional: список записей
+      // пуст, перенос содержимого папки в trash ничего бы не нашёл, а
+      // removeFolderPathsFromDisk физически уничтожил бы файлы на диске.
+      if (!isCodeVaultDiskReady(paths)) {
+        throwStorageError(
+          'VAULT_HYDRATING',
+          'Vault is still syncing, folder deletion is not available yet',
+        )
+      }
+
       const { state, snippets } = getRuntimeCache(paths)
 
       const folder = findFolderById(state, id)
@@ -254,26 +313,57 @@ export function createFoldersStorage(): FoldersStorage {
       removedFolderIds.add(id)
       const directoryEntriesCache = new Map<string, string[]>()
 
+      const removedFolderPaths = getFolderPathsByDepth(
+        oldFolderPathMap,
+        removedFolderIds,
+      )
+
+      // Доменный .md без записи в runtime (плейсхолдер с другого устройства,
+      // сбой чтения при скане) физически уничтожился бы вместе с каталогом:
+      // удаление отклоняется целиком. Обход стартует с корня удаляемой папки
+      // (вложенные каталоги покрываются рекурсией). Известные записи
+      // переносятся в trash штатно, включая pending (их trash-маркер — путь).
+      const topFolderPath = oldFolderPathMap.get(id)
+      const knownFilePaths = new Set(
+        snippets
+          .filter(
+            snippet =>
+              snippet.folderId !== null
+              && removedFolderIds.has(snippet.folderId),
+          )
+          .map(snippet => snippet.filePath),
+      )
+      assertNoUnknownDomainFiles(
+        paths.vaultPath,
+        topFolderPath ? [topFolderPath] : [],
+        knownFilePaths,
+      )
+
       snippets.forEach((snippet) => {
         if (
           snippet.folderId !== null
           && removedFolderIds.has(snippet.folderId)
         ) {
           const previousPath = snippet.filePath
+          const sourceAvailability = getFileAvailability(
+            path.join(paths.vaultPath, previousPath),
+          )
+          const sourceFileVerifiedLocal
+            = !snippet.pendingCloudDownload
+              && sourceAvailability.exists
+              && !sourceAvailability.isCloudPlaceholder
+
           snippet.folderId = null
           snippet.isDeleted = 1
           snippet.updatedAt = Date.now()
           persistSnippet(paths, state, snippet, previousPath, {
             allowRenameOnConflict: true,
             directoryEntriesCache,
+            skipWriteIfUnavailable: true,
+            sourceFileVerifiedLocal,
           })
         }
       })
-
-      const removedFolderPaths = getFolderPathsByDepth(
-        oldFolderPathMap,
-        removedFolderIds,
-      )
 
       state.folders = state.folders.filter(
         folder => !removedFolderIds.has(folder.id),
@@ -282,6 +372,7 @@ export function createFoldersStorage(): FoldersStorage {
       removeFolderPathsFromDisk(paths.vaultPath, removedFolderPaths)
 
       saveState(paths, state)
+      scheduleDockBadgeRefresh()
 
       return { deleted: true }
     },

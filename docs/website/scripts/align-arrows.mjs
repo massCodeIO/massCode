@@ -8,7 +8,8 @@ let inBlock = false
 let block = []
 
 function flushBlock() {
-  if (block.length === 0) return
+  if (block.length === 0)
+    return
   // Find lines with →
   const arrowLines = block.filter(l => l.includes('→'))
   if (arrowLines.length === 0) {
@@ -21,7 +22,8 @@ function flushBlock() {
   for (const line of arrowLines) {
     const idx = line.indexOf('→')
     const left = line.substring(0, idx).trimEnd()
-    if (left.length > maxLeft) maxLeft = left.length
+    if (left.length > maxLeft)
+      maxLeft = left.length
   }
   const col = maxLeft + 4 // 4 spaces before →
   for (const line of block) {
@@ -29,9 +31,10 @@ function flushBlock() {
       const idx = line.indexOf('→')
       const left = line.substring(0, idx).trimEnd()
       const right = line.substring(idx + 1).trimStart()
-      const padded = left.padEnd(col) + '→ ' + right
+      const padded = `${left.padEnd(col)}→ ${right}`
       result.push(padded)
-    } else {
+    }
+    else {
       result.push(line)
     }
   }
@@ -42,13 +45,16 @@ for (const line of lines) {
   if (line.startsWith('```') && !inBlock) {
     inBlock = true
     result.push(line)
-  } else if (line.startsWith('```') && inBlock) {
+  }
+  else if (line.startsWith('```') && inBlock) {
     flushBlock()
     inBlock = false
     result.push(line)
-  } else if (inBlock) {
+  }
+  else if (inBlock) {
     block.push(line)
-  } else {
+  }
+  else {
     result.push(line)
   }
 }

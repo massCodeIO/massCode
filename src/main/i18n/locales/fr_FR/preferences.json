@@ -2,11 +2,9 @@
   "label": "Préférences",
   "storage": {
     "section": {
-      "main": "Main",
-      "migration": "Migration"
+      "main": "Main"
     },
     "label": "Stockage",
-    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "Nombre",
     "vaultPath": "Vault Path"
   },
@@ -116,7 +114,7 @@
     "codeRenderer": "Rendu des blocs de code"
   },
   "api": {
-    "label": "Port API",
+    "label": "API",
     "port": {
       "label": "Port API",
       "description": "Numéro de port pour le serveur API (nécessite un redémarrage de l'application). Plage valide: 1024-65535."

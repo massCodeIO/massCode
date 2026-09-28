@@ -1,45 +1,125 @@
 {
   "confirm": {
-    "delete": "您确定要删除 \"{{name}}\" 吗？",
-    "deletePermanently": "您确定要永久删除 \"{{name}}\" 吗？",
-    "deleteConfirmMultipleSnippets": "您确定要永久删除已选择的 {{count}} 个代码片段吗？",
-    "emptyTrash": "您确定要永久删除回收站中的所有代码片段吗？",
-    "migrateToMarkdown": [
-      "Migrate to Markdown Vault?",
-      "The selected vault will be overwritten with the current SQLite library."
+    "delete": "确定要删除 \"{{name}}\" 吗？",
+    "deleteVariable": "确定要删除变量 \"{{name}}\" 吗？",
+    "deleteUnnamedVariable": "确定要删除该变量吗？",
+    "unprotectHttpSecret": "确定要停止保护 \"{{name}}\" 吗？",
+    "deletePermanently": "确定要永久删除 \"{{name}}\" 吗？",
+    "deleteConfirmMultipleSnippets": "确定要永久删除选中的 {{count}} 个代码片段吗？",
+    "emptyTrash": "确定要永久清空回收站中的所有代码片段吗？",
+    "convertTaskToNote": "确定要将任务 \"{{name}}\" 转换成笔记吗？",
+    "moveVaultOverwrite": [
+      "确定要覆盖所选目录吗？",
+      "所选目录不为空。当前库的内容将会覆盖该目录下的现有内容。"
+    ],
+    "vaultDoctorApply": [
+      "应用仓库修复？",
+      "massCode 将自动执行安全的元数据修复，并应用您选中的重复 ID 处理方案. 未选中的冲突项将被跳过。"
     ]
   },
   "success": {
     "copied": "已复制到剪贴板",
-    "migrateToMarkdown": "Migrated to Markdown Vault. Folders: {{folders}}, snippets: {{snippets}}, tags: {{tags}}.",
-    "vaultLoaded": "Vault successfully loaded."
+    "vaultMoved": "仓库已成功移动。",
+    "vaultLoaded": "仓库已成功加载。",
+    "licenseActivated": "许可证已激活。感谢您对 massCode 的支持!",
+    "noteExported": "笔记已成功导出。",
+    "noteFolderSiteExported": "笔记文件夹已导出为 HTML 站点。",
+    "vaultDoctorApplied": "仓库医生应用了 {{count}} 个修复。",
+    "vaultDoctorClean": "仓库医生没有发现任何问题。"
   },
   "warning": {
     "noUndo": "此操作无法撤消。",
+    "httpSecretToPlainText": "其值将以纯文本形式存放在环境，因此将存储在仓库中并与之同步。",
     "allSnippetsMoveToTrash": "此文件夹中的所有代码片段将被移至回收站。",
+    "taskPropertiesRemoved": "任务状态、优先级和截止日期将被移除。",
     "deleteTag": "这也将导致所有带有该标签的代码片段移除此标签。",
     "createDb": "请选择其他文件夹",
     "htmlCssPreview": "添加HTML片段以查看结果。添加CSS进行样式设计，添加JavaScript实现交互功能。",
     "codeBlockRenderer": [
       "使用 Codemirror 时，代码块设置的语言必须对应",
       "languages"
-    ]
+    ],
+    "vaultDoctorConflicts": "仓库：{{count}} 个同步冲突待关注",
+    "vaultDoctorReview": "审查",
+    "vaultDoctorNotReady": "仓库仍在与云存储同步中。稍后请尝试再次扫描。",
+    "cloudFileNotReady": "此文件仍在从云存储同步中。请稍后重试。"
   },
   "error": {
-    "migration": "Auto-migration from SQLite failed: {{error}}"
+    "secretNameRequired": "在保存值之前，请为机密变量输入一个名称。",
+    "secretEnvironmentMissing": "该环境已不存在。",
+    "secretEncryptionUnavailable": "无法存储机密变量：该系统没有可用的操作系统加密功能。",
+    "secretSaveFailed": "保存机密变量失败。",
+    "secretRevealFailed": "读取机密变量失败。它可能已被其他操作系统用户保存。",
+    "entryNameEmpty": "名称不能为空。",
+    "entryNameLeadingDot": "名称不能以点字符（.）开头。",
+    "entryNameInvalidChars": "名称不能包含以下字符：{{- chars}}",
+    "entryNameTrailingDot": "名称不能以点字符（.）结尾。",
+    "entryNameWindowsReserved": "该名称为 Windows 系统保留名称。",
+    "entryNameNoteConflict": "此文件夹中已存在同名笔记。",
+    "entryNameSnippetConflict": "此文件夹中已存在同名代码片段。",
+    "entryNameRequestConflict": "此文件夹中已存在同名请求。",
+    "entryNameFolderConflict": "当前层级下已存在同名文件夹。",
+    "vaultPathRequired": "需填写仓库路径",
+    "licenseInvalid": "无效的许可证密钥",
+    "noteExportFailed": "笔记导出失败。",
+    "noteFolderSiteExportFailed": "笔记文件夹导出失败"
   },
   "description": {
-    "storageVault": "Choose the vault directory. To sync between devices, select a folder in iCloud Drive, Google Drive or Dropbox.",
-    "language": "To apply language changes, you need to reload the app.",
-    "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
+    "storageVault": "请选择仓库目录。如需在多设备间同步，请选择 iCloud Drive、Google Drive 或 Dropbox 中的文件夹。",
+    "language": "应用语言更改需要重新加载应用程序。"
   },
   "special": {
-    "supportMessage": "你好，我是 Anton 👋<br><br>\n感谢使用 massCode。如果您觉得这个应用有用，请{{-tagStart}}捐赠{{-tagEnd}}。这将激励我继续开发这个项目。",
     "unsponsored": "未赞助"
+  },
+  "donations": {
+    "trigger": {
+      "copy": {
+        "code": "累计复制 {{count}} 个代码片段 🚀",
+        "http": "累计复制 {{count}} 条 HTTP 请求 🚀",
+        "notes": "累计复制 {{count}} 篇笔记 🚀",
+        "math": "累计复制 {{count}} 个计算结果 🚀",
+        "tools": "累计复制 {{count}} 个工具输出 🚀",
+        "drawings": "累计复制 {{count}} 幅绘图 🚀"
+      },
+      "created": {
+        "code": "累计创建 {{count}} 个代码片段 🎉",
+        "http": "累计创建 {{count}} 条 HTTP 请求 🎉",
+        "notes": "累计创建 {{count}} 篇笔记 🎉",
+        "math": "累计创建 {{count}} 个计算工作表 🎉",
+        "drawings": "累计创建 {{count}} 幅绘图 🎉"
+      },
+      "sent": {
+        "http": "累计发送 {{count}} 条 HTTP 请求 🚀"
+      },
+      "streak_7": {
+        "title": "连续打卡 7 天 🔥"
+      },
+      "streak_30": {
+        "title": "massCode 已陪您度过 30 天 🎊"
+      },
+      "streak_100": {
+        "title": "massCode 已陪您度过 100 天 🏆"
+      }
+    },
+    "body": {
+      "full": "Hi，我是 Anton 👋\nmassCode 是由我独自一人开发并维护的。如果它对你的工作有所帮助，请支持一下这个项目，让它能够继续成长。",
+      "short": "喜欢 massCode 吗？支持一下这个项目吧，让它能够继续成长。"
+    },
+    "actions": {
+      "support": "支持",
+      "dismiss": "先用用看"
+    }
   },
   "release": {},
   "update": {
-    "available": "版本 {{newVersion}} 现已可供下载。\n您的版本是 {{oldVersion}}。",
-    "noAvailable": "目前没有可用的更新。"
+    "available": "版本 {{newVersion}} 现已可供下载。\n您当前的版本是 {{oldVersion}}。",
+    "noAvailable": "当前没有可用更新。",
+    "downloading": "新版本 v{{version}} 正在后台下载中。准备就绪后将提示您重启应用。",
+    "availableToast": "发现新版本",
+    "goToGitHub": "前往 GitHub",
+    "downloaded": "新版本 v{{version}} 已准备就绪。请重启 massCode 以应用更新。",
+    "restart": "重启应用",
+    "whatsNewToast": "查看 massCode v{{version}} 的新功能",
+    "releaseNotes": "版本日志"
   }
 }

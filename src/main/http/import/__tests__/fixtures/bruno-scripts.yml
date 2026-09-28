@@ -1,0 +1,92 @@
+opencollection: 1.0.0
+info:
+  name: Bruno import demo
+request:
+  scripts:
+    - type: before-request
+      code: bru.setVar('order', 'collection');
+    - type: after-response
+      code: bru.setVar('postOrder', bru.getVar('postOrder') + '/collection');
+    - type: tests
+      code: "test('Collection test', () => { expect(res.status).to.equal(200); });"
+items:
+  - info:
+      name: Workflow
+      type: folder
+    request:
+      scripts:
+        - type: before-request
+          code: bru.setVar('order', bru.getVar('order') + '/folder');
+        - type: after-response
+          code: bru.setVar('postOrder', bru.getVar('postOrder') + '/folder');
+        - type: tests
+          code: "test('Folder test', () => { expect(res.status).to.equal(200); });"
+    items:
+      - info:
+          name: 01 Passing tests
+          type: http
+        http:
+          method: POST
+          url: http://127.0.0.1:5189/echo
+          body:
+            type: text
+            data: '{{order}}'
+        runtime:
+          assertions:
+            - expression: res.status
+              operator: eq
+              value: '200'
+            - expression: res.body.token
+              operator: isString
+            - expression: res.body.token
+              operator: eq
+              value: demo-token
+          scripts:
+            - type: before-request
+              code: bru.setVar('order', bru.getVar('order') + '/request');
+            - type: after-response
+              code: |
+                bru.setVar('postOrder', 'request');
+                bru.setVar('token', res.body.token);
+            - type: tests
+              code: |
+                test('Request test', () => { expect(res.status).to.equal(200); });
+                test('Sandwich order', () => { expect(bru.getVar('postOrder')).to.equal('request/folder/collection'); });
+      - info:
+          name: 02 Failing tests
+          type: http
+        http:
+          method: GET
+          url: http://127.0.0.1:5189/echo
+        runtime:
+          assertions:
+            - expression: res.status
+              operator: eq
+              value: '201'
+          scripts:
+            - type: tests
+              code: "test('Intentional failure', () => { expect(res.status).to.equal(201); });"
+      - info:
+          name: 03 Unsupported script
+          type: http
+        http:
+          method: GET
+          url: http://127.0.0.1:5189/echo
+        runtime:
+          assertions:
+            - expression: res.body.token
+              operator: eq
+              value: '${process.env.SECRET}'
+          scripts:
+            - type: before-request
+              code: require('node:fs').readFileSync('/tmp/private');
+      - info:
+          name: 04 Malformed script
+          type: http
+        http:
+          method: GET
+          url: http://127.0.0.1:5189/echo
+        runtime:
+          scripts:
+            - type: tests
+              code: {not: javascript}

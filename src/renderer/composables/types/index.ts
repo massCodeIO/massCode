@@ -2,9 +2,13 @@ import type { LayoutMode } from '../layoutModes'
 
 export const LibraryFilter = {
   All: 'all',
+  Completed: 'completed',
   Favorites: 'favorites',
   Inbox: 'inbox',
+  Tasks: 'tasks',
+  Today: 'today',
   Trash: 'trash',
+  Upcoming: 'upcoming',
 } as const
 
 export const LibraryTab = {

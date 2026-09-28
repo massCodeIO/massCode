@@ -2,7 +2,7 @@ import type {
   SnippetContentsAdd,
   SnippetsUpdate,
 } from '../services/api/generated'
-import { useDebounceFn } from '@vueuse/core'
+import { isRetriableSaveError } from '@/utils'
 import { useSnippets } from './useSnippets'
 import { markUserEdit } from './useStorageMutation'
 
@@ -18,55 +18,147 @@ interface UpdateContentQueueItem {
 }
 
 const UPDATE_DEBOUNCE_TIME = 500
+const UPDATE_RETRY_TIME = 2000
+// Backoff растёт экспоненциально до потолка: без него клиентская ошибка или
+// лежащий API-сервер молотили бы PATCH каждые 2 секунды бесконечно.
+const UPDATE_RETRY_MAX_TIME = 60_000
 
 const { updateSnippetContent, updateSnippet } = useSnippets()
 
 const updateQueue = ref<Map<string, UpdateQueueItem>>(new Map())
 const updateContentQueue = ref<Map<string, UpdateContentQueueItem>>(new Map())
+const metadataUpdateTimers = ref<Map<string, ReturnType<typeof setTimeout>>>(
+  new Map(),
+)
 const contentUpdateTimers = ref<Map<string, ReturnType<typeof setTimeout>>>(
   new Map(),
 )
 const inFlightContentKeys = ref<Set<string>>(new Set())
+const inFlightContentUpdates = new Map<string, Promise<void>>()
+const retryAttemptsByKey = ref<Map<string, number>>(new Map())
 
-const updateDebounced = useDebounceFn((snippetId: number) => {
+function nextRetryDelay(key: string): number {
+  const attempts = (retryAttemptsByKey.value.get(key) ?? 0) + 1
+  retryAttemptsByKey.value.set(key, attempts)
+  return Math.min(
+    UPDATE_RETRY_TIME * 2 ** (attempts - 1),
+    UPDATE_RETRY_MAX_TIME,
+  )
+}
+
+// Дебаунс метаданных — по ключу сниппета: общий таймер терял бы обновление
+// сниппета A, если в окне дебаунса тронули сниппет B (payload A остался бы
+// в очереди навсегда).
+function scheduleMetadataUpdate(
+  snippetId: number,
+  delayMs = UPDATE_DEBOUNCE_TIME,
+) {
+  const key = `${snippetId}`
+  const pendingTimer = metadataUpdateTimers.value.get(key)
+  if (pendingTimer) {
+    clearTimeout(pendingTimer)
+  }
+
+  const timer = setTimeout(() => {
+    metadataUpdateTimers.value.delete(key)
+    void flushMetadataUpdate(snippetId)
+  }, delayMs)
+
+  metadataUpdateTimers.value.set(key, timer)
+}
+
+async function flushMetadataUpdate(snippetId: number) {
   const key = `${snippetId}`
   const update = updateQueue.value.get(key)
-
-  if (update) {
-    updateSnippet(update.snippetId, update.data)
-    updateQueue.value.delete(key)
+  if (!update) {
+    return
   }
-}, UPDATE_DEBOUNCE_TIME)
+
+  updateQueue.value.delete(key)
+
+  try {
+    await updateSnippet(update.snippetId, update.data)
+    retryAttemptsByKey.value.delete(key)
+  }
+  catch (error) {
+    console.error(error)
+
+    // Временный сбой возвращает payload в очередь и ретраит с backoff:
+    // иначе правка метаданных молча гибла бы. Более свежий ввод приоритетнее.
+    if (isRetriableSaveError(error) && !updateQueue.value.has(key)) {
+      updateQueue.value.set(key, update)
+      scheduleMetadataUpdate(snippetId, nextRetryDelay(key))
+    }
+  }
+}
 
 function getContentUpdateKey(snippetId: number, contentId: number) {
   return `${snippetId}-${contentId}`
 }
 
-async function flushContentUpdate(key: string) {
+function flushContentUpdate(key: string): Promise<void> {
+  const pending = inFlightContentUpdates.get(key)
+  if (pending)
+    return pending
   const update = updateContentQueue.value.get(key)
-  if (!update) {
-    return
-  }
+  if (!update)
+    return Promise.resolve()
 
   updateContentQueue.value.delete(key)
   inFlightContentKeys.value.add(key)
 
-  try {
-    await updateSnippetContent(update.snippetId, update.contentId, update.data)
-  }
-  catch (error) {
-    console.error(error)
-  }
-  finally {
-    inFlightContentKeys.value.delete(key)
-
-    if (updateContentQueue.value.has(key)) {
-      scheduleContentUpdate(key)
+  const saving = (async () => {
+    let failed = false
+    let shouldRetry = false
+    try {
+      await updateSnippetContent(
+        update.snippetId,
+        update.contentId,
+        update.data,
+      )
+      retryAttemptsByKey.value.delete(key)
     }
-  }
+    catch (error) {
+      failed = true
+      shouldRetry = isRetriableSaveError(error)
+      // Даже постоянная ошибка оставляет несохранённый текст доступным
+      // для явного retry; автоматический backoff — только для временных.
+      if (!updateContentQueue.value.has(key))
+        updateContentQueue.value.set(key, update)
+      throw error
+    }
+    finally {
+      inFlightContentKeys.value.delete(key)
+      inFlightContentUpdates.delete(key)
+      const queued = updateContentQueue.value.get(key)
+      if (queued && (!failed || shouldRetry || queued !== update)) {
+        scheduleContentUpdate(
+          key,
+          shouldRetry ? nextRetryDelay(key) : undefined,
+        )
+      }
+    }
+  })()
+  inFlightContentUpdates.set(key, saving)
+  return saving
 }
 
-function scheduleContentUpdate(key: string) {
+async function flushSnippetContent(snippetId: number, contentId: number) {
+  const key = getContentUpdateKey(snippetId, contentId)
+  do {
+    const timer = contentUpdateTimers.value.get(key)
+    if (timer) {
+      clearTimeout(timer)
+      contentUpdateTimers.value.delete(key)
+    }
+    await flushContentUpdate(key)
+  } while (
+    updateContentQueue.value.has(key)
+    || inFlightContentUpdates.has(key)
+  )
+}
+
+function scheduleContentUpdate(key: string, delayMs = UPDATE_DEBOUNCE_TIME) {
   const pendingTimer = contentUpdateTimers.value.get(key)
   if (pendingTimer) {
     clearTimeout(pendingTimer)
@@ -74,8 +166,8 @@ function scheduleContentUpdate(key: string) {
 
   const timer = setTimeout(() => {
     contentUpdateTimers.value.delete(key)
-    void flushContentUpdate(key)
-  }, UPDATE_DEBOUNCE_TIME)
+    void flushContentUpdate(key).catch(error => console.error(error))
+  }, delayMs)
 
   contentUpdateTimers.value.set(key, timer)
 }
@@ -83,8 +175,14 @@ function scheduleContentUpdate(key: string) {
 function addToUpdateQueue(snippetId: number, data: SnippetsUpdate) {
   markUserEdit()
   const key = `${snippetId}`
-  updateQueue.value.set(key, { snippetId, data })
-  updateDebounced(snippetId)
+  updateQueue.value.set(key, {
+    snippetId,
+    data: { ...updateQueue.value.get(key)?.data, ...data },
+  })
+  // Новый ввод сбрасывает backoff: пользователь активен, сохранение снова
+  // пробуется быстро.
+  retryAttemptsByKey.value.delete(key)
+  scheduleMetadataUpdate(snippetId)
 }
 
 function addToUpdateContentQueue(
@@ -95,6 +193,7 @@ function addToUpdateContentQueue(
   markUserEdit()
   const key = getContentUpdateKey(snippetId, contentId)
   updateContentQueue.value.set(key, { snippetId, contentId, data })
+  retryAttemptsByKey.value.delete(key)
 
   if (inFlightContentKeys.value.has(key)) {
     return
@@ -126,6 +225,7 @@ export function useSnippetUpdate() {
     addToUpdateContentQueue,
     addToUpdateQueue,
     getPendingContentUpdate,
+    flushSnippetContent,
     hasBusyContentUpdates,
     isContentUpdateBusy,
   }

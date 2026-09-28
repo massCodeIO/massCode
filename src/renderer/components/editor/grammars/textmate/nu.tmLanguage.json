@@ -327,7 +327,7 @@
       "name": "meta.function.parameters.nushell"
     },
     "function-multiple-inout": {
-      "begin": "(?<=]\\s*)(:)\\s+(\\[)",
+      "begin": "(?<=])\\s*(:)\\s+(\\[)",
       "beginCaptures": {
         "1": { "name": "punctuation.definition.in-out.nushell" },
         "2": { "name": "meta.brace.square.begin.nushell" }

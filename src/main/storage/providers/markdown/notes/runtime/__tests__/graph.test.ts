@@ -1,0 +1,109 @@
+import type { NotesGraphNoteLookup } from '../graph'
+import { describe, expect, it } from 'vitest'
+import { buildNotesGraph } from '../graph'
+
+interface SnippetLookup {
+  id: number
+  name: string
+}
+
+function createNote(
+  id: number,
+  name: string,
+  content: string,
+  overrides: Partial<NotesGraphNoteLookup> = {},
+): NotesGraphNoteLookup {
+  return {
+    content,
+    folderId: null,
+    id,
+    name,
+    tags: [],
+    ...overrides,
+  }
+}
+
+describe('buildNotesGraph', () => {
+  it('builds a note-to-note edge from an exact title link', () => {
+    const graph = buildNotesGraph({
+      notes: [
+        createNote(1, 'Source', 'See [[Target]]'),
+        createNote(2, 'Target', ''),
+      ],
+      snippets: [],
+    })
+
+    expect(graph.edges).toEqual([{ source: 1, target: 2 }])
+    expect(graph.nodes).toContainEqual(
+      expect.objectContaining({
+        id: 2,
+        incomingLinksCount: 1,
+      }),
+    )
+  })
+
+  it('prefers snippet title matches over note title matches and skips such edges', () => {
+    const snippets: SnippetLookup[] = [{ id: 50, name: 'Architecture' }]
+    const graph = buildNotesGraph({
+      notes: [
+        createNote(1, 'Source', 'See [[Architecture]]'),
+        createNote(2, 'Architecture', ''),
+      ],
+      snippets,
+    })
+
+    expect(graph.edges).toEqual([])
+    expect(graph.nodes).toContainEqual(
+      expect.objectContaining({
+        id: 2,
+        incomingLinksCount: 0,
+      }),
+    )
+  })
+
+  it('supports legacy note:id links', () => {
+    const graph = buildNotesGraph({
+      notes: [
+        createNote(1, 'Source', 'See [[note:2|Target]]'),
+        createNote(2, 'Target', ''),
+      ],
+      snippets: [],
+    })
+
+    expect(graph.edges).toEqual([{ source: 1, target: 2 }])
+  })
+
+  it('collapses duplicate edges and ignores broken or self links', () => {
+    const graph = buildNotesGraph({
+      notes: [
+        createNote(
+          1,
+          'Source',
+          '[[Target]] [[Target|Again]] [[Missing]] [[note:1|Self]]',
+        ),
+        createNote(2, 'Target', ''),
+      ],
+      snippets: [],
+    })
+
+    expect(graph.edges).toEqual([{ source: 1, target: 2 }])
+    expect(graph.nodes).toContainEqual(
+      expect.objectContaining({
+        id: 2,
+        incomingLinksCount: 1,
+      }),
+    )
+  })
+})
+
+it('never creates planned edges even when a real reserved title exists', () => {
+  const graph = buildNotesGraph({
+    notes: [
+      createNote(1, 'Source', '[[masscode:planned:note|Later]]'),
+      createNote(2, 'masscode:planned:note', ''),
+    ],
+    snippets: [],
+  })
+  expect(graph.edges).toEqual([])
+  expect(graph.nodes.find(node => node.id === 2)?.incomingLinksCount).toBe(0)
+})

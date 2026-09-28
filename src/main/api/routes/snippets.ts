@@ -1,7 +1,14 @@
-import type { SnippetsCountsResponse, SnippetsResponse } from '../dto/snippets'
+import type {
+  SnippetItemResponse,
+  SnippetsCountsResponse,
+  SnippetsResponse,
+} from '../dto/snippets'
 import Elysia from 'elysia'
 import { useStorage } from '../../storage'
-import { commonAddResponse } from '../dto/common/response'
+import {
+  commonAddResponse,
+  commonMessageResponse,
+} from '../dto/common/response'
 import { snippetsDTO } from '../dto/snippets'
 
 const app = new Elysia({ prefix: '/snippets' })
@@ -40,6 +47,13 @@ function mapStorageError(status: unknown, error: unknown): never {
   }
 
   if (
+    parsedError.code === 'VAULT_HYDRATING'
+    || parsedError.code === 'CLOUD_FILE_NOT_DOWNLOADED'
+  ) {
+    return setStatus(503, { message: parsedError.message })
+  }
+
+  if (
     parsedError.code === 'FOLDER_NOT_FOUND'
     || parsedError.code === 'SNIPPET_NOT_FOUND'
   ) {
@@ -47,7 +61,8 @@ function mapStorageError(status: unknown, error: unknown): never {
   }
 
   if (
-    parsedError.code === 'INVALID_NAME'
+    parsedError.code === 'INVALID_CONTENT_ORDER'
+    || parsedError.code === 'INVALID_NAME'
     || parsedError.code === 'RESERVED_NAME'
   ) {
     return setStatus(400, { message: parsedError.message })
@@ -63,11 +78,25 @@ app
   // Получение списка сниппетов c возможностью фильтрации
   .get(
     '/',
-    ({ query }) => {
+    async ({ query }) => {
       const storage = useStorage()
-      const result = storage.snippets.getSnippets(query)
+      const result
+        = query.search
+          && !query.searchNameOnly
+          && storage.snippets.getSnippetsAsync
+          ? await storage.snippets.getSnippetsAsync(query)
+          : storage.snippets.getSnippets(query)
 
-      return result as SnippetsResponse
+      // Тела фрагментов не сериализуются в список: контент выбранного
+      // сниппета загружается через GET /snippets/:id.
+      return result.map(snippet => ({
+        ...snippet,
+        contents: snippet.contents.map(({ id, label, language }) => ({
+          id,
+          label,
+          language,
+        })),
+      })) as SnippetsResponse
     },
     {
       query: 'snippetsQuery',
@@ -86,6 +115,28 @@ app
     },
     {
       response: 'snippetsCountsResponse',
+      detail: {
+        tags: ['Snippets'],
+      },
+    },
+  )
+  .get(
+    '/:id',
+    ({ params, status }) => {
+      const storage = useStorage()
+      const snippet = storage.snippets.getSnippetById(Number(params.id))
+
+      if (!snippet) {
+        return status(404, { message: 'Snippet not found' })
+      }
+
+      return snippet as SnippetItemResponse
+    },
+    {
+      response: {
+        200: 'snippetItemResponse',
+        404: commonMessageResponse,
+      },
       detail: {
         tags: ['Snippets'],
       },
@@ -168,6 +219,38 @@ app
       detail: {
         tags: ['Snippets'],
       },
+    },
+  )
+  .patch(
+    '/:id/contents/order',
+    ({ params, body, status }) => {
+      try {
+        useStorage().snippets.reorderSnippetContents(
+          Number(params.id),
+          body.contentIds,
+        )
+        return { message: 'Snippet contents reordered' }
+      }
+      catch (error) {
+        return mapStorageError(status, error)
+      }
+    },
+    {
+      body: 'snippetContentsOrder',
+      error: ({ code, status }) => {
+        if (code === 'VALIDATION') {
+          return status(400, {
+            message: 'Expected positive integer content IDs',
+          })
+        }
+      },
+      response: {
+        200: commonMessageResponse,
+        400: commonMessageResponse,
+        404: commonMessageResponse,
+        503: commonMessageResponse,
+      },
+      detail: { tags: ['Snippets'] },
     },
   )
   // Обновление содержимого сниппета
@@ -308,6 +391,7 @@ app
     ({ params, status }) => {
       const storage = useStorage()
       const { deleted } = storage.snippets.deleteSnippetContent(
+        Number(params.id),
         Number(params.contentId),
       )
 

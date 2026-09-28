@@ -2,20 +2,23 @@ import { useNoteFolders } from './useNoteFolders'
 import { useNotes } from './useNotes'
 import { useNotesApp } from './useNotesApp'
 import { useNoteSearch } from './useNoteSearch'
+import { normalizeNotesSelectionState } from './useNotesSelectionNormalization'
 import { useNoteTags } from './useNoteTags'
 
 const {
   hideNotesViewModes,
   isNotesSpaceInitialized,
   notesState,
+  pendingNotesNavigation,
   showAllNotesPanels,
 } = useNotesApp()
 const { getNoteFolders } = useNoteFolders()
-const { getNotes, selectFirstNote } = useNotes()
-const { displayedNotes } = useNoteSearch()
+const { selectFirstNote } = useNotes()
+const { displayedNotes, resetNoteSearchState } = useNoteSearch()
 const { getNoteTags } = useNoteTags()
 
 export function resetNotesSpaceInitialization() {
+  resetNoteSearchState()
   isNotesSpaceInitialized.value = false
 }
 
@@ -28,15 +31,11 @@ function hasSelectedNoteInList(noteId: number | undefined): boolean {
 }
 
 async function initNotesSpace() {
-  if (isNotesSpaceInitialized.value) {
+  if (isNotesSpaceInitialized.value || pendingNotesNavigation.value) {
     return
   }
 
-  const results = await Promise.allSettled([
-    getNoteFolders(),
-    getNotes(),
-    getNoteTags(),
-  ])
+  const results = await Promise.allSettled([getNoteFolders(), getNoteTags()])
 
   results.forEach((result) => {
     if (result.status === 'rejected') {
@@ -47,6 +46,10 @@ async function initNotesSpace() {
   isNotesSpaceInitialized.value = results.every(
     result => result.status === 'fulfilled',
   )
+
+  if (isNotesSpaceInitialized.value) {
+    await normalizeNotesSelectionState()
+  }
 
   if (
     !hasSelectedNoteInList(notesState.noteId)

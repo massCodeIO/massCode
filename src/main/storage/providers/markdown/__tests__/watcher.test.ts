@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  getManagedNotesAssetName,
   getWatchPathSpaceId,
   isCodeWatchPath,
+  isHttpWatchPath,
+  isManagedNotesAssetsPath,
   isMathWatchPath,
   isNotesWatchPath,
   normalizeRelativeWatchPath,
@@ -31,6 +34,16 @@ describe('watcher routing', () => {
     expect(getWatchPathSpaceId('math/.state.yaml')).toBe('math')
   })
 
+  it('keeps http state and request files observable', () => {
+    expect(shouldIgnoreWatchPath(vaultRoot, '/vault/http/.state.yaml')).toBe(
+      false,
+    )
+    expect(
+      shouldIgnoreWatchPath(vaultRoot, '/vault/http/API/List posts.md'),
+    ).toBe(false)
+    expect(getWatchPathSpaceId('http/API/List posts.md')).toBe('http')
+  })
+
   it('drops unknown vault-root entries from space routing', () => {
     expect(getWatchPathSpaceId('README.md')).toBe(null)
     expect(getWatchPathSpaceId('random-dir/file.md')).toBe(null)
@@ -45,6 +58,25 @@ describe('watcher routing', () => {
     )
   })
 
+  it('routes managed Notes assets without hiding legacy assets', () => {
+    expect(
+      getManagedNotesAssetName('notes/.masscode/assets/abcdefghijklmnop.png'),
+    ).toBe('abcdefghijklmnop.png')
+    expect(
+      getManagedNotesAssetName('notes/assets/abcdefghijklmnop.png'),
+    ).toBeNull()
+    expect(isManagedNotesAssetsPath('notes/.masscode/assets')).toBe(true)
+    expect(
+      isManagedNotesAssetsPath('notes/.masscode/assets/nested/file.png'),
+    ).toBe(true)
+    expect(
+      shouldIgnoreWatchPath(
+        vaultRoot,
+        '/vault/notes/assets/abcdefghijklmnop.png',
+      ),
+    ).toBe(false)
+  })
+
   it('ignores hidden non-space paths', () => {
     expect(shouldIgnoreWatchPath(vaultRoot, '/vault/.git/config')).toBe(true)
     expect(shouldIgnoreWatchPath(vaultRoot, '/vault/random/.cache/file')).toBe(
@@ -52,11 +84,13 @@ describe('watcher routing', () => {
     )
   })
 
-  it('recognizes code, notes and math space paths', () => {
+  it('recognizes code, notes, math and http space paths', () => {
     expect(isCodeWatchPath('code/demo.md')).toBe(true)
     expect(isCodeWatchPath('notes/demo.md')).toBe(false)
     expect(isNotesWatchPath('notes/demo.md')).toBe(true)
     expect(isMathWatchPath('math/.state.yaml')).toBe(true)
+    expect(isHttpWatchPath('http/API/List posts.md')).toBe(true)
+    expect(isHttpWatchPath('notes/demo.md')).toBe(false)
   })
 
   it('extracts code-relative paths only from code space entries', () => {

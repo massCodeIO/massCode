@@ -2,6 +2,7 @@ import type { FolderRecord } from '../../../contracts'
 import type {
   MarkdownBodyFragment,
   MarkdownFolderMetadataFile,
+  MarkdownFrontmatterContent,
   MarkdownSnippet,
   MarkdownSnippetFrontmatter,
   Paths,
@@ -10,11 +11,20 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
 import {
-  LEGACY_FOLDER_META_FILE_NAME,
-  META_FILE_NAME,
-  NEW_LINE_SPLIT_RE,
-} from './constants'
-import { readYamlObjectFile, writeYamlObjectFile } from './shared/yaml'
+  enqueueCloudDownload,
+  prioritizeCloudDownload,
+} from '../cloudDownloads'
+import { LEGACY_FOLDER_META_FILE_NAME, META_FILE_NAME } from './constants'
+import { rememberAppFileChange } from './shared/appChanges'
+import {
+  getFileAvailability,
+  markAppWrittenFileAsLocal,
+} from './shared/cloudFiles'
+import {
+  isYamlFileCloudUnavailable,
+  readYamlObjectFile,
+  writeYamlObjectFile,
+} from './shared/yaml'
 
 export function readFolderMetadata(
   paths: Paths,
@@ -30,9 +40,22 @@ export function readFolderMetadata(
     return metaData
   }
 
+  // Недокачанный .meta.yaml — не «метаданных нет»: id папки существует, но
+  // сейчас неизвестен. Маркер запрещает legacy-миграции писать поверх
+  // плейсхолдера, а сам файл (крошечный и критичный для стабильности id)
+  // поднимается в начало очереди докачки.
+  if (isYamlFileCloudUnavailable(metaPath)) {
+    prioritizeCloudDownload(metaPath)
+    return { unavailable: true }
+  }
+
   // Step 2: Try legacy .masscode-folder.yml
   const legacyData = readYamlObjectFile<MarkdownFolderMetadataFile>(legacyPath)
   if (!legacyData) {
+    if (isYamlFileCloudUnavailable(legacyPath)) {
+      prioritizeCloudDownload(legacyPath)
+      return { unavailable: true }
+    }
     return {}
   }
 
@@ -45,7 +68,10 @@ export function readFolderMetadata(
 
   try {
     writeYamlObjectFile(metaPath, migrated as Record<string, unknown>)
+    markAppWrittenFileAsLocal(metaPath)
     fs.removeSync(legacyPath)
+    rememberAppFileChange(metaPath)
+    rememberAppFileChange(legacyPath)
   }
   catch {
     // Migration failed — non-critical, we still have the data
@@ -68,6 +94,21 @@ export function serializeFolderMetadata(
   }
 }
 
+export function isFolderMetadataInSync(
+  metadata: MarkdownFolderMetadataFile,
+  folder: FolderRecord,
+): boolean {
+  const payload = serializeFolderMetadata(folder)
+  const payloadKeys = Object.keys(payload)
+  const metadataRecord = metadata as Record<string, unknown>
+
+  if (Object.keys(metadataRecord).length !== payloadKeys.length) {
+    return false
+  }
+
+  return payloadKeys.every(key => metadataRecord[key] === payload[key])
+}
+
 export function writeFolderMetadataFile(
   paths: Paths,
   folderRelativePath: string,
@@ -86,8 +127,16 @@ export function writeFolderMetadataFile(
     .trim()
 
   const nextContent = `${body}\n`
+  const availability = getFileAvailability(metaPath)
 
-  if (fs.pathExistsSync(metaPath)) {
+  // Запись в недокачанный .meta.yaml затёрла бы облачные метаданные папки
+  // (включая её id): файл сначала докачивается в фоне.
+  if (availability.isCloudPlaceholder) {
+    enqueueCloudDownload(metaPath)
+    return
+  }
+
+  if (availability.exists) {
     const currentContent = fs.readFileSync(metaPath, 'utf8')
     if (currentContent === nextContent) {
       return
@@ -96,12 +145,15 @@ export function writeFolderMetadataFile(
 
   fs.ensureDirSync(folderAbsPath)
   fs.writeFileSync(metaPath, nextContent, 'utf8')
+  markAppWrittenFileAsLocal(metaPath)
+  rememberAppFileChange(metaPath)
 
   // Clean up legacy file if it exists
   const legacyPath = path.join(folderAbsPath, LEGACY_FOLDER_META_FILE_NAME)
   if (fs.pathExistsSync(legacyPath)) {
     try {
       fs.removeSync(legacyPath)
+      rememberAppFileChange(legacyPath)
     }
     catch {
       // Non-critical
@@ -132,20 +184,61 @@ export function splitFrontmatter(source: string): {
   }
 }
 
-export function parseBodyFragments(body: string): MarkdownBodyFragment[] {
+interface BodyFragmentParseResult {
+  fragments: MarkdownBodyFragment[]
+  legacyRecovery: 'ambiguous' | 'none' | 'recovered'
+}
+
+interface StrictBodyFragmentParseResult {
+  fragments: MarkdownBodyFragment[]
+  lastCursor: number
+}
+
+function getFenceLength(line: string): number {
+  let fenceLength = 0
+
+  while (fenceLength < line.length && line.charCodeAt(fenceLength) === 96) {
+    fenceLength += 1
+  }
+
+  return fenceLength
+}
+
+function parseFragmentHeader(line: string): string | null {
+  if (!line.startsWith('## Fragment:')) {
+    return null
+  }
+
+  return line.slice('## Fragment:'.length).trim() || 'Fragment'
+}
+
+function hasNonEmptyTail(lines: string[], cursor: number): boolean {
+  for (let index = cursor; index < lines.length; index += 1) {
+    if (lines[index].trim()) {
+      return true
+    }
+  }
+
+  return false
+}
+
+function parseBodyFragmentsStrict(
+  body: string,
+  lines = body.split('\n'),
+): StrictBodyFragmentParseResult {
   const fragments: MarkdownBodyFragment[] = []
-  const lines = body.split(NEW_LINE_SPLIT_RE)
+  let lastCursor = 0
 
   let lineIndex = 0
   while (lineIndex < lines.length) {
     const line = lines[lineIndex]
+    const label = parseFragmentHeader(line)
 
-    if (!line.startsWith('## Fragment:')) {
+    if (!label) {
       lineIndex += 1
       continue
     }
 
-    const label = line.slice('## Fragment:'.length).trim() || 'Fragment'
     lineIndex += 1
 
     if (lineIndex >= lines.length) {
@@ -153,14 +246,7 @@ export function parseBodyFragments(body: string): MarkdownBodyFragment[] {
     }
 
     const fenceLine = lines[lineIndex]
-    let fenceLength = 0
-
-    while (
-      fenceLength < fenceLine.length
-      && fenceLine.charCodeAt(fenceLength) === 96
-    ) {
-      fenceLength += 1
-    }
+    const fenceLength = getFenceLength(fenceLine)
 
     if (fenceLength < 3) {
       continue
@@ -170,20 +256,21 @@ export function parseBodyFragments(body: string): MarkdownBodyFragment[] {
     const language = fenceLine.slice(fenceLength).trim() || 'plain_text'
     lineIndex += 1
 
-    const valueLines: string[] = []
+    const contentStart = lineIndex
     while (lineIndex < lines.length && lines[lineIndex].trim() !== fence) {
-      valueLines.push(lines[lineIndex])
       lineIndex += 1
     }
 
+    const value = readFragmentValue(lines, contentStart, lineIndex, fenceLine)
     if (lineIndex < lines.length && lines[lineIndex].trim() === fence) {
       lineIndex += 1
     }
 
+    lastCursor = lineIndex
     fragments.push({
       label,
       language,
-      value: valueLines.join('\n'),
+      value,
     })
   }
 
@@ -195,6 +282,228 @@ export function parseBodyFragments(body: string): MarkdownBodyFragment[] {
     })
   }
 
+  return { fragments, lastCursor }
+}
+
+function readFragmentValue(
+  lines: string[],
+  start: number,
+  end: number,
+  fenceLine: string,
+): string {
+  const value = lines.slice(start, end).join('\n')
+  // Keep content CRs. Only remove the CR belonging to a CRLF wrapper's
+  // separator before the closing fence; our serializer uses LF wrappers.
+  if (end < lines.length && fenceLine.endsWith('\r') && value.endsWith('\r')) {
+    return value.slice(0, -1)
+  }
+  return value
+}
+
+function findLegacyFragmentOpenings(
+  lines: string[],
+  metadata: MarkdownFrontmatterContent[],
+): number[][] {
+  return metadata.map((meta) => {
+    const openings: number[] = []
+
+    for (let index = 0; index < lines.length - 1; index += 1) {
+      const label = parseFragmentHeader(lines[index])
+      if (!label) {
+        continue
+      }
+
+      const fenceLine = lines[index + 1]
+      const fenceLength = getFenceLength(fenceLine)
+      if (fenceLength !== 3) {
+        continue
+      }
+
+      const language = fenceLine.slice(fenceLength).trim() || 'plain_text'
+      if (meta.label && label !== meta.label) {
+        continue
+      }
+
+      if (meta.language && language !== meta.language) {
+        continue
+      }
+
+      openings.push(index)
+    }
+
+    return openings
+  })
+}
+
+function buildLegacyOpeningSequences(
+  openingsByFragment: number[][],
+): number[][] {
+  const sequences: number[][] = []
+
+  function visit(
+    fragmentIndex: number,
+    previousOpening: number,
+    sequence: number[],
+  ): void {
+    if (fragmentIndex >= openingsByFragment.length) {
+      sequences.push([...sequence])
+      return
+    }
+
+    for (const openingIndex of openingsByFragment[fragmentIndex]) {
+      if (openingIndex <= previousOpening) {
+        continue
+      }
+
+      sequence.push(openingIndex)
+      visit(fragmentIndex + 1, openingIndex, sequence)
+      sequence.pop()
+    }
+  }
+
+  visit(0, -1, [])
+  return sequences
+}
+
+function parseLegacyTripleFenceFragments(
+  lines: string[],
+  metadata: MarkdownFrontmatterContent[],
+): BodyFragmentParseResult {
+  if (metadata.length === 0) {
+    return { fragments: [], legacyRecovery: 'none' }
+  }
+
+  const openingsByFragment = findLegacyFragmentOpenings(lines, metadata)
+  if (openingsByFragment.some(openings => openings.length === 0)) {
+    return { fragments: [], legacyRecovery: 'none' }
+  }
+
+  const firstOpening = Math.min(...openingsByFragment[0])
+  const sequences = buildLegacyOpeningSequences(openingsByFragment).filter(
+    sequence => sequence[0] === firstOpening,
+  )
+
+  const recoveredFragmentsBySignature = new Map<
+    string,
+    MarkdownBodyFragment[]
+  >()
+
+  for (const sequence of sequences) {
+    const fragments: MarkdownBodyFragment[] = []
+    let isValidSequence = true
+
+    for (let index = 0; index < sequence.length; index += 1) {
+      const openingIndex = sequence[index]
+      const nextOpeningIndex = sequence[index + 1] ?? lines.length
+      const closingCandidates: number[] = []
+
+      for (
+        let lineIndex = openingIndex + 2;
+        lineIndex < nextOpeningIndex;
+        lineIndex += 1
+      ) {
+        if (lines[lineIndex].trim() === '```') {
+          closingCandidates.push(lineIndex)
+        }
+      }
+
+      const closingIndex = closingCandidates.at(-1)
+      if (closingIndex === undefined) {
+        isValidSequence = false
+        break
+      }
+
+      const label = parseFragmentHeader(lines[openingIndex]) || 'Fragment'
+      const fenceLine = lines[openingIndex + 1]
+      const language = fenceLine.slice(3).trim() || 'plain_text'
+
+      fragments.push({
+        label,
+        language,
+        value: readFragmentValue(
+          lines,
+          openingIndex + 2,
+          closingIndex,
+          fenceLine,
+        ),
+      })
+    }
+
+    if (!isValidSequence) {
+      continue
+    }
+
+    // With one valid opening sequence there is no competing recovery to
+    // deduplicate. Avoid serializing every fragment body in this common case.
+    if (sequences.length === 1) {
+      return { fragments, legacyRecovery: 'recovered' }
+    }
+
+    recoveredFragmentsBySignature.set(JSON.stringify(fragments), fragments)
+  }
+
+  if (recoveredFragmentsBySignature.size === 1) {
+    return {
+      fragments: [...recoveredFragmentsBySignature.values()][0],
+      legacyRecovery: 'recovered',
+    }
+  }
+
+  if (recoveredFragmentsBySignature.size > 1) {
+    return { fragments: [], legacyRecovery: 'ambiguous' }
+  }
+
+  return { fragments: [], legacyRecovery: 'none' }
+}
+
+export function parseBodyFragmentsWithMetadata(
+  body: string,
+  metadata: MarkdownFrontmatterContent[],
+): BodyFragmentParseResult {
+  const lines = body.split('\n')
+  const strictResult = parseBodyFragmentsStrict(body, lines)
+  const declaredFragmentCount = metadata.length
+
+  if (declaredFragmentCount === 0) {
+    return { fragments: strictResult.fragments, legacyRecovery: 'none' }
+  }
+
+  const legacyResult = parseLegacyTripleFenceFragments(lines, metadata)
+  const hasSuspiciousTail
+    = strictResult.fragments.length >= declaredFragmentCount
+      && hasNonEmptyTail(lines, strictResult.lastCursor)
+  const hasLegacyMismatch
+    = legacyResult.legacyRecovery === 'recovered'
+      && (legacyResult.fragments.length !== strictResult.fragments.length
+        || legacyResult.fragments.some((fragment, index) => {
+          const strict = strictResult.fragments[index]
+          return (
+            fragment.label !== strict.label
+            || fragment.language !== strict.language
+            || fragment.value !== strict.value
+          )
+        }))
+
+  if (
+    strictResult.fragments.length === declaredFragmentCount
+    && !hasSuspiciousTail
+    && !hasLegacyMismatch
+  ) {
+    return { fragments: strictResult.fragments, legacyRecovery: 'none' }
+  }
+
+  if (legacyResult.legacyRecovery === 'recovered') {
+    return legacyResult
+  }
+
+  return {
+    fragments: strictResult.fragments,
+    legacyRecovery: legacyResult.legacyRecovery,
+  }
+}
+
+export function parseBodyFragments(body: string): MarkdownBodyFragment[] {
+  const { fragments } = parseBodyFragmentsStrict(body)
   return fragments
 }
 

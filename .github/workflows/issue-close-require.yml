@@ -4,14 +4,36 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   close-issues:
     runs-on: ubuntu-latest
     steps:
       - name: need reproduction
-        uses: actions-cool/issues-helper@v3
-        with:
-          actions: close-issues
-          token: ${{ secrets.GITHUB_TOKEN }}
-          labels: need reproduction
-          inactive-day: 3
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INACTIVE_DAYS: 3
+          LABEL: need reproduction
+          REPO: ${{ github.repository }}
+        run: |
+          set -o pipefail
+
+          cutoff="$(date -u -d "$INACTIVE_DAYS days ago" +%s)"
+
+          gh issue list \
+            --repo "$REPO" \
+            --state open \
+            --label "$LABEL" \
+            --limit 1000 \
+            --json number,updatedAt \
+            --jq '.[] | [.number, .updatedAt] | @tsv' \
+            | while IFS=$'\t' read -r number updated_at; do
+                updated_at_epoch="$(date -u -d "$updated_at" +%s)"
+
+                if [ "$updated_at_epoch" -le "$cutoff" ]; then
+                  gh issue close "$number" --repo "$REPO"
+                fi
+              done

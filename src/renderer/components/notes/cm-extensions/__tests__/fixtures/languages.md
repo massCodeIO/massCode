@@ -9,7 +9,8 @@ const API_URL = 'https://api.example.com'
 
 async function fetchUsers(page = 1) {
   const res = await fetch(`${API_URL}/users?page=${page}`)
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  if (!res.ok)
+    throw new Error(`HTTP ${res.status}`)
   return res.json()
 }
 
@@ -415,8 +416,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
-tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = [ "derive" ] }
+tokio = { version = "1", features = [ "full" ] }
 ```
 
 ## XML
@@ -480,7 +481,9 @@ const doubled = computed(() => count.value * 2)
 <template>
   <div class="counter">
     <span>{{ count }} (× 2 = {{ doubled }})</span>
-    <button @click="increment">+</button>
+    <button @click="increment">
+      +
+    </button>
   </div>
 </template>
 ```

@@ -5,14 +5,22 @@
   "description": "massCode documentation website",
   "scripts": {
     "dev": "vitepress dev",
-    "build": "vitepress build",
+    "build": "node scripts/update-github-stats.mjs && vitepress build",
+    "stats:update": "node scripts/update-github-stats.mjs",
     "preview": "vitepress preview"
   },
   "dependencies": {
+    "lucide-vue-next": "^0.476.0",
     "vue": "^3.5.17",
     "vue-gtag": "^3.7.0"
   },
   "devDependencies": {
     "vitepress": "^1.6.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "esbuild"
+    ]
   }
 }

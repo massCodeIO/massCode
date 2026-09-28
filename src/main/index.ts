@@ -1,65 +1,201 @@
+import type { Event as ElectronEvent } from 'electron'
 /* eslint-disable node/prefer-global/process */
-import { readFileSync } from 'node:fs'
-import { readFile } from 'node:fs/promises'
-import { createRequire } from 'node:module'
 import path from 'node:path'
-import { app, BrowserWindow, ipcMain, Menu, protocol } from 'electron'
+import { pathToFileURL } from 'node:url'
+import { app, BrowserWindow, Menu, protocol, screen } from 'electron'
+import { registerAiHandlers } from './ai/ipc'
 import { initApi } from './api'
+import { registerApiRequestHandler } from './api/requestIpc'
+import { resolveApiSessionToken } from './api/sessionAuth'
+import {
+  benchmarkEnabled,
+  recordBenchmark,
+  registerBenchmark,
+} from './benchmark'
+import { cleanupDockBadge, refreshDockBadge } from './dockBadge'
+import { resolveFolderIconResponse } from './folderIcons'
 import { registerIPC } from './ipc'
+import { registerHttpConsoleHandlers } from './ipc/handlers/httpConsole'
+import { registerHttpCookieHandlers } from './ipc/handlers/httpCookies'
+import { registerHttpScriptHandlers } from './ipc/handlers/httpScripts'
+import { registerHttpTerminalHandlers } from './ipc/handlers/httpTerminal'
 import { startThemeWatcher, stopThemeWatcher } from './ipc/handlers/theme'
+import { validateStoredLicense } from './license'
+import { configureLifecycle, requestLifecycleAction } from './lifecycle'
 import { createMainMenu } from './menu/main'
-import { startMarkdownWatcher, stopMarkdownWatcher } from './storage'
-import { ensureFlatSpacesLayout } from './storage/providers/markdown/runtime/spaces'
+import { isQuitting, setQuitting } from './quitState'
+import {
+  prepareMarkdownWatcher,
+  startMarkdownWatcher,
+  stopMarkdownWatcher,
+} from './storage'
+import {
+  getNotesPaths,
+  resolveNotesAsset,
+} from './storage/providers/markdown/notes/runtime'
+import { getVaultPath } from './storage/providers/markdown/runtime/paths'
 import { store } from './store'
+import { startTasksCleanupScheduler, stopTasksCleanupScheduler } from './tasks'
 import { checkForUpdates } from './updates'
-import { isSqliteFile, log } from './utils'
+import { log } from './utils'
+import { DEFAULT_WINDOW_BOUNDS, normalizeWindowBounds } from './windowBounds'
+import { mainWindowWebPreferences } from './windowSecurity'
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
+// Отладка renderer через Chrome DevTools Protocol (только по явному env).
+if (process.env.MASSCODE_REMOTE_DEBUG_PORT) {
+  app.commandLine.appendSwitch(
+    'remote-debugging-port',
+    process.env.MASSCODE_REMOTE_DEBUG_PORT,
+  )
+}
+
 const isDev = process.env.NODE_ENV === 'development'
 const gotTheLock = app.requestSingleInstanceLock()
-const lazyRequire = createRequire(__filename)
+const WINDOW_BOUNDS_SAVE_DELAY = 250
 
 let mainWindow: BrowserWindow
-let isQuitting = false
-let migrationResult: {
-  folders: number
-  snippets: number
-  tags: number
-} | null = null
-let migrationError: string | null = null
+let saveWindowBoundsTimer: ReturnType<typeof setTimeout> | null = null
 
-if (process.defaultApp) {
+function saveWindowBounds() {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return
+  }
+
+  store.app.set('window.bounds', mainWindow.getBounds())
+}
+
+function scheduleWindowBoundsSave() {
+  if (saveWindowBoundsTimer) {
+    clearTimeout(saveWindowBoundsTimer)
+  }
+
+  saveWindowBoundsTimer = setTimeout(() => {
+    saveWindowBoundsTimer = null
+    saveWindowBounds()
+  }, WINDOW_BOUNDS_SAVE_DELAY)
+}
+
+function flushWindowBoundsSave() {
+  if (saveWindowBoundsTimer) {
+    clearTimeout(saveWindowBoundsTimer)
+    saveWindowBoundsTimer = null
+  }
+
+  saveWindowBounds()
+}
+
+export function handleMainWindowClose(
+  event: ElectronEvent,
+  window = mainWindow,
+): void {
+  if (!isQuitting()) {
+    event.preventDefault()
+
+    if (process.platform === 'darwin') {
+      flushWindowBoundsSave()
+      window.hide()
+    }
+    else {
+      app.quit()
+    }
+    return
+  }
+
+  flushWindowBoundsSave()
+  window.destroy()
+}
+
+export function prepareQuit(): boolean {
+  try {
+    stopMarkdownWatcher()
+  }
+  catch (error) {
+    setQuitting(false)
+    log('Error stopping markdown watcher before quit', error)
+    return false
+  }
+
+  flushWindowBoundsSave()
+  stopThemeWatcher()
+  stopTasksCleanupScheduler()
+  cleanupDockBadge()
+  return true
+}
+
+configureLifecycle(() => mainWindow, prepareQuit)
+
+export function handleBeforeQuit(event: ElectronEvent): void {
+  if (isQuitting())
+    return
+  event.preventDefault()
+  void requestLifecycleAction()
+}
+
+if (!benchmarkEnabled && process.defaultApp) {
   if (process.argv.length >= 2) {
     app.setAsDefaultProtocolClient('masscode', process.execPath, [
       path.resolve(process.argv[1]),
     ])
   }
 }
-else {
+else if (!benchmarkEnabled) {
   app.setAsDefaultProtocolClient('masscode')
 }
 
-function createWindow() {
-  const bounds = store.app.get('window.bounds') as Record<string, unknown>
+function createWindow(sessionToken: string) {
+  const bounds = normalizeWindowBounds(
+    store.app.get('window.bounds'),
+    screen.getAllDisplays(),
+  )
 
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    ...DEFAULT_WINDOW_BOUNDS,
     ...bounds,
     titleBarStyle: process.platform === 'darwin' ? 'hidden' : 'default',
     webPreferences: {
+      ...mainWindowWebPreferences,
       preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: true,
-      webSecurity: false,
     },
   })
 
   Menu.setApplicationMenu(createMainMenu())
 
+  const rendererUrl = isDev
+    ? `http://localhost:${process.env.DEV_PORT || 5177}`
+    : pathToFileURL(
+        path.join(__dirname, '../../build/renderer/index.html'),
+      ).toString()
+
+  registerAiHandlers(mainWindow.webContents, rendererUrl)
+  registerBenchmark(mainWindow.webContents, rendererUrl)
+  registerHttpCookieHandlers(mainWindow.webContents, rendererUrl)
+  registerHttpScriptHandlers(mainWindow.webContents, rendererUrl)
+  registerHttpTerminalHandlers(mainWindow.webContents, rendererUrl)
+  registerHttpConsoleHandlers(mainWindow.webContents, rendererUrl)
+  registerApiRequestHandler(
+    mainWindow.webContents,
+    rendererUrl,
+    sessionToken,
+    store.preferences.get('api.port') as number,
+    benchmarkEnabled ? recordBenchmark : undefined,
+  )
+
   if (isDev) {
-    mainWindow.loadURL('http://localhost:5173')
-    mainWindow.webContents.openDevTools()
+    mainWindow.webContents.on('devtools-opened', () => {
+      store.app.set('window.devToolsOpen', true)
+    })
+    mainWindow.webContents.on('devtools-closed', () => {
+      if (!isQuitting() && !mainWindow.isDestroyed()) {
+        store.app.set('window.devToolsOpen', false)
+      }
+    })
+
+    mainWindow.loadURL(rendererUrl)
+    if (store.app.get('window.devToolsOpen')) {
+      mainWindow.webContents.openDevTools()
+    }
   }
   else {
     mainWindow.loadFile(
@@ -67,28 +203,10 @@ function createWindow() {
     )
   }
 
-  ipcMain.once('system:renderer-ready', () => {
-    if (migrationResult) {
-      mainWindow.webContents.send('system:migration-complete', migrationResult)
-    }
-    else if (migrationError) {
-      mainWindow.webContents.send('system:migration-error', {
-        message: migrationError,
-      })
-    }
-  })
+  mainWindow.on('move', scheduleWindowBoundsSave)
+  mainWindow.on('resize', scheduleWindowBoundsSave)
 
-  mainWindow.on('close', (event) => {
-    store.app.set('window.bounds', mainWindow.getBounds())
-
-    if (process.platform === 'darwin' && !isQuitting) {
-      event.preventDefault()
-      mainWindow.hide()
-      return
-    }
-
-    mainWindow.destroy()
-  })
+  mainWindow.on('close', handleMainWindowClose)
 }
 
 if (!gotTheLock) {
@@ -96,110 +214,33 @@ if (!gotTheLock) {
 }
 else {
   app.whenReady().then(async () => {
+    const apiSessionToken = resolveApiSessionToken(
+      isDev && !app.isPackaged,
+      process.env.MASSCODE_API_TOKEN,
+    )
+
     protocol.handle('masscode', async (request) => {
       const url = new URL(request.url)
 
       if (url.hostname === 'notes-asset') {
-        const fileName = url.pathname.replace(/^\//, '')
-        const vaultPath
-          = (store.preferences.get('storage.vaultPath') as string | null)
-            || path.join(
-              store.preferences.get('storage.rootPath') as string,
-              'markdown-vault',
-            )
-        ensureFlatSpacesLayout(vaultPath)
-        const filePath = path.join(vaultPath, 'notes', 'assets', fileName)
+        const paths = getNotesPaths(getVaultPath())
+        return resolveNotesAsset(url.pathname.replace(/^\//, ''), paths)
+      }
 
-        try {
-          const data = await readFile(filePath)
-          const ext = path.extname(fileName).toLowerCase()
-          const mimeTypes: Record<string, string> = {
-            '.png': 'image/png',
-            '.jpg': 'image/jpeg',
-            '.jpeg': 'image/jpeg',
-            '.gif': 'image/gif',
-            '.webp': 'image/webp',
-            '.svg': 'image/svg+xml',
-            '.bmp': 'image/bmp',
-          }
-          return new Response(data, {
-            headers: {
-              'Content-Type': mimeTypes[ext] || 'application/octet-stream',
-            },
-          })
-        }
-        catch {
-          return new Response('Not found', { status: 404 })
-        }
+      if (url.hostname === 'folder-icon') {
+        const [, spaceId, folderId, ...rest] = url.pathname.split('/')
+        if (rest.length === 0)
+          return resolveFolderIconResponse(spaceId, folderId)
       }
 
       return new Response('Not found', { status: 404 })
     })
 
     try {
-      const storagePath = store.preferences.get('storage.rootPath') as string
-      const dbPath = `${storagePath}/massCode.db`
-
-      if (isSqliteFile(dbPath)) {
-        const vaultPath
-          = (store.preferences.get('storage.vaultPath') as string | null)
-            || path.join(storagePath, 'markdown-vault')
-        ensureFlatSpacesLayout(vaultPath)
-        const statePath = path.join(
-          vaultPath,
-          'code',
-          '.masscode',
-          'state.json',
-        )
-        let vaultHasData = false
-
-        try {
-          const stateContent = readFileSync(statePath, 'utf8')
-          const state = JSON.parse(stateContent) as {
-            folders?: unknown[]
-            snippets?: unknown[]
-            tags?: unknown[]
-          }
-
-          vaultHasData = [state.folders, state.snippets, state.tags].some(
-            collection => Array.isArray(collection) && collection.length > 0,
-          )
-        }
-        catch {
-          // state.json doesn't exist or is invalid; treat the vault as empty
-        }
-
-        if (!vaultHasData) {
-          const { closeDB } = lazyRequire('./db') as typeof import('./db')
-          const { migrateSqliteToMarkdownStorage } = lazyRequire(
-            './storage/providers/markdown',
-          ) as typeof import('./storage/providers/markdown')
-
-          try {
-            migrationResult = migrateSqliteToMarkdownStorage()
-
-            store.preferences.delete('storage.engine' as any)
-            store.preferences.delete('backup' as any)
-
-            // eslint-disable-next-line no-console
-            console.log('[Auto-migration complete]', migrationResult)
-          }
-          finally {
-            closeDB()
-          }
-        }
-      }
+      startTasksCleanupScheduler()
     }
     catch (error) {
-      log('Error during auto-migration from SQLite', error)
-      migrationError = error instanceof Error ? error.message : String(error)
-    }
-
-    try {
-      startMarkdownWatcher()
-    }
-    catch (error) {
-      log('Error starting markdown watcher', error)
+      log('Error starting tasks cleanup scheduler', error)
     }
 
     try {
@@ -210,11 +251,39 @@ else {
     }
 
     try {
-      createWindow()
+      prepareMarkdownWatcher()
+    }
+    catch (error) {
+      log('Error preparing markdown watcher', error)
+    }
+
+    try {
+      validateStoredLicense()
+    }
+    catch (error) {
+      log('Error validating stored license', error)
+    }
+
+    try {
+      createWindow(apiSessionToken)
     }
     catch (error) {
       log('Error creating window', error)
     }
+
+    // Первичный скан vault уходит из критического пути старта: окно
+    // появляется сразу, а скан (уже без блокирующих чтений облачных
+    // плейсхолдеров) выполняется следом. Ранние API/IPC-запросы renderer
+    // безопасны: они лениво триггерят тот же скан через getRuntimeCache.
+    setImmediate(() => {
+      try {
+        startMarkdownWatcher()
+        refreshDockBadge()
+      }
+      catch (error) {
+        log('Error starting markdown watcher', error)
+      }
+    })
 
     try {
       startThemeWatcher()
@@ -224,14 +293,15 @@ else {
     }
 
     try {
-      await initApi()
+      await initApi(apiSessionToken)
     }
     catch (error) {
       log('Error initializing API', error)
     }
 
     try {
-      checkForUpdates()
+      if (!benchmarkEnabled)
+        checkForUpdates()
     }
     catch (error) {
       log('Error checking for updates', error)
@@ -242,11 +312,7 @@ else {
     mainWindow.show()
   })
 
-  app.on('before-quit', () => {
-    isQuitting = true
-    stopThemeWatcher()
-    stopMarkdownWatcher()
-  })
+  app.on('before-quit', handleBeforeQuit)
 
   app.on('window-all-closed', () => {
     if (process.platform !== 'darwin')

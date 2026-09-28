@@ -9,32 +9,354 @@
     "library": "库",
     "fragment": "片段"
   },
+  "contentSearch": {
+    "placeholder": "查找内容",
+    "previous": "上一个匹配",
+    "next": "下一个匹配"
+  },
+  "commandPalette": {
+    "title": "命令面板",
+    "description": "搜索空间、代码片段、笔记和 HTTP 请求。",
+    "placeholder": "搜索或运行命令...",
+    "commandPlaceholder": "运行命令...",
+    "scopedPlaceholder": "在 {{space}} 空间搜索...",
+    "clearScope": "清除搜索范围",
+    "clearFilter": "清除筛选器：{{filter}}",
+    "searching": "正在搜索...",
+    "empty": "未找到结果",
+    "groups": {
+      "recent": "最近使用",
+      "actions": "动作",
+      "spaces": "空间",
+      "filters": "筛选器",
+      "results": "结果",
+      "snippets": "代码片段",
+      "notes": "笔记",
+      "httpRequests": "HTTP 请求"
+    },
+    "actions": {
+      "importSnippets": "导入代码片段",
+      "importSnippetsSubtitle": "导入 VS Code 代码片段 JSON、Raycast 代码片段 JSON、SnippetsLab JSON 或公共 GitHub Gist URL",
+      "importNotes": "导入笔记",
+      "importNotesSubtitle": "导入 Obsidian Markdown 目录",
+      "newSnippet": "新建代码片段",
+      "newSnippetSubtitle": "创建一个代码片段",
+      "newNote": "新建笔记",
+      "newNoteSubtitle": "创建一条笔记",
+      "newHttpRequest": "新建 HTTP 请求",
+      "newHttpRequestSubtitle": "创建一条 HTTP 请求",
+      "newCodeFolder": "新建代码文件夹",
+      "newCodeFolderSubtitle": "在代码空间中创建一个文件夹",
+      "newNotesFolder": "新建笔记文件夹",
+      "newNotesFolderSubtitle": "在笔记空间中创建一个文件夹",
+      "newHttpFolder": "新建 HTTP 文件夹",
+      "importHttpCollection": "导入 HTTP 集合",
+      "importHttpCollectionSubtitle": "导入 OpenAPI、Postman 或 Bruno 集合文件",
+      "openPreferences": "打开首选项",
+      "openPreferencesSubtitle": "更改 massCode 设置"
+    },
+    "fallbacks": {
+      "createSnippet": "创建代码片段 \"{{- query}}\"",
+      "createSnippetSubtitle": "在代码收件箱内创建",
+      "createNote": "创建笔记 \"{{- query}}\"",
+      "createNoteSubtitle": "在笔记收件箱内创建",
+      "createHttpRequest": "创建 HTTP 请求 \"{{- query}}\"",
+      "createHttpRequestFromUrl": "从 URL 创建 HTTP 请求",
+      "createHttpRequestSubtitle": "在 HTTP 空间中创建"
+    },
+    "suggestions": {
+      "tagSubtitle": "按标签在 {{space}} 空间筛选",
+      "folderSubtitle": "按文件夹在 {{space}} 空间筛选"
+    },
+    "actionPanel": {
+      "heading": "动作",
+      "open": "打开",
+      "run": "执行",
+      "copyTitle": "复制标题",
+      "copySnippetContent": "复制代码片段",
+      "copyHttpUrl": "复制 URL"
+    },
+    "footer": {
+      "open": "打开",
+      "jump": "跳转",
+      "actions": "动作",
+      "apply": "应用",
+      "run": "执行",
+      "back": "回退"
+    }
+  },
+  "imports": {
+    "title": {
+      "code": "导入代码片段",
+      "notes": "导入笔记"
+    },
+    "description": {
+      "code": "导入 VS Code 代码片段 JSON、Raycast 代码片段 JSON、SnippetsLab JSON 或公共 GitHub Gist 链接。",
+      "notes": "导入 Obsidian Markdown 文件夹。"
+    },
+    "action": {
+      "import": "导入"
+    },
+    "sources": {
+      "vscode-snippets": "VS Code",
+      "raycast-snippets": "Raycast",
+      "snippetslab": "SnippetsLab",
+      "github-gists": "GitHub Gists",
+      "obsidian": "Obsidian"
+    },
+    "gistUrl": "Gist 链接",
+    "gistUrlPlaceholder": "https://gist.github.com/user/id",
+    "filesTitle": "选择导入文件",
+    "folderTitle": "选择导入目录",
+    "fileHint": "将文件拖拽至此区域，或选择文件以预览导入内容。",
+    "folderHint": "选择一个 Obsidian Markdown 目录以预览导入内容。",
+    "chooseFiles": "选择文件",
+    "chooseFolder": "选择目录",
+    "preview": "预览",
+    "previewing": "正在读取导入内容",
+    "noReadableFiles": "未找到可读文件。请将目录下载到本地或检查文件权限，然后重试。",
+    "noImportableFiles": "未找到可导入的 Markdown 文件",
+    "snippets": "代码片段",
+    "notes": "笔记",
+    "tags": "标签",
+    "detectedSource": "已检测到的源",
+    "folderMeta_one": "{{count}} 项",
+    "folderMeta_other": "{{count}} 项",
+    "warningTitle": "警告",
+    "warningMessages": {
+      "file": {
+        "readFailed": "无法读取文件。请确保文件已下载到本地且可供 massCode 访问。"
+      },
+      "fs": {
+        "folderReadFailed": "无法读取目录。请检查文件权限和 iCloud 下载状态。",
+        "fileReadFailed": "无法读取文件。请检查文件权限和 iCloud 下载状态。"
+      },
+      "source": {
+        "unsupported": "不支持的导入来源。"
+      },
+      "vscode": {
+        "invalidJson": "文件不是有效的 VS Code 代码片段 JSON 对象。",
+        "entryNotObject": "代码片段条目不是一个对象。",
+        "invalidBody": "代码片段 body 必须是字符串或字符串数组。"
+      },
+      "raycast": {
+        "invalidExport": "文件不是有效的 Raycast 代码片段导出。",
+        "emptyText": "代码片段文本为空或缺失。"
+      },
+      "snippetslab": {
+        "invalidExport": "文件不是有效的 SnippetsLab 导出。",
+        "smartGroupsSkipped": "SnippetsLab 的智能分组将被忽略。",
+        "attachmentsSkipped": "SnippetsLab 的片段附件将被忽略。",
+        "emptySnippet": "此 SnippetsLab 代码片段没有可导入的片段。"
+      },
+      "gist": {
+        "noFiles": "GitHub Gist 中没有文件。",
+        "truncatedSkipped": "此导入版本中已跳过被截断的 Gist 文件。",
+        "contentMissing": "Gist 文件内容缺失。"
+      },
+      "obsidian": {
+        "excalidrawSkipped": "已跳过 Excalidraw Markdown 文件。",
+        "emptyMarkdown": "Markdown 文件为空。",
+        "frontmatterIgnored": "已忽略 Frontmatter 字段：{{fields}}。",
+        "attachmentsKept": "附件引用以文本形式保留；附件不会被导入。",
+        "wikiLinksKept": "Obsidian Wiki 链接以文本形式导入，未进行重写。",
+        "noMarkdownFiles": "未在 Obsidian 导入目录中找到 Markdown 文件。",
+        "invalidFrontmatter": "无法解析 Frontmatter，已将其作为笔记内容导入。"
+      },
+      "unknown": "导入警告。"
+    },
+    "import": "导入",
+    "importing": "正在导入...",
+    "importedSnippets_one": "已导入 {{snippets}} 个代码片段。",
+    "importedSnippets_other": "已导入 {{snippets}} 个代码片段。",
+    "importedNotes_one": "已导入 {{notes}} 篇笔记。",
+    "importedNotes_other": "已导入 {{notes}} 篇笔记。",
+    "createdFolder": "已创建：{{name}}",
+    "error": "导入失败"
+  },
   "spaces": {
-    "label": "Spaces",
+    "label": "空间",
     "code": {
-      "label": "Code",
-      "tooltip": "Code snippets",
-      "title": "Code Snippets",
+      "label": "代码",
+      "tooltip": "代码片段",
+      "title": "代码片段",
       "allSnippets": "所有代码片段"
     },
     "notes": {
-      "label": "Notes",
-      "tooltip": "Notes",
-      "title": "Notes",
-      "allNotes": "All Notes"
+      "label": "笔记",
+      "tooltip": "笔记",
+      "title": "笔记",
+      "allNotes": "所有笔记"
     },
     "math": {
-      "label": "Math",
-      "tooltip": "Math notebook",
-      "title": "Math Notebook",
-      "sheetList": "Sheet List",
-      "newSheet": "New Sheet",
-      "untitled": "Untitled",
-      "currencyUnavailable": "Currency rates service unavailable"
+      "label": "计算",
+      "tooltip": "计算草稿本",
+      "title": "计算草稿本",
+      "sheetList": "草稿列表",
+      "newSheet": "新建草稿",
+      "searchPlaceholder": "搜索草稿…",
+      "noResults": "未找到相关草稿",
+      "untitled": "未命名草稿",
+      "currencyUnavailable": "汇率服务不可用",
+      "cloudSyncing": "正在同步云端数据…"
+    },
+    "drawings": {
+      "label": "绘图",
+      "tooltip": "Excalidraw 绘图",
+      "title": "绘图",
+      "drawingList": "绘图列表",
+      "newDrawing": "新建绘图",
+      "searchPlaceholder": "搜索绘图…",
+      "noResults": "未找到绘图",
+      "fitToContent": "适应内容",
+      "exportImage": "导出图片…",
+      "copyLinkForNote": "复制笔记引用链接",
+      "openInSpace": "在绘图空间打开",
+      "notFound": "未找到绘图",
+      "noSelected": "未选择绘图"
+    },
+    "http": {
+      "label": "HTTP",
+      "tooltip": "HTTP 客户端",
+      "title": "HTTP 客户端",
+      "allRequests": "所有请求",
+      "untitledRequest": "未命名的请求",
+      "empty": "没有请求",
+      "noUrl": "没有 URL",
+      "action": {
+        "import": "导入",
+        "newRequest": "新建请求",
+        "newEnvironment": "新建环境",
+        "manageEnvironments": "管理环境",
+        "deleteEnvironment": "删除环境"
+      },
+      "environments": {
+        "title": "环境",
+        "none": "不使用环境",
+        "activeTooltip": "环境：{{name}}",
+        "selectTooltip": "选择环境",
+        "manage": "管理环境…",
+        "empty": "没有环境",
+        "untitled": "未命名环境",
+        "namePlaceholder": "自定义环境名称",
+        "variables": "变量",
+        "noVariables": "没有变量",
+        "varKey": "变量名称",
+        "varValue": "值",
+        "varSecret": "机密",
+        "secretHint": "该值仅在此设备上加密存储，不会保存在仓库中",
+        "secretUnavailable": "此系统没有可用于机密变量的操作系统加密功能",
+        "secretNotSet": "在此设备上未设置",
+        "secretKeyLocked": "如需重命名机密变量，请删除后重新添加",
+        "revealSecret": "显示明文",
+        "hideSecret": "隐藏明文",
+        "addSecret": "添加机密变量",
+        "addVariable": "添加变量",
+        "noEnvironmentSelected": "选择一个环境以编辑变量"
+      },
+      "import": {
+        "title": "导入 HTTP 集合",
+        "description": "导入 OpenAPI JSON/YAML、Postman Collection v2.1 JSON、Postman Environment JSON 以及 Bruno OpenCollection YAML 或 ZIP 文件。",
+        "formats": "选择导入文件",
+        "postman": "Postman 集合",
+        "postmanHint": "选择一个集合 JSON 文件，并可选择附加一个环境 JSON 文件。",
+        "fileHint": "拖拽文件至此区域，或选择文件以预览导入内容。",
+        "chooseFiles": "选择文件",
+        "previewing": "正在读取文件",
+        "collections": "集合",
+        "requests": "请求",
+        "environments": "环境",
+        "collectionMeta": "{{folders}} 个文件夹，{{requests}} 个请求",
+        "variablesMeta": "{{variables}} 个变量",
+        "plainTextNotice": "环境变量将以纯文本形式存储在保险库中",
+        "warnings": "警告",
+        "import": "导入",
+        "importing": "正在导入",
+        "imported": "已导入 {{requests}} 个集合中的 {{collections}} 个请求。",
+        "createdFolders": "已创建：{{names}}",
+        "error": "导入失败"
+      },
+      "editor": {
+        "noSelected": "未选择请求",
+        "namePlaceholder": "自定义请求名称",
+        "urlPlaceholder": "输入请求 URL",
+        "send": "发送",
+        "tabs": {
+          "params": "参数",
+          "headers": "请求头",
+          "body": "请求体",
+          "auth": "鉴权",
+          "description": "描述"
+        },
+        "keyValue": {
+          "key": "键",
+          "value": "值",
+          "description": "描述",
+          "addRow": "添加行",
+          "empty": "无条目"
+        },
+        "body": {
+          "typeNone": "无",
+          "typeJson": "JSON",
+          "typeText": "Text",
+          "typeFormUrlencoded": "Form URL-encoded",
+          "typeMultipart": "Multipart form-data",
+          "placeholder": "输入请求体",
+          "fieldType": {
+            "text": "文本",
+            "file": "文件"
+          },
+          "filePlaceholder": "选择文件路径",
+          "jsonInvalid": "无效的 JSON"
+        },
+        "auth": {
+          "typeNone": "无鉴权",
+          "typeBearer": "Bearer Token",
+          "typeBasic": "Basic Auth",
+          "token": "Token",
+          "tokenPlaceholder": "输入 Token",
+          "username": "用户名",
+          "usernamePlaceholder": "输入用户名",
+          "password": "密码",
+          "passwordPlaceholder": "输入密码",
+          "plainTextHint": "鉴权值以纯文本形式存储在保险库中。对于敏感数据，请创建机密环境变量并引用为 {{API_KEY}}。"
+        },
+        "description": {
+          "placeholder": "为此请求添加描述"
+        },
+        "panels": {
+          "preview": "预览",
+          "response": "响应"
+        },
+        "preview": {
+          "empty": "没有可预览的请求",
+          "formats": {
+            "http": "HTTP",
+            "curl": "cURL"
+          }
+        },
+        "response": {
+          "empty": "还未收到响应",
+          "executing": "发送请求",
+          "status": "状态",
+          "time": "用时",
+          "size": "大小",
+          "tabs": {
+            "body": "响应体",
+            "headers": "响应头"
+          },
+          "error": "请求失败",
+          "noResponse": "请求未获得响应",
+          "truncated": "响应被截断",
+          "binaryNotice": "不显示二进制响应",
+          "copy": "复制",
+          "copied": "已复制"
+        }
+      }
     },
     "tools": {
-      "label": "Tools",
-      "tooltip": "Developer tools"
+      "label": "工具",
+      "tooltip": "开发者工具"
     }
   },
   "snippet": {
@@ -43,15 +365,189 @@
     "noSelected": "未选择代码片段"
   },
   "notes": {
-    "untitled": "Untitled note",
-    "plural": "Notes",
-    "words": "Words",
-    "symbols": "Symbols",
-    "selectedMultiple": "{{count}} Notes Selected",
-    "noSelected": "No Note Selected"
+    "untitled": "未命名笔记",
+    "plural": "笔记",
+    "words": "字数",
+    "symbols": "字符数",
+    "selectedMultiple": "{{count}} 已选的笔记",
+    "noSelected": "未选择任何笔记",
+    "editor": {
+      "menu": {
+        "format": {
+          "title": "格式",
+          "bold": "加粗",
+          "italic": "斜体",
+          "strikethrough": "删除线",
+          "highlight": "高亮",
+          "code": "代码",
+          "link": "链接",
+          "clearFormatting": "清除格式"
+        },
+        "paragraph": {
+          "title": "段落",
+          "bulletList": "无序列表",
+          "numberedList": "有序列表",
+          "taskList": "任务列表",
+          "heading": "{{level}} 级标题",
+          "body": "正文",
+          "quote": "引用"
+        },
+        "insert": {
+          "title": "插入",
+          "table": "表格",
+          "callout": "标注",
+          "horizontalRule": "分割线",
+          "codeBlock": "代码块"
+        },
+        "table": {
+          "title": "表格",
+          "insertRowAbove": "在上方插入行",
+          "insertRowBelow": "在下方插入行",
+          "deleteRow": "删除行",
+          "insertColumnLeft": "在左侧插入列",
+          "insertColumnRight": "在右侧插入列",
+          "deleteColumn": "删除列",
+          "alignLeft": "左对齐",
+          "alignCenter": "居中对齐",
+          "alignRight": "右对齐"
+        }
+      },
+      "table": {
+        "addColumn": "在右侧添加列",
+        "addRow": "在下方添加行"
+      }
+    },
+    "tasks": {
+      "title": "任务",
+      "today": "今天的",
+      "upcoming": "即将到来的",
+      "completed": "已完成的",
+      "convertToTask": "转换为任务",
+      "convertToNote": "转换为笔记",
+      "duePlaceholder": "截止日期",
+      "clearDue": "清除截止日期",
+      "noDue": "无截止日期",
+      "cleanupCompleted": "清理已完成任务",
+      "cleanupConfirmTitle": "清理已完成任务？",
+      "cleanupConfirmMessage": "所有已完成任务将被移至回收站。在清空回收站之前，您可以恢复它们。",
+      "cleanupDone": "已将 {{count}} 个已完成任务移至回收站",
+      "cleanupEmpty": "无待清理的已完成任务",
+      "cleanupError": "清理已完成任务失败",
+      "status": {
+        "todo": "待办",
+        "inProgress": "进行中",
+        "done": "已完成",
+        "blocked": "已阻塞"
+      },
+      "priority": {
+        "label": "优先级",
+        "none": "无优先级",
+        "low": "低",
+        "medium": "中",
+        "high": "高"
+      }
+    },
+    "dashboard": {
+      "label": "仪表盘",
+      "title": "笔记仪表盘",
+      "description": "您的笔记活动、链接和结构。",
+      "empty": "所有仪表盘小组件已隐藏。",
+      "error": "加载笔记仪表盘失败。",
+      "actions": {
+        "refresh": "刷新",
+        "backToDashboard": "返回仪表盘",
+        "showAllWidgets": "显示所有小组件"
+      },
+      "widgets": {
+        "title": "可见小组件",
+        "description": "选择仪表盘上要展示的模块。",
+        "stats": "概览",
+        "activityHeatmap": "活动热力图",
+        "recent": "最近笔记",
+        "graphPreview": "笔记关系图谱",
+        "topLinked": "最多链接笔记"
+      },
+      "stats": {
+        "title": "概览",
+        "notes": "笔记",
+        "words": "字数",
+        "folders": "文件夹",
+        "tags": "标签"
+      },
+      "activity": {
+        "heatmapTitle": "活动热力图",
+        "heatmapDescription": "按日统计的近期笔记更新。",
+        "updatedToday": "今日更新",
+        "updatedWeek": "7 天内更新",
+        "less": "更少",
+        "more": "更多",
+        "totalLastYear": "最近 53 周内累计 {{count}} 次笔记更新",
+        "tooltipUpdates": "{{count}} 次笔记更新"
+      },
+      "recent": {
+        "title": "最近笔记",
+        "empty": "暂无最近笔记。"
+      },
+      "graphPreview": {
+        "title": "笔记关系图谱",
+        "empty": "笔记间尚无链接。"
+      },
+      "topLinked": {
+        "title": "最多链接笔记",
+        "empty": "暂无链接笔记。",
+        "incoming": "{{count}} 条入链"
+      },
+      "graph": {
+        "title": "笔记关系图谱",
+        "description": "探索笔记之间的连接，并在工作区中打开它们。",
+        "hint": "拖动以平移，使用缩放按钮或鼠标滚轮缩放，悬停节点以查看它的邻居。",
+        "meta": "{{links}} 条入链 · {{neighbors}} 条连接的笔记",
+        "empty": "笔记间尚无链接。",
+        "error": "加载笔记关系图谱失败。"
+      }
+    }
   },
   "folder": {
-    "untitled": "未命名文件夹"
+    "untitled": "未命名文件夹",
+    "iconPicker": {
+      "searchPlaceholder": "搜索图标...",
+      "emojiSearchPlaceholder": "搜索表情符号...",
+      "iconSearchPlaceholder": "搜索图标...",
+      "emptyResults": "未找到图标",
+      "emptyEmojiResults": "未找到表情符号",
+      "uploadImage": "上传 JPG 或 PNG",
+      "replaceImage": "选择其他",
+      "applyImage": "使用图片",
+      "uploading": "正在处理图片...",
+      "uploadTitle": "添加自定义图片",
+      "uploadHint": "将 JPG 或 PNG 拖放至此区域，或选择文件。最大尺寸：10 MB。",
+      "tabs": {
+        "emoji": "表情符号",
+        "icons": "图标",
+        "upload": "上传"
+      },
+      "emojiCategories": {
+        "people": "人物",
+        "nature": "自然",
+        "food": "饮食",
+        "activities": "活动",
+        "travel": "旅行与地点",
+        "objects": "物品",
+        "symbols": "符号",
+        "flags": "旗帜"
+      },
+      "errors": {
+        "unsupportedFormat": "请选择 JPG 或 PNG 图片。",
+        "fileTooLarge": "图片大小不能超过 10 MB。",
+        "processingFailed": "图片处理失败，请重试。",
+        "updateFailed": "无法更新文件夹图标。"
+      },
+      "filters": {
+        "all": "全部",
+        "material": "Material",
+        "lucide": "Lucide"
+      }
+    }
   },
   "button": {
     "back": "返回",
@@ -59,6 +555,7 @@
     "confirm": "确认",
     "copy": "复制",
     "fit": "适应",
+    "generate": "生成",
     "saveAs": "另存为",
     "update": [
       "前往 GitHub",
@@ -70,7 +567,7 @@
     "toggleDarkMode": "切换深色模式",
     "background": "背景",
     "goToDownload": "前往下载",
-    "goToSettings": "Go to Settings",
+    "goToSettings": "前往设置",
     "refreshPreview": "刷新预览",
     "laserPointer": "激光指针",
     "fullscreen": "全屏",
@@ -79,6 +576,7 @@
   },
   "action": {
     "close": "关闭",
+    "clearSearch": "清除搜索",
     "defaultLanguage": "默认语言",
     "duplicate": "复制",
     "rename": "重命名",
@@ -89,15 +587,17 @@
     "hide": "隐藏",
     "showSidebar": "显示侧边栏",
     "hideSidebar": "隐藏侧边栏",
-    "showSidebarAndList": "Show Sidebar and List",
-    "hideSidebarAndList": "Hide Sidebar and List",
+    "showSidebarAndList": "显示侧边栏和列表",
+    "hideSidebarAndList": "隐藏侧边栏和列表",
     "new": {
       "storage": "新建存储",
       "folder": "新建文件夹",
       "snippet": "新建代码片段",
       "fragment": "新建片段",
-      "note": "New Note"
+      "note": "新建笔记",
+      "task": "新建任务"
     },
+    "createOptions": "创建选项",
     "add": {
       "description": "添加描述",
       "tag": "添加标签",
@@ -114,12 +614,12 @@
       "fromFavorites": "从收藏中移除"
     },
     "reveal": {
-      "inFinder": "Reveal in Finder",
-      "inFileManager": "Show in File Manager"
+      "inFinder": "在访达中显示",
+      "inFileManager": "在文件管理器中显示"
     },
     "reload": {
       "storage": "重新加载存储",
-      "app": "Reload massCode"
+      "app": "重新加载 massCode"
     },
     "delete": {
       "common": "删除",
@@ -132,24 +632,60 @@
       "fromV3": "从 massCode v3 导入"
     },
     "export": {
-      "toHtml": "导出为 HTML"
+      "folderToHtmlSite": "将文件夹导出为 HTML 站点",
+      "toHtml": "导出为 HTML",
+      "toPdf": "导出为 PDF"
     },
     "copy": {
-      "snippetLink": "复制代码片段链接"
+      "snippet": "复制代码片段",
+      "snippetLink": "复制代码片段链接",
+      "note": "复制笔记",
+      "noteLink": "复制笔记引用链接",
+      "request": "复制请求",
+      "requestLink": "复制请求引用链接"
     },
     "select": {
-      "directory": "Select Directory"
+      "directory": "选择目录"
+    }
+  },
+  "internalLinks": {
+    "picker": {
+      "searchPlaceholder": "搜索代码片段、HTTP 请求和笔记...",
+      "emptyResults": "无结果",
+      "groups": {
+        "snippets": "代码片段",
+        "httpRequests": "HTTP 请求",
+        "notes": "笔记"
+      }
+    },
+    "missing": {
+      "snippet": "未找到代码片段",
+      "httpRequest": "未找到 HTTP 请求",
+      "note": "未找到笔记"
     }
   },
   "placeholder": {
     "emptyTagList": "在代码片段中添加标签以在此处查看",
-    "emptyNotesTagList": "Add tags to notes to see them here",
+    "emptyNotesTagList": "在笔记中添加标签以在此处查看",
     "emptyFoldersList": "没有文件夹",
     "emptySnippetsList": "没有代码片段",
-    "emptyNotesList": "No Notes",
-    "searchNotes": "Search notes...",
-    "emptySheetList": "No Sheets",
+    "emptyNotesList": "没有笔记",
+    "searchNotes": "搜索笔记...",
+    "emptySheetList": "没有草稿",
+    "emptyDrawingsList": "没有绘图",
     "search": "搜索",
-    "addTag": "添加标签"
+    "searchIn": "在 {{- context}} 中搜索",
+    "addTag": "添加标签",
+    "selectLanguage": "选择语言"
+  },
+  "cloudDownloads": {
+    "downloading": "正在从云存储下载文件：剩余 {{count}} 个",
+    "failed": "从云存储下载文件失败：{{count}} 个",
+    "itemPending": "正在从云存储下载…",
+    "label": "云端下载"
+  },
+  "contentLoad": {
+    "failed": "加载内容失败。",
+    "retry": "重试"
   }
 }

@@ -1,10 +1,17 @@
 import type { Component } from 'vue'
 import type { RouteLocationRaw, RouteRecordName } from 'vue-router'
-import { i18n } from '@/electron'
+import { i18n, store } from '@/electron'
 import { router, RouterName } from '@/router'
-import { Blocks, Calculator, Code2, Notebook } from 'lucide-vue-next'
+import {
+  Blocks,
+  Calculator,
+  Code2,
+  Notebook,
+  PenTool,
+  Send,
+} from 'lucide-vue-next'
 
-export type SpaceId = 'code' | 'tools' | 'math' | 'notes'
+export type SpaceId = 'code' | 'tools' | 'math' | 'notes' | 'http' | 'drawings'
 
 export interface SpaceDefinition {
   id: SpaceId
@@ -25,6 +32,20 @@ function isRouteNameInSpace(
   )
 }
 
+function getSavedNotesRouteName() {
+  const savedRoute = store.app.get<string>('notes.route')
+
+  if (
+    savedRoute === RouterName.notesSpace
+    || savedRoute === RouterName.notesDashboard
+    || savedRoute === RouterName.notesGraph
+  ) {
+    return savedRoute
+  }
+
+  return RouterName.notesSpace
+}
+
 export function getSpaceDefinitions(): SpaceDefinition[] {
   return [
     {
@@ -40,9 +61,18 @@ export function getSpaceDefinitions(): SpaceDefinition[] {
       label: i18n.t('spaces.notes.label'),
       tooltip: i18n.t('spaces.notes.tooltip'),
       icon: Notebook,
-      to: { name: RouterName.notesSpace },
+      to: { name: getSavedNotesRouteName() },
       isActive: routeName =>
         isRouteNameInSpace(routeName, RouterName.notesSpace),
+    },
+    {
+      id: 'http',
+      label: i18n.t('spaces.http.label'),
+      tooltip: i18n.t('spaces.http.tooltip'),
+      icon: Send,
+      to: { name: RouterName.httpSpace },
+      isActive: routeName =>
+        isRouteNameInSpace(routeName, RouterName.httpSpace),
     },
     {
       id: 'math',
@@ -53,11 +83,19 @@ export function getSpaceDefinitions(): SpaceDefinition[] {
       isActive: routeName => routeName === RouterName.mathNotebook,
     },
     {
+      id: 'drawings',
+      label: i18n.t('spaces.drawings.label'),
+      tooltip: i18n.t('spaces.drawings.tooltip'),
+      icon: PenTool,
+      to: { name: RouterName.drawingsSpace },
+      isActive: routeName => routeName === RouterName.drawingsSpace,
+    },
+    {
       id: 'tools',
       label: i18n.t('spaces.tools.label'),
       tooltip: i18n.t('spaces.tools.tooltip'),
       icon: Blocks,
-      to: { name: RouterName.devtoolsCaseConverter },
+      to: { name: RouterName.devtools },
       isActive: routeName =>
         isRouteNameInSpace(routeName, RouterName.devtools),
     },

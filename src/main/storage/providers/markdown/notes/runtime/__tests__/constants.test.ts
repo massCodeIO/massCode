@@ -47,6 +47,12 @@ describe('getNotesPaths', () => {
       fs.pathExistsSync(path.join(notesPaths.notesRoot, 'Folder', 'note.md')),
     ).toBe(true)
     expect(fs.pathExistsSync(legacyNotesRoot)).toBe(false)
+    expect(notesPaths.assetsPath).toBe(
+      path.join(vaultPath, 'notes', '.masscode', 'assets'),
+    )
+    expect(notesPaths.legacyAssetsPath).toBe(
+      path.join(vaultPath, 'notes', 'assets'),
+    )
   })
 
   it('merges nested notes space into existing flat notes space', () => {

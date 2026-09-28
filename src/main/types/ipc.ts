@@ -3,57 +3,146 @@ import type { OpenDialogOptions } from 'electron'
 export type CombineWith<T extends string, U extends string> = `${U}:${T}`
 
 type MainMenuAction =
+  | 'open-ai'
   | 'add-description'
+  | 'copy-note'
   | 'copy-snippet'
   | 'find'
   | 'font-size-decrease'
   | 'font-size-increase'
   | 'font-size-reset'
   | 'format'
+  | 'normalize-code-line-breaks'
+  | 'normalize-note-line-breaks'
   | 'goto-preferences'
   | 'goto-devtools'
   | 'new-note'
   | 'new-note-folder'
+  | 'new-task'
   | 'new-folder'
   | 'new-fragment'
   | 'new-sheet'
   | 'new-snippet'
+  | 'navigate-back'
+  | 'navigate-forward'
   | 'open-dialog'
   | 'preview-mindmap'
   | 'preview-code'
   | 'preview-json'
   | 'presentation-mode'
+  | 'set-content-sort-field'
+  | 'set-content-sort-order'
   | 'set-layout-mode'
+  | 'toggle-http-panel'
+  | 'toggle-notes-inspector'
   | 'set-notes-editor-mode'
+  | 'send-http-request'
   | 'toggle-sidebar'
+  | 'toggle-secondary-sidebar'
   | 'toggle-compact-mode'
+  | 'toggle-hide-completed-tasks'
   | 'update-context'
   | 'goto-math-notebook'
 
-type DBAction = 'migrate-to-markdown'
-
 type SystemAction =
+  | `ai:${'settings' | 'configure' | 'models' | 'context-search' | 'start' | 'cancel' | 'event' | 'workspace-apply' | 'workspace-undo' | 'http-apply' | 'http-complete' | 'http-cancel' | 'data-complete' | 'mutation-complete' | 'mutation-start' | 'native-start' | 'native-complete' | 'workspace-cancel' | 'workspace-undo-partial' | 'steer' | 'answer'}`
+  | 'activate-license'
+  | 'api-request'
+  | 'api-token-generate'
+  | 'api-token-revoke'
+  | 'clipboard-write-text'
   | 'currency-rates'
   | 'currency-rates-refresh'
   | 'crypto-rates-refresh'
+  | 'get-directory-state'
+  | 'tasks-cleanup'
+  | 'tasks-cleanup-undo'
   | 'reload'
+  | 'move-vault'
+  | 'set-vault-path'
   | 'open-external'
+  | 'refresh-dock-badge'
+  | 'show-http-request-in-file-manager'
   | 'show-notes-folder-in-file-manager'
   | 'show-note-in-file-manager'
+  | 'show-snippet-in-file-manager'
   | 'deep-link'
+  | 'install-update'
+  | 'check-for-updates'
+  | 'runtime-info'
   | 'update-available'
-  | 'renderer-ready'
+  | 'update-downloaded'
+  | 'confirm-leave'
+  | 'confirm-leave-result'
   | 'storage-synced'
-  | 'migration-complete'
-  | 'migration-error'
+  | 'cloud-download-status'
+  | 'cloud-download-progress'
+  | 'notes-asset-ready'
   | 'error'
 type PrettierAction = 'format'
-type FsAction = 'assets' | 'notes-asset'
+type FsAction =
+  | 'assets'
+  | 'export-rendered-artifact'
+  | 'export-note'
+  | 'export-note-folder-site'
+  | 'prepare-note-folder-site-export'
+  | 'folder-icon:set'
+  | 'folder-icon:write'
+  | 'folder-icon:change'
+  | 'folder-icon:undo'
+  | 'import-markdown-folder'
+  | 'pick-note-image'
+  | 'notes-asset'
 type ThemeAction = 'list' | 'get' | 'open-dir' | 'create-template' | 'changed'
-type SpacesAction = 'math:read' | 'math:write'
+type SpacesAction =
+  | `http:cookies:${
+  | 'read'
+  | 'preview'
+  | 'addDomain'
+  | 'save'
+  | 'remove'
+  | 'removeDomain'
+  | 'clear'
+  | 'setEnabled'
+  | 'event'}`
+  | `http:terminal:${'list' | 'create' | 'input' | 'resize' | 'clear' | 'kill' | 'ack' | 'event'}`
+  | `http:console:${'read' | 'clear' | 'event' | 'detach'}`
+  | 'math:read'
+  | 'math:write'
+  | 'http:execute'
+  | 'http:generate-code'
+  | 'http:cancel'
+  | 'http:script-trust-status'
+  | 'http:script-trust'
+  | 'http:script-revoke'
+  | 'http:ws-connect'
+  | 'http:ws-read'
+  | 'http:ws-send'
+  | 'http:ws-disconnect'
+  | 'http:ws-clear'
+  | 'http:ws-dispose'
+  | 'http:run-prepare'
+  | 'http:run-start'
+  | 'http:run-status'
+  | 'http:run-cancel'
+  | 'http:run-dispose'
+  | 'http:clear-session'
+  | 'http:session-names'
+  | 'http:history-snapshot'
+  | 'http:secrets-status'
+  | 'http:set-secret'
+  | 'http:delete-secret'
+  | 'http:reveal-secret'
+  | 'http:unprotect-secret'
+  | 'drawings:list'
+  | 'drawings:read'
+  | 'drawings:write'
+  | 'drawings:create'
+  | 'drawings:rename'
+  | 'drawings:duplicate'
+  | 'drawings:delete'
 
 export type MainMenuChannel = CombineWith<MainMenuAction, 'main-menu'>
-export type DBChannel = CombineWith<DBAction, 'db'>
 export type SystemChannel = CombineWith<SystemAction, 'system'>
 export type PrettierChannel = CombineWith<PrettierAction, 'prettier'>
 export type FsChannel = CombineWith<FsAction, 'fs'>
@@ -62,7 +151,6 @@ export type SpacesChannel = CombineWith<SpacesAction, 'spaces'>
 
 export type Channel =
   | MainMenuChannel
-  | DBChannel
   | SystemChannel
   | PrettierChannel
   | FsChannel
@@ -81,4 +169,157 @@ export interface PrettierOptions {
 
 export interface FsAssetsOptions {
   path: string
+}
+
+export type FolderIconSpaceId = 'code' | 'notes' | 'http'
+
+export interface FolderIconTarget {
+  folderId: number
+  spaceId: FolderIconSpaceId
+}
+
+export interface FolderIconWritePayload extends FolderIconTarget {
+  buffer: ArrayBuffer
+}
+
+export interface FolderIconSetPayload extends FolderIconTarget {
+  icon: string | null
+}
+export type FolderIconChangeResult =
+  | { status: 'done', receiptId: string, icon: string | null }
+  | { status: 'cancelled' | 'stale' | 'failed' | 'unavailable' }
+
+export interface ImportMarkdownFolderFile {
+  content: string
+  name: string
+  relativePath: string
+}
+
+export interface ImportMarkdownFolderWarning {
+  code: string
+  details?: Record<string, string>
+  source: string
+}
+
+export interface ImportMarkdownFolderResponse {
+  canceled: boolean
+  files: ImportMarkdownFolderFile[]
+  warnings: ImportMarkdownFolderWarning[]
+}
+
+export type NoteExportFormat = 'html' | 'pdf'
+
+export interface RenderedArtifactExportPayload {
+  format: 'png' | 'svg' | 'html'
+  name: string
+  data: string
+  vault: string
+}
+
+export type RenderedArtifactExportResult =
+  | { status: 'saved', filePath: string, bytes: number }
+  | { status: 'cancelled' | 'stale' | 'failed' }
+
+export interface NoteExportDrawingPreview {
+  id: string
+  svg: string
+}
+
+export interface NoteExportDiagramPreview {
+  code: string
+  svg: string
+}
+
+export type NoteExportWarnings = Partial<
+  Record<
+    | 'mermaid'
+    | 'drawings'
+    | 'managedImages'
+    | 'remoteImages'
+    | 'richFormatting'
+    | 'internalLinks',
+    number
+  >
+>
+
+export interface NoteExportPayload {
+  content: string
+  drawingPreviews?: NoteExportDrawingPreview[]
+  diagramPreviews?: NoteExportDiagramPreview[]
+  format: NoteExportFormat
+  name: string
+}
+
+export interface NoteExportResponse {
+  canceled: boolean
+  filePath?: string
+  warnings?: NoteExportWarnings
+}
+
+export type NoteFolderSiteExportSort = 'createdAt' | 'updatedAt' | 'name'
+export type NoteFolderSiteExportOrder = 'ASC' | 'DESC'
+
+export interface NoteFolderSiteExportPreparePayload {
+  folderId: number
+}
+
+export type NoteFolderSiteExportPrepareResponse =
+  | {
+    drawingIds: string[]
+    mermaidSources?: string[]
+    status: 'ready'
+  }
+  | {
+    status: 'cloud-unavailable'
+  }
+
+export interface NoteFolderSiteExportPayload {
+  drawingPreviews: NoteExportDrawingPreview[]
+  diagramPreviews?: NoteExportDiagramPreview[]
+  folderId: number
+  order: NoteFolderSiteExportOrder
+  sort: NoteFolderSiteExportSort
+}
+
+export type NoteFolderSiteExportResponse =
+  | {
+    canceled: false
+    directoryPath: string
+    status: 'exported'
+    warnings?: NoteExportWarnings
+  }
+  | {
+    canceled: true
+    status: 'canceled'
+  }
+  | {
+    canceled: false
+    status: 'cloud-unavailable'
+  }
+
+export interface NoteImagePickerInput {
+  vault: string
+  source?: 'picker' | 'clipboardImage'
+}
+export type NoteImagePickerResult =
+  | { status: 'saved', url: string, bytes: number }
+  | { status: 'cancelled' | 'stale' | 'failed' }
+
+export interface TaskCleanupResult {
+  status: 'done' | 'failed' | 'stale'
+  count: number
+  receiptId?: string
+}
+export interface TaskCleanupUndoResult {
+  undone: boolean
+  restored: number
+  conflicts: string[]
+}
+
+export interface RuntimeInfo {
+  electron: string
+  chrome: string
+  node: string
+  v8: string
+  os: string
 }

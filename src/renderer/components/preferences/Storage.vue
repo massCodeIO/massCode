@@ -1,30 +1,75 @@
 <script setup lang="ts">
+import type { NativeBridgeResult } from '@/composables/ai/nativeBridges'
+import type { ComponentPublicInstance } from 'vue'
 import type { DialogOptions } from '~/main/types/ipc'
 import type { SnippetsCountsResponse } from '~/renderer/services/api/generated'
+import { Badge } from '@/components/ui/shadcn/badge'
 import { Button } from '@/components/ui/shadcn/button'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/shadcn/radio-group'
 import {
+  resetCodeSpaceInitialization,
+  resetHttpSpaceState,
   resetNotesSpaceInitialization,
   useDialog,
+  useDrawings,
   useFolders,
+  useHttpEnvironments,
+  useHttpFolders,
+  useHttpHistory,
+  useHttpRequests,
   useMathNotebook,
   useNoteFolders,
   useNotes,
   useNoteTags,
   useSnippets,
   useSonner,
+  useVaultDoctor,
+  VAULT_DOCTOR_NOTICE_ID,
 } from '@/composables'
+import {
+  cancelPreferenceHandoff,
+  claimPreferenceHandoff,
+  finishPreferenceHandoff,
+  preferenceHandoff,
+  registerPreferenceFlow,
+  waitForPreferenceUser,
+} from '@/composables/ai/nativePreferenceFlows'
+import { httpRuntimeNavigation } from '@/composables/spaces/http/runtimeNavigation'
 import { i18n, ipc, store } from '@/electron'
-import { LoaderCircle } from 'lucide-vue-next'
+import { AlertTriangle, Check, LoaderCircle } from 'lucide-vue-next'
+import { useRoute, useRouter } from 'vue-router'
 import { api } from '~/renderer/services/api'
+import {
+  formatVaultDoctorWarning,
+  getVaultDoctorWarningKey,
+} from './vaultDoctorWarnings'
 
-const { sonner } = useSonner()
+interface DirectoryStateResponse {
+  exists: boolean
+  isEmpty: boolean
+}
+
+interface VaultPathResponse {
+  vaultPath: string
+}
+
+const { sonner, dismiss } = useSonner()
 const { confirm } = useDialog()
 const { getFolders } = useFolders()
+const { getHttpFolders } = useHttpFolders()
+const { getHttpRequests } = useHttpRequests()
+const { getHttpEnvironments } = useHttpEnvironments()
+const { getHttpHistory } = useHttpHistory()
 const { reset: resetMathNotebook } = useMathNotebook()
+const { resetDrawings } = useDrawings()
 const { resetNoteFoldersState } = useNoteFolders()
-const { clearNotesState } = useNotes()
+const { clearNotesState, getNotes } = useNotes()
 const { resetNoteTags } = useNoteTags()
 const { getSnippets } = useSnippets()
+const route = useRoute()
+const router = useRouter()
+const vaultDoctorSection
+  = useTemplateRef<ComponentPublicInstance>('vaultDoctorSection')
 
 function getDefaultVaultPath(baseStoragePath: string): string {
   const separator = baseStoragePath.includes('\\') ? '\\' : '/'
@@ -55,7 +100,46 @@ const counts = reactive<SnippetsCountsResponse>({
   trash: 0,
 })
 const isLoadingCounts = ref(false)
+const isMovingVault = ref(false)
+const isVaultDoctorScanLoaderVisible = ref(false)
+const isVaultDoctorApplyLoaderVisible = ref(false)
 let loadingCountsTimer: ReturnType<typeof setTimeout> | null = null
+let vaultDoctorScanLoaderTimer: ReturnType<typeof setTimeout> | null = null
+let vaultDoctorApplyLoaderTimer: ReturnType<typeof setTimeout> | null = null
+
+const {
+  report: vaultDoctorReport,
+  decisionByGroupId: vaultDoctorDecisionByGroupId,
+  isScanning: isVaultDoctorScanning,
+  isApplying: isVaultDoctorApplying,
+  hasReport: vaultDoctorHasReport,
+  safeFixesCount: vaultDoctorSafeFixesCount,
+  blockedCount: vaultDoctorBlockedCount,
+  conflictCount: vaultDoctorConflictCount,
+  duplicateGroups: vaultDoctorDuplicateGroups,
+  selectedDecisionCount: vaultDoctorSelectedDecisionCount,
+  warningPreview: vaultDoctorWarningPreview,
+  hiddenWarningCount: vaultDoctorHiddenWarningCount,
+  canApply: vaultDoctorCanApply,
+  splitPath: splitVaultDoctorPath,
+  isCopyPath: isVaultDoctorCopyPath,
+  getConflictId: getVaultDoctorConflictId,
+  getDecisionReassignCount: getVaultDoctorDecisionReassignCount,
+  selectDecision: selectVaultDoctorDecision,
+  isDecisionSelected: isVaultDoctorDecisionSelected,
+  scan: scanVault,
+  apply: applyVault,
+  reset: resetVaultDoctor,
+} = useVaultDoctor()
+
+const formattedVaultDoctorWarnings = computed(() =>
+  vaultDoctorWarningPreview.value.map(warning => ({
+    ...formatVaultDoctorWarning(warning, (key, options) =>
+      i18n.t(key, options)),
+    key: getVaultDoctorWarningKey(warning),
+    warning,
+  })),
+)
 
 function showLoadingCounts() {
   loadingCountsTimer = setTimeout(() => {
@@ -72,6 +156,39 @@ function hideLoadingCounts() {
   isLoadingCounts.value = false
 }
 
+// Отложенный лоадер скана: показываем спиннер только если скан длится дольше
+// порога, иначе быстрый скан вызвал бы мелькание лоадера на долю секунды.
+function showVaultDoctorScanLoader() {
+  vaultDoctorScanLoaderTimer = setTimeout(() => {
+    isVaultDoctorScanLoaderVisible.value = true
+  }, 300)
+}
+
+function hideVaultDoctorScanLoader() {
+  if (vaultDoctorScanLoaderTimer) {
+    clearTimeout(vaultDoctorScanLoaderTimer)
+    vaultDoctorScanLoaderTimer = null
+  }
+
+  isVaultDoctorScanLoaderVisible.value = false
+}
+
+// Тот же отложенный лоадер для apply, чтобы быстрый apply не мигал спиннером.
+function showVaultDoctorApplyLoader() {
+  vaultDoctorApplyLoaderTimer = setTimeout(() => {
+    isVaultDoctorApplyLoaderVisible.value = true
+  }, 300)
+}
+
+function hideVaultDoctorApplyLoader() {
+  if (vaultDoctorApplyLoaderTimer) {
+    clearTimeout(vaultDoctorApplyLoaderTimer)
+    vaultDoctorApplyLoaderTimer = null
+  }
+
+  isVaultDoctorApplyLoaderVisible.value = false
+}
+
 async function getSnippetsCounts() {
   showLoadingCounts()
 
@@ -80,9 +197,11 @@ async function getSnippetsCounts() {
 
     counts.total = data.total
     counts.trash = data.trash
+    return true
   }
   catch (err) {
     console.error(err)
+    return false
   }
   finally {
     hideLoadingCounts()
@@ -91,94 +210,409 @@ async function getSnippetsCounts() {
 
 getSnippetsCounts()
 
-async function openVaultStorage() {
-  const result = await ipc.invoke<DialogOptions, string>(
+async function resetAndReloadVaultData() {
+  resetCodeSpaceInitialization()
+  resetMathNotebook()
+  resetDrawings()
+  clearNotesState()
+  resetNoteFoldersState()
+  resetNoteTags()
+  resetNotesSpaceInitialization()
+  resetHttpSpaceState()
+
+  await nextTick()
+
+  const results = await Promise.allSettled([
+    getFolders(false),
+    getSnippets(),
+    getNotes(),
+    getHttpFolders(false),
+    getHttpRequests(),
+    getHttpEnvironments(),
+    getHttpHistory(),
+  ])
+  const countsLoaded = await getSnippetsCounts()
+  return (
+    countsLoaded
+    && results.every(
+      result => result.status === 'fulfilled' && result.value === true,
+    )
+  )
+}
+
+function storageOutcome(
+  status: NativeBridgeResult['status'],
+  source: string,
+  operationCompleted = false,
+  refreshCompleted = false,
+  extra: Partial<NonNullable<NativeBridgeResult['storage']>> = {},
+): NativeBridgeResult {
+  const actual
+    = store.preferences.get<string>('storage.vaultPath')
+      || effectiveVaultPath.value
+  return {
+    status,
+    persisted: operationCompleted,
+    filePath: actual,
+    storage: {
+      operationCompleted,
+      activeVaultChanged: source !== actual,
+      refreshCompleted,
+      ...extra,
+    },
+  }
+}
+
+async function syncVaultPathAfterFailedChange() {
+  // Main process мог сохранить новый путь до ошибки следующего шага
+  // (например, запуска watcher после физического переноса). UI должен
+  // отражать фактически активный vault, а не уже несуществующий старый.
+  const configuredVaultPath = store.preferences.get<string | null>(
+    'storage.vaultPath',
+  )
+  if (configuredVaultPath !== vaultPath.value) {
+    vaultPath.value = configuredVaultPath
+    await resetAndReloadVaultData()
+  }
+}
+
+async function openVaultStorage(
+  current: () => boolean = () => true,
+): Promise<NativeBridgeResult> {
+  const source = effectiveVaultPath.value
+  if (isMovingVault.value) {
+    return { status: 'unavailable' }
+  }
+
+  const selectedPath = await ipc.invoke<DialogOptions, string>(
     'main-menu:open-dialog',
     {
       properties: ['openDirectory', 'createDirectory'],
     },
   )
 
-  if (!result) {
-    return
+  if (!selectedPath || !(await httpRuntimeNavigation.confirmLeave())) {
+    return { status: 'cancelled' }
   }
+  if (!current() || source !== effectiveVaultPath.value)
+    return { status: 'stale' }
 
-  vaultPath.value = result
-  store.preferences.set('storage.vaultPath', result)
-  resetMathNotebook()
-  clearNotesState()
-  resetNoteFoldersState()
-  resetNoteTags()
-  resetNotesSpaceInitialization()
-
-  await nextTick()
-
-  showLoadingCounts()
-
+  let operationCompleted = false
   try {
-    await getFolders(false)
-    await getSnippets()
+    const result = await ipc.invoke<
+      { vaultPath: string, expectedVault: string },
+      VaultPathResponse
+    >('system:set-vault-path', {
+      vaultPath: selectedPath,
+      expectedVault: source,
+    })
 
-    const { data } = await api.snippets.getSnippetsCounts()
-    counts.total = data.total
-    counts.trash = data.trash
-  }
-  finally {
-    hideLoadingCounts()
-  }
+    operationCompleted = true
+    vaultPath.value = result.vaultPath
+    const refreshed = await resetAndReloadVaultData()
 
-  sonner({
-    message: i18n.t('messages:success.vaultLoaded'),
-    type: 'success',
-  })
+    sonner({
+      message: i18n.t('messages:success.vaultLoaded'),
+      type: 'success',
+    })
+
+    await refreshVaultDoctorAfterVaultChange()
+    return storageOutcome(
+      refreshed ? 'done' : 'failed',
+      source,
+      true,
+      refreshed,
+    )
+  }
+  catch (err) {
+    await syncVaultPathAfterFailedChange()
+    const error = err as Error
+    sonner({ message: error.message, type: 'error' })
+    return storageOutcome('failed', source, operationCompleted, false, {
+      changesMayHaveOccurred: true,
+    })
+  }
 }
 
-async function migrateSqliteToMarkdown() {
-  const sqliteDbPath = await ipc.invoke<DialogOptions, string>(
+async function moveVaultStorage(
+  current: () => boolean = () => true,
+): Promise<NativeBridgeResult> {
+  const source = effectiveVaultPath.value
+  if (isMovingVault.value) {
+    return { status: 'unavailable' }
+  }
+
+  const targetPath = await ipc.invoke<DialogOptions, string>(
     'main-menu:open-dialog',
     {
-      properties: ['openFile'],
-      filters: [{ name: 'SQLite Database', extensions: ['db'] }],
+      properties: ['openDirectory', 'createDirectory'],
     },
   )
 
-  if (!sqliteDbPath) {
-    return
+  if (!targetPath || !(await httpRuntimeNavigation.confirmLeave())) {
+    return { status: 'cancelled' }
   }
 
-  const isConfirmed = await confirm({
-    title: i18n.t('messages:confirm.migrateToMarkdown.0'),
-    content: i18n.t('messages:confirm.migrateToMarkdown.1'),
+  const directoryState = await ipc.invoke<
+    { path: string },
+    DirectoryStateResponse
+  >('system:get-directory-state', {
+    path: targetPath,
   })
 
-  if (!isConfirmed) {
-    return
+  if (!directoryState.isEmpty) {
+    const isConfirmed = await confirm({
+      title: i18n.t('messages:confirm.moveVaultOverwrite.0'),
+      content: i18n.t('messages:confirm.moveVaultOverwrite.1'),
+    })
+
+    if (!isConfirmed) {
+      return { status: 'cancelled' }
+    }
   }
 
+  if (!current() || source !== effectiveVaultPath.value)
+    return { status: 'stale' }
+  isMovingVault.value = true
+
+  let operationCompleted = false
   try {
     const result = await ipc.invoke<
-      string,
-      { folders: number, snippets: number, tags: number }
-    >('db:migrate-to-markdown', sqliteDbPath)
+      { targetPath: string, expectedVault: string },
+      VaultPathResponse
+    >('system:move-vault', { targetPath, expectedVault: source })
 
-    await getFolders(false)
-    await getSnippets()
-    await getSnippetsCounts()
+    operationCompleted = true
+    vaultPath.value = result.vaultPath
+    const refreshed = await resetAndReloadVaultData()
+
+    // Контент тот же, но путь сменился — прежний отчёт по старым путям неактуален.
+    dismiss(VAULT_DOCTOR_NOTICE_ID)
+    resetVaultDoctor()
 
     sonner({
-      message: i18n.t('messages:success.migrateToMarkdown', {
-        folders: result.folders,
-        snippets: result.snippets,
-        tags: result.tags,
-      }),
+      message: i18n.t('messages:success.vaultMoved'),
       type: 'success',
     })
+    return storageOutcome(
+      refreshed ? 'done' : 'failed',
+      source,
+      true,
+      refreshed,
+    )
+  }
+  catch (err) {
+    await syncVaultPathAfterFailedChange()
+    const error = err as Error
+    sonner({ message: error.message, type: 'error' })
+    return storageOutcome('failed', source, operationCompleted, false, {
+      changesMayHaveOccurred: true,
+    })
+  }
+  finally {
+    isMovingVault.value = false
+  }
+}
+
+async function scanVaultDoctor(): Promise<NativeBridgeResult> {
+  const source = effectiveVaultPath.value
+  showVaultDoctorScanLoader()
+
+  try {
+    const data = await scanVault()
+
+    // Vault ещё сверяется с диском: аудит не выполнялся, «чистый» тост был
+    // бы ложным.
+    if (data?.notReady) {
+      sonner({
+        message: i18n.t('messages:warning.vaultDoctorNotReady'),
+        type: 'warning',
+      })
+      return { status: 'unavailable' }
+    }
+
+    if (
+      data
+      && data.summary.affectedFiles === 0
+      && data.summary.conflicts === 0
+      && data.summary.warnings === 0
+    ) {
+      sonner({
+        message: i18n.t('messages:success.vaultDoctorClean'),
+        type: 'success',
+      })
+    }
+    return data
+      ? storageOutcome('done', source, false, true, {
+          affectedFiles: data.summary.affectedFiles,
+          blocked: data.summary.blocked,
+          conflicts: data.summary.conflicts,
+          warnings: data.summary.warnings,
+          applied: data.items.filter(item => item.status === 'applied')
+            .length,
+        })
+      : { status: 'unavailable' }
   }
   catch (err) {
     const error = err as Error
     sonner({ message: error.message, type: 'error' })
+    return storageOutcome('failed', source)
+  }
+  finally {
+    hideVaultDoctorScanLoader()
   }
 }
+
+async function applyVaultDoctorSafeFixes() {
+  if (
+    isVaultDoctorApplying.value
+    || isVaultDoctorScanning.value
+    || !vaultDoctorCanApply.value
+  ) {
+    return
+  }
+  const handoffId = claimPreferenceHandoff('doctorApply')
+  if (preferenceHandoff.value?.kind === 'doctorApply' && !handoffId)
+    return
+  const source = effectiveVaultPath.value
+
+  const isConfirmed = await confirm({
+    title: i18n.t('messages:confirm.vaultDoctorApply.0'),
+    content: i18n.t('messages:confirm.vaultDoctorApply.1'),
+  })
+
+  if (!isConfirmed) {
+    finishPreferenceHandoff(handoffId, { status: 'cancelled' })
+    return
+  }
+  if (
+    source !== effectiveVaultPath.value
+    || (handoffId && !preferenceHandoff.value?.current())
+  ) {
+    finishPreferenceHandoff(handoffId, { status: 'stale' })
+    return
+  }
+
+  showVaultDoctorApplyLoader()
+
+  try {
+    const data = await applyVault()
+    const appliedCount = data.items.filter(
+      item => item.status === 'applied',
+    ).length
+
+    const refreshed = await resetAndReloadVaultData()
+
+    sonner({
+      message: i18n.t('messages:success.vaultDoctorApplied', {
+        count: appliedCount,
+      }),
+      type: 'success',
+    })
+    finishPreferenceHandoff(
+      handoffId,
+      storageOutcome(refreshed ? 'done' : 'failed', source, true, refreshed, {
+        affectedFiles: data.summary.affectedFiles,
+        blocked: data.summary.blocked,
+        conflicts: data.summary.conflicts,
+        warnings: data.summary.warnings,
+        applied: appliedCount,
+      }),
+    )
+  }
+  catch (err) {
+    const error = err as Error
+    sonner({ message: error.message, type: 'error' })
+    finishPreferenceHandoff(
+      handoffId,
+      storageOutcome('failed', source, false, false, {
+        changesMayHaveOccurred: true,
+      }),
+    )
+  }
+  finally {
+    hideVaultDoctorApplyLoader()
+  }
+}
+
+const unregisterNative = registerPreferenceFlow(
+  'storage',
+  async (action, id, current) => {
+    if (action.action !== 'storage' || !current())
+      return { status: 'stale' }
+    if (action.command === 'select')
+      return openVaultStorage(current)
+    if (action.command === 'move')
+      return moveVaultStorage(current)
+    if (isVaultDoctorScanning.value || isVaultDoctorApplying.value)
+      return { status: 'unavailable' }
+    const scanned = await scanVaultDoctor()
+    if (!current())
+      return { status: 'stale' }
+    if (scanned.status !== 'done' || action.command === 'doctorScan')
+      return scanned
+    scrollToVaultDoctorSection()
+    if (!vaultDoctorCanApply.value)
+      return { ...scanned, status: 'unavailable' }
+    return waitForPreferenceUser('doctorApply', id, current)
+  },
+)
+onBeforeUnmount(() => {
+  unregisterNative()
+  if (preferenceHandoff.value?.kind === 'doctorApply')
+    cancelPreferenceHandoff()
+})
+
+function scrollToVaultDoctorSection() {
+  nextTick(() => {
+    vaultDoctorSection.value?.$el?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  })
+}
+
+// Смена vault делает прежний отчёт неактуальным (он про другой путь). Сбрасываем
+// и пере-сканируем новый vault. Сканируем тихо (без sonner): мы уже в Storage,
+// секция сама покажет результат, а при конфликтах подсвечиваем её скроллом.
+async function refreshVaultDoctorAfterVaultChange() {
+  // Убираем уведомление о конфликтах прежнего vault — оно больше не актуально.
+  dismiss(VAULT_DOCTOR_NOTICE_ID)
+  resetVaultDoctor()
+  showVaultDoctorScanLoader()
+
+  try {
+    await scanVault()
+
+    if (vaultDoctorConflictCount.value > 0) {
+      scrollToVaultDoctorSection()
+    }
+  }
+  catch {
+    // Vault уже загружен; провал health-чека не критичен и не требует sonner.
+  }
+  finally {
+    hideVaultDoctorScanLoader()
+  }
+}
+
+// Переход из startup-уведомления о конфликтах: переиспользуем отчёт
+// startup-проверки (если он есть), иначе сканируем, и скроллим к секции,
+// чтобы пользователь не искал её вручную. Query чистим, чтобы повторный
+// заход не триггерил автоповедение.
+onMounted(() => {
+  if (route.query.doctor !== 'scan') {
+    return
+  }
+
+  router.replace({ query: {} })
+
+  if (!vaultDoctorReport.value) {
+    scanVaultDoctor()
+  }
+
+  scrollToVaultDoctorSection()
+})
 </script>
 
 <template>
@@ -192,16 +626,43 @@ async function migrateSqliteToMarkdown() {
         />
 
         <template #actions>
-          <Button
-            variant="outline"
-            @click="openVaultStorage"
-          >
-            {{ i18n.t("action.select.directory") }}
-          </Button>
+          <div class="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              :disabled="isMovingVault"
+              @click="openVaultStorage()"
+            >
+              {{ i18n.t("action.select.directory") }}
+            </Button>
+
+            <Button
+              variant="outline"
+              :disabled="isMovingVault"
+              @click="moveVaultStorage()"
+            >
+              <LoaderCircle
+                v-if="isMovingVault"
+                class="mr-2 h-4 w-4 animate-spin"
+              />
+              {{ i18n.t("preferences:storage.moveVault") }}
+            </Button>
+          </div>
         </template>
 
         <template #description>
-          {{ i18n.t("messages:description.storageVault") }}
+          <div class="space-y-2">
+            <div>
+              {{ i18n.t("messages:description.storageVault") }}
+            </div>
+
+            <div
+              v-if="isMovingVault"
+              class="flex items-center gap-2"
+            >
+              <LoaderCircle class="h-4 w-4 animate-spin" />
+              <span>{{ i18n.t("preferences:storage.movingVault") }}</span>
+            </div>
+          </div>
         </template>
       </UiMenuFormItem>
 
@@ -218,19 +679,377 @@ async function migrateSqliteToMarkdown() {
       </UiMenuFormItem>
     </UiMenuFormSection>
 
-    <UiMenuFormSection :label="i18n.t('preferences:storage.section.migration')">
+    <UiMenuFormSection
+      ref="vaultDoctorSection"
+      :label="i18n.t('preferences:storage.vaultDoctor.label')"
+    >
       <UiMenuFormItem
-        :label="i18n.t('preferences:storage.migrateSqliteToMarkdown')"
+        :label="i18n.t('preferences:storage.vaultDoctor.scan.label')"
       >
-        <Button
-          variant="outline"
-          @click="migrateSqliteToMarkdown"
-        >
-          {{ i18n.t("preferences:storage.migrateSqliteToMarkdown") }}
-        </Button>
+        <div class="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            :disabled="isVaultDoctorScanning || isVaultDoctorApplying"
+            @click="scanVaultDoctor"
+          >
+            <LoaderCircle
+              v-if="isVaultDoctorScanLoaderVisible"
+              class="mr-2 h-4 w-4 animate-spin"
+            />
+            {{
+              isVaultDoctorScanLoaderVisible
+                ? i18n.t("preferences:storage.vaultDoctor.scan.scanning")
+                : i18n.t("preferences:storage.vaultDoctor.scan.action")
+            }}
+          </Button>
+
+          <Button
+            v-if="vaultDoctorHasReport"
+            variant="default"
+            :disabled="
+              isVaultDoctorScanning
+                || isVaultDoctorApplying
+                || !vaultDoctorCanApply
+            "
+            @click="applyVaultDoctorSafeFixes"
+          >
+            <LoaderCircle
+              v-if="isVaultDoctorApplyLoaderVisible"
+              class="mr-2 h-4 w-4 animate-spin"
+            />
+            {{
+              isVaultDoctorApplyLoaderVisible
+                ? i18n.t("preferences:storage.vaultDoctor.apply.applying")
+                : i18n.t("preferences:storage.vaultDoctor.apply.action")
+            }}
+          </Button>
+        </div>
 
         <template #description>
-          {{ i18n.t("messages:description.migrateSqliteUtility") }}
+          <div class="space-y-3">
+            <div>
+              {{ i18n.t("preferences:storage.vaultDoctor.description") }}
+            </div>
+
+            <div
+              v-if="vaultDoctorReport"
+              class="space-y-2"
+            >
+              <div class="grid gap-2 sm:grid-cols-4">
+                <div class="border-border space-y-1 rounded-md border p-2">
+                  <UiText
+                    variant="caption"
+                    class="block"
+                  >
+                    {{ i18n.t("preferences:storage.vaultDoctor.summary.safe") }}
+                  </UiText>
+                  <UiText
+                    variant="sm"
+                    class="block"
+                  >
+                    {{ vaultDoctorSafeFixesCount }}
+                  </UiText>
+                </div>
+                <div class="border-border space-y-1 rounded-md border p-2">
+                  <UiText
+                    variant="caption"
+                    class="block"
+                  >
+                    {{
+                      i18n.t(
+                        "preferences:storage.vaultDoctor.summary.conflicts",
+                      )
+                    }}
+                  </UiText>
+                  <UiText
+                    variant="sm"
+                    class="block"
+                  >
+                    {{ vaultDoctorConflictCount }}
+                  </UiText>
+                </div>
+                <div class="border-border space-y-1 rounded-md border p-2">
+                  <UiText
+                    variant="caption"
+                    class="block"
+                  >
+                    {{
+                      i18n.t("preferences:storage.vaultDoctor.summary.blocked")
+                    }}
+                  </UiText>
+                  <UiText
+                    variant="sm"
+                    class="block"
+                  >
+                    {{ vaultDoctorBlockedCount }}
+                  </UiText>
+                </div>
+                <div class="border-border space-y-1 rounded-md border p-2">
+                  <UiText
+                    variant="caption"
+                    class="block"
+                  >
+                    {{
+                      i18n.t("preferences:storage.vaultDoctor.summary.warnings")
+                    }}
+                  </UiText>
+                  <UiText
+                    variant="sm"
+                    class="block"
+                  >
+                    {{ vaultDoctorReport.summary.warnings }}
+                  </UiText>
+                </div>
+              </div>
+
+              <div
+                v-if="vaultDoctorReport.conflictGroups.length"
+                class="border-border bg-background overflow-hidden rounded-md border"
+              >
+                <div
+                  class="border-border bg-background flex flex-wrap items-center justify-between gap-2 border-b p-2"
+                >
+                  <div class="flex min-w-0 items-center gap-2">
+                    <AlertTriangle class="text-muted-foreground h-4 w-4" />
+                    <UiText variant="sm">
+                      {{ i18n.t("preferences:storage.vaultDoctor.conflicts") }}
+                    </UiText>
+                  </div>
+
+                  <UiText
+                    v-if="vaultDoctorDuplicateGroups.length"
+                    variant="caption"
+                    class="text-muted-foreground"
+                  >
+                    {{
+                      i18n.t(
+                        "preferences:storage.vaultDoctor.decisions.progress",
+                        {
+                          selected: vaultDoctorSelectedDecisionCount,
+                          total: vaultDoctorDuplicateGroups.length,
+                        },
+                      )
+                    }}
+                  </UiText>
+                </div>
+
+                <div class="max-h-80 space-y-2 overflow-y-auto p-2 pr-1">
+                  <div
+                    v-for="group in vaultDoctorReport.conflictGroups"
+                    :key="group.id"
+                    class="border-border bg-muted/20 space-y-2 rounded-md border p-2"
+                  >
+                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <Check
+                        v-if="
+                          group.reason === 'duplicate-id'
+                            && vaultDoctorDecisionByGroupId[group.id]
+                        "
+                        class="h-4 w-4 shrink-0 text-emerald-500"
+                      />
+                      <AlertTriangle
+                        v-else
+                        class="text-muted-foreground h-4 w-4 shrink-0"
+                      />
+
+                      <UiText
+                        v-if="group.reason === 'duplicate-id'"
+                        variant="caption"
+                      >
+                        {{
+                          i18n.t(
+                            "preferences:storage.vaultDoctor.decisions.duplicateId",
+                            { id: getVaultDoctorConflictId(group) },
+                          )
+                        }}
+                      </UiText>
+                      <UiText
+                        v-else
+                        variant="caption"
+                      >
+                        {{
+                          i18n.t(
+                            `preferences:storage.vaultDoctor.reason.${group.reason}`,
+                          )
+                        }}
+                      </UiText>
+
+                      <UiText
+                        variant="caption"
+                        class="text-muted-foreground"
+                      >
+                        {{
+                          i18n.t(
+                            "preferences:storage.vaultDoctor.decisions.files",
+                            { count: group.items.length },
+                          )
+                        }}
+                      </UiText>
+                    </div>
+
+                    <!-- Дубли id: выбор canonical через radio-group -->
+                    <div
+                      v-if="group.reason === 'duplicate-id'"
+                      class="space-y-2"
+                    >
+                      <UiText
+                        variant="caption"
+                        class="text-muted-foreground block"
+                      >
+                        {{
+                          i18n.t(
+                            "preferences:storage.vaultDoctor.decisions.choose",
+                            {
+                              count: getVaultDoctorDecisionReassignCount(group),
+                            },
+                          )
+                        }}
+                      </UiText>
+
+                      <RadioGroup
+                        :model-value="vaultDoctorDecisionByGroupId[group.id]"
+                        class="max-h-48 gap-1.5 overflow-y-auto pr-1"
+                        @update:model-value="
+                          (value) =>
+                            selectVaultDoctorDecision(group.id, String(value))
+                        "
+                      >
+                        <label
+                          v-for="item in group.items"
+                          :key="item.path"
+                          class="hover:bg-accent/50 flex cursor-pointer items-center gap-3 rounded-md border p-2 transition-colors"
+                          :class="
+                            isVaultDoctorDecisionSelected(group.id, item.path)
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border'
+                          "
+                        >
+                          <RadioGroupItem :value="item.path" />
+
+                          <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2">
+                              <UiText
+                                variant="sm"
+                                class="truncate"
+                                :title="item.path"
+                              >
+                                {{ splitVaultDoctorPath(item.path).name }}
+                              </UiText>
+                              <Badge
+                                v-if="!isVaultDoctorCopyPath(item.path)"
+                                variant="secondary"
+                              >
+                                {{
+                                  i18n.t(
+                                    "preferences:storage.vaultDoctor.decisions.original",
+                                  )
+                                }}
+                              </Badge>
+                              <Badge
+                                v-else
+                                variant="outline"
+                              >
+                                {{
+                                  i18n.t(
+                                    "preferences:storage.vaultDoctor.decisions.copy",
+                                  )
+                                }}
+                              </Badge>
+                            </div>
+                            <UiText
+                              v-if="splitVaultDoctorPath(item.path).dir"
+                              variant="caption"
+                              class="text-muted-foreground block truncate"
+                              :title="item.path"
+                            >
+                              {{ splitVaultDoctorPath(item.path).dir }}
+                            </UiText>
+                          </div>
+
+                          <UiText
+                            variant="sm"
+                            class="shrink-0"
+                            :class="
+                              isVaultDoctorDecisionSelected(group.id, item.path)
+                                ? 'text-foreground'
+                                : 'text-muted-foreground'
+                            "
+                          >
+                            {{
+                              isVaultDoctorDecisionSelected(group.id, item.path)
+                                ? i18n.t(
+                                  "preferences:storage.vaultDoctor.decisions.keepsId",
+                                  {
+                                    id: `:${getVaultDoctorConflictId(group)}`,
+                                  },
+                                )
+                                : i18n.t(
+                                  "preferences:storage.vaultDoctor.decisions.newId",
+                                )
+                            }}
+                          </UiText>
+                        </label>
+                      </RadioGroup>
+                    </div>
+
+                    <!-- Заблокированные файлы (merge markers / битый frontmatter) -->
+                    <UiText
+                      v-else
+                      variant="caption"
+                      class="text-muted-foreground block font-mono break-all"
+                    >
+                      {{ group.items.map((item) => item.path).join(", ") }}
+                    </UiText>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                v-if="vaultDoctorReport.warnings.length"
+                class="border-border space-y-1 rounded-md border p-2"
+              >
+                <UiText variant="sm">
+                  {{ i18n.t("preferences:storage.vaultDoctor.warnings") }}
+                </UiText>
+                <div
+                  v-for="item in formattedVaultDoctorWarnings"
+                  :key="item.key"
+                  class="space-y-0.5"
+                >
+                  <UiText
+                    variant="caption"
+                    class="block"
+                  >
+                    {{ item.message }}
+                  </UiText>
+                  <UiText
+                    variant="caption"
+                    class="text-muted-foreground block font-mono break-all"
+                  >
+                    {{ item.warning.path }}
+                  </UiText>
+                  <UiText
+                    v-if="item.recommendation"
+                    variant="caption"
+                    class="text-muted-foreground block"
+                  >
+                    {{ item.recommendation }}
+                  </UiText>
+                </div>
+                <UiText
+                  v-if="vaultDoctorHiddenWarningCount > 0"
+                  variant="caption"
+                  class="text-muted-foreground block"
+                >
+                  {{
+                    i18n.t("preferences:storage.vaultDoctor.moreWarnings", {
+                      count: vaultDoctorHiddenWarningCount,
+                    })
+                  }}
+                </UiText>
+              </div>
+            </div>
+          </div>
         </template>
       </UiMenuFormItem>
     </UiMenuFormSection>

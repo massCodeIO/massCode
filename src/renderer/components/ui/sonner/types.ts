@@ -1,4 +1,5 @@
 export interface Props {
+  id?: string | number
   message?: string
   component?: Component
   type?: 'default' | 'success' | 'error' | 'warning'

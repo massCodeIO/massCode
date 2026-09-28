@@ -28,16 +28,15 @@
       "gumroad": "Поддержать через Gumroad (Visa, Mastercard и др.)"
     },
     "twitter": "X",
-    "devTools": "Инструменты разработчика",
-    "links": {
-      "snippets": "Коллекция сниппетов"
-    }
+    "devTools": "Инструменты разработчика"
   },
   "file": {
     "label": "Файл",
     "new": "Создать"
   },
   "view": {
+    "primarySidebar": "Основная боковая панель",
+    "secondarySidebar": "Дополнительная боковая панель",
     "label": "Вид",
     "showSidebar": "Показать/скрыть боковую панель",
     "layout": {
@@ -47,21 +46,36 @@
       "editorOnly": "Только редактор"
     },
     "sortBy": {
-      "label": "Сортировать сниппеты по",
+      "label": "Сортировать по",
       "dateModified": "Дате изменения",
       "dateCreated": "Дате создания",
       "name": "Имени"
     },
-    "compactMode": "Компактный список"
+    "sortOrder": {
+      "label": "Порядок сортировки",
+      "ascending": "По возрастанию",
+      "descending": "По убыванию"
+    },
+    "compactMode": "Компактный список",
+    "hideCompletedTasks": "Скрывать завершённые задачи"
   },
   "edit": {
     "label": "Правка",
+    "undo": "Отменить",
+    "redo": "Повторить",
+    "cut": "Вырезать",
+    "copy": "Копировать",
+    "paste": "Вставить",
+    "delete": "Удалить",
+    "selectAll": "Выделить всё",
     "find": "Найти"
   },
   "editor": {
     "label": "Редактор",
-    "copy": "Копировать сниппет в буфер обмена",
+    "copySnippet": "Копировать сниппет",
+    "copyNote": "Копировать заметку",
     "format": "Форматировать",
+    "normalizeTerminalOutput": "Нормализовать переносы строк",
     "mode": "Режим",
     "modeRaw": "Исходный",
     "modeLivePreview": "Живой предпросмотр",
@@ -69,6 +83,7 @@
     "previewCode": "Предпросмотр кода",
     "previewScreenshot": "Предпросмотр скриншота",
     "previewJson": "Предпросмотр JSON",
+    "sendRequest": "Отправить запрос",
     "fontSizeIncrease": "Увеличить размер шрифта",
     "fontSizeDecrease": "Уменьшить размер шрифта",
     "fontSizeReset": "Сбросить размер шрифта"
@@ -89,6 +104,9 @@
   },
   "window": {
     "label": "Окно",
-    "minimize": "Свернуть"
+    "minimize": "Свернуть",
+    "zoom": "Изменить размер окна",
+    "front": "Все окна на передний план",
+    "close": "Закрыть"
   }
 }

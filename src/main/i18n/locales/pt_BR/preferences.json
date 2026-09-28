@@ -2,11 +2,9 @@
   "label": "Preferências",
   "storage": {
     "section": {
-      "main": "Main",
-      "migration": "Migration"
+      "main": "Main"
     },
     "label": "Storage",
-    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "Contagem",
     "vaultPath": "Vault Path"
   },
@@ -116,7 +114,7 @@
     "codeRenderer": "Renderizador de Bloco de Código"
   },
   "api": {
-    "label": "Porta API",
+    "label": "API",
     "port": {
       "label": "Porta API",
       "description": "Número da porta para o servidor API (requer reinicialização do aplicativo). Faixa válida: 1024-65535."

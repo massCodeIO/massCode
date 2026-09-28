@@ -33,5 +33,9 @@ export function useEditableField(
     isFocused.value = false
   }
 
-  return { model, onFocus, onBlur }
+  function reset() {
+    localValue.value = source() ?? ''
+  }
+
+  return { model, onFocus, onBlur, reset }
 }

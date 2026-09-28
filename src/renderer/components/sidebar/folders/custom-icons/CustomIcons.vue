@@ -1,124 +1,133 @@
 <script setup lang="ts">
-import UiInput from '~/renderer/components/ui/input/Input.vue'
-import { useFolders } from '~/renderer/composables'
-import { icons, iconsSet } from './icons'
+import type {
+  FolderIconSetPayload,
+  FolderIconSpaceId,
+  FolderIconWritePayload,
+} from '~/main/types/ipc'
+import { createFolderEmojiValue } from '@/components/ui/folder-icon/icons'
+import * as Tabs from '@/components/ui/shadcn/tabs'
+import { i18n, ipc } from '@/electron'
+import {
+  markPersistedStorageMutation,
+  useFolders,
+  useSonner,
+} from '~/renderer/composables'
+
+type PickerTab = 'emoji' | 'icons' | 'upload'
 
 interface Props {
   nodeId: number
-  onSetIcon?: (nodeId: number, iconName: string) => Promise<void>
+  spaceId: FolderIconSpaceId
+  onIconChanged?: () => Promise<unknown>
 }
 
 const props = defineProps<Props>()
 
-const { updateFolder, getFolders } = useFolders()
+const { getFolders } = useFolders()
+const { sonner } = useSonner()
+const activeTab = ref<PickerTab>('emoji')
+const isUploading = ref(false)
 
-const search = ref('')
+const tabs = computed<Array<{ label: string, value: PickerTab }>>(() => [
+  { label: i18n.t('folder.iconPicker.tabs.emoji'), value: 'emoji' },
+  { label: i18n.t('folder.iconPicker.tabs.icons'), value: 'icons' },
+  { label: i18n.t('folder.iconPicker.tabs.upload'), value: 'upload' },
+])
 
-const containerRef = useTemplateRef('containerRef')
+async function refreshAndClose() {
+  markPersistedStorageMutation()
 
-const iconsBySearch = computed(() => {
-  if (search.value === '') {
-    return icons
-  }
-  return icons.filter(i => i.name?.includes(search.value.toLowerCase()))
-})
+  if (props.onIconChanged)
+    await props.onIconChanged()
+  else await getFolders()
 
-const selectedIndex = ref(-1)
-
-function onKeydown(e: KeyboardEvent) {
-  const len = iconsBySearch.value.length
-
-  if (e.key === 'ArrowDown') {
-    e.preventDefault()
-    if (selectedIndex.value + 1 < len) {
-      selectedIndex.value += 1
-    }
-  }
-  else if (e.key === 'ArrowUp') {
-    e.preventDefault()
-    if (selectedIndex.value - 1 >= 0) {
-      selectedIndex.value -= 1
-    }
-  }
-  else if (e.key === 'Enter') {
-    e.preventDefault()
-    onSet(iconsBySearch.value[selectedIndex.value].name!)
-  }
-}
-
-async function onSet(name: string) {
-  if (!props.nodeId)
-    return
-
-  if (props.onSetIcon) {
-    await props.onSetIcon(props.nodeId, name)
-  }
-  else {
-    await updateFolder(props.nodeId, { icon: name })
-    await getFolders()
-  }
-
-  containerRef.value?.dispatchEvent(
+  document.dispatchEvent(
     new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
   )
 }
 
-watch(
-  () => search.value,
-  () => {
-    selectedIndex.value = -1
-  },
-)
+function showError(key: string) {
+  sonner({ message: i18n.t(key), type: 'error' })
+}
 
-watch(
-  () => iconsBySearch.value,
-  () => {
-    if (selectedIndex.value >= iconsBySearch.value.length) {
-      selectedIndex.value = -1
-    }
-  },
-  { immediate: true },
-)
+async function onSet(value: string) {
+  if (!props.nodeId || isUploading.value)
+    return
 
-watch(selectedIndex, () => {
-  if (selectedIndex.value >= 0) {
-    const el = document.getElementById(`icon-${selectedIndex.value}`)
-    el?.scrollIntoView({
-      behavior: 'auto',
-      block: 'nearest',
+  try {
+    await ipc.invoke<FolderIconSetPayload, void>('fs:folder-icon:set', {
+      folderId: props.nodeId,
+      icon: value,
+      spaceId: props.spaceId,
     })
+    await refreshAndClose()
   }
-})
+  catch {
+    showError('folder.iconPicker.errors.updateFailed')
+  }
+}
+
+function onEmojiSelected(emoji: string) {
+  return onSet(createFolderEmojiValue(emoji))
+}
+
+async function onFileSelected(file: File) {
+  isUploading.value = true
+
+  try {
+    await ipc.invoke<FolderIconWritePayload, string>('fs:folder-icon:write', {
+      buffer: await file.arrayBuffer(),
+      folderId: props.nodeId,
+      spaceId: props.spaceId,
+    })
+    await refreshAndClose()
+  }
+  catch {
+    showError('folder.iconPicker.errors.processingFailed')
+  }
+  finally {
+    isUploading.value = false
+  }
+}
 </script>
 
 <template>
-  <div
-    ref="containerRef"
-    class="space-y-5"
+  <Tabs.Tabs
+    v-model="activeTab"
+    class="gap-4"
+    @keydown.enter.stop
   >
-    <div>
-      <UiInput
-        v-model="search"
-        placeholder="Search..."
-        @keydown="onKeydown"
+    <Tabs.TabsList>
+      <Tabs.TabsTrigger
+        v-for="tab in tabs"
+        :key="tab.value"
+        :disabled="isUploading"
+        :value="tab.value"
+      >
+        {{ tab.label }}
+      </Tabs.TabsTrigger>
+    </Tabs.TabsList>
+    <Tabs.TabsContent
+      class="mt-0"
+      value="emoji"
+    >
+      <SidebarFoldersCustomIconsEmojiPicker @select="onEmojiSelected" />
+    </Tabs.TabsContent>
+    <Tabs.TabsContent
+      class="mt-0"
+      value="icons"
+    >
+      <SidebarFoldersCustomIconsIconsPicker @select="onSet" />
+    </Tabs.TabsContent>
+    <Tabs.TabsContent
+      class="mt-0"
+      value="upload"
+    >
+      <SidebarFoldersCustomIconsUploadPicker
+        :is-uploading="isUploading"
+        @error="showError"
+        @select="onFileSelected"
       />
-    </div>
-    <div class="scrollbar max-h-[200px] overflow-y-auto">
-      <div class="grid auto-rows-[36px] grid-cols-8 gap-2">
-        <div
-          v-for="(icon, index) in iconsBySearch"
-          :id="`icon-${index}`"
-          :key="icon.name"
-          class="user-select-none flex items-center justify-center rounded-md"
-          :class="index === selectedIndex ? 'bg-muted' : 'hover:bg-muted'"
-          @click="onSet(icon.name!)"
-        >
-          <span
-            class="*:size-5"
-            v-html="iconsSet[icon.name!]"
-          />
-        </div>
-      </div>
-    </div>
-  </div>
+    </Tabs.TabsContent>
+  </Tabs.Tabs>
 </template>

@@ -8,6 +8,13 @@
   --font-code: 'SF Mono', Consolas, Menlo, Ubuntu Mono, monospace;
 }
 
+/* Theme and route colors change atomically; normal interaction transitions remain. */
+html.appearance-changing *,
+html.appearance-changing *::before,
+html.appearance-changing *::after {
+  transition: none !important;
+}
+
 code, kbd {
   font-family: var(--font-code);
   padding: 0 4px;
@@ -73,4 +80,77 @@ svg {
 
 .VPButton {
   text-decoration: none !important;
+}
+
+.VPNav a[href$="/donate/"]::before {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  vertical-align: -2px;
+  background-color: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* A quiet closing row aligned with the homepage content. */
+.Layout .VPFooter {
+  padding: 28px 32px;
+  border-top: 0;
+}
+.Layout .VPFooter .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 32px;
+  max-width: 1216px;
+  text-align: left;
+}
+.Layout .VPFooter .message,
+.Layout .VPFooter .copyright {
+  font-size: 13px;
+  font-weight: 400;
+}
+.Layout .VPFooter a {
+  color: var(--vp-c-text-1);
+  text-decoration: none;
+}
+.Layout .VPFooter a::after {
+  content: '';
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  margin-left: 5px;
+  vertical-align: -2px;
+  background-color: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 17 17 7M7 7h10v10'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.Layout .VPFooter a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.Layout .VPFooter a:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+@media (max-width: 640px) {
+  .Layout .VPFooter { padding: 24px 20px; }
+  .Layout .VPFooter .container { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
+
+/* Full navigation needs more room than the default 768px breakpoint. */
+@media (min-width: 768px) and (max-width: 959px) {
+  .Layout .VPNavBarMenu,
+  .Layout .VPNavBarExtra,
+  .Layout .VPNavBarAppearance,
+  .Layout .VPNavBarSocialLinks {
+    display: none;
+  }
+  .Layout .VPNavBarHamburger {
+    display: flex;
+  }
+  .Layout .VPNavScreen {
+    display: block;
+  }
 }

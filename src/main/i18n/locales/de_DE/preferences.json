@@ -2,11 +2,9 @@
   "label": "Einstellungen",
   "storage": {
     "section": {
-      "main": "Main",
-      "migration": "Migration"
+      "main": "Main"
     },
     "label": "Speicher",
-    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "Anzahl",
     "vaultPath": "Vault Path"
   },
@@ -116,7 +114,7 @@
     "codeRenderer": "Code-Block Renderer"
   },
   "api": {
-    "label": "API-Port",
+    "label": "API",
     "port": {
       "label": "API-Port",
       "description": "Portnummer für den API-Server (erfordert Neustart der App). Gültiger Bereich: 1024-65535."

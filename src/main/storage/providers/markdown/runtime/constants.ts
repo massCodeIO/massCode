@@ -5,6 +5,8 @@ export const TRASH_DIR_NAME = 'trash'
 export const CODE_SPACE_ID = 'code'
 export const MATH_SPACE_ID = 'math'
 export const NOTES_SPACE_ID = 'notes'
+export const HTTP_SPACE_ID = 'http'
+export const DRAWINGS_SPACE_ID = 'drawings'
 export const META_FILE_NAME = '.meta.yaml'
 export const SPACE_STATE_FILE_NAME = '.state.yaml'
 export const LEGACY_FOLDER_META_FILE_NAME = '.masscode-folder.yml'
@@ -12,6 +14,8 @@ export const PERSISTED_SPACE_IDS = [
   CODE_SPACE_ID,
   MATH_SPACE_ID,
   NOTES_SPACE_ID,
+  HTTP_SPACE_ID,
+  DRAWINGS_SPACE_ID,
 ] as const
 export const SPACE_IDS = new Set<string>(PERSISTED_SPACE_IDS)
 
@@ -26,6 +30,8 @@ export const RESERVED_ROOT_NAMES = new Set([
   CODE_SPACE_ID,
   MATH_SPACE_ID,
   NOTES_SPACE_ID,
+  HTTP_SPACE_ID,
+  DRAWINGS_SPACE_ID,
 ])
 export const NEW_LINE_SPLIT_RE = /\r?\n/
 export const SEARCH_DIACRITICS_RE = /[\u0300-\u036F]/g
@@ -33,12 +39,16 @@ export const SEARCH_WORD_RE = /[\p{L}\p{N}_]+/gu
 export const STATE_WRITE_DEBOUNCE_MS = 100
 export const INVALID_NAME_CHARS_RE = /[<>:"/\\|?*]/g
 export const INVALID_NAME_CHARS = new Set([
+  '#',
   '<',
   '>',
   ':',
   '"',
   '/',
   '\\',
+  '[',
+  ']',
+  '^',
   '|',
   '?',
   '*',

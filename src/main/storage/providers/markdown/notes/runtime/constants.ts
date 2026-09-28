@@ -1,4 +1,4 @@
-import type { NotesRuntimeCache } from './types'
+import type { NotesPaths, NotesRuntimeCache } from './types'
 import path from 'node:path'
 import fs from 'fs-extra'
 import {
@@ -16,6 +16,9 @@ export { INBOX_DIR_NAME, META_DIR_NAME, META_FILE_NAME, TRASH_DIR_NAME }
 
 export const NOTES_INBOX_RELATIVE_PATH = `${META_DIR_NAME}/${INBOX_DIR_NAME}`
 export const NOTES_TRASH_RELATIVE_PATH = `${META_DIR_NAME}/${TRASH_DIR_NAME}`
+export const NOTES_ASSETS_DIR_NAME = 'assets'
+export const NOTES_ASSETS_RELATIVE_PATH = `${META_DIR_NAME}/${NOTES_ASSETS_DIR_NAME}`
+export const NOTES_LEGACY_ASSETS_RELATIVE_PATH = NOTES_ASSETS_DIR_NAME
 
 export const NOTES_RESERVED_ROOT_NAMES = new Set([
   INBOX_DIR_NAME,
@@ -58,18 +61,37 @@ function migrateNestedNotesSpace(vaultPath: string, notesRoot: string): void {
   fs.removeSync(legacyNotesRoot)
 }
 
-export function getNotesPaths(vaultPath: string) {
+// Legacy layout migration checks run fs calls on every invocation, so
+// resolved paths are memoized per vault path. The cache is reset on vault
+// re-watch (stopMarkdownWatcher) and via resetNotesPathsCache().
+const notesPathsCacheByVaultPath = new Map<string, NotesPaths>()
+
+export function getNotesPaths(vaultPath: string): NotesPaths {
+  const cachedPaths = notesPathsCacheByVaultPath.get(vaultPath)
+  if (cachedPaths) {
+    return cachedPaths
+  }
+
   const notesRoot = getSpaceDirPath(vaultPath, NOTES_SPACE_ID)
   migrateNestedNotesSpace(vaultPath, notesRoot)
   const metaDirPath = path.join(notesRoot, META_DIR_NAME)
 
-  return {
+  const notesPaths: NotesPaths = {
+    assetsPath: path.join(metaDirPath, NOTES_ASSETS_DIR_NAME),
     inboxDirPath: path.join(metaDirPath, INBOX_DIR_NAME),
+    legacyAssetsPath: path.join(notesRoot, NOTES_ASSETS_DIR_NAME),
     metaDirPath,
     notesRoot,
     statePath: path.join(metaDirPath, 'state.json'),
     trashDirPath: path.join(metaDirPath, TRASH_DIR_NAME),
   }
+
+  notesPathsCacheByVaultPath.set(vaultPath, notesPaths)
+  return notesPaths
+}
+
+export function resetNotesPathsCache(): void {
+  notesPathsCacheByVaultPath.clear()
 }
 
 export function peekNotesRuntimeCache(): NotesRuntimeCache | null {

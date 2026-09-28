@@ -1,21 +1,26 @@
 <script setup lang="ts">
-import { useNotesApp } from '@/composables'
+import { useImportDialog, useNavigationHistory } from '@/composables'
 import { i18n } from '@/electron'
-import { scrollToElement } from '@/utils'
+import { router, RouterName } from '@/router'
+import { LayoutGrid, Upload } from 'lucide-vue-next'
 
-const { notesState } = useNotesApp()
+const { isNavigatingHistory, recordNavigation } = useNavigationHistory()
+const { openImportDialog } = useImportDialog()
 
-function scrollToCurrentFolder() {
-  if (!notesState.folderId) {
+async function openDashboard() {
+  if (router.currentRoute.value.name === RouterName.notesDashboard) {
     return
   }
 
-  scrollToElement(`[id="${notesState.folderId}"]`)
-}
+  if (isNavigatingHistory.value) {
+    await router.push({ name: RouterName.notesDashboard })
+    return
+  }
 
-nextTick(() => {
-  scrollToCurrentFolder()
-})
+  await recordNavigation(async () => {
+    await router.push({ name: RouterName.notesDashboard })
+  })
+}
 </script>
 
 <template>
@@ -29,7 +34,22 @@ nextTick(() => {
     <SidebarHeader
       :title="i18n.t('notes.plural')"
       :section-title="i18n.t('common.library')"
-    />
+    >
+      <template #actions>
+        <UiActionButton
+          :tooltip="i18n.t('imports.action.import')"
+          @click="openImportDialog('obsidian', 'notes')"
+        >
+          <Upload class="h-4 w-4" />
+        </UiActionButton>
+        <UiActionButton
+          :tooltip="i18n.t('notes.dashboard.label')"
+          @click="openDashboard"
+        >
+          <LayoutGrid class="h-4 w-4" />
+        </UiActionButton>
+      </template>
+    </SidebarHeader>
     <NotesSidebarLibrary />
     <NotesSidebarFolders />
   </div>

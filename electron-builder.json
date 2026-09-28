@@ -8,15 +8,22 @@
   "files": [
     "build/renderer/**/*",
     "build/main/**/*",
+    "build/shared/**/*",
     "!build/**/*.map"
   ],
+  "asarUnpack": ["node_modules/@lydell/**/*"],
+  "publish": {
+    "provider": "github",
+    "owner": "massCodeIO",
+    "repo": "massCode"
+  },
   "mac": {
-    "target": "dmg",
+    "target": ["dmg", "zip"],
     "icon": "build/icons/icon.icns",
     "entitlements": "build/entitlements.mac.inherit.plist",
     "category": "public.app-category.productivity",
     "hardenedRuntime": true,
-    "identity": null
+    "notarize": true
   },
   "win": {
     "target": ["nsis", "portable"],

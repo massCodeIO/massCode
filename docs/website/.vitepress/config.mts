@@ -3,7 +3,7 @@ import { version } from './_data/assets.json'
 
 const siteUrl = 'https://masscode.io'
 const siteTitle = 'massCode'
-const description = 'Free, open-source developer workspace with code snippets, markdown notes, math notebook, and built-in dev tools.'
+const description = 'Free, open-source developer workspace for code snippets, Markdown notes, API requests, diagrams, calculations, and built-in developer tools.'
 const ogImage = `${siteUrl}/og-image.png`
 const gsv = 'h-rU1tSutO83wOyvi4syrk_XTvgennlUPkL6fMmq5cI'
 
@@ -45,10 +45,14 @@ function buildSeoHead({
     ['meta', { property: 'og:description', content: pageDescription }],
     ['meta', { property: 'og:url', content: pageUrl }],
     ['meta', { property: 'og:image', content: ogImage }],
+    ['meta', { property: 'og:image:width', content: '1200' }],
+    ['meta', { property: 'og:image:height', content: '630' }],
+    ['meta', { property: 'og:image:alt', content: 'massCode code snippets workspace in light and dark themes' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
     ['meta', { name: 'twitter:title', content: pageTitle }],
     ['meta', { name: 'twitter:description', content: pageDescription }],
     ['meta', { name: 'twitter:image', content: ogImage }],
+    ['meta', { name: 'twitter:image:alt', content: 'massCode code snippets workspace in light and dark themes' }],
   ]
 }
 
@@ -68,13 +72,66 @@ export default defineConfig({
     ['meta', { name: 'google-site-verification', content: gsv }],
   ],
 
-  transformHead({ pageData, title, description }) {
-    return buildSeoHead({
+  transformPageData(pageData) {
+    const pageTitle = pageData.title || siteTitle
+    const titleTemplate = pageData.titleTemplate ?? siteTitle
+    const socialTitle = titleTemplate === false || pageTitle === titleTemplate
+      ? pageTitle
+      : `${pageTitle} | ${titleTemplate === true ? siteTitle : titleTemplate}`
+    const head = buildSeoHead({
       relativePath: pageData.relativePath,
-      pageTitle: title,
-      pageDescription: description,
+      pageTitle: socialTitle,
+      pageDescription: pageData.description || description,
       isNotFound: pageData.isNotFound,
     })
+
+    if (pageData.relativePath === 'index.md') {
+      head.push(['script', { type: 'application/ld+json' }, JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        'name': siteTitle,
+        'url': `${siteUrl}/`,
+        'description': pageData.description || description,
+        'applicationCategory': 'DeveloperApplication',
+        'operatingSystem': 'macOS, Windows, Linux',
+        'isAccessibleForFree': true,
+        'license': 'https://www.gnu.org/licenses/agpl-3.0.html',
+        'downloadUrl': `${siteUrl}/download/`,
+        'offers': { '@type': 'Offer', 'price': 0, 'priceCurrency': 'USD' },
+      })])
+    }
+
+    if (pageData.relativePath.startsWith('compare/') && !pageData.isNotFound) {
+      const breadcrumbs = [
+        { name: 'Home', item: `${siteUrl}/` },
+        { name: 'Compare', item: `${siteUrl}/compare/` },
+      ]
+
+      if (pageData.relativePath !== 'compare/index.md') {
+        breadcrumbs.push({
+          name: pageData.title,
+          item: resolvePageUrl(pageData.relativePath),
+        })
+      }
+
+      head.push(['script', { type: 'application/ld+json' }, JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        'itemListElement': breadcrumbs.map((breadcrumb, index) => ({
+          '@type': 'ListItem',
+          'position': index + 1,
+          ...breadcrumb,
+        })),
+      })])
+    }
+
+    // Page head is included in both rendered HTML and client-side navigation.
+    pageData.frontmatter.head = [...(pageData.frontmatter.head || []), ...head]
+  },
+
+  transformHead({ pageData }) {
+    if (pageData.isNotFound)
+      return [['meta', { name: 'robots', content: 'noindex, nofollow' }]]
   },
 
   themeConfig: {
@@ -82,6 +139,9 @@ export default defineConfig({
 
     nav: [
       { text: 'Documentation', link: '/documentation/' },
+      { text: 'Compare', link: '/compare/' },
+      { text: 'Blog', link: '/blog/' },
+      { text: 'Sponsorship', link: '/sponsor/' },
       { text: 'Donate', link: '/donate/' },
       {
         text: version,
@@ -93,51 +153,123 @@ export default defineConfig({
     ],
 
     sidebar: {
+      '/blog/': [
+        {
+          text: 'Blog',
+          items: [
+            { text: 'Overview', link: '/blog/' },
+            { text: 'How to Organize Code Snippets', link: '/blog/how-to-organize-code-snippets' },
+          ],
+        },
+      ],
+      '/compare/': [
+        {
+          text: 'Compare',
+          items: [
+            { text: 'Overview', link: '/compare/' },
+            { text: 'massCode vs Pieces', link: '/compare/pieces' },
+            { text: 'massCode vs Cacher', link: '/compare/cacher' },
+            { text: 'massCode vs SnippetsLab', link: '/compare/snippetslab' },
+            { text: 'massCode vs Raycast Snippets', link: '/compare/raycast' },
+            { text: 'massCode vs GitHub Gist', link: '/compare/github-gist' },
+            { text: 'massCode vs Postman', link: '/compare/postman' },
+            { text: 'massCode vs Bruno', link: '/compare/bruno' },
+            { text: 'massCode vs Todoist', link: '/compare/todoist' },
+            { text: 'massCode vs TickTick', link: '/compare/ticktick' },
+            { text: 'massCode vs Things 3', link: '/compare/things' },
+            { text: 'massCode vs Apple Reminders', link: '/compare/apple-reminders' },
+            { text: 'massCode vs Obsidian Tasks', link: '/compare/obsidian-tasks' },
+            { text: 'Best Code Snippet Managers', link: '/compare/best-code-snippet-managers' },
+            { text: 'Code Snippet Manager for Mac', link: '/compare/code-snippet-manager-for-mac' },
+            { text: 'Code Snippet Manager for Windows', link: '/compare/code-snippet-manager-for-windows' },
+            { text: 'Best Open-Source Snippet Manager', link: '/compare/best-open-source' },
+            { text: 'Local-First Alternative to Pieces / Cacher', link: '/compare/local-first' },
+            { text: 'Markdown-First Task Manager', link: '/compare/markdown-first-tasks' },
+          ],
+        },
+      ],
       '/documentation/': [
         {
           text: 'General',
           items: [
             { text: 'Overview', link: '/documentation/' },
+            { text: 'Command Palette', link: '/documentation/command-palette' },
+            { text: 'Search', link: '/documentation/search' },
             { text: 'Storage', link: '/documentation/storage' },
             { text: 'Sync', link: '/documentation/sync' },
-            { text: 'Themes', link: '/documentation/themes' },
+            { text: 'Imports', link: '/documentation/imports' },
+            { text: 'Clipper', link: '/documentation/clipper' },
+            { text: 'AI Assistant', link: '/documentation/ai' },
+            { text: 'MCP', link: '/documentation/mcp' },
+            { text: 'Appearance', link: '/documentation/themes' },
           ],
         },
         {
           text: 'Code',
           items: [
-            { text: 'Library', link: '/documentation/code/library' },
-            { text: 'Folders', link: '/documentation/code/folders' },
-            { text: 'Tags', link: '/documentation/code/tags' },
+            { text: 'Overview', link: '/documentation/code/' },
             { text: 'Snippets', link: '/documentation/code/snippets' },
             { text: 'Fragments', link: '/documentation/code/fragments' },
             { text: 'Description', link: '/documentation/code/description' },
-            { text: 'Search', link: '/documentation/code/search' },
+            { text: 'Library', link: '/documentation/code/library' },
+            { text: 'Folders', link: '/documentation/code/folders' },
+            { text: 'Tags', link: '/documentation/code/tags' },
           ],
         },
         {
           text: 'Notes',
           items: [
-            { text: 'Notes', link: '/documentation/notes/' },
+            { text: 'Overview', link: '/documentation/notes/' },
+            { text: 'Dashboard', link: '/documentation/notes/dashboard' },
             { text: 'Library', link: '/documentation/notes/library' },
+            { text: 'Tasks', link: '/documentation/notes/tasks' },
             { text: 'Folders', link: '/documentation/notes/folders' },
             { text: 'Tags', link: '/documentation/notes/tags' },
+            { text: 'Internal Links', link: '/documentation/notes/internal-links' },
+            { text: 'Note Inspector', link: '/documentation/notes/inspector' },
+            { text: 'Images', link: '/documentation/notes/images' },
+            { text: 'Callouts', link: '/documentation/notes/callouts' },
             { text: 'Mermaid', link: '/documentation/notes/mermaid' },
             { text: 'Mindmap', link: '/documentation/notes/mindmap' },
             { text: 'Presentation', link: '/documentation/notes/presentation' },
-            { text: 'Search', link: '/documentation/notes/search' },
+          ],
+        },
+        {
+          text: 'HTTP',
+          items: [
+            { text: 'Overview', link: '/documentation/http/' },
+            { text: 'Collections & Folders', link: '/documentation/http/collections' },
+            { text: 'Requests', link: '/documentation/http/requests' },
+            { text: 'Authorization', link: '/documentation/http/authorization' },
+            { text: 'Environments', link: '/documentation/http/environments' },
+            { text: 'Responses & History', link: '/documentation/http/responses' },
+            { text: 'Tests & Variables', link: '/documentation/http/tests' },
+            { text: 'JavaScript Scripts', link: '/documentation/http/scripts' },
+            { text: 'Folder Runner', link: '/documentation/http/runner' },
+            { text: 'GraphQL', link: '/documentation/http/graphql' },
+            { text: 'WebSocket', link: '/documentation/http/websocket' },
+            { text: 'Settings', link: '/documentation/http/settings' },
+            { text: 'Debugging', link: '/documentation/http/debugging' },
+            { text: 'Importing Collections', link: '/documentation/http/importing' },
           ],
         },
         {
           text: 'Math',
           items: [
-            { text: 'Math Notebook', link: '/documentation/math/' },
+            { text: 'Overview', link: '/documentation/math/' },
+          ],
+        },
+        {
+          text: 'Drawings',
+          items: [
+            { text: 'Overview', link: '/documentation/drawings/' },
           ],
         },
         {
           text: 'Tools',
           items: [
-            { text: 'Developer Tools', link: '/documentation/tools/' },
+            { text: 'Overview', link: '/documentation/tools/' },
+            { text: 'JSON Diff', link: '/documentation/tools/json-diff' },
           ],
         },
       ],
@@ -149,8 +281,8 @@ export default defineConfig({
     ],
 
     footer: {
-      message: 'massCode released under the AGPL v3 License.<br>Snippet collection released under the CC-BY-4.0 License.',
-      copyright: 'Copyright © 2019-present Anton Reshetov',
+      message: 'massCode · <a href="https://github.com/massCodeIO/massCode/blob/main/LICENSE">AGPL v3</a>',
+      copyright: '© 2019–present <a href="https://antonreshetov.com/">Anton Reshetov</a>',
     },
 
     editLink: {

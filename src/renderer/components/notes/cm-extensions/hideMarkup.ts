@@ -1,12 +1,20 @@
-import type { Range } from '@codemirror/state'
+import type { EditorState, Range } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
+import type { SyntaxNode } from '@lezer/common'
 import { syntaxTree } from '@codemirror/language'
 import { Decoration, ViewPlugin } from '@codemirror/view'
+import { isStandaloneFencedCode } from './fencedCodeStyles'
+import {
+  getRevealHasFocus,
+  getRevealSelection,
+  revealSelectionChanged,
+} from './revealSelection'
 
 const HIDEABLE_MARKS = new Set([
   'HeaderMark',
   'EmphasisMark',
   'StrikethroughMark',
+  'HighlightMark',
   'CodeMark',
   'CodeInfo',
   'LinkMark',
@@ -34,8 +42,56 @@ export function shouldHideUrlNodeInMarkup(
   return parentName === 'Link' || parentName === 'Image'
 }
 
+export function shouldKeepStandaloneFencedCodeMarkup(
+  nodeName: string,
+  parent: SyntaxNode | null,
+): boolean {
+  return (
+    (nodeName === 'CodeMark' || nodeName === 'CodeInfo')
+    && parent !== null
+    && isStandaloneFencedCode(parent)
+  )
+}
+
+export function createMarkupHidingDecoration(
+  nodeName: string,
+  parentName: string | null | undefined,
+): Decoration {
+  if (
+    (nodeName === 'CodeMark' || nodeName === 'CodeInfo')
+    && parentName === 'FencedCode'
+  ) {
+    return Decoration.mark({
+      attributes: { style: 'visibility:hidden' },
+    })
+  }
+
+  return Decoration.replace({})
+}
+
+function isInternalLinkBracket(
+  view: EditorView,
+  node: { name: string, from: number, to: number },
+): boolean {
+  if (node.name !== 'LinkMark') {
+    return false
+  }
+
+  const char = view.state.sliceDoc(node.from, node.to)
+
+  if (char === '[') {
+    return view.state.sliceDoc(node.from - 1, node.from) === '['
+  }
+
+  if (char === ']') {
+    return view.state.sliceDoc(node.to, node.to + 1) === ']'
+  }
+
+  return false
+}
+
 function isCursorInRange(view: EditorView, from: number, to: number): boolean {
-  for (const range of view.state.selection.ranges) {
+  for (const range of getRevealSelection(view.state).ranges) {
     if (range.from <= to && range.to >= from)
       return true
   }
@@ -43,7 +99,7 @@ function isCursorInRange(view: EditorView, from: number, to: number): boolean {
 }
 
 function isCursorOnLine(view: EditorView, lineNumber: number): boolean {
-  for (const range of view.state.selection.ranges) {
+  for (const range of getRevealSelection(view.state).ranges) {
     const startLine = view.state.doc.lineAt(range.from).number
     const endLine = view.state.doc.lineAt(range.to).number
     if (lineNumber >= startLine && lineNumber <= endLine)
@@ -62,7 +118,7 @@ function shouldShowMark(
   },
   alwaysHide: boolean,
 ): boolean {
-  if (!canShowMarkup(alwaysHide, view.hasFocus))
+  if (!canShowMarkup(alwaysHide, getRevealHasFocus(view.state, view.hasFocus)))
     return false
 
   if (LINE_BASED_MARKS.has(node.name)) {
@@ -101,6 +157,13 @@ function buildHideDecorations(view: EditorView, alwaysHide: boolean) {
         if (node.from === node.to)
           return
 
+        if (isInternalLinkBracket(view, node))
+          return
+
+        if (shouldKeepStandaloneFencedCodeMarkup(node.name, node.node.parent)) {
+          return
+        }
+
         if (shouldShowMark(view, node, alwaysHide))
           return
 
@@ -111,7 +174,12 @@ function buildHideDecorations(view: EditorView, alwaysHide: boolean) {
             end = node.to + 1
         }
 
-        decorations.push(Decoration.replace({}).range(node.from, end))
+        decorations.push(
+          createMarkupHidingDecoration(node.name, node.node.parent?.name).range(
+            node.from,
+            end,
+          ),
+        )
       },
     })
   }
@@ -135,6 +203,8 @@ export function createHideMarkup(options: HideMarkupOptions = {}) {
         selectionSet: boolean
         viewportChanged: boolean
         focusChanged: boolean
+        startState: EditorState
+        state: EditorState
         view: EditorView
       }) {
         if (
@@ -142,6 +212,8 @@ export function createHideMarkup(options: HideMarkupOptions = {}) {
           || update.selectionSet
           || update.viewportChanged
           || update.focusChanged
+          || syntaxTree(update.startState) !== syntaxTree(update.state)
+          || revealSelectionChanged(update)
         ) {
           this.decorations = buildHideDecorations(update.view, alwaysHide)
         }

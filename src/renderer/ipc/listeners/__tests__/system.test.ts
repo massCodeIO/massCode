@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 
-async function setup(activeSpace: 'code' | 'notes' | 'tools' | null) {
+async function setup(
+  activeSpace: 'code' | 'notes' | 'http' | 'tools' | null,
+  routeName = 'main',
+) {
   vi.resetModules()
   vi.useFakeTimers()
 
@@ -11,46 +14,100 @@ async function setup(activeSpace: 'code' | 'notes' | 'tools' | null) {
   }
   const isCodeSpaceInitialized = ref(true)
   const isNotesSpaceInitialized = ref(true)
+  const isHttpSpaceInitialized = ref(true)
   const displayedSnippets = ref<{ id: number }[]>([])
+  const getTags = vi.fn(async () => undefined)
+  const normalizeCodeSelectionState = vi.fn(async () => undefined)
   const getFolders = vi.fn(async () => undefined)
   const getSnippets = vi.fn(async () => undefined)
   const reloadMathFromDisk = vi.fn(async () => undefined)
+  const getNotesGraph = vi.fn(async () => undefined)
   const getNoteFolders = vi.fn(async () => undefined)
   const getNotes = vi.fn(async () => undefined)
   const getNoteTags = vi.fn(async () => undefined)
+  const normalizeNotesSelectionState = vi.fn(async () => undefined)
+  const refreshHttpSpaceFromDisk = vi.fn(async () => undefined)
+  const storageSyncBusy = { value: false }
+  const shouldSkipStorageSyncRefresh = vi.fn(() => storageSyncBusy.value)
 
   vi.doMock('@/composables', () => ({
+    initCodeSpace: vi.fn(async () => undefined),
     useApp: () => ({
       state,
       highlightedFolderIds: ref(new Set<number>()),
       highlightedSnippetIds: ref(new Set<number>()),
       focusedSnippetId: ref<number | undefined>(),
       focusedFolderId: ref<number | undefined>(),
+      isAppLoading: ref(false),
       isCodeSpaceInitialized,
+      pendingCodeNavigation: ref(false),
     }),
     useFolders: () => ({
       selectFolder: vi.fn(),
       getFolders,
     }),
+    useTags: () => ({
+      getTags,
+    }),
+    normalizeCodeSelectionState,
+    useNavigationHistory: () => ({
+      canGoBack: ref(false),
+      canGoForward: ref(false),
+      cursor: ref(-1),
+      entries: ref([]),
+      goBack: vi.fn(),
+      goForward: vi.fn(),
+      isNavigatingHistory: ref(false),
+      recordNavigation: vi.fn(async (navigate: () => Promise<void>) => {
+        await navigate()
+      }),
+    }),
     useMathNotebook: () => ({
       reloadFromDisk: reloadMathFromDisk,
+    }),
+    useDrawings: () => ({
+      reloadFromDisk: vi.fn(async () => undefined),
+      hasBusyDrawingUpdates: vi.fn(() => false),
+      markDrawingsStale: vi.fn(),
+    }),
+    useCloudDownloads: () => ({
+      refreshCloudDownloadStatus: vi.fn(async () => undefined),
+      setCloudDownloadStatus: vi.fn(),
+    }),
+    useHttpSpaceInit: () => ({
+      refreshHttpSpaceFromDisk,
+    }),
+    useHttpApp: () => ({
+      isHttpSpaceInitialized,
     }),
     useNoteFolders: () => ({
       getNoteFolders,
     }),
     useNotes: () => ({
       getNotes,
+      refreshSelectedNote: vi.fn(async () => undefined),
       hasBusyNoteContentUpdates: vi.fn(() => false),
     }),
     useNotesApp: () => ({
       isNotesSpaceInitialized,
     }),
+    useNotesSpaceInitialization: () => ({
+      initNotesSpace: vi.fn(async () => undefined),
+    }),
+    useNotesDashboard: () => ({
+      getNotesDashboard: vi.fn(async () => undefined),
+    }),
+    useNotesGraph: () => ({
+      getNotesGraph,
+    }),
+    normalizeNotesSelectionState,
     useNoteTags: () => ({
       getNoteTags,
     }),
     useSnippets: () => ({
       selectSnippet: vi.fn(),
       getSnippets,
+      refreshSelectedSnippet: vi.fn(async () => undefined),
       selectFirstSnippet: vi.fn(),
       displayedSnippets,
     }),
@@ -61,10 +118,9 @@ async function setup(activeSpace: 'code' | 'notes' | 'tools' | null) {
       sonner: vi.fn(),
     }),
     useStorageMutation: () => ({
-      shouldSkipStorageSyncRefresh: vi.fn(() => false),
+      shouldSkipStorageSyncRefresh,
     }),
   }))
-
   vi.doMock('@/electron', () => ({
     i18n: {
       t: vi.fn((key: string) => key),
@@ -77,8 +133,32 @@ async function setup(activeSpace: 'code' | 'notes' | 'tools' | null) {
     },
   }))
 
+  vi.doMock('@/services/api', () => ({
+    api: {
+      notes: { getNotesById: vi.fn() },
+      snippets: { getSnippetsById: vi.fn() },
+    },
+  }))
+
+  vi.doMock('@/router', () => ({
+    RouterName: {
+      main: 'main',
+      notesGraph: 'notes-graph',
+      notesSpace: 'notes-space',
+      notesPresentation: 'notes-space/presentation',
+    },
+    router: {
+      currentRoute: ref({ name: routeName }),
+      push: vi.fn(async () => undefined),
+    },
+  }))
+
   vi.doMock('@/spaceDefinitions', () => ({
     getActiveSpaceId: vi.fn(() => activeSpace),
+  }))
+
+  vi.doMock('../deepLinks', () => ({
+    handleDeepLink: vi.fn(async () => undefined),
   }))
 
   const { registerSystemListeners } = await import('../system')
@@ -86,14 +166,22 @@ async function setup(activeSpace: 'code' | 'notes' | 'tools' | null) {
   registerSystemListeners()
 
   return {
+    getNotesGraph,
     getFolders,
+    getTags,
     getNoteFolders,
     getNotes,
     getNoteTags,
     getSnippets,
+    refreshHttpSpaceFromDisk,
     ipcHandlers,
     isCodeSpaceInitialized,
+    isHttpSpaceInitialized,
     isNotesSpaceInitialized,
+    normalizeCodeSelectionState,
+    normalizeNotesSelectionState,
+    shouldSkipStorageSyncRefresh,
+    storageSyncBusy,
   }
 }
 
@@ -106,7 +194,27 @@ afterEach(() => {
 })
 
 describe('registerSystemListeners', () => {
-  it('invalidates code and notes initialization after storage sync', async () => {
+  it('paces busy retries after the max wait elapses', async () => {
+    const context = await setup('tools')
+    context.storageSyncBusy.value = true
+
+    context.ipcHandlers.get('system:storage-synced')?.(undefined)
+
+    // Дожидаемся истечения max-wait (1.5 c) в busy-состоянии.
+    await vi.advanceTimersByTimeAsync(1600)
+
+    // После max-wait busy-ретрай обязан идти с полной debounce-паузой, а не
+    // раскручивать setTimeout(0)-петлю: за 900 мс не больше трёх проверок.
+    const callsBefore = context.shouldSkipStorageSyncRefresh.mock.calls.length
+    await vi.advanceTimersByTimeAsync(900)
+    const retryCalls
+      = context.shouldSkipStorageSyncRefresh.mock.calls.length - callsBefore
+
+    expect(retryCalls).toBeGreaterThan(0)
+    expect(retryCalls).toBeLessThanOrEqual(3)
+  })
+
+  it('invalidates space initialization after storage sync', async () => {
     const context = await setup('tools')
 
     context.ipcHandlers.get('system:storage-synced')?.(undefined)
@@ -114,10 +222,56 @@ describe('registerSystemListeners', () => {
 
     expect(context.isCodeSpaceInitialized.value).toBe(false)
     expect(context.isNotesSpaceInitialized.value).toBe(false)
+    expect(context.isHttpSpaceInitialized.value).toBe(false)
     expect(context.getFolders).not.toHaveBeenCalled()
     expect(context.getSnippets).not.toHaveBeenCalled()
     expect(context.getNoteFolders).not.toHaveBeenCalled()
     expect(context.getNotes).not.toHaveBeenCalled()
     expect(context.getNoteTags).not.toHaveBeenCalled()
+  })
+
+  it('refreshes code space through tags and normalized selection state', async () => {
+    const context = await setup('code')
+
+    context.ipcHandlers.get('system:storage-synced')?.(undefined)
+    await vi.advanceTimersByTimeAsync(300)
+
+    expect(context.getFolders).toHaveBeenCalledTimes(1)
+    expect(context.getTags).toHaveBeenCalledTimes(1)
+    expect(context.normalizeCodeSelectionState).toHaveBeenCalledTimes(1)
+    expect(context.getSnippets).toHaveBeenCalledTimes(1)
+  })
+
+  it('refreshes notes space through tags and normalized selection state', async () => {
+    const context = await setup('notes')
+
+    context.ipcHandlers.get('system:storage-synced')?.(undefined)
+    await vi.advanceTimersByTimeAsync(300)
+
+    expect(context.getNoteFolders).toHaveBeenCalledTimes(1)
+    expect(context.getNoteTags).toHaveBeenCalledTimes(1)
+    expect(context.normalizeNotesSelectionState).toHaveBeenCalledTimes(1)
+    expect(context.getNotes).toHaveBeenCalledTimes(1)
+  })
+
+  it('refreshes http space from disk', async () => {
+    const context = await setup('http')
+
+    context.ipcHandlers.get('system:storage-synced')?.(undefined)
+    await vi.advanceTimersByTimeAsync(300)
+
+    expect(context.refreshHttpSpaceFromDisk).toHaveBeenCalledTimes(1)
+    expect(context.isHttpSpaceInitialized.value).toBe(false)
+    expect(context.getFolders).not.toHaveBeenCalled()
+    expect(context.getNoteFolders).not.toHaveBeenCalled()
+  })
+})
+
+it('requests a post-sync graph refresh instead of joining a pre-sync read', async () => {
+  const context = await setup('notes', 'notes-graph')
+  context.ipcHandlers.get('system:storage-synced')?.(undefined)
+  await vi.advanceTimersByTimeAsync(300)
+  expect(context.getNotesGraph).toHaveBeenCalledExactlyOnceWith({
+    fresh: true,
   })
 })

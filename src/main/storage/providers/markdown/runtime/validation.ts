@@ -21,6 +21,20 @@ export function getMarkdownStorageErrorMessage(error: unknown): string {
   return normalizeErrorMessage(error)
 }
 
+// Пока state-файл пространства не докачан из облака, создание записей
+// работало бы на дефолтных счётчиках и чеканило id поверх существующего
+// индекса. Такие мутации отклоняются до окончания докачки.
+export function assertVaultNotHydrating(state: {
+  provisional?: boolean
+}): void {
+  if (state.provisional) {
+    throwStorageError(
+      'VAULT_HYDRATING',
+      'Vault state is not downloaded from cloud storage yet',
+    )
+  }
+}
+
 function normalizeName(name: string): string {
   return name.trim()
 }
@@ -41,12 +55,16 @@ function hasInvalidNameChars(name: string): boolean {
 
 export function validateEntryName(
   name: string,
-  kind: 'folder' | 'note' | 'snippet',
+  kind: 'folder' | 'note' | 'snippet' | 'request',
 ): string {
   const normalized = normalizeName(name)
 
   if (!normalized || normalized === '.' || normalized === '..') {
     throwStorageError('INVALID_NAME', `${kind} name is empty or invalid`)
+  }
+
+  if (normalized.startsWith('.')) {
+    throwStorageError('INVALID_NAME', `${kind} name cannot start with a dot`)
   }
 
   if (hasInvalidNameChars(normalized)) {
@@ -94,6 +112,38 @@ export function assertNotReservedRootFolderName(
     throwStorageError(
       'RESERVED_NAME',
       'This folder name is reserved for technical folder',
+    )
+  }
+}
+
+export function assertUniqueSiblingEntryName(
+  entries: {
+    id: number
+    name: string
+    isDeleted?: number
+    folderId: number | null
+  }[],
+  folderId: number | null,
+  name: string,
+  kind: 'note' | 'snippet' | 'request',
+  excludeId?: number,
+): void {
+  const normalizedName = name.toLowerCase()
+
+  const hasConflict = entries.some(
+    entry =>
+      entry.id !== excludeId
+      && (entry.isDeleted ?? 0) === 0
+      && entry.folderId === folderId
+      && entry.name.toLowerCase() === normalizedName,
+  )
+
+  if (hasConflict) {
+    const label
+      = kind === 'note' ? 'Note' : kind === 'snippet' ? 'Snippet' : 'Request'
+    throwStorageError(
+      'NAME_CONFLICT',
+      `${label} with this name already exists in this folder`,
     )
   }
 }

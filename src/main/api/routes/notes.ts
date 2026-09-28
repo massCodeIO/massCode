@@ -1,7 +1,11 @@
-import type { NotesResponse } from '../dto/notes'
+import type { NoteItemResponse, NotesResponse } from '../dto/notes'
 import Elysia from 'elysia'
 import { useNotesStorage } from '../../storage'
-import { commonAddResponse } from '../dto/common/response'
+import { runTasksCleanupNow } from '../../tasks'
+import {
+  commonAddResponse,
+  commonMessageResponse,
+} from '../dto/common/response'
 import { notesDTO } from '../dto/notes'
 
 const app = new Elysia({ prefix: '/notes' })
@@ -40,6 +44,13 @@ function mapStorageError(status: unknown, error: unknown): never {
   }
 
   if (
+    parsedError.code === 'VAULT_HYDRATING'
+    || parsedError.code === 'CLOUD_FILE_NOT_DOWNLOADED'
+  ) {
+    return setStatus(503, { message: parsedError.message })
+  }
+
+  if (
     parsedError.code === 'FOLDER_NOT_FOUND'
     || parsedError.code === 'NOTE_NOT_FOUND'
   ) {
@@ -62,11 +73,18 @@ app
   .use(notesDTO)
   .get(
     '/',
-    ({ query }) => {
+    async ({ query }) => {
       const storage = useNotesStorage()
-      const result = storage.notes.getNotes(query)
+      const result
+        = query.search && !query.searchNameOnly && storage.notes.getNotesAsync
+          ? await storage.notes.getNotesAsync(query)
+          : storage.notes.getNotes(query)
 
-      return result as NotesResponse
+      // Контент заметок не сериализуется в список: контент выбранной
+      // заметки загружается через GET /notes/:id.
+      return result.map(
+        ({ content: _content, ...note }) => note,
+      ) as NotesResponse
     },
     {
       query: 'notesQuery',
@@ -84,6 +102,28 @@ app
     },
     {
       response: 'notesCountsResponse',
+      detail: {
+        tags: ['Notes'],
+      },
+    },
+  )
+  .get(
+    '/:id',
+    ({ params, status }) => {
+      const storage = useNotesStorage()
+      const note = storage.notes.getNoteById(Number(params.id))
+
+      if (!note) {
+        return status(404, { message: 'Note not found' })
+      }
+
+      return note as NoteItemResponse
+    },
+    {
+      response: {
+        200: 'noteItemResponse',
+        404: commonMessageResponse,
+      },
       detail: {
         tags: ['Notes'],
       },
@@ -145,19 +185,55 @@ app
     '/:id/content',
     ({ params, body, status }) => {
       const storage = useNotesStorage()
-      const { notFound } = storage.notes.updateNoteContent(
-        Number(params.id),
-        body.content,
-      )
+      try {
+        const { notFound } = storage.notes.updateNoteContent(
+          Number(params.id),
+          body.content,
+        )
 
-      if (notFound) {
-        return status(404, { message: 'Note not found' })
+        if (notFound) {
+          return status(404, { message: 'Note not found' })
+        }
+
+        return { message: 'Note content updated' }
       }
-
-      return { message: 'Note content updated' }
+      catch (error) {
+        return mapStorageError(status, error)
+      }
     },
     {
       body: 'notesContentUpdate',
+      detail: {
+        tags: ['Notes'],
+      },
+    },
+  )
+  .patch(
+    '/:id/properties',
+    ({ params, body, status }) => {
+      const storage = useNotesStorage()
+      try {
+        const { invalidInput, notFound } = storage.notes.updateNoteProperties(
+          Number(params.id),
+          body,
+        )
+
+        if (invalidInput) {
+          return status(400, { message: 'Need at least one field to update' })
+        }
+
+        if (notFound) {
+          return status(404, { message: 'Note not found' })
+        }
+
+        return { message: 'Note properties updated' }
+      }
+      catch (error) {
+        return mapStorageError(status, error)
+      }
+    },
+    {
+      body: 'notePropertiesUpdate',
       detail: {
         tags: ['Notes'],
       },
@@ -253,6 +329,19 @@ app
       }
     },
     {
+      detail: {
+        tags: ['Notes'],
+      },
+    },
+  )
+  .post(
+    '/tasks/cleanup',
+    () => {
+      const count = runTasksCleanupNow()
+      return { count }
+    },
+    {
+      response: 'notesTasksCleanupResponse',
       detail: {
         tags: ['Notes'],
       },

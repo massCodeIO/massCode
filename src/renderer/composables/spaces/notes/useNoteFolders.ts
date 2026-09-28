@@ -1,9 +1,10 @@
 import type { NoteFoldersTreeResponse } from './useNoteFolderTree'
+import { useDialog } from '@/composables/useDialog'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
 
-import { getContiguousSelection, scrollToElement } from '@/utils'
+import { getContiguousSelection } from '@/utils'
 
 import {
   findParentFolderIds,
@@ -30,6 +31,7 @@ interface NoteFoldersUpdate {
 const folders = shallowRef<NoteFoldersTreeResponse>()
 
 const renameFolderId = ref<number | null>(null)
+let isApplyingFolderSelection = false
 
 const selectedFolderIds = ref<number[]>(
   notesState.folderId ? [notesState.folderId] : [],
@@ -144,28 +146,33 @@ function syncSelectedFoldersWithTree() {
 watch(
   () => notesState.folderId,
   (folderId) => {
+    if (isApplyingFolderSelection) {
+      return
+    }
+
     if (folderId === undefined) {
       selectedFolderIds.value = []
       lastSelectedFolderId.value = undefined
       return
     }
 
-    if (!selectedFolderIds.value.includes(folderId)) {
-      selectedFolderIds.value = sortFolderIdsByTreeOrder([
-        folderId,
-        ...selectedFolderIds.value,
-      ])
-    }
+    selectedFolderIds.value = [folderId]
+    lastSelectedFolderId.value = folderId
   },
 )
 
 // --- Selection helpers ---
 
 function clearFolderSelection() {
+  isApplyingFolderSelection = true
   selectedFolderIds.value = []
   notesState.folderId = undefined
-  notesState.noteId = undefined
+  // noteId намеренно не сбрасывается: иначе заголовок и редактор мигают
+  // пустым состоянием при переходах Library/Tags, пока загружается список.
+  // Вызывающие реселектят через selectFirstNote/selectNote либо чистят
+  // выбор через clearNotesState.
   lastSelectedFolderId.value = undefined
+  isApplyingFolderSelection = false
 }
 
 function resetNoteFoldersState() {
@@ -181,15 +188,19 @@ function setFolderSelection(ids: number[]) {
   }
 
   const orderedSelection = sortFolderIdsByTreeOrder(ids)
+  isApplyingFolderSelection = true
   selectedFolderIds.value = orderedSelection
   notesState.folderId = orderedSelection[0]
   lastSelectedFolderId.value = orderedSelection[orderedSelection.length - 1]
+  isApplyingFolderSelection = false
 }
 
 function applySingleFolderSelection(folderId: number) {
+  isApplyingFolderSelection = true
   selectedFolderIds.value = [folderId]
   notesState.folderId = folderId
   lastSelectedFolderId.value = folderId
+  isApplyingFolderSelection = false
 }
 
 function applyRangeFolderSelection(folderId: number) {
@@ -209,8 +220,10 @@ function applyRangeFolderSelection(folderId: number) {
     return
   }
 
+  isApplyingFolderSelection = true
   selectedFolderIds.value = rangeSelection
   lastSelectedFolderId.value = folderId
+  isApplyingFolderSelection = false
 }
 
 function applyToggleFolderSelection(folderId: number) {
@@ -219,21 +232,25 @@ function applyToggleFolderSelection(folderId: number) {
       return
     }
 
+    isApplyingFolderSelection = true
     selectedFolderIds.value = selectedFolderIds.value.filter(
       id => id !== folderId,
     )
     notesState.folderId = selectedFolderIds.value[0]
     lastSelectedFolderId.value
       = selectedFolderIds.value[selectedFolderIds.value.length - 1]
+    isApplyingFolderSelection = false
     return
   }
 
+  isApplyingFolderSelection = true
   selectedFolderIds.value = sortFolderIdsByTreeOrder([
     ...selectedFolderIds.value,
     folderId,
   ])
   notesState.folderId = folderId
   lastSelectedFolderId.value = folderId
+  isApplyingFolderSelection = false
 }
 
 // --- Visibility helpers ---
@@ -302,9 +319,11 @@ async function getNoteFolders(shouldEnsureVisibility = true) {
     if (shouldEnsureVisibility) {
       await ensureSelectedFolderIsVisible()
     }
+    return true
   }
   catch (error) {
     console.error(error)
+    return false
   }
 }
 
@@ -338,7 +357,6 @@ async function createNoteFolderAndSelect(parentId?: number) {
   if (id) {
     await selectNoteFolder(Number(id))
     clearNotesState()
-    scrollToElement(`[id="${id}"]`)
     renameFolderId.value = Number(id)
   }
 }
@@ -372,6 +390,65 @@ async function deleteNoteFolder(folderId: number, shouldRefresh = true) {
   }
 }
 
+function getDeleteTargetFolderIds(fallbackFolderId?: number) {
+  if (
+    fallbackFolderId !== undefined
+    && selectedFolderIds.value.includes(fallbackFolderId)
+  ) {
+    return [...selectedFolderIds.value]
+  }
+
+  if (fallbackFolderId !== undefined) {
+    return [fallbackFolderId]
+  }
+
+  return [...selectedFolderIds.value]
+}
+
+async function deleteSelectedNoteFolders(fallbackFolderId?: number) {
+  const targetIds = getDeleteTargetFolderIds(fallbackFolderId)
+
+  if (!targetIds.length) {
+    return
+  }
+
+  const { clearNotesState } = useNotes()
+  const { confirm } = useDialog()
+  const activeBeforeDelete = notesState.folderId
+  const folderName
+    = fallbackFolderId !== undefined
+      ? getFolderByIdFromTree(folders.value, fallbackFolderId)?.name
+      : undefined
+
+  const isConfirmed = await confirm({
+    title:
+      targetIds.length > 1
+        ? i18n.t('messages:confirm.delete', {
+            name: i18n.t('common.folders'),
+          })
+        : i18n.t('messages:confirm.delete', { name: folderName }),
+  })
+
+  if (!isConfirmed) {
+    return
+  }
+
+  await Promise.all(targetIds.map(id => deleteNoteFolder(id, false)))
+  await getNoteFolders(false)
+
+  if (activeBeforeDelete && targetIds.includes(activeBeforeDelete)) {
+    clearNotesState()
+    const fallbackId = selectedFolderIds.value[0]
+
+    if (fallbackId) {
+      await selectNoteFolder(fallbackId)
+    }
+    else {
+      clearFolderSelection()
+    }
+  }
+}
+
 // --- Selection ---
 
 interface SelectFolderOptions {
@@ -396,7 +473,10 @@ async function selectNoteFolder(
     applySingleFolderSelection(folderId)
     notesState.libraryFilter = undefined
     notesState.tagId = undefined
-    notesState.noteId = undefined
+    // noteId намеренно не сбрасывается: иначе заголовок и редактор мигают
+    // пустым состоянием, пока загружается список новой папки. Все вызывающие
+    // либо делают selectFirstNote/selectNote после загрузки списка, либо
+    // чистят выбор через clearNotesState.
   }
 
   if (folders.value?.length && shouldEnsureVisibility) {
@@ -410,6 +490,7 @@ export function useNoteFolders() {
     createNoteFolder,
     createNoteFolderAndSelect,
     deleteNoteFolder,
+    deleteSelectedNoteFolders,
     folders,
     getFolderByIdFromTree,
     getNoteFolders,

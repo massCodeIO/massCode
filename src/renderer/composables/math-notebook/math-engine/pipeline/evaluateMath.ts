@@ -15,6 +15,7 @@ export function evaluateMathPath(
   trimmed: string,
   processed: string,
   currentDate: Date,
+  locale: string,
   scope: Record<string, any>,
   math: MathEvaluatorInstance,
   mathDeps: MathDeps,
@@ -50,6 +51,7 @@ export function evaluateMathPath(
   const localTemporalResult = parseExplicitLocalTemporalExpression(
     processed,
     currentDate,
+    locale,
   )
   if (localTemporalResult) {
     return toEvaluatedLine(

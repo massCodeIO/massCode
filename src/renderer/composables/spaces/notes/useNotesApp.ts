@@ -1,5 +1,6 @@
 import type { LibraryFilter } from '../../types'
 import { store } from '@/electron'
+import { watchDebounced } from '@vueuse/core'
 import {
   getLayoutModeFromNotesPanels,
   getNextLayoutModeForSidebarToggle,
@@ -32,16 +33,54 @@ const focusedFolderId = ref<number | undefined>()
 const focusedNoteId = ref<number | undefined>()
 
 export type NotesEditorMode = 'raw' | 'livePreview' | 'preview'
+export type NotesCreateKind = 'note' | 'task'
+
+function normalizeNotesCreateKind(value: unknown): NotesCreateKind {
+  return value === 'task' ? 'task' : 'note'
+}
 
 const notesEditorMode = ref<NotesEditorMode>(
   (store.app.get('notes.editorMode') as NotesEditorMode) || 'livePreview',
+)
+const notesCreateKind = ref<NotesCreateKind>(
+  normalizeNotesCreateKind(store.app.get('notes.create.kind')),
+)
+
+const hideCompletedTasksInFolders = ref<boolean>(
+  (store.app.get('notes.hideCompletedTasksInFolders') as boolean | undefined)
+  ?? false,
 )
 
 watch(notesEditorMode, (mode) => {
   store.app.set('notes.editorMode', mode)
 })
 
+watch(notesCreateKind, (kind) => {
+  store.app.set('notes.create.kind', kind)
+})
+
+watch(hideCompletedTasksInFolders, (value) => {
+  store.app.set('notes.hideCompletedTasksInFolders', value)
+})
+
+const notesInspectorTab = ref<'outline' | 'links' | 'annotations'>(
+  store.app.get('notes.layout.inspectorTab') === 'outline'
+    ? 'outline'
+    : store.app.get('notes.layout.inspectorTab') === 'annotations'
+      ? 'annotations'
+      : 'links',
+)
+watch(notesInspectorTab, value =>
+  store.app.set('notes.layout.inspectorTab', value))
+
+const isNotesInspectorOpen = ref(
+  store.app.get<boolean>('notes.layout.inspectorOpen') ?? false,
+)
+watch(isNotesInspectorOpen, value =>
+  store.app.set('notes.layout.inspectorOpen', value))
+
 const isNotesSpaceInitialized = ref(false)
+const pendingNotesNavigation = ref(false)
 const isFocusedNoteName = ref(false)
 const isFocusedSearch = ref(false)
 const isNotesMindmapShown = ref(false)
@@ -91,6 +130,18 @@ function restoreNotesStateSnapshot(action: NotesStateAction): void {
     notesState.tagId = snapshot.tagId
   if (snapshot.libraryFilter !== undefined)
     notesState.libraryFilter = snapshot.libraryFilter
+
+  if (
+    snapshot.isSidebarHidden !== undefined
+    && snapshot.isListHidden !== undefined
+  ) {
+    notesLayoutMode.value = getLayoutModeFromNotesPanels({
+      isListHidden: snapshot.isListHidden,
+      isSidebarHidden: snapshot.isSidebarHidden,
+    })
+    return
+  }
+
   if (snapshot.isSidebarHidden !== undefined) {
     isNotesSidebarHidden.value = snapshot.isSidebarHidden
   }
@@ -136,13 +187,26 @@ function showNotesPresentation() {
   isNotesMindmapShown.value = false
 }
 
-watch(
-  notesState,
-  () => {
-    store.app.set('notes.selection', JSON.parse(JSON.stringify(notesState)))
-  },
-  { deep: true },
-)
+async function focusNoteNameInput() {
+  isFocusedNoteName.value = false
+  await nextTick()
+  isFocusedNoteName.value = true
+}
+
+function persistNotesSelectionState() {
+  store.app.set('notes.selection', JSON.parse(JSON.stringify(notesState)))
+}
+
+// store.app.set — синхронная запись файла на диск: без debounce каждая смена
+// выбранной заметки/папки блокирует main thread renderer.
+watchDebounced(notesState, persistNotesSelectionState, {
+  debounce: 300,
+  deep: true,
+})
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', persistNotesSelectionState)
+}
 
 watch(notesLayoutMode, (mode) => {
   store.app.set('notes.layout.mode', mode)
@@ -150,8 +214,11 @@ watch(notesLayoutMode, (mode) => {
 
 export function useNotesApp() {
   return {
+    isNotesInspectorOpen,
+    notesInspectorTab,
     focusedFolderId,
     focusedNoteId,
+    focusNoteNameInput,
     highlightedFolderIds,
     highlightedNoteIds,
     highlightedTagId,
@@ -162,8 +229,11 @@ export function useNotesApp() {
     notesLayoutMode,
     isNotesPresentationShown,
     notesEditorMode,
+    notesCreateKind,
+    hideCompletedTasksInFolders,
     isNotesSidebarHidden,
     isNotesSpaceInitialized,
+    pendingNotesNavigation,
     hideNotesSidebar,
     hideNotesViewModes,
     notesState,

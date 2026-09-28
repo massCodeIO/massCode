@@ -163,6 +163,7 @@ export type Language =
   | 'sparql'
   | 'sql'
   | 'sqlserver'
+  | 'st'
   | 'stylus'
   | 'svg'
   | 'swift'

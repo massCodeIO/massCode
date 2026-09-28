@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Props } from './types'
 import { Button } from '@/components/ui/shadcn/button'
+import { i18n } from '@/electron'
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-vue-next'
 
 interface Emits {
@@ -33,50 +34,57 @@ const icon = computed(() => {
 
 <template>
   <div
-    class="bg-background border-border relative w-[var(--width)] rounded-md border p-3 shadow-lg"
+    class="bg-background text-foreground border-border relative w-[var(--width)] rounded-md border p-3 shadow-lg"
     :class="{
-      'border-red-700': type === 'error',
-      'border-yellow-600': type === 'warning',
+      'border-destructive/25': type === 'error',
+      'border-warning/25': type === 'warning',
+      'border-success/25': type === 'success',
     }"
   >
-    <div
-      v-if="closeButton"
-      class="border-border bg-background hover:bg-muted absolute -top-2.5 -left-2.5 rounded-full border p-0.5"
-    >
-      <X
-        class="text-text h-4 w-4"
-        @click="emit('closeToast')"
+    <div class="flex items-start gap-2">
+      <component
+        :is="icon"
+        aria-hidden="true"
+        class="mt-0.5 size-4 shrink-0"
+        :class="{
+          'text-destructive': type === 'error',
+          'text-success': type === 'success',
+          'text-warning': type === 'warning',
+          'text-muted-foreground': !type || type === 'default',
+        }"
       />
-    </div>
-    <div class="grid grid-cols-[20px_1fr_auto] items-center gap-2">
-      <div class="flex- shrink-0">
-        <component
-          :is="icon"
-          class="h-4 w-4"
-          :class="{
-            'text-red-700': type === 'error',
-            'text-green-500': type === 'success',
-            'text-yellow-600': type === 'warning',
-          }"
-        />
-      </div>
-      <div class="pr-6">
-        <template v-if="message">
+      <div class="min-w-0 flex-1 space-y-2">
+        <UiText
+          v-if="message"
+          as="div"
+          variant="sm"
+          class="break-words"
+        >
           {{ message }}
-        </template>
+        </UiText>
         <component
           :is="component"
           v-if="component"
           @close-toast="emit('closeToast')"
         />
+        <Button
+          v-if="action"
+          size="sm"
+          variant="outline"
+          @click="onActionClick"
+        >
+          {{ action.label }}
+        </Button>
       </div>
       <Button
-        v-if="action"
-        class="shrink-0"
-        variant="outline"
-        @click="onActionClick"
+        v-if="closeButton"
+        size="icon"
+        variant="ghost"
+        class="size-6 shrink-0"
+        :aria-label="i18n.t('action.close')"
+        @click="emit('closeToast')"
       >
-        {{ action.label }}
+        <X class="size-4" />
       </Button>
     </div>
   </div>

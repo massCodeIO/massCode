@@ -1,0 +1,189 @@
+import type {
+  HttpAuth,
+  HttpBodyType,
+  HttpFormDataEntry,
+  HttpHeaderEntry,
+  HttpMethod,
+  HttpQueryEntry,
+} from '../../../../../types/http'
+
+export type {
+  HttpAuth,
+  HttpAuthType,
+  HttpBodyType,
+  HttpFormDataEntry,
+  HttpHeaderEntry,
+  HttpMethod,
+  HttpQueryEntry,
+} from '../../../../../types/http'
+
+export interface HttpRequestFrontmatter {
+  /** Preserve unknown versions verbatim; validation belongs to requestRuntime. */
+  runtime?: unknown
+  protocol?: 'http' | 'websocket'
+  id?: number
+  name?: string
+  folderId?: number | null
+  method?: HttpMethod
+  url?: string
+  headers?: HttpHeaderEntry[]
+  query?: HttpQueryEntry[]
+  bodyType?: HttpBodyType
+  body?: string | null
+  formData?: HttpFormDataEntry[]
+  auth?: HttpAuth
+  isDeleted?: number
+  isFavorites?: number
+  createdAt?: number
+  updatedAt?: number
+}
+
+export interface HttpFolderRecord {
+  /** Preserve invalid synced configuration; execution validates before use. */
+  collectionConfig?: unknown
+  id: number
+  name: string
+  icon: string | null
+  parentId: number | null
+  isOpen: number
+  orderIndex: number
+  createdAt: number
+  updatedAt: number
+}
+
+export interface HttpFolderTreeRecord extends HttpFolderRecord {
+  children: HttpFolderTreeRecord[]
+}
+
+// Денормализованные метаданные списка в .state.yaml (слой 4 плана
+// icloud-lazy-vault-load): всё, кроме body, чтобы строить записи без чтения
+// файлов (description входит: он отдаётся списком GET /http-requests).
+// mtimeMs/size — freshness-сигнатура последнего чтения: пока stat
+// совпадает, файл не перечитывается.
+export interface HttpRequestIndexMetadata {
+  protocol?: 'http' | 'websocket'
+  auth: HttpAuth
+  bodyType: HttpBodyType
+  createdAt: number
+  description: string
+  formData: HttpFormDataEntry[]
+  headers: HttpHeaderEntry[]
+  isDeleted: number
+  isFavorites: number
+  method: HttpMethod
+  mtimeMs: number
+  name: string
+  query: HttpQueryEntry[]
+  size: number
+  updatedAt: number
+  url: string
+}
+
+export interface HttpRequestIndexItem {
+  id: number
+  filePath: string
+  meta?: HttpRequestIndexMetadata
+}
+
+export interface HttpRequestRecord {
+  protocol?: 'http' | 'websocket'
+  id: number
+  name: string
+  folderId: number | null
+  method: HttpMethod
+  url: string
+  headers: HttpHeaderEntry[]
+  query: HttpQueryEntry[]
+  bodyType: HttpBodyType
+  body: string | null
+  formData: HttpFormDataEntry[]
+  auth: HttpAuth
+  description: string
+  filePath: string
+  isFavorites: number
+  isDeleted: number
+  createdAt: number
+  updatedAt: number
+  /**
+   * Runtime-only: body и description ещё не дочитаны из файла (запись
+   * построена из индекса метаданных). Снимается ensureRequestDetailsLoaded;
+   * наружу через API не отдаётся — все выдающие потоки материализуют.
+   */
+  detailsPending?: boolean
+  /**
+   * Файл запроса — облачный плейсхолдер: содержимое ещё не скачано
+   * провайдером, запись показывается в списке и докачивается в фоне.
+   */
+  pendingCloudDownload?: boolean
+}
+
+export interface HttpEnvironmentRecord {
+  id: number
+  /** Локальный scope секретов; legacy-записи без него используют String(id). */
+  secretStorageId?: string
+  name: string
+  variables: Record<string, string>
+  /**
+   * Имена secret-переменных. Сами значения намеренно не попадают в vault:
+   * они лежат локально в зашифрованном хранилище (`store.httpSecrets`),
+   * потому что .state.yaml синхронизируется через облачную папку.
+   */
+  secretKeys?: string[]
+  createdAt: number
+  updatedAt: number
+}
+
+export interface HttpHistoryRecord {
+  snapshotFile?: string
+  id: number
+  requestId: number | null
+  method: HttpMethod
+  url: string
+  status: number | null
+  durationMs: number
+  sizeBytes: number
+  requestedAt: number
+  error?: string
+}
+
+export interface HttpCounters {
+  folderId: number
+  requestId: number
+  environmentId: number
+}
+
+export interface HttpStateFile {
+  /** Legacy v5.10 history, retained verbatim until migration succeeds. */
+  history?: unknown
+  version?: number
+  counters?: Partial<HttpCounters>
+  folders?: HttpFolderRecord[]
+  requests?: HttpRequestIndexItem[]
+  environments?: HttpEnvironmentRecord[]
+  activeEnvironmentId?: number | null
+}
+
+export interface HttpState {
+  history?: unknown
+  version: number
+  counters: HttpCounters
+  folders: HttpFolderRecord[]
+  requests: HttpRequestIndexItem[]
+  environments: HttpEnvironmentRecord[]
+  activeEnvironmentId: number | null
+  // Дефолтный state на период, пока .state.yaml не докачан из облака:
+  // такой state нельзя ни персистить, ни использовать для выдачи id.
+  provisional?: boolean
+}
+
+export interface HttpPaths {
+  httpRoot: string
+  statePath: string
+}
+
+export interface HttpRuntimeCache {
+  paths: HttpPaths
+  state: HttpState
+  requestById: Map<number, HttpRequestRecord>
+  folderById: Map<number, HttpFolderRecord>
+}

@@ -1,0 +1,120 @@
+import type { LayoutMode } from '../../layoutModes'
+import type { LibraryFilter } from '../../types'
+import { store } from '@/electron'
+
+export interface HttpSpaceState {
+  activePanel?: 'request' | 'folder' | 'environments' | 'runner'
+  folderId?: number
+  libraryFilter?: (typeof LibraryFilter)[keyof typeof LibraryFilter]
+  requestId?: number
+}
+
+export type HttpStateAction = 'beforeSearch'
+
+export interface HttpSavedState {
+  activePanel?: 'request' | 'folder' | 'environments' | 'runner'
+  folderId?: number
+  libraryFilter?: (typeof LibraryFilter)[keyof typeof LibraryFilter]
+  requestId?: number
+}
+
+const httpState = reactive<HttpSpaceState>(
+  (store.app.get('http.selection') as HttpSpaceState) || {},
+)
+
+const stateSnapshots = reactive<Record<HttpStateAction, HttpSavedState>>({
+  beforeSearch: {},
+})
+
+const isHttpSpaceInitialized = ref(false)
+const isFocusedSearch = ref(false)
+
+const highlightedFolderIds = ref<Set<number>>(new Set())
+const highlightedRequestIds = ref<Set<number>>(new Set())
+const focusedFolderId = ref<number | undefined>()
+const focusedRequestId = ref<number | undefined>()
+const isFocusedRequestName = ref(false)
+
+const httpLayoutMode = ref<LayoutMode>(
+  (store.app.get('http.layout.mode') as LayoutMode) || 'all-panels',
+)
+
+const isHttpSidebarHidden = computed({
+  get: () => httpLayoutMode.value === 'editor-only',
+  set: (value: boolean) => {
+    httpLayoutMode.value = value ? 'editor-only' : 'all-panels'
+  },
+})
+
+const isHttpListHidden = computed({
+  get: () => httpLayoutMode.value === 'editor-only',
+  set: (value: boolean) => {
+    httpLayoutMode.value = value ? 'editor-only' : 'list-editor'
+  },
+})
+
+function saveHttpStateSnapshot(action: HttpStateAction): void {
+  stateSnapshots[action] = {
+    activePanel: httpState.activePanel,
+    folderId: httpState.folderId,
+    libraryFilter: httpState.libraryFilter,
+    requestId: httpState.requestId,
+  }
+}
+
+function restoreHttpStateSnapshot(action: HttpStateAction): void {
+  const snapshot = stateSnapshots[action]
+  if (!snapshot)
+    return
+
+  Object.assign(httpState, snapshot)
+}
+
+function setHttpLayoutMode(value: LayoutMode) {
+  httpLayoutMode.value = value
+}
+
+function toggleHttpSidebar() {
+  httpLayoutMode.value
+    = httpLayoutMode.value === 'editor-only' ? 'all-panels' : 'editor-only'
+}
+
+async function focusRequestNameInput() {
+  isFocusedRequestName.value = false
+  await nextTick()
+  isFocusedRequestName.value = true
+}
+
+watch(
+  httpState,
+  () => {
+    store.app.set('http.selection', JSON.parse(JSON.stringify(httpState)))
+  },
+  { deep: true },
+)
+
+watch(httpLayoutMode, (mode) => {
+  store.app.set('http.layout.mode', mode)
+})
+
+export function useHttpApp() {
+  return {
+    httpState,
+    isHttpSpaceInitialized,
+    isFocusedSearch,
+    isFocusedRequestName,
+    highlightedFolderIds,
+    highlightedRequestIds,
+    focusedFolderId,
+    focusedRequestId,
+    httpLayoutMode,
+    isHttpSidebarHidden,
+    isHttpListHidden,
+    restoreHttpStateSnapshot,
+    saveHttpStateSnapshot,
+    stateSnapshots,
+    setHttpLayoutMode,
+    focusRequestNameInput,
+    toggleHttpSidebar,
+  }
+}

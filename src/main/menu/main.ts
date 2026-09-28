@@ -1,7 +1,8 @@
 /* eslint-disable node/prefer-global/process */
 import type {
+  MainMenuContentSortField,
+  MainMenuContentSortOrder,
   MainMenuContext,
-  MainMenuLayoutMode,
   MainMenuPrimaryAction,
 } from '../types/menu'
 import type { MenuConfig } from './utils'
@@ -14,10 +15,10 @@ import {
   type MenuItemConstructorOptions,
   shell,
 } from 'electron'
-import { repository } from '../../../package.json'
 import i18n from '../i18n'
 import { send } from '../ipc'
-import { fetchUpdates } from '../updates'
+import { requestLifecycleAction } from '../lifecycle'
+import { checkForUpdatesFromMenu } from '../updates'
 import { createMenu, createPlatformMenuItems } from './utils'
 
 const year = new Date().getFullYear()
@@ -30,11 +31,16 @@ const defaultMainMenuContext: MainMenuContext = {
     primaryAction: null,
     secondaryAction: null,
     canCreateFragment: false,
+    canCreateTask: false,
   },
   view: {
     layoutMode: null,
     layoutModes: [],
+    contentSortField: null,
+    contentSortOrder: null,
     canToggleCompactMode: false,
+    canToggleHideCompletedTasks: false,
+    isHideCompletedTasksInFolders: false,
     canToggleMindmap: false,
     isCompactMode: false,
     isMindmapShown: false,
@@ -44,6 +50,7 @@ const defaultMainMenuContext: MainMenuContext = {
   editor: {
     kind: null,
     noteMode: null,
+    canSendRequest: false,
     canFormat: false,
     canPreviewCode: false,
     isCodePreviewShown: false,
@@ -82,33 +89,7 @@ const appMenuItems: MenuConfig[] = [
   {
     id: 'update',
     label: i18n.t('menu:app.update'),
-    click: async () => {
-      const latestVersion = await fetchUpdates()
-
-      if (latestVersion) {
-        const buttonId = dialog.showMessageBoxSync(
-          BrowserWindow.getFocusedWindow()!,
-          {
-            message: i18n.t('messages:update.available', {
-              newVersion: latestVersion,
-              oldVersion: version,
-            }),
-            buttons: [i18n.t('button.update.0'), i18n.t('button.update.1')],
-            defaultId: 0,
-            cancelId: 1,
-          },
-        )
-
-        if (buttonId === 0) {
-          shell.openExternal(`${repository}/releases`)
-        }
-      }
-      else {
-        dialog.showMessageBoxSync(BrowserWindow.getFocusedWindow()!, {
-          message: i18n.t('messages:update.noAvailable'),
-        })
-      }
-    },
+    click: () => checkForUpdatesFromMenu(),
   },
   {
     type: 'separator',
@@ -155,19 +136,19 @@ const helpMenuItems: MenuConfig[] = [
   {
     label: i18n.t('menu:help.website'),
     click: () => {
-      shell.openExternal('https://masscode.io')
+      shell.openExternal('https://masscode.io?ref=masscode-app')
     },
   },
   {
     label: i18n.t('menu:help.documentation'),
     click: () => {
-      shell.openExternal('https://masscode.io/documentation')
+      shell.openExternal('https://masscode.io/documentation?ref=masscode-app')
     },
   },
   {
     label: i18n.t('menu:help.twitter'),
     click: () => {
-      shell.openExternal('https://twitter.com/anton_reshetov')
+      shell.openExternal('https://twitter.com/anton_reshetov?ref=masscode-app')
     },
   },
   {
@@ -176,27 +157,33 @@ const helpMenuItems: MenuConfig[] = [
   {
     label: i18n.t('menu:help.viewInGitHub'),
     click: () => {
-      shell.openExternal('https://github.com/massCodeIO/massCode')
+      shell.openExternal(
+        'https://github.com/massCodeIO/massCode?ref=masscode-app',
+      )
     },
   },
   {
     label: i18n.t('menu:help.changeLog'),
     click: () => {
-      shell.openExternal('https://github.com/massCodeIO/massCode/releases')
+      shell.openExternal(
+        'https://github.com/massCodeIO/massCode/releases?ref=masscode-app',
+      )
     },
   },
   {
     label: i18n.t('menu:help.reportIssue'),
     click: () => {
       shell.openExternal(
-        'https://github.com/massCodeIO/massCode/issues/new/choose',
+        'https://github.com/massCodeIO/massCode/issues/new/choose?ref=masscode-app',
       )
     },
   },
   {
     label: i18n.t('menu:help.giveStar'),
     click: () => {
-      shell.openExternal('https://github.com/massCodeIO/massCode/stargazers')
+      shell.openExternal(
+        'https://github.com/massCodeIO/massCode/stargazers?ref=masscode-app',
+      )
     },
   },
   {
@@ -206,17 +193,8 @@ const helpMenuItems: MenuConfig[] = [
     label: i18n.t('menu:help.extension.vscode'),
     click: () => {
       shell.openExternal(
-        'https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant',
+        'https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant&ref=masscode-app',
       )
-    },
-  },
-  {
-    type: 'separator',
-  },
-  {
-    label: i18n.t('menu:help.links.snippets'),
-    click: () => {
-      shell.openExternal('https://masscode.io/snippets')
     },
   },
   {
@@ -225,19 +203,25 @@ const helpMenuItems: MenuConfig[] = [
   {
     label: i18n.t('menu:help.donate.openCollective'),
     click: () => {
-      shell.openExternal('https://opencollective.com/masscode')
+      shell.openExternal(
+        'https://opencollective.com/masscode?ref=masscode-app',
+      )
     },
   },
   {
     label: i18n.t('menu:help.donate.gumroad'),
     click: () => {
-      shell.openExternal('https://antonreshetov.gumroad.com/l/masscode')
+      shell.openExternal(
+        'https://antonreshetov.gumroad.com/l/masscode?ref=masscode-app',
+      )
     },
   },
   {
     label: i18n.t('menu:help.donate.payPal'),
     click: () => {
-      shell.openExternal('https://www.paypal.com/paypalme/antongithub')
+      shell.openExternal(
+        'https://www.paypal.com/paypalme/antongithub?ref=masscode-app',
+      )
     },
   },
   {
@@ -252,36 +236,47 @@ const helpMenuItems: MenuConfig[] = [
 if (isDev) {
   helpMenuItems.push({
     label: 'Reload',
-    role: 'reload',
+    accelerator: 'CommandOrControl+R',
+    click: () =>
+      requestLifecycleAction(() => {
+        BrowserWindow.getFocusedWindow()?.webContents.reload()
+      }, false),
   })
 }
 
 const editMenuItems: MenuConfig[] = [
   {
+    label: i18n.t('menu:edit.undo'),
     role: 'undo',
   },
   {
+    label: i18n.t('menu:edit.redo'),
     role: 'redo',
   },
   {
     type: 'separator',
   },
   {
+    label: i18n.t('menu:edit.cut'),
     role: 'cut',
   },
   {
+    label: i18n.t('menu:edit.copy'),
     role: 'copy',
   },
   {
+    label: i18n.t('menu:edit.paste'),
     role: 'paste',
   },
   {
+    label: i18n.t('menu:edit.delete'),
     role: 'delete',
   },
   {
     type: 'separator',
   },
   {
+    label: i18n.t('menu:edit.selectAll'),
     role: 'selectAll',
   },
   {
@@ -293,6 +288,25 @@ const editMenuItems: MenuConfig[] = [
     click: () => send('main-menu:find'),
   },
 ]
+
+function createWindowMenuItems(): MenuItemConstructorOptions[] {
+  return [
+    {
+      label: i18n.t('menu:window.minimize'),
+      role: 'minimize',
+    },
+    {
+      label: i18n.t('menu:window.zoom'),
+      role: 'zoom',
+    },
+    ...(process.platform === 'darwin'
+      ? [
+          { type: 'separator' as const },
+          { label: i18n.t('menu:window.front'), role: 'front' as const },
+        ]
+      : [{ label: i18n.t('menu:window.close'), role: 'close' as const }]),
+  ]
+}
 
 function getPrimaryActionLabel(action: MainMenuPrimaryAction) {
   if (action === 'new-snippet')
@@ -339,6 +353,14 @@ function createFileMenuItems(context: MainMenuContext): MenuConfig[] {
     })
   }
 
+  if (context.file.canCreateTask) {
+    items.push({
+      label: i18n.t('action.new.task'),
+      accelerator: 'CommandOrControl+T',
+      click: () => send('main-menu:new-task'),
+    })
+  }
+
   if (context.file.secondaryAction) {
     items.push({
       label: i18n.t('action.new.folder'),
@@ -355,46 +377,115 @@ function createFileMenuItems(context: MainMenuContext): MenuConfig[] {
   return items
 }
 
-function getSidebarLayoutAccelerator(
-  targetLayout: MainMenuLayoutMode,
-  currentLayout: MainMenuLayoutMode | null,
-) {
-  if (currentLayout === 'all-panels' && targetLayout === 'list-editor') {
-    return 'Alt+CommandOrControl+B'
-  }
+function createLayoutMenuItems(context: MainMenuContext): MenuConfig[] {
+  const { view } = context
+  const sidebars = view.sidebars
+  const hasPrimary = sidebars || view.layoutMode || view.httpPanels
+  if (!hasPrimary)
+    return []
 
-  if (currentLayout !== 'all-panels' && targetLayout === 'all-panels') {
-    return 'Alt+CommandOrControl+B'
+  const items: MenuConfig[] = [
+    {
+      label: i18n.t('menu:view.primarySidebar'),
+      type: 'checkbox',
+      checked:
+        sidebars?.primary
+        ?? view.httpPanels?.sidebar
+        ?? view.layoutMode === 'all-panels',
+      enabled: sidebars?.primaryAvailable ?? true,
+      accelerator: 'CommandOrControl+B',
+      click: () => send('main-menu:toggle-sidebar'),
+    },
+  ]
+  if (sidebars?.secondaryAvailable ?? context.editor.kind !== null) {
+    items.push({
+      label: i18n.t('menu:view.secondarySidebar'),
+      type: 'checkbox',
+      checked:
+        sidebars?.secondary
+        ?? view.httpPanels?.inspector
+        ?? view.notesInspector?.open
+        ?? false,
+      accelerator: 'Alt+CommandOrControl+B',
+      click: () => send('main-menu:toggle-secondary-sidebar'),
+    })
   }
-
-  return undefined
+  if (view.httpPanels) {
+    items.push({
+      label: i18n.t('ui:spaces.http.inspector.bottom'),
+      type: 'checkbox',
+      checked: view.httpPanels.bottom,
+      enabled: view.httpPanels.canToggleBottom,
+      click: () => send('main-menu:toggle-http-panel', 'bottom'),
+    })
+  }
+  return items
 }
 
-function createLayoutMenuItems(context: MainMenuContext): MenuConfig[] {
-  if (!context.view.layoutModes.length || !context.view.layoutMode) {
+function createSortMenuItems(context: MainMenuContext): MenuConfig[] {
+  if (!context.view.contentSortField || !context.view.contentSortOrder) {
     return []
   }
 
-  const labels: Record<MainMenuLayoutMode, string> = {
-    'all-panels': i18n.t('menu:view.layout.allPanels'),
-    'list-editor': i18n.t('menu:view.layout.listEditor'),
-    'editor-only': i18n.t('menu:view.layout.editorOnly'),
+  const sortLabels: Record<MainMenuContentSortField, string> = {
+    updatedAt: i18n.t('menu:view.sortBy.dateModified'),
+    createdAt: i18n.t('menu:view.sortBy.dateCreated'),
+    name: i18n.t('menu:view.sortBy.name'),
+  }
+  const orderLabels: Record<MainMenuContentSortOrder, string> = {
+    ASC: i18n.t('menu:view.sortOrder.ascending'),
+    DESC: i18n.t('menu:view.sortOrder.descending'),
   }
 
-  return context.view.layoutModes.map(layoutMode => ({
-    label: labels[layoutMode],
-    type: 'radio',
-    checked: context.view.layoutMode === layoutMode,
-    accelerator: getSidebarLayoutAccelerator(
-      layoutMode,
-      context.view.layoutMode,
-    ),
-    click: () => send('main-menu:set-layout-mode', layoutMode),
+  const sortItems = (Object.keys(sortLabels) as MainMenuContentSortField[]).map(
+    sortField => ({
+      label: sortLabels[sortField],
+      type: 'radio' as const,
+      checked: context.view.contentSortField === sortField,
+      click: () => send('main-menu:set-content-sort-field', sortField),
+    }),
+  )
+  const orderItems = (
+    Object.keys(orderLabels) as MainMenuContentSortOrder[]
+  ).map(sortOrder => ({
+    label: orderLabels[sortOrder],
+    type: 'radio' as const,
+    checked: context.view.contentSortOrder === sortOrder,
+    click: () => send('main-menu:set-content-sort-order', sortOrder),
   }))
+
+  return [
+    {
+      label: i18n.t('menu:view.sortBy.label'),
+      enabled: false,
+    },
+    ...sortItems,
+    { type: 'separator' as const },
+    {
+      label: i18n.t('menu:view.sortOrder.label'),
+      enabled: false,
+    },
+    ...orderItems,
+  ]
 }
 
 function createViewMenuItems(context: MainMenuContext): MenuConfig[] {
   const items = createLayoutMenuItems(context)
+  items.push({
+    label: i18n.t('ui:ai.title'),
+    accelerator: 'CommandOrControl+L',
+    enabled: context.editor.kind !== null,
+    click: () => send('main-menu:open-ai'),
+  })
+  const sortItems = createSortMenuItems(context)
+
+  if (sortItems.length) {
+    if (items.length) {
+      items.push({ type: 'separator' })
+    }
+
+    items.push(...sortItems)
+  }
 
   if (context.view.canToggleCompactMode) {
     if (items.length) {
@@ -406,6 +497,19 @@ function createViewMenuItems(context: MainMenuContext): MenuConfig[] {
       type: 'checkbox',
       checked: context.view.isCompactMode,
       click: () => send('main-menu:toggle-compact-mode'),
+    })
+  }
+
+  if (context.view.canToggleHideCompletedTasks) {
+    if (items.length) {
+      items.push({ type: 'separator' })
+    }
+
+    items.push({
+      label: i18n.t('menu:view.hideCompletedTasks'),
+      type: 'checkbox',
+      checked: context.view.isHideCompletedTasksInFolders,
+      click: () => send('main-menu:toggle-hide-completed-tasks'),
     })
   }
 
@@ -433,6 +537,21 @@ function createViewMenuItems(context: MainMenuContext): MenuConfig[] {
   }
 
   return items
+}
+
+function createHistoryMenuItems(): MenuConfig[] {
+  return [
+    {
+      label: i18n.t('menu:history.back'),
+      accelerator: 'CommandOrControl+[',
+      click: () => send('main-menu:navigate-back'),
+    },
+    {
+      label: i18n.t('menu:history.forward'),
+      accelerator: 'CommandOrControl+]',
+      click: () => send('main-menu:navigate-forward'),
+    },
+  ]
 }
 
 function createNotesEditorModeItems(context: MainMenuContext): MenuConfig[] {
@@ -472,14 +591,20 @@ function createEditorMenuItems(context: MainMenuContext): MenuConfig[] {
 
   if (context.editor.kind === 'code') {
     items.push({
-      label: i18n.t('menu:editor.copy'),
+      label: i18n.t('menu:editor.copySnippet'),
       click: () => send('main-menu:copy-snippet'),
       accelerator: 'CommandOrControl+Shift+C',
     })
     items.push({
       label: i18n.t('menu:editor.format'),
-      accelerator: 'Shift+CommandOrControl+F',
+      enabled: context.editor.canFormat,
+      accelerator: 'Shift+Alt+F',
       click: () => send('main-menu:format'),
+    })
+    items.push({
+      label: i18n.t('menu:editor.normalizeTerminalOutput'),
+      enabled: true,
+      click: () => send('main-menu:normalize-code-line-breaks'),
     })
     items.push({
       label: i18n.t('menu:editor.previewCode'),
@@ -496,6 +621,33 @@ function createEditorMenuItems(context: MainMenuContext): MenuConfig[] {
       checked: context.editor.isJsonPreviewShown,
       click: () => send('main-menu:preview-json'),
       accelerator: 'Alt+CommandOrControl+J',
+    })
+  }
+
+  if (context.editor.kind === 'notes') {
+    items.push({
+      label: i18n.t('menu:editor.copyNote'),
+      click: () => send('main-menu:copy-note'),
+      accelerator: 'CommandOrControl+Shift+C',
+    })
+    items.push({
+      label: i18n.t('menu:editor.normalizeTerminalOutput'),
+      enabled:
+        context.editor.noteMode !== null
+        && context.editor.noteMode !== 'preview'
+        && context.view.canToggleMindmap
+        && !context.view.isMindmapShown
+        && !context.view.isPresentationShown,
+      click: () => send('main-menu:normalize-note-line-breaks'),
+    })
+  }
+
+  if (context.editor.kind === 'http') {
+    items.push({
+      label: i18n.t('menu:editor.sendRequest'),
+      enabled: context.editor.canSendRequest,
+      click: () => send('main-menu:send-http-request'),
+      accelerator: 'CommandOrControl+Enter',
     })
   }
 
@@ -539,6 +691,7 @@ function createMainMenuTemplate(
   context: MainMenuContext = currentMainMenuContext,
 ): MenuItemConstructorOptions[] {
   const fileMenuItems = createFileMenuItems(context)
+  const historyMenuItems = createHistoryMenuItems()
   const viewMenuItems = createViewMenuItems(context)
   const editorMenuItems = createEditorMenuItems(context)
 
@@ -548,11 +701,18 @@ function createMainMenuTemplate(
       submenu: createPlatformMenuItems(appMenuItems),
     },
     {
+      label: i18n.t('menu:edit.label'),
       role: 'editMenu',
       submenu: createPlatformMenuItems(editMenuItems),
     },
     {
+      label: i18n.t('menu:history.label'),
+      submenu: createPlatformMenuItems(historyMenuItems),
+    },
+    {
+      label: i18n.t('menu:window.label'),
       role: 'windowMenu',
+      submenu: createWindowMenuItems(),
     },
     {
       label: i18n.t('menu:help.label'),

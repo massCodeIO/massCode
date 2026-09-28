@@ -28,10 +28,7 @@
       "gumroad": "Donează prin Gumroad (Visa, Mastercard, etc.)"
     },
     "twitter": "X",
-    "devTools": "Comută Instrumentele de Dezvoltare",
-    "links": {
-      "snippets": "Colecție de Snippets"
-    }
+    "devTools": "Comută Instrumentele de Dezvoltare"
   },
   "view": {
     "label": "Vizualizare",

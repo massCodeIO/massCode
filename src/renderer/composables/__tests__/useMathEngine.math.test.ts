@@ -19,10 +19,45 @@ describe('arithmetic', () => {
   it('subtraction', () => expectValue('20 - 3', '17'))
   it('multiplication', () => expectValue('4 * 5', '20'))
   it('division', () => expectValue('100 / 4', '25'))
+  it('prefers division over ambiguous slash dates', () => {
+    expectNumericClose('4/3', 4 / 3, 4)
+    expectNumericClose('22/11', 2, 4)
+  })
   it('parentheses', () => expectValue('(2 + 3) * 4', '20'))
   it('exponent', () => expectValue('2 ^ 10', '1,024'))
   it('negative numbers', () => expectValue('-5 + 3', '-2'))
   it('decimal', () => expectValue('0.1 + 0.2', '0.3'))
+  it('keeps a standalone decimal numeric instead of parsing a date', () => {
+    expectValue('6.5', '6.5')
+    expect(evalLine('6.5').numericValue).toBe(6.5)
+  })
+  it('uses decimal assignments in dependent loan calculations', () => {
+    const results = evalLines(
+      [
+        'principal = 350000',
+        'annual_rate = 6.5',
+        'years = 30',
+        'monthly_rate = annual_rate / 100 / 12',
+        'num_payments = years * 12',
+        'monthly_payment = principal * (monthly_rate * (1 + monthly_rate)^num_payments) / ((1 + monthly_rate)^num_payments - 1)',
+        'total_paid = monthly_payment * num_payments',
+        'total_interest = total_paid - principal',
+        'interest_ratio = total_interest / principal * 100',
+      ].join('\n'),
+    )
+
+    expect(results[1].numericValue).toBe(6.5)
+    expect(results[3].numericValue).toBeCloseTo(6.5 / 100 / 12, 6)
+    expect(results[5].numericValue).toBeCloseTo(2212.238082, 5)
+    expect(results[6].numericValue).toBeCloseTo(796405.709601, 4)
+    expect(results[7].numericValue).toBeCloseTo(446405.709601, 4)
+    expect(results[8].numericValue).toBeCloseTo(127.544488, 5)
+  })
+  it('decimal comma for comma-decimal locales', () => {
+    setFormatSettings('es-ES', 6, 'numeric')
+
+    expectValue('2,50 + 1,25', '3,75')
+  })
   it('complex expression', () => expectValue('2 + 3 * 4 - 1', '13'))
   it('implicit multiplication', () => expectValue('6 (3)', '18'))
   it('grouped thousands', () => expectValue('5 300', '5,300'))
@@ -30,6 +65,32 @@ describe('arithmetic', () => {
     const result = evalLine('1km + 1 000m')
     expect(result.type).toBe('unit')
     expect(result.value).toContain('km')
+  })
+})
+
+describe('locale-aware full slash dates', () => {
+  it('uses mdy parsing for en-US', () => {
+    setFormatSettings('en-US', 6, 'numeric')
+
+    const result = evalLine('11/22/2005')
+    expect(result.type).toBe('date')
+    expect(result.value).toContain(
+      new Date(2005, 10, 22).toLocaleDateString('en-US'),
+    )
+
+    expectNumericClose('22/11/2005', 22 / 11 / 2005, 6)
+  })
+
+  it('uses dmy parsing for en-GB', () => {
+    setFormatSettings('en-GB', 6, 'numeric')
+
+    const result = evalLine('22/11/2005')
+    expect(result.type).toBe('date')
+    expect(result.value).toContain(
+      new Date(2005, 10, 22).toLocaleDateString('en-GB'),
+    )
+
+    expectNumericClose('11/22/2005', 11 / 22 / 2005, 6)
   })
 })
 

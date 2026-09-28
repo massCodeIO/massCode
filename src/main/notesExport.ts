@@ -1,0 +1,730 @@
+import type {
+  NoteExportDiagramPreview,
+  NoteExportDrawingPreview,
+  NoteExportFormat,
+  NoteExportPayload,
+  NoteExportResponse,
+  NoteExportWarnings,
+} from './types/ipc'
+import { Buffer } from 'node:buffer'
+import { randomBytes } from 'node:crypto'
+import { mkdtemp, rename, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { dirname, join } from 'node:path'
+import { BrowserWindow, dialog } from 'electron'
+import MarkdownIt from 'markdown-it'
+import { findInternalLinks } from '../shared/notes/internalLinks'
+import {
+  getNotesPaths,
+  resolveNotesAsset,
+} from './storage/providers/markdown/notes/runtime'
+import {
+  getVaultPath,
+  INVALID_NAME_CHARS_RE,
+  WINDOWS_RESERVED_NAME_RE,
+} from './storage/providers/markdown/runtime'
+
+type NotesAssetResolver = (fileName: string) => Promise<Response>
+type NoteAssetSourceBuilder = (
+  fileName: string,
+  response: Response,
+) => Promise<string | null>
+
+export interface NoteHtmlBodyOptions {
+  drawingPreviews?: NoteExportDrawingPreview[]
+  diagramPreviews?: NoteExportDiagramPreview[]
+  warnings?: NoteExportWarnings
+  drawingSource?: (id: string, svg: string) => string | null
+  internalLinkHref?: (target: string) => string | null
+  resolveAsset?: NotesAssetResolver
+  assetSource?: NoteAssetSourceBuilder
+  strictAssets?: boolean
+}
+
+export class NotesAssetTemporarilyUnavailableError extends Error {}
+
+const markdown = new MarkdownIt({
+  html: false,
+  linkify: true,
+  typographer: false,
+})
+
+function warn(
+  warnings: NoteExportWarnings | undefined,
+  key: keyof NoteExportWarnings,
+) {
+  if (warnings)
+    warnings[key] = (warnings[key] ?? 0) + 1
+}
+
+const defaultFence = markdown.renderer.rules.fence!
+markdown.renderer.rules.fence = (tokens, index, options, env, renderer) => {
+  const token = tokens[index]!
+  if (token.info.trim().toLowerCase() === 'mermaid') {
+    const preview = (
+      env.diagramPreviews as NoteExportDiagramPreview[] | undefined
+    )?.find(preview => preview.code === token.content.trim())
+    if (preview && isSafeDrawingSvg(preview.svg)) {
+      const source = `data:image/svg+xml;base64,${Buffer.from(preview.svg).toString('base64')}`
+      return `<img class="diagram-preview" src="${source}" alt="${escapeHtml(token.content.trim())}">\n`
+    }
+    warn(env.warnings, 'mermaid')
+  }
+  return defaultFence(tokens, index, options, env, renderer)
+}
+
+markdown.inline.ruler.before(
+  'emphasis',
+  'masscode-internal-link',
+  (state, silent) => {
+    const match = findInternalLinks(state.src.slice(state.pos))[0]
+    if (!match || match.from !== 0) {
+      return false
+    }
+
+    if (!silent) {
+      const token = state.push('masscode_internal_link', '', 0)
+      token.content = match.raw
+      token.meta = {
+        label: match.label,
+        planned: !!match.plannedTarget,
+        target: match.target,
+      }
+    }
+    state.pos += match.to
+    return true
+  },
+)
+
+markdown.renderer.rules.masscode_internal_link = (tokens, index, _, env) => {
+  const token = tokens[index]
+  const meta = token.meta as {
+    label: string
+    target: string
+    planned?: boolean
+  }
+  if (meta.planned)
+    return escapeHtml(meta.label)
+  const resolveHref = (
+    env as { internalLinkHref?: (target: string) => string | null }
+  ).internalLinkHref
+
+  if (!resolveHref) {
+    warn(env.warnings, 'internalLinks')
+    return escapeHtml(token.content)
+  }
+
+  const href = resolveHref(meta.target)
+  if (!href)
+    warn(env.warnings, 'internalLinks')
+  return href
+    ? `<a href="${escapeHtml(href)}">${escapeHtml(meta.label)}</a>`
+    : escapeHtml(meta.label)
+}
+
+const LEADING_FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/
+
+const MAX_EXPORT_FILE_NAME_BYTES = 240
+const MAX_DRAWING_PREVIEWS = 50
+const MAX_DRAWING_PREVIEW_BYTES = 5 * 1024 * 1024
+const MAX_DRAWING_PREVIEWS_TOTAL_BYTES = 20 * 1024 * 1024
+
+export const NOTE_DOCUMENT_STYLES = `
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 48px 32px;
+    color: #29292e;
+    background: #fff;
+    font: 14px/1.54 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    overflow-wrap: break-word;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    color: #29292e;
+    letter-spacing: -0.01em;
+  }
+  h1 { margin: 1.2em 0 0.5em; font-size: 1.95em; font-weight: 700; line-height: 1.25; }
+  h2 { margin: 1.2em 0 0.5em; font-size: 1.65em; font-weight: 700; line-height: 1.28; }
+  h3 { margin: 1.1em 0 0.45em; font-size: 1.42em; font-weight: 650; line-height: 1.3; }
+  h4 { margin: 1em 0 0.4em; font-size: 1.22em; font-weight: 650; line-height: 1.34; }
+  h5 { margin: 0.9em 0 0.35em; font-size: 1.08em; font-weight: 600; line-height: 1.4; }
+  h6 { margin: 0.8em 0 0.3em; font-size: 0.96em; font-weight: 600; line-height: 1.42; }
+  p { margin: 0 0 1.54em; }
+  ul, ol { margin: 0 0 1.54em; padding-left: 1.75em; }
+  li > ul, li > ol { margin-bottom: 0; }
+  a { color: #3159c9; text-underline-offset: 0.18em; }
+  hr {
+    margin: 14px 0;
+    border: 0;
+    border-top: 1px solid #e7e7ea;
+  }
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 4px 0;
+    border: 1px solid #e7e7ea;
+    border-radius: 8px;
+  }
+  img.drawing-preview {
+    padding: 16px;
+    border-radius: 6px;
+  }
+  blockquote {
+    margin: 1.54em 0;
+    padding: 8px 12px;
+    color: #29292e;
+    background: #f8f8f9;
+    border-left: 3px solid #3159c9;
+    border-radius: 0 8px 8px 0;
+  }
+  blockquote > :last-child { margin-bottom: 0; }
+  pre {
+    margin: 1.54em 0;
+    padding: 10px 16px;
+    overflow: visible;
+    color: #29292e;
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    background: #f8f8f9;
+    border: 1px solid #e7e7ea;
+    border-radius: 8px;
+  }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  }
+  pre code { font-size: inherit; line-height: inherit; }
+  :not(pre) > code {
+    padding: 1px 6px;
+    color: #29292e;
+    font-size: 0.9em;
+    line-height: 1.45;
+    background: #f8f8f9;
+    border: 1px solid #e7e7ea;
+    border-radius: 6px;
+  }
+  table {
+    display: block;
+    width: 100%;
+    margin: 1.54em 0;
+    overflow-x: auto;
+    border-collapse: collapse;
+  }
+  th, td {
+    text-align: left;
+    border: 0;
+    border-bottom: 1px solid #e7e7ea;
+  }
+  th {
+    padding: 8px 10px;
+    font-weight: 600;
+    background: #f8f8f9;
+  }
+  td { padding: 7px 10px; }
+  @page { size: auto; margin: 18mm; }
+  @media print {
+    body { max-width: none; padding: 0; }
+    table { display: table; overflow: visible; }
+    th, td { overflow-wrap: anywhere; }
+    pre, blockquote, img, table { break-inside: avoid; }
+  }
+`
+
+function escapeHtml(value: string): string {
+  return value.replace(
+    /[&<>"']/g,
+    character =>
+      ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        '\'': '&#39;',
+      })[character]!,
+  )
+}
+
+function renderMarkdownContent(
+  content: string,
+  internalLinkHref?: (target: string) => string | null,
+  diagramPreviews?: NoteExportDiagramPreview[],
+  warnings?: NoteExportWarnings,
+): string {
+  const env = { internalLinkHref, diagramPreviews, warnings }
+  // Preserve these constructs as readable Markdown and disclose the loss of
+  // editor-specific styling. Never advertise visual parity for a fallback.
+  if (/^\s*>\s*\[!\w+\]|^\s*[-*+]\s+\[[ x]\]|==[^\n]+==/im.test(content))
+    warn(warnings, 'richFormatting')
+  const frontmatterMatch = content.match(LEADING_FRONTMATTER_RE)
+  if (!frontmatterMatch) {
+    return markdown.render(content, env)
+  }
+
+  const [, frontmatter, body] = frontmatterMatch
+  const frontmatterSource = `---\n${frontmatter}\n---`
+
+  return [
+    `<pre class="frontmatter"><code class="language-yaml">${escapeHtml(frontmatterSource)}</code></pre>`,
+    markdown.render(body, env),
+  ].join('\n')
+}
+
+export function sanitizeNoteExportFileName(
+  name: string,
+  format: NoteExportFormat,
+): string {
+  let safeName = name
+    .replace(INVALID_NAME_CHARS_RE, '-')
+    .split('')
+    .map(character => (character.charCodeAt(0) <= 0x1F ? '-' : character))
+    .join('')
+    .trim()
+    .replace(/^[.\s]+|[.\s]+$/g, '')
+
+  if (!safeName) {
+    safeName = 'note'
+  }
+  else if (WINDOWS_RESERVED_NAME_RE.test(safeName)) {
+    safeName = `_${safeName}`
+  }
+
+  const extension = `.${format}`
+  const maxNameBytes
+    = MAX_EXPORT_FILE_NAME_BYTES - Buffer.byteLength(extension)
+  let truncatedName = ''
+  let byteLength = 0
+  for (const character of safeName) {
+    const characterBytes = Buffer.byteLength(character)
+    if (byteLength + characterBytes > maxNameBytes) {
+      break
+    }
+    truncatedName += character
+    byteLength += characterBytes
+  }
+
+  return `${truncatedName || 'note'}${extension}`
+}
+
+export function parseNoteExportPayload(
+  payload: unknown,
+): NoteExportPayload | null {
+  if (!payload || typeof payload !== 'object') {
+    return null
+  }
+
+  const candidate = payload as Partial<NoteExportPayload>
+  if (
+    typeof candidate.name !== 'string'
+    || typeof candidate.content !== 'string'
+    || (candidate.format !== 'html' && candidate.format !== 'pdf')
+  ) {
+    return null
+  }
+
+  const diagramPreviews = parseDiagramPreviews(candidate.diagramPreviews)
+  if (diagramPreviews === null)
+    return null
+
+  let drawingPreviews: NoteExportDrawingPreview[] | undefined
+  if (candidate.drawingPreviews !== undefined) {
+    if (
+      !Array.isArray(candidate.drawingPreviews)
+      || candidate.drawingPreviews.length > MAX_DRAWING_PREVIEWS
+    ) {
+      return null
+    }
+
+    let totalBytes = 0
+    drawingPreviews = []
+    for (const preview of candidate.drawingPreviews) {
+      if (
+        !preview
+        || typeof preview !== 'object'
+        || typeof preview.id !== 'string'
+        || typeof preview.svg !== 'string'
+      ) {
+        return null
+      }
+
+      const previewBytes
+        = Buffer.byteLength(preview.id) + Buffer.byteLength(preview.svg)
+      totalBytes += previewBytes
+      if (
+        previewBytes > MAX_DRAWING_PREVIEW_BYTES
+        || totalBytes > MAX_DRAWING_PREVIEWS_TOTAL_BYTES
+      ) {
+        return null
+      }
+
+      drawingPreviews.push({
+        id: preview.id,
+        svg: preview.svg,
+      })
+    }
+  }
+
+  const previewCount = (drawingPreviews?.length ?? 0) + diagramPreviews.length
+  const previewBytes = [
+    ...(drawingPreviews ?? []).map(
+      item => Buffer.byteLength(item.id) + Buffer.byteLength(item.svg),
+    ),
+    ...diagramPreviews.map(
+      item => Buffer.byteLength(item.code) + Buffer.byteLength(item.svg),
+    ),
+  ].reduce((sum, bytes) => sum + bytes, 0)
+  if (
+    previewCount > MAX_DRAWING_PREVIEWS
+    || previewBytes > MAX_DRAWING_PREVIEWS_TOTAL_BYTES
+  ) {
+    return null
+  }
+
+  return {
+    content: candidate.content,
+    ...(drawingPreviews === undefined ? {} : { drawingPreviews }),
+    ...(candidate.diagramPreviews === undefined ? {} : { diagramPreviews }),
+    format: candidate.format,
+    name: candidate.name,
+  }
+}
+
+export function parseDiagramPreviews(
+  value: unknown,
+  maxCount = 50,
+  maxBytes = 20 * 1024 * 1024,
+): NoteExportDiagramPreview[] | null {
+  if (value === undefined)
+    return []
+  if (!Array.isArray(value) || value.length > maxCount)
+    return null
+  let total = 0
+  const previews: NoteExportDiagramPreview[] = []
+  for (const item of value) {
+    if (!item || typeof item.code !== 'string' || typeof item.svg !== 'string')
+      return null
+    const bytes = Buffer.byteLength(item.code) + Buffer.byteLength(item.svg)
+    total += bytes
+    if (bytes > MAX_DRAWING_PREVIEW_BYTES || total > maxBytes)
+      return null
+    previews.push({ code: item.code, svg: item.svg })
+  }
+  return previews
+}
+
+async function defaultAssetResolver(fileName: string): Promise<Response> {
+  return resolveNotesAsset(fileName, getNotesPaths(getVaultPath()))
+}
+
+async function defaultAssetSource(
+  _fileName: string,
+  response: Response,
+): Promise<string | null> {
+  const mimeType = response.headers.get('content-type')
+  if (!mimeType?.startsWith('image/')) {
+    return null
+  }
+
+  return `data:${mimeType};base64,${Buffer.from(
+    await response.arrayBuffer(),
+  ).toString('base64')}`
+}
+
+async function embedManagedAssets(
+  html: string,
+  resolveAsset: NotesAssetResolver,
+  buildSource: NoteAssetSourceBuilder,
+  strict: boolean,
+  warnings?: NoteExportWarnings,
+): Promise<string> {
+  const sourcePattern = /\bsrc="masscode:\/\/notes-asset\/([^"]+)"/g
+  const matches = [
+    ...new Map(
+      [...html.matchAll(sourcePattern)].map(match => [match[0], match]),
+    ).values(),
+  ]
+
+  await Promise.all(
+    matches.map(async (match) => {
+      const [attribute, fileName] = match
+      try {
+        const response = await resolveAsset(fileName)
+        if (response.status === 503) {
+          throw new NotesAssetTemporarilyUnavailableError(
+            'Notes asset is temporarily unavailable',
+          )
+        }
+        if (!response.ok) {
+          if (strict) {
+            throw new Error(`Notes asset is unavailable: ${fileName}`)
+          }
+          warn(warnings, 'managedImages')
+          return
+        }
+
+        const source = await buildSource(fileName, response)
+        if (!source) {
+          if (strict) {
+            throw new Error(
+              `Notes asset is not a supported image: ${fileName}`,
+            )
+          }
+          warn(warnings, 'managedImages')
+          return
+        }
+
+        html = html.replaceAll(attribute, `src="${escapeHtml(source)}"`)
+      }
+      catch (error) {
+        if (error instanceof NotesAssetTemporarilyUnavailableError) {
+          throw error
+        }
+        if (strict) {
+          throw error
+        }
+        // A missing or unavailable asset must not prevent exporting the note.
+        warn(warnings, 'managedImages')
+      }
+    }),
+  )
+
+  return html
+}
+
+export function isSafeDrawingSvg(svg: string): boolean {
+  if (!/^\s*(?:<\?xml[^>]*>\s*)?<svg\b/i.test(svg)) {
+    return false
+  }
+
+  return !(
+    /<(?:script|foreignObject)\b/i.test(svg)
+    || /\bon[a-z]+\s*=/i.test(svg)
+    || /javascript\s*:/i.test(svg)
+    || /\b(?:href|src)\s*=\s*["']\s*https?:/i.test(svg)
+    || /url\([^)]*https?:/i.test(svg)
+  )
+}
+
+function embedDrawingPreviews(
+  html: string,
+  drawingPreviews: NoteExportDrawingPreview[],
+  buildSource: (id: string, svg: string) => string | null,
+  warnings?: NoteExportWarnings,
+): string {
+  const previewsById = new Map(
+    drawingPreviews
+      .filter(preview => isSafeDrawingSvg(preview.svg))
+      .map(preview => [preview.id, preview.svg]),
+  )
+
+  return html.replace(
+    /<img src="masscode:\/\/drawing\/([^"]+)"([^>]*)>/g,
+    (image, rawId: string, after: string) => {
+      let drawingId = rawId
+      try {
+        drawingId = decodeURIComponent(rawId)
+      }
+      catch {
+        // Match renderer URL decoding: malformed escapes fall back to raw id.
+      }
+
+      const svg = previewsById.get(drawingId)
+      if (svg === undefined) {
+        warn(warnings, 'drawings')
+        return image
+      }
+
+      const source = buildSource(drawingId, svg)
+      if (!source) {
+        warn(warnings, 'drawings')
+        return image
+      }
+
+      return `<img src="${escapeHtml(source)}" class="drawing-preview"${after}>`
+    },
+  )
+}
+
+export async function renderNoteHtmlBody(
+  content: string,
+  options: NoteHtmlBodyOptions = {},
+): Promise<string> {
+  const rendered = renderMarkdownContent(
+    content,
+    options.internalLinkHref,
+    options.diagramPreviews,
+    options.warnings,
+  )
+  const remoteCount = [...rendered.matchAll(/<img\s[^>]*\bsrc="https?:\/\//gi)]
+    .length
+  if (remoteCount && options.warnings) {
+    options.warnings.remoteImages
+      = (options.warnings.remoteImages ?? 0) + remoteCount
+  }
+  const bodyWithAssets = await embedManagedAssets(
+    rendered,
+    options.resolveAsset ?? defaultAssetResolver,
+    options.assetSource ?? defaultAssetSource,
+    options.strictAssets === true,
+    options.warnings,
+  )
+
+  return embedDrawingPreviews(
+    bodyWithAssets,
+    options.drawingPreviews ?? [],
+    options.drawingSource
+    ?? ((_id, svg) =>
+      `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`),
+    options.warnings,
+  )
+}
+
+export async function renderNoteHtml(
+  name: string,
+  content: string,
+  resolveAsset: NotesAssetResolver = defaultAssetResolver,
+  drawingPreviews: NoteExportDrawingPreview[] = [],
+  diagramPreviews: NoteExportDiagramPreview[] = [],
+  warnings?: NoteExportWarnings,
+): Promise<string> {
+  const body = await renderNoteHtmlBody(content, {
+    drawingPreviews,
+    diagramPreviews,
+    warnings,
+    resolveAsset,
+  })
+  const title = escapeHtml(name)
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'">
+  <title>${title}</title>
+  <style>${NOTE_DOCUMENT_STYLES}</style>
+</head>
+<body>
+${body}</body>
+</html>
+`
+}
+
+async function chooseDestination(
+  format: NoteExportFormat,
+  name: string,
+): Promise<string | null> {
+  const options = {
+    defaultPath: sanitizeNoteExportFileName(name, format),
+    filters: [
+      {
+        extensions: [format],
+        name: format.toUpperCase(),
+      },
+    ],
+  }
+  const parentWindow = BrowserWindow.getFocusedWindow()
+  const result = parentWindow
+    ? await dialog.showSaveDialog(parentWindow, options)
+    : await dialog.showSaveDialog(options)
+
+  return result.canceled ? null : result.filePath
+}
+
+async function exportPdf(destinationPath: string, html: string): Promise<void> {
+  const tempDirectory = await mkdtemp(join(tmpdir(), 'masscode-note-export-'))
+  const htmlPath = join(tempDirectory, 'note.html')
+  let pdfWindow: BrowserWindow | undefined
+
+  try {
+    await writeFile(htmlPath, html, 'utf8')
+    pdfWindow = new BrowserWindow({
+      show: false,
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: true,
+      },
+    })
+    await pdfWindow.loadFile(htmlPath)
+    const pdf = await pdfWindow.webContents.printToPDF({
+      preferCSSPageSize: true,
+      printBackground: true,
+    })
+    await writeFileAtomically(destinationPath, pdf)
+  }
+  finally {
+    if (pdfWindow && !pdfWindow.isDestroyed()) {
+      try {
+        pdfWindow.destroy()
+      }
+      catch (error) {
+        console.warn('Failed to destroy note export window', error)
+      }
+    }
+    try {
+      await rm(tempDirectory, { force: true, recursive: true })
+    }
+    catch (error) {
+      // Cleanup is best-effort and must not mask a successful write or
+      // the original export error.
+      console.warn('Failed to clean note export temporary directory', error)
+    }
+  }
+}
+
+export async function writeFileAtomically(
+  destinationPath: string,
+  data: string | Uint8Array,
+): Promise<void> {
+  const tempPath = join(
+    dirname(destinationPath),
+    `.masscode-export-${randomBytes(8).toString('hex')}.tmp`,
+  )
+
+  try {
+    await writeFile(tempPath, data, { flag: 'wx', mode: 0o600 })
+    await rename(tempPath, destinationPath)
+  }
+  finally {
+    await rm(tempPath, { force: true })
+  }
+}
+
+export async function exportNote(
+  payload: NoteExportPayload,
+): Promise<NoteExportResponse> {
+  const vault = getVaultPath()
+  const destinationPath = await chooseDestination(payload.format, payload.name)
+  if (!destinationPath) {
+    return { canceled: true }
+  }
+  if (getVaultPath() !== vault)
+    throw new Error('VAULT_CHANGED')
+
+  const warnings: NoteExportWarnings = {}
+  const html = await renderNoteHtml(
+    payload.name,
+    payload.content,
+    fileName => resolveNotesAsset(fileName, getNotesPaths(vault)),
+    payload.drawingPreviews,
+    payload.diagramPreviews,
+    warnings,
+  )
+  if (payload.format === 'html') {
+    await writeFileAtomically(destinationPath, html)
+  }
+  else {
+    await exportPdf(destinationPath, html)
+  }
+
+  return {
+    canceled: false,
+    filePath: destinationPath,
+    ...(Object.keys(warnings).length ? { warnings } : {}),
+  }
+}

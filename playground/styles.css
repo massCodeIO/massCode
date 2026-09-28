@@ -1,0 +1,3 @@
+@import "../src/renderer/styles.css";
+@source "../src/renderer/components";
+@source "./**/*.vue";

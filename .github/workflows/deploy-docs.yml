@@ -47,7 +47,7 @@ jobs:
       - name: Deploy to server
         uses: burnett01/rsync-deployments@7.0.2
         with:
-          switches: -rlptzv --delete
+          switches: -rlptzv --delete --exclude=/.well-known/
           path: docs/website/.vitepress/dist/
           remote_path: /var/www/masscode.io/public/
           remote_host: ${{ secrets.DEPLOY_HOST }}

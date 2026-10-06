@@ -1,0 +1,53 @@
+{
+  "$schema": "https://floss.fund/schema/v1.0.0/funding.schema.json#",
+  "version": "v1.0.0",
+  "entity": {
+    "type": "individual",
+    "role": "owner",
+    "name": "Anton Reshetov",
+    "email": "reshetov.art@gmail.com",
+    "description": "I'm Anton Reshetov, the creator and maintainer of massCode, a free and open-source desktop workspace for developers. I develop, release, and support it as an independent developer.",
+    "webpageUrl": {
+      "url": "https://masscode.io"
+    }
+  },
+  "projects": [
+    {
+      "guid": "masscode",
+      "name": "massCode",
+      "description": "massCode is an open-source desktop workspace for developers on macOS, Windows, and Linux. It brings together code snippets, technical notes, a full-featured HTTP client, and a collection of developer tools. A built-in AI assistant works across the workspace using your own AI provider or a locally running model, while MCP lets coding agents work with your saved code, notes, and HTTP requests.\n\nAll content is stored locally as plain Markdown files, with no account and no proprietary cloud. Users keep full ownership of their data and can sync it with iCloud Drive, Dropbox, Google Drive, Syncthing, or Git.\n\nmassCode has 7k GitHub stars and 494k cumulative release downloads, with 25 releases in the last 12 months.",
+      "webpageUrl": {
+        "url": "https://masscode.io"
+      },
+      "repositoryUrl": {
+        "url": "https://github.com/massCodeIO/massCode",
+        "wellKnown": "https://github.com/massCodeIO/massCode/blob/main/.well-known/funding-manifest-urls"
+      },
+      "licenses": ["spdx:AGPL-3.0"],
+      "tags": ["developer-tools", "code-snippets", "notes", "http-client", "markdown", "local-first", "desktop-app", "mcp"]
+    }
+  ],
+  "funding": {
+    "channels": [
+      {
+        "guid": "opencollective",
+        "type": "payment-provider",
+        "address": "https://opencollective.com/masscode",
+        "description": "Open Collective, fiscally hosted by Open Source Collective. Funds and expenses are public."
+      }
+    ],
+    "plans": [
+      {
+        "guid": "floss-fund-2026",
+        "status": "active",
+        "name": "Maintenance, Linux distribution, and storage reliability",
+        "description": "One year of focused work on three areas: ongoing maintenance, issue triage, and regular releases across macOS, Windows, and Linux; publishing and maintaining massCode on Flathub for Linux users; and hardening the Markdown vault storage (sync conflicts, offloaded cloud files, migrations) together with user documentation.",
+        "amount": 25000,
+        "currency": "USD",
+        "frequency": "yearly",
+        "channels": ["opencollective"]
+      }
+    ],
+    "history": []
+  }
+}

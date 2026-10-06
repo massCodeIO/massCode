@@ -21,9 +21,10 @@
     ]
   },
   "error": {
+  },
   "description": {
-    "storageVault": "Choisissez le répertoire du coffre-fort. Pour synchroniser entre les appareils, sélectionnez un dossier dans  iCloud Drive, Google Drive ou Dropbox.",
-    "language": "Pour appliquer les changements de langue, Vous devez relancer l'application."
+    "storageVault": "Choisissez le répertoire du coffre-fort. Pour synchroniser entre les appareils, sélectionnez un dossier dans iCloud Drive, Google Drive ou Dropbox.",
+    "language": "Pour appliquer les changements de langue, vous devez relancer l'application."
   },
   "special": {
     "unsponsored": "Non sponsorisé"
@@ -34,4 +35,3 @@
     "noAvailable": "Il n'y a actuellement aucune mise à jour disponible."
   }
  }
-}

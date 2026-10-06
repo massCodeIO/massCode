@@ -114,7 +114,7 @@
       "fromFavorites": "Retirer des favoris"
     },
     "reveal": {
-      "inFinder": "Afficher dans l'explorateur",
+      "inFinder": "Afficher dans le Finder",
       "inFileManager": "Afficher dans le gestionnaire de fichiers"
     },
     "reload": {

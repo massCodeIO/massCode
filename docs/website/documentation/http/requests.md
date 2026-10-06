@@ -39,8 +39,6 @@ The request editor is split into focused tabs:
 
 ### Drafts and Explicit Saving
 
-<AppVersion text=">=5.11" />
-
 Use the **Save** icon next to Send or <kbd>⌘+S</kbd> on macOS / <kbd>Ctrl+S</kbd> on Windows and Linux to save request fields, scripts, assertions, and variable extraction. Request content is not autosaved. The request name is saved automatically and independently; renaming does not save or discard content edits. A green dot on Save indicates unsaved edits; saving invalid rules opens the tab containing the first error. Before switching requests or leaving the HTTP space, choose **Save**, **Discard changes**, or **Cancel**. If saving fails partway through, remaining unsaved edits stay in the editor for retry.
 
 **Send** uses the current request fields, trusted scripts, assertions, and variable extraction without saving them. Invalid rules are highlighted before sending; unsaved changes remain in the editor after execution.
@@ -106,8 +104,6 @@ The lower panel can show the outgoing request before it is sent.
 Use the copy button in the preview panel to copy the active preview.
 
 ### Code Generation
-
-<AppVersion text=">=5.11" />
 
 Select a language in the preview toolbar. If it has multiple clients, choose one using the tabs above the code. For example, **Node.js** offers **Native**, **Axios**, and **Fetch**, while **Shell** offers **cURL**, **HTTPie**, and **Wget**.
 

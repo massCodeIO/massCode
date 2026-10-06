@@ -90,8 +90,6 @@ Only local document references are resolved; external `$ref` documents are not f
 
 ## Scripts and Tests
 
-<AppVersion text=">=5.11" />
-
 Import converts a limited, explicit subset of JavaScript into the [massCode `mc` API](/documentation/http/scripts). It reads the source syntax without executing it. Original `pm` and `bru` APIs are not available in the massCode runtime.
 
 | Source feature | Supported conversion |

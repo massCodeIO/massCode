@@ -29,8 +29,6 @@ Use the **Icons** tab to search the built-in Material and Lucide collections. Ch
 
 ### Emoji and Uploaded Images
 
-<AppVersion text=">=5.9" />
-
 - **Emoji** uses the system emoji style for your platform.
 - **Upload** accepts JPG or PNG images up to 10 MB and shows a preview before applying the image.
 

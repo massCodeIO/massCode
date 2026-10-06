@@ -35,8 +35,6 @@ GraphQL can return partial `data` together with `errors` under HTTP `200`. Check
 
 ## Request history
 
-<AppVersion text=">=5.11" />
-
 Open **History** in the request's lower panel to inspect earlier sends for that request. The collection **Overview** also shows its five most recent request entries. Select an entry in either surface to open its saved request and response snapshot, including headers, body, status, timing, and any saved error.
 
 <img :src="withBase('/http-history.png')" alt="Saved request and response snapshot with redacted credentials">

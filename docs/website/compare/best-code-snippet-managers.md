@@ -84,7 +84,7 @@ For a reproducible evaluation, use the [sample workflow](/compare/#try-a-small-w
 
 The existing [Code documentation](/documentation/code/) illustrates the library layout: folders on the left, a snippet list in the middle, and code in the editor. This is a product screenshot, not a comparative benchmark.
 
-<img :src="withBase('/code.png')" alt="massCode Code space with TypeScript folders, a snippet list, tags, and the selected code in the editor">
+<img class="screenshot" :src="withBase('/code.png')" alt="massCode Code space with TypeScript folders, a snippet list, tags, and the selected code in the editor">
 
 Import behavior matters more than a simple “supports import” checkbox:
 

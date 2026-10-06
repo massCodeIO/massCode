@@ -5,8 +5,6 @@ description: "Connect your coding agent to massCode to work with snippets, notes
 
 # MCP
 
-<AppVersion text=">=6.0" />
-
 Connect your coding agent to massCode through Model Context Protocol (MCP) to work with snippets, notes, and saved HTTP requests.
 
 Try asking: "Find my retry helper and use it here," or "Save this solution as a TypeScript snippet."

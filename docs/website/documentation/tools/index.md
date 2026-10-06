@@ -5,8 +5,6 @@ description: "Use built-in developer tools in massCode for JSON diffing, text co
 
 # Tools overview
 
-<AppVersion text=">=3.8" />
-
 Tools is for the small developer tasks that should take seconds, not a trip to a random website. Use it when you need to compare JSON, convert, encode, hash, or generate something quickly without leaving massCode.
 
 The available tools are grouped by category:
@@ -32,8 +30,6 @@ Turn free-form text into a URL-friendly slug.
 Split a URL into its protocol, host, path, query, and hash parts.
 
 ### Line Break Normalizer
-
-<AppVersion text=">=5.9" />
 
 Remove hard wraps from copied terminal output while preserving Markdown lists, tables, quotes, commands, and code blocks. The same normalization is available from the **Editor** menu in Code and Notes.
 

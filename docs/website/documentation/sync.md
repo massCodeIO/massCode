@@ -27,8 +27,6 @@ Values of HTTP [secret variables](/documentation/http/environments#secret-variab
 
 ## Offloaded (online-only) files
 
-<AppVersion text=">=5.9" />
-
 Cloud services can free up disk space by keeping only file placeholders on your device: the file is visible on disk, but its content stays in the cloud until it is read. This happens with iCloud Drive (Optimize Mac Storage), OneDrive (Files On-Demand), Google Drive (online-only), and Dropbox (online-only).
 
 massCode handles offloaded vault files without freezing:

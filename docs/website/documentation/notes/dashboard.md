@@ -5,11 +5,9 @@ description: "Use the Notes Dashboard in massCode to see note activity, recent n
 
 # Dashboard
 
-<AppVersion text=">=5.1" />
-
 Dashboard is the home screen for Notes. Use it to get an overview of your note base before opening a specific note.
 
-<img :src="withBase('/notes-dashboard.png')">
+<img class="screenshot" :src="withBase('/notes-dashboard.png')">
 
 ## Opening Dashboard
 

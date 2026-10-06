@@ -35,15 +35,11 @@ Right-click the folder and choose **"Default Language"**.
 
 ## Setting a Folder Icon
 
-<AppVersion text=">=3.7" />
-
 Folder icons help large libraries stay easier to scan. Right-click a folder and choose **Set Icon**. Use the **Icons** tab to search the built-in Material and Lucide icon collections.
 
 To restore the default folder icon, right-click the folder and choose **Remove Icon**.
 
 ### Emoji and Uploaded Images
-
-<AppVersion text=">=5.9" />
 
 The icon picker also supports:
 

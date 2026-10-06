@@ -25,4 +25,4 @@ flowchart TD
 import { withBase } from 'vitepress'
 </script>
 
-<img :src="withBase('/mermaid.png')">
+<img class="screenshot" :src="withBase('/mermaid.png')">

@@ -5,8 +5,6 @@ description: "Use the massCode Math Notebook for natural-language calculations, 
 
 # Math Notebook
 
-<AppVersion text=">=4.6" />
-
 Math Notebook is a calculator-style workspace for quick calculations, conversions, and date math inside massCode. Use it when you need to check a number, compare prices, convert units, or work through finance and time calculations without leaving your main workflow.
 
 Write expressions in natural language and get instant results on every line.
@@ -152,11 +150,11 @@ Supports 166+ fiat currencies (ISO 4217 codes), 21 cryptocurrencies, common curr
 | `NZ$`  | NZD      |
 | `R$`   | BRL      |
 
-### Cryptocurrencies <AppVersion text=">=5.0" />
+### Cryptocurrencies
 
 BTC, ETH, SOL, DOGE, XRP, ADA, DOT, LTC, AVAX, SHIB, BNB, USDT, USDC, XLM, XMR, EOS, TRX, DASH, NEO, BCH, ETC.
 
-### Custom exchange rates <AppVersion text=">=5.0" />
+### Custom exchange rates
 
 ```
 50 EUR in USD at 1.05 USD/EUR    → 52.50 USD
@@ -359,9 +357,9 @@ Time arithmetic follows Numi-like semantics: `1 year = 365 days`, `1 month = 365
 Zones can be specified as:
 
 - **Timezone codes**: PST, EST, CET, JST, etc.
-- **Airport codes** <AppVersion text=">=5.0" />: LAX, JFK, SFO, NRT, CDG, SYD, etc.
-- **City names** <AppVersion text=">=5.0" />: Seattle, Berlin, Tokyo, Dubai, etc.
-- **Country names** <AppVersion text=">=5.0" />: Japan, Germany, France, etc.
+- **Airport codes**: LAX, JFK, SFO, NRT, CDG, SYD, etc.
+- **City names**: Seattle, Berlin, Tokyo, Dubai, etc.
+- **Country names**: Japan, Germany, France, etc.
 
 ```
 PST time                                      → (current time in PST)
@@ -417,8 +415,6 @@ SI-based units support all SI prefixes (case-sensitive):
 
 ## Finance
 
-<AppVersion text=">=5.0" />
-
 ### Compound interest
 
 ```
@@ -436,8 +432,6 @@ total interest on $10,000 over 6 years at 6%                      → $1,932.48
 
 ## Cooking Conversions
 
-<AppVersion text=">=5.0" />
-
 130+ food substances with density data for accurate volume-to-mass and mass-to-volume conversions.
 
 ```
@@ -451,8 +445,6 @@ Supports cups, tablespoons, teaspoons, fl oz, pints, quarts, and gallons.
 
 ## Video & Timecode
 
-<AppVersion text=">=5.0" />
-
 Timecode format `HH:MM:SS:FF` with `at` or `@` to specify frame rate (default 24 fps).
 
 ```
@@ -463,8 +455,6 @@ Timecode format `HH:MM:SS:FF` with `at` or `@` to specify frame rate (default 24
 
 ## Workday Calculations
 
-<AppVersion text=">=5.0" />
-
 ```
 workdays in 3 weeks                 → 15 workdays
 workdays from March 3 to March 7    → ... workdays
@@ -472,8 +462,6 @@ workdays from March 3 to March 7    → ... workdays
 ```
 
 ## Clock Time Intervals
-
-<AppVersion text=">=5.0" />
 
 ```
 7:30 to 20:45    → 13 hours 15 min
@@ -484,8 +472,6 @@ workdays from March 3 to March 7    → ... workdays
 Midnight crossing is handled automatically.
 
 ## Timespan & Laptime
-
-<AppVersion text=">=5.0" />
 
 ### Timespan
 
@@ -509,8 +495,6 @@ Midnight crossing is handled automatically.
 
 ## Base N Conversion
 
-<AppVersion text=">=5.0" />
-
 Convert between arbitrary bases.
 
 ```
@@ -528,8 +512,6 @@ int(0o55)    → 45
 
 ## Large Numbers
 
-<AppVersion text=">=5.0" />
-
 Use `B`/`bn` for billion and `T`/`tn` for trillion, or word forms.
 
 ```
@@ -537,8 +519,6 @@ Use `B`/`bn` for billion and `T`/`tn` for trillion, or word forms.
 ```
 
 ## Additional Functions
-
-<AppVersion text=">=5.0" />
 
 ```
 larger of 100 and 200             → 200
@@ -555,16 +535,12 @@ clamp 26 between 5 and 25         → 25
 
 ## Proportions
 
-<AppVersion text=">=5.0" />
-
 ```
 6 is to 60 as 8 is to what     → 80
 5 is to 10 as what is to 80    → 40
 ```
 
 ## Conditions
-
-<AppVersion text=">=5.0" />
 
 ```
 if 5 > 3 then 10 else 20    → 10
@@ -575,8 +551,6 @@ if 5 > 3 then 10 else 20    → 10
 
 ## Comment Syntax
 
-<AppVersion text=">=5.0" />
-
 End-of-line comments and parenthesized remarks are stripped before evaluation.
 
 ```
@@ -585,8 +559,6 @@ $999 (for iPhone)
 ```
 
 ## Preferences
-
-<AppVersion text=">=5.0" />
 
 Math Notebook has configurable preferences:
 

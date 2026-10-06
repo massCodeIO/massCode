@@ -37,8 +37,6 @@ Variables can be used in:
 
 ## Secret Variables
 
-<AppVersion text=">=5.10" />
-
 Secret variables keep sensitive values out of the vault. The value is encrypted with your operating system keychain and stored locally, outside the Markdown Vault.
 
 To create one, click the sliders icon beside **Environments** to open **Manage**, then click **Add variable**. Enter its name while leaving the value empty, then select the **Secret** checkbox. Wait for the protected value field to appear before entering the secret. Its value is saved when you leave that field.
@@ -95,8 +93,6 @@ Use the **Environments** panel below folders to choose the active environment.
 Select **No environment** to stop applying environment variables. Collection/folder variables still apply, and Session variables can still be extracted and used while no environment is selected. Placeholders without a matching variable remain unresolved.
 
 ## Session Variables and Inspector
-
-<AppVersion text=">=5.11" />
 
 Open the **Variables inspector** using the right-panel icon in the editor header. It shows the relevant Collection, Environment, and Session scopes, masks secret and Session values, and identifies used values, overridden entries, and unresolved references. Use it to find which scope is supplying a placeholder before changing a saved value. Search by variable name, expand **All variables** for unused entries, or edit a regular environment value directly in the inspector. Collection values edited there remain collection drafts and require Save; environment edits are autosaved. A Session value takes priority even when the matching environment variable is a secret.
 

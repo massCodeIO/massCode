@@ -39,8 +39,6 @@ Callouts are shown with dedicated styling in **Live Preview** and **Preview** mo
 
 ## Authoring TODOs and Annotations
 
-<AppVersion text=">=5.12" />
-
 Use a TODO callout to mark unfinished work in the current note:
 
 ```md

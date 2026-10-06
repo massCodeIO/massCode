@@ -5,8 +5,6 @@ description: "Ask the AI assistant to edit code, organize notes, run HTTP workfl
 
 # AI Assistant
 
-<AppVersion text=">=6.0" />
-
 Use your own AI provider or a local model to edit snippets, organize notes and work with HTTP requests. Edits apply directly unless you ask for a preview.
 
 <img :src="withBase('/http-ai.png')" alt="AI assistant reviewing an HTTP product request and suggesting additional response checks">

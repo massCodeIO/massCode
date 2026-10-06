@@ -64,10 +64,6 @@ massCode is free and open source. But building and maintaining a quality tool ta
 </p>
 
 <p align="center">
-  <a href="https://m.do.co/c/f2bb3bfab2e6">
-    <img src='.github/assets/DO.svg'>
-  </a>
-  &nbsp;
   <a href="https://mysigmail.com/?ref=github/massCodeIO">
     <img src='.github/assets/MySigMail.svg'>
   </a>

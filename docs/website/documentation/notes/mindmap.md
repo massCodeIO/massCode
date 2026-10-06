@@ -17,4 +17,4 @@ The map is generated from the markdown structure of the current note, with headi
 import { withBase } from 'vitepress'
 </script>
 
-<img :src="withBase('/mindmap.png')">
+<img class="screenshot" :src="withBase('/mindmap.png')">

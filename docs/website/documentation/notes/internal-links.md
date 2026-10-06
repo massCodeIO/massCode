@@ -5,11 +5,9 @@ description: "Link notes, snippets, and HTTP requests together inside massCode N
 
 # Internal Links
 
-<AppVersion text=">=5.1" />
-
 Internal Links let you connect notes, snippets, and HTTP requests with wiki-style links directly inside Notes. Use them to build lightweight documentation, link reference snippets or saved API requests from prose, and move through related item without leaving massCode.
 
-<img :src="withBase('/notes-internal-links.png')">
+<img class="screenshot" :src="withBase('/notes-internal-links.png')">
 
 ## Link Syntax
 
@@ -49,11 +47,9 @@ The picker inserts the shortest unambiguous form: just the name when it is uniqu
 
 ## Plan Notes, Snippets, and Requests
 
-<AppVersion text=">=5.12" />
-
 Plan a note, snippet, or HTTP request right where you need it in your writing. Insert a placeholder, continue the note, and create the item later without losing your place.
 
-<img :src="withBase('/notes-planned.png')" alt="Internal link picker with Plan Note, Plan Snippet, and Plan HTTP request actions below existing results">
+<img class="screenshot" :src="withBase('/notes-planned.png')" alt="Internal link picker with Plan Note, Plan Snippet, and Plan HTTP request actions below existing results">
 
 ### Insert a placeholder
 
@@ -110,8 +106,6 @@ Hover an internal link while holding <kbd>Cmd</kbd> on macOS or <kbd>Ctrl</kbd> 
 This helps you confirm the target before you navigate away from the current note.
 
 ## Note Inspector
-
-<AppVersion text=">=5.12" />
 
 Open the **Links** tab in [Note inspector](/documentation/notes/inspector#links) to inspect linked items, planned placeholders, missing targets, and external addresses. Filter by status or space and use the locate button to find each occurrence in your note.
 

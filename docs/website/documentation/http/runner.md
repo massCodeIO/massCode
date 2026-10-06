@@ -5,8 +5,6 @@ description: "Run saved HTTP requests in sequence, pass variables between steps,
 
 # Folder Runner
 
-<AppVersion text=">=5.11" />
-
 Right-click an HTTP folder and choose **Runner** to run its saved requests, including nested folders, in sequence. A top-level collection can be run the same way. This is a sequential workflow runner, not a load generator or a scheduled monitor.
 
 ## Prepare and Run

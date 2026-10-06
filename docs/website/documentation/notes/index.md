@@ -5,13 +5,11 @@ description: "Write markdown notes in massCode with a Notes Dashboard, tasks, li
 
 # Notes
 
-<AppVersion text=">=5.0" />
-
 Notes is the markdown writing space inside massCode. Use it for project documentation, technical notes, drafts, meeting notes, and personal knowledge bases when a snippet is too small and a full note makes more sense.
 
 Access Notes from the **Notes** icon in the Space rail. The layout matches Code: Library on the left, notes list in the middle, editor on the right. You can also open the [Notes Dashboard](/documentation/notes/dashboard) from the grid button in the Notes sidebar to see activity, recent notes, and graph-based navigation before opening a document.
 
-<img :src="withBase('/notes.png')">
+<img class="screenshot" :src="withBase('/notes.png')">
 
 ## When to use Notes
 
@@ -25,8 +23,6 @@ Use Notes when you want to keep markdown documents close to your snippets and da
 
 ## Note Inspector
 
-<AppVersion text=">=5.12" />
-
 Use [Note inspector](/documentation/notes/inspector) to navigate and reorder sections, inspect links, and find callouts while writing. [Planned links](/documentation/notes/internal-links#plan-notes-snippets-and-requests) let you leave placeholders for notes, snippets, and HTTP requests, then create them when you are ready.
 
 ## Creating a Note
@@ -36,11 +32,9 @@ Use [Note inspector](/documentation/notes/inspector) to navigate and reorder sec
 
 See [Tasks](/documentation/notes/tasks) to create task notes with structured status, priority, and due date properties.
 
-To duplicate an existing note, right-click it in the Notes list and choose **Duplicate**. The copy stays in the same folder and its title is selected for renaming. <AppVersion text=">=5.9" />
+To duplicate an existing note, right-click it in the Notes list and choose **Duplicate**. The copy stays in the same folder and its title is selected for renaming.
 
 ## Dashboard
-
-<AppVersion text=">=5.1" />
 
 Dashboard gives Notes a home screen with a quick overview of your markdown workspace.
 
@@ -70,8 +64,8 @@ The editor is built on CodeMirror 6 and includes:
 - Right-click formatting menu in editable modes
 - Inline markdown formatting shortcuts in editable modes
 - Editable markdown tables in Live Preview
-- One-click copying for fenced code blocks in Live Preview and Preview <AppVersion text=">=5.9" />
-- Line break normalization for hard-wrapped terminal text from **Editor** > **Normalize Line Breaks** <AppVersion text=">=5.9" />
+- One-click copying for fenced code blocks in Live Preview and Preview
+- Line break normalization for hard-wrapped terminal text from **Editor** > **Normalize Line Breaks**
 - [Internal links](/documentation/notes/internal-links) to notes, snippets, and HTTP requests
 - [Task notes](/documentation/notes/tasks) with status, priority, due dates, and smart views
 - [Mermaid diagram](/documentation/notes/mermaid) support
@@ -80,11 +74,9 @@ The editor is built on CodeMirror 6 and includes:
 
 ## Editor Context Menu
 
-<AppVersion text=">=5.8" />
-
 Right-click in **Live Preview** to apply markdown formatting or insert a table, callout, horizontal rule, or code block. The context menu is disabled in **Preview** mode because the rendered note is read-only.
 
-<img :src="withBase('/notes-context-menu.png')" alt="Notes editor context menu">
+<img class="screenshot" :src="withBase('/notes-context-menu.png')" alt="Notes editor context menu">
 
 - **Format** adds bold, italic, strikethrough, highlight, inline code, links, or removes formatting from the current selection.
 - **Paragraph** switches the current line between body text, headings, bullet lists, numbered lists, task lists, and quotes.
@@ -92,11 +84,9 @@ Right-click in **Live Preview** to apply markdown formatting or insert a table, 
 
 ## Editable Tables
 
-<AppVersion text=">=5.8" />
-
 In **Live Preview**, markdown tables render as interactive table blocks while the note still stays plain Markdown in the vault.
 
-<img :src="withBase('/notes-table.png')" alt="Editable markdown table in Notes">
+<img class="screenshot" :src="withBase('/notes-table.png')" alt="Editable markdown table in Notes">
 
 - Click a table cell to edit it in place.
 - Press <kbd>Tab</kbd> and <kbd>Shift+Tab</kbd> to move between cells.
@@ -127,7 +117,7 @@ Customize the editor appearance and behavior in preferences:
 - **Indent size**
 - **Limit width** - toggle to constrain the editor width
 - **Line numbers** - toggle to show or hide line numbers
-- **Wrap table cells** - wrap long cell content so wide tables stay within the editor <AppVersion text=">=5.9" />
+- **Wrap table cells** - wrap long cell content so wide tables stay within the editor
 
 ## AI Assistant
 

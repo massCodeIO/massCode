@@ -65,8 +65,6 @@ Press <kbd>Esc</kbd> to leave the active scope and return to the full palette.
 
 ## Add filters in the palette
 
-<AppVersion text=">=5.6" />
-
 Use filter tokens when you want to narrow Command Palette search by folder or tag.
 
 ### Tags

@@ -62,6 +62,21 @@ svg {
   max-width: 256px;
 }
 
+/* Скрины сняты без системной тени (screencapture -o), тень рисуем здесь.
+   drop-shadow, а не box-shadow: повторяет прозрачные скруглённые углы окна. */
+.vp-doc img.screenshot {
+  margin: 24px 0;
+  filter:
+    drop-shadow(0 2px 6px rgb(0 0 0 / 0.12))
+    drop-shadow(0 12px 28px rgb(0 0 0 / 0.16));
+}
+
+.dark .vp-doc img.screenshot {
+  filter:
+    drop-shadow(0 0 1px rgb(255 255 255 / 0.18))
+    drop-shadow(0 12px 28px rgb(0 0 0 / 0.5));
+}
+
 .vp-doc [class*="language-"] code {
   padding: 0 24px;
   display: block;

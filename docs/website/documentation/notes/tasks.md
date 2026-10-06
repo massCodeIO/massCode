@@ -5,13 +5,11 @@ description: "Create task notes in massCode with status, priority, due dates, ta
 
 # Tasks
 
-<AppVersion text=">=5.5" />
-
 Tasks are notes with structured task properties. They stay in the Notes space, use the same markdown editor as regular notes, and can still be organized with folders, tags, favorites, internal links, and navigation history.
 
 Use tasks when a note needs a clear next action, due date, or completion state without moving it into a separate task manager.
 
-<img :src="withBase('/task.png')">
+<img class="screenshot" :src="withBase('/task.png')">
 
 ## Creating a Task
 
@@ -62,13 +60,9 @@ Tasks can still appear in **Inbox**, **Favorites**, **All Notes**, folders, tags
 
 ## Hiding Completed Tasks
 
-<AppVersion text=">=5.8" />
-
 When you are reviewing folders, select **View** > **Hide Completed Tasks** to hide tasks with Done status from folder lists. This does not delete or change the tasks; it only keeps completed items out of folder views while the option is enabled.
 
 ## Cleaning Up Completed Tasks
-
-<AppVersion text=">=5.8" />
 
 Use cleanup when completed tasks should leave active task views but remain recoverable.
 

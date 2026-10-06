@@ -67,11 +67,9 @@ Use one of these methods:
 - XML
 - YAML
 
-Use **Editor** > **Normalize Line Breaks** to remove hard terminal wraps from the selection or the whole snippet. <AppVersion text=">=5.9" />
+Use **Editor** > **Normalize Line Breaks** to remove hard terminal wraps from the selection or the whole snippet.
 
 ## Real-time Render HTML & CSS
-
-<AppVersion text=">=2.9" />
 
 Use code preview when you want to test a small HTML/CSS idea directly inside massCode.
 
@@ -82,8 +80,6 @@ Use code preview when you want to test a small HTML/CSS idea directly inside mas
 
 ## JSON Visualizer
 
-<AppVersion text=">=4.1" />
-
 Use JSON Visualizer when nested JSON is too dense to read comfortably as raw text. massCode turns the current JSON snippet into a visual graph, so objects, arrays, and relationships are easier to scan.
 
 - Add a new [snippet](#adding-a-snippet) or select an existing one.
@@ -93,7 +89,7 @@ Use JSON Visualizer when nested JSON is too dense to read comfortably as raw tex
 - Click a node to inspect its content.
 - Export the visualization as **PNG** or **SVG** when you want to share it.
 
-<img :src="withBase('/json-visually.png')">
+<img class="screenshot" :src="withBase('/json-visually.png')">
 
 <script setup>
 import { withBase } from 'vitepress'

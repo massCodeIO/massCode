@@ -5,8 +5,6 @@ description: "Connect to WebSocket endpoints, configure authentication, and exch
 
 # WebSocket
 
-<AppVersion text=">=5.11" />
-
 Choose **WebSocket** in the method/type selector beside the URL. Existing saved requests remain HTTP unless you change their type.
 
 ## Connect and Send Messages

@@ -23,8 +23,6 @@ The `masscode://notes-asset/` URL is resolved by massCode. Other Markdown apps m
 
 ## Managed Storage
 
-<AppVersion text=">=5.9" />
-
 Starting with massCode 5.9, newly pasted or dropped images are saved to `notes/.masscode/assets`. When you copy or synchronize Notes between devices, include the whole vault, including the hidden `notes/.masscode` directory. Copying only Markdown files leaves their local images behind.
 
 ::: warning Compatibility

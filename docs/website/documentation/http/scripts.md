@@ -5,8 +5,6 @@ description: Run local pre-request scripts and response tests with explicit trus
 
 # JavaScript Scripts
 
-<AppVersion text=">=5.11" />
-
 Use **Scripts** in a request, collection, or nested folder to compute variables before sending and test the response. WebSocket requests do not run scripts. Scripts use the massCode `mc` API; Postman and Bruno scripting APIs are not supported.
 
 ## Review and trust

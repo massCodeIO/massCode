@@ -5,8 +5,6 @@ description: Send GraphQL queries and mutations with variables, operation select
 
 # GraphQL
 
-<AppVersion text=">=5.11" />
-
 Open **Body** and choose **GraphQL** as the body type. This sets the HTTP method to **POST**. GraphQL uses the same HTTP client as other requests.
 
 ## Send a query or mutation

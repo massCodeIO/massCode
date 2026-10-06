@@ -9,7 +9,7 @@ Code is the snippet library space inside massCode. Use it to keep reusable examp
 
 Access Code from the **Code** icon in the Space rail. The layout has three columns: the [Library](/documentation/code/library) on the left, the snippet list in the middle, and the editor on the right.
 
-<img :src="withBase('/code.png')">
+<img class="screenshot" :src="withBase('/code.png')">
 
 ## When to use Code
 

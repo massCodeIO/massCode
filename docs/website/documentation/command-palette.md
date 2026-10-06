@@ -5,13 +5,11 @@ description: "Use the massCode Command Palette to jump between spaces, find snip
 
 # Command Palette
 
-<AppVersion text=">=5.4" />
-
 The Command Palette gives you a keyboard-first way to move around massCode without reaching for the Space rail or sidebars. Use it to jump to spaces, open snippets, notes, and HTTP requests, run common actions, and create new items from any space.
 
 Open it with <kbd>Cmd+P</kbd> on macOS or <kbd>Ctrl+P</kbd> on Windows and Linux.
 
-<img :src="withBase('/command-palette.png')">
+<img class="screenshot" :src="withBase('/command-palette.png')">
 
 ## What You Can Find
 
@@ -70,7 +68,7 @@ Open the actions panel for the selected result with <kbd>Right Arrow</kbd> or <k
 
 Actions depend on the selected result. For example, you can copy a title, copy snippet content, duplicate a snippet or HTTP request, copy an HTTP request URL, or run the selected command.
 
-You can also duplicate a note while preserving its content, description, properties, and tags. <AppVersion text=">=5.9" />
+You can also duplicate a note while preserving its content, description, properties, and tags.
 
 Use <kbd>Left Arrow</kbd> or <kbd>Esc</kbd> to close the actions panel.
 

@@ -5,8 +5,6 @@ description: "Learn the massCode HTTP workspace, send your first request, and bu
 
 # HTTP Client
 
-<AppVersion text=">=5.3" />
-
 The HTTP space is a local API workspace inside massCode. Send HTTP requests, inspect responses, organize collections, and reuse variables alongside your code snippets and notes. No massCode account is required.
 
 This guide describes the **5.11 interface**, including collection settings, scripts, tests, GraphQL, WebSocket, history, and debugging tools. Individual version markers identify features introduced after the original HTTP client.
@@ -65,8 +63,6 @@ The HTTP command palette actions can create a request, collection, folder, or We
 A top-level folder is a collection; nested folders provide another configuration scope. Read [Collections & Folders](./collections) for inheritance, navigation, moving items, favorites, and Trash.
 
 ### Emoji and Uploaded Images
-
-<AppVersion text=">=5.9" />
 
 Collection and folder icons support built-in icons, native emoji, and uploaded JPG/PNG images. See [Custom icons](./collections#custom-icons).
 

@@ -5,8 +5,6 @@ description: "Compare two JSON documents side by side in massCode with validatio
 
 # JSON Diff
 
-<AppVersion text=">=5.1" />
-
 JSON Diff lets you compare two JSON documents side by side without leaving massCode. It is useful for checking API responses, fixture changes, configuration edits, and generated JSON payloads.
 
 ## Where to find it

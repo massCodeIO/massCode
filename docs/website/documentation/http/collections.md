@@ -9,8 +9,6 @@ A collection is a top-level HTTP folder. Nested folders group related operations
 
 ## Create and edit a collection
 
-<AppVersion text=">=5.11" />
-
 1. Choose **New collection** in the sidebar **+** menu or use the **New HTTP collection** command palette action.
 2. Name it for the API or workflow.
 3. Select the collection itself in the tree to open its editor. Expanding the arrow only reveals its contents.
@@ -72,8 +70,6 @@ Cloud-offloaded files must finish downloading before content actions such as cop
 ## Custom icons
 
 Right-click a collection/folder and choose **Set Icon** for a Material or Lucide icon. **Remove Icon** restores the default.
-
-<AppVersion text=">=5.9" />
 
 The picker also supports native emoji and JPG/PNG uploads. Preview an uploaded image before applying it; massCode center-crops and resizes it to 128×128.
 

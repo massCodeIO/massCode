@@ -5,8 +5,6 @@ description: "Check HTTP responses with assertions and extract temporary variabl
 
 # Tests & Variables
 
-<AppVersion text=">=5.11" />
-
 Use **Assertions** for checks and **Variables → Post-response** for extraction. These declarative rules need no JavaScript. Put shared rules on a collection/folder, or request-specific rules on the request.
 
 Use **Add assertion** or **Add extraction** at the bottom of the corresponding tab.

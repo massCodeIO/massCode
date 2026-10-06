@@ -5,13 +5,11 @@ description: "Sketch diagrams and visual notes in massCode with an Excalidraw-po
 
 # Drawings
 
-<AppVersion text=">=5.6" />
-
 Drawings is the visual canvas space inside massCode, powered by Excalidraw. Use it for diagrams, sketches, flows, and whiteboard-style notes that are easier to draw than to write.
 
 Access Drawings from the **Drawings** icon in the Space rail. The layout uses two columns: the drawing list on the left and the canvas on the right.
 
-<img :src="withBase('/drawings.png')">
+<img class="screenshot" :src="withBase('/drawings.png')">
 
 ## When to use Drawings
 
@@ -61,7 +59,7 @@ Drawings can be embedded directly in your markdown notes.
 1. In the drawing list, open the context menu and choose **Copy Link for Note**.
 2. Paste the link into a note. The drawing renders inline in the preview.
 
-<img :src="withBase('/notes-drawings.png')">
+<img class="screenshot" :src="withBase('/notes-drawings.png')">
 
 From an embedded drawing you can open it in the Drawings space, and use the back and forward controls to move through your navigation history.
 

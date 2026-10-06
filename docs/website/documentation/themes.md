@@ -7,8 +7,6 @@ description: "Configure the macOS Dock counter and customize massCode themes for
 
 ## macOS Dock Icon Counter
 
-<AppVersion text=">=5.9" />
-
 On macOS, open **Settings** > **Appearance** and use **Dock Icon Counter** to show one of these counts on the massCode Dock icon:
 
 - items in the Code Inbox
@@ -18,8 +16,6 @@ On macOS, open **Settings** > **Appearance** and use **Dock Icon Counter** to sh
 Choose **Don't Show** to disable the counter. If macOS blocks the badge, allow notifications and badges for massCode in System Settings.
 
 ## Custom Themes
-
-<AppVersion text=">=4.5" />
 
 Custom themes let you adapt massCode to your workflow and visual preferences. You can change both the app UI colors and the editor syntax highlighting colors.
 

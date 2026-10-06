@@ -47,12 +47,12 @@ function buildSeoHead({
     ['meta', { property: 'og:image', content: ogImage }],
     ['meta', { property: 'og:image:width', content: '1200' }],
     ['meta', { property: 'og:image:height', content: '630' }],
-    ['meta', { property: 'og:image:alt', content: 'massCode code snippets workspace in light and dark themes' }],
+    ['meta', { property: 'og:image:alt', content: 'massCode developer workspace with Notes, Code with the AI assistant, and Drawings' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
     ['meta', { name: 'twitter:title', content: pageTitle }],
     ['meta', { name: 'twitter:description', content: pageDescription }],
     ['meta', { name: 'twitter:image', content: ogImage }],
-    ['meta', { name: 'twitter:image:alt', content: 'massCode code snippets workspace in light and dark themes' }],
+    ['meta', { name: 'twitter:image:alt', content: 'massCode developer workspace with Notes, Code with the AI assistant, and Drawings' }],
   ]
 }
 

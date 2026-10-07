@@ -1,5 +1,6 @@
 import { swagger } from '@elysiajs/swagger'
 import { Elysia } from 'elysia'
+import { isIntegrationTokenAuthorized } from './integrations/auth'
 import { createMcpRoute } from './mcp/route'
 import captures from './routes/captures'
 import folders from './routes/folders'
@@ -21,6 +22,8 @@ import tags from './routes/tags'
 import { isSessionTokenAuthorized } from './sessionAuth'
 
 const CAPTURE_PATHS = new Set(['/captures', '/captures/'])
+const SNIPPETS_PATH_RE = /^\/snippets\/?$/
+const SNIPPET_PATH_RE = /^\/snippets\/\d+\/?$/
 const CAPTURE_CORS_HEADERS = {
   'access-control-allow-headers': 'Authorization, Content-Type',
   'access-control-allow-methods': 'POST, OPTIONS',
@@ -55,6 +58,19 @@ function isSwaggerRequest(method: string, pathname: string): boolean {
 function isCaptureRequest(method: string, pathname: string): boolean {
   return (
     (method === 'POST' || method === 'OPTIONS') && CAPTURE_PATHS.has(pathname)
+  )
+}
+
+// Внешние расширения (Raycast, VS Code) не знают session token, поэтому
+// чтение сниппетов доступно и по Integration API token. Создание сниппетов
+// расширения выполняют через /captures.
+function isIntegrationSnippetsRequest(
+  method: string,
+  pathname: string,
+): boolean {
+  return (
+    method === 'GET'
+    && (SNIPPETS_PATH_RE.test(pathname) || SNIPPET_PATH_RE.test(pathname))
   )
 }
 
@@ -93,15 +109,21 @@ export function createApiApp(
           return
         }
 
-        if (
-          !isSessionTokenAuthorized(
-            request.headers.get('authorization') ?? undefined,
-            sessionToken,
-          )
-        ) {
-          set.status = 401
-          return { message: 'Unauthorized request' }
+        const authorization = request.headers.get('authorization') ?? undefined
+
+        if (isSessionTokenAuthorized(authorization, sessionToken)) {
+          return
         }
+
+        if (
+          isIntegrationSnippetsRequest(request.method, url.pathname)
+          && isIntegrationTokenAuthorized(authorization)
+        ) {
+          return
+        }
+
+        set.status = 401
+        return { message: 'Unauthorized request' }
       },
     })
     .use(

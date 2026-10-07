@@ -3,6 +3,15 @@ import { createApiApp } from '../app'
 
 const context = vi.hoisted(() => ({
   getVaultPath: vi.fn(() => '/test-vault'),
+  snippets: {
+    createSnippet: vi.fn(),
+    createSnippetContent: vi.fn(),
+    deleteSnippet: vi.fn(),
+    getSnippetById: vi.fn(() => null),
+    getSnippets: vi.fn(() => []),
+    getSnippetsCounts: vi.fn(() => ({ total: 0, trash: 0 })),
+    updateSnippet: vi.fn(),
+  },
   isIntegrationTokenAuthorized: vi.fn(
     (authorization?: string) => authorization === 'Bearer integration-token',
   ),
@@ -10,6 +19,10 @@ const context = vi.hoisted(() => ({
 
 vi.mock('../../storage/providers/markdown/runtime/paths', () => ({
   getVaultPath: context.getVaultPath,
+}))
+
+vi.mock('../../storage', () => ({
+  useStorage: () => ({ snippets: context.snippets }),
 }))
 
 vi.mock('../../store', () => ({
@@ -46,6 +59,7 @@ describe('local API security policy', () => {
   beforeEach(() => {
     context.getVaultPath.mockClear()
     context.isIntegrationTokenAuthorized.mockClear()
+    Object.values(context.snippets).forEach(fn => fn.mockClear())
   })
 
   it.each([`localhost:${port}`, `127.0.0.1:${port}`, `LOCALHOST:${port}`])(
@@ -123,6 +137,74 @@ describe('local API security policy', () => {
 
     expect(response.status).toBe(401)
     expect(context.getVaultPath).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['GET', '/snippets', 200],
+    ['GET', '/snippets/1', 404],
+  ])(
+    'accepts an Integration API token on %s %s for external extensions',
+    async (method, pathname, status) => {
+      const app = createApiApp({ port, sessionToken, version: 'test' })
+      const response = await app.handle(
+        request(pathname, {
+          headers: { authorization: 'Bearer integration-token' },
+          method,
+        }),
+      )
+
+      expect(response.status).toBe(status)
+    },
+  )
+
+  // Тело должно проходить валидацию DTO, иначе Elysia ответит 422 до guard.
+  it.each([
+    ['GET', '/snippets/abc', undefined],
+    ['GET', '/snippets/counts', undefined],
+    ['POST', '/snippets', { name: 'test' }],
+    [
+      'POST',
+      '/snippets/1/contents',
+      { label: 'a', language: 'plain_text', value: 'b' },
+    ],
+    ['PATCH', '/snippets/1', {}],
+    ['DELETE', '/snippets/1', {}],
+    ['DELETE', '/snippets/trash', {}],
+  ])(
+    'rejects an Integration API token on %s %s',
+    async (method, pathname, body) => {
+      const app = createApiApp({ port, sessionToken, version: 'test' })
+      const response = await app.handle(
+        request(pathname, {
+          body: body ? JSON.stringify(body) : undefined,
+          headers: {
+            'authorization': 'Bearer integration-token',
+            'content-type': 'application/json',
+          },
+          method,
+        }),
+      )
+
+      expect(response.status).toBe(401)
+      expect(context.snippets.getSnippetById).not.toHaveBeenCalled()
+      expect(context.snippets.getSnippetsCounts).not.toHaveBeenCalled()
+      expect(context.snippets.createSnippet).not.toHaveBeenCalled()
+      expect(context.snippets.createSnippetContent).not.toHaveBeenCalled()
+      expect(context.snippets.updateSnippet).not.toHaveBeenCalled()
+      expect(context.snippets.deleteSnippet).not.toHaveBeenCalled()
+    },
+  )
+
+  it('rejects snippet routes without a valid token', async () => {
+    const app = createApiApp({ port, sessionToken, version: 'test' })
+    const response = await app.handle(
+      request('/snippets', {
+        headers: { authorization: 'Bearer invalid' },
+      }),
+    )
+
+    expect(response.status).toBe(401)
+    expect(context.snippets.getSnippets).not.toHaveBeenCalled()
   })
 
   it('leaves Swagger GET and HEAD public but not non-read methods', async () => {

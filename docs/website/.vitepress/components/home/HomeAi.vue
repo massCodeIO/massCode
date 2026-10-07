@@ -74,9 +74,10 @@ const workflows = [
       <div>
         <h3>Your choice of model.</h3>
         <p>
-          Connect OpenAI, Anthropic, Gemini, DeepSeek, Mistral, or xAI with your
-          own API key. Or use a model running on your computer with Ollama or LM
-          Studio. Cloud API usage is billed by your provider.
+          Connect OpenAI, Anthropic, Gemini, DeepSeek, Mistral, xAI, or
+          OpenRouter with your own API key. Or use a model running on your
+          computer with Ollama or LM Studio. Cloud API usage is billed by your
+          provider.
         </p>
       </div>
       <div>

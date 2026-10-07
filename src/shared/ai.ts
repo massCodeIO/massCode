@@ -19,6 +19,7 @@ export const aiProviderSchema = z.enum([
   'deepseek',
   'mistral',
   'xai',
+  'openrouter',
   'ollama',
   'lmstudio',
 ])
@@ -30,6 +31,7 @@ export const AI_DEFAULT_URLS: Record<AiProvider, string> = {
   deepseek: 'https://api.deepseek.com/v1',
   mistral: 'https://api.mistral.ai/v1',
   xai: 'https://api.x.ai/v1',
+  openrouter: 'https://openrouter.ai/api/v1',
   ollama: 'http://localhost:11434/v1',
   lmstudio: 'http://localhost:1234/v1',
 }

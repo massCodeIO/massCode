@@ -7,6 +7,7 @@ import { createDeepSeek } from '@ai-sdk/deepseek'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createMistral } from '@ai-sdk/mistral'
 import { createXai } from '@ai-sdk/xai'
+import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import {
   APICallError,
   EmptyResponseBodyError,
@@ -84,6 +85,41 @@ export function sdkMessages(
   })
 }
 
+function sdkModel(
+  connection: AiConnection,
+  config: { apiKey: string, baseURL: string, fetch: typeof fetch },
+) {
+  switch (connection.provider) {
+    case 'anthropic':
+      return createAnthropic(config)(connection.model)
+    case 'gemini':
+      return createGoogleGenerativeAI(config)(connection.model)
+    case 'deepseek':
+      return createDeepSeek(config)(connection.model)
+    case 'mistral':
+      return createMistral(config)(connection.model)
+    case 'openrouter':
+      return createOpenRouter({
+        ...config,
+        compatibility: 'strict',
+        appName: 'massCode',
+        appUrl: 'https://masscode.io',
+      })(connection.model)
+    case 'xai':
+      return createXai(config)(connection.model)
+    case 'openai':
+    case 'ollama':
+    case 'lmstudio':
+    case undefined:
+      throw new AiError('invalidRequest')
+    default: {
+      // A provider added to the schema without an SDK model fails typecheck here.
+      const unhandled: never = connection.provider
+      throw new AiError('invalidRequest', unhandled)
+    }
+  }
+}
+
 export async function generateSdkResponse(
   connection: AiConnection,
   options: Parameters<typeof generateAiResponse>[1],
@@ -141,16 +177,7 @@ export async function generateSdkResponse(
     baseURL: connection.baseURL,
     fetch: guardedFetch,
   }
-  const model
-    = connection.provider === 'anthropic'
-      ? createAnthropic(config)(connection.model)
-      : connection.provider === 'gemini'
-        ? createGoogleGenerativeAI(config)(connection.model)
-        : connection.provider === 'deepseek'
-          ? createDeepSeek(config)(connection.model)
-          : connection.provider === 'mistral'
-            ? createMistral(config)(connection.model)
-            : createXai(config)(connection.model)
+  const model = sdkModel(connection, config)
   const tools: ToolSet = Object.fromEntries(
     (options.tools ?? []).map(({ function: fn }) => [
       fn.name,
@@ -202,11 +229,15 @@ export async function generateSdkResponse(
     )
     if (!assistant || typeof assistant.content === 'string')
       throw new AiError('invalidResponse')
+    // Providers may leave undefined-valued keys (e.g. OpenRouter merged
+    // reasoning_details without signature) that z.json() rejects.
     const replay = aiSdkReplaySchema.parse({
       provider: connection.provider,
       model: connection.model,
-      content: assistant.content,
-      providerOptions: assistant.providerOptions,
+      content: JSON.parse(JSON.stringify(assistant.content)),
+      providerOptions:
+        assistant.providerOptions
+        && JSON.parse(JSON.stringify(assistant.providerOptions)),
     })
     const calls: AiProtocolCall[] = replay.content.flatMap(part =>
       part.type === 'tool-call'
@@ -260,7 +291,7 @@ export async function generateSdkResponse(
       throw new AiError(
         status === 401 || status === 403
           ? 'authentication'
-          : status === 429
+          : status === 429 || status === 402
             ? 'rateLimit'
             : status === 404
               ? 'modelUnavailable'

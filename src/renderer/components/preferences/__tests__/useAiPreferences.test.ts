@@ -123,6 +123,28 @@ describe('aI preferences persistence', () => {
     scope.stop()
   })
 
+  it('reports a rejected key after persisting the connection', async () => {
+    const { ui, settings, scope } = await setup()
+    ui.apiKey.value = 'invalid-key'
+    mocks.invoke
+      .mockResolvedValueOnce({ ok: true, data: settings.value })
+      .mockResolvedValueOnce({ ok: false, error: 'authentication' })
+    await ui.save('connection')
+    expect(mocks.sonner).toHaveBeenCalledWith({
+      type: 'error',
+      message: 'ai.savedKeyRejected',
+    })
+    expect(mocks.finish).toHaveBeenLastCalledWith(
+      undefined,
+      expect.objectContaining({
+        persisted: true,
+        profile: expect.objectContaining({ connectionCheck: 'failed' }),
+      }),
+      false,
+    )
+    scope.stop()
+  })
+
   it('reports discovery failure separately after persisting the connection', async () => {
     const { ui, settings, scope } = await setup()
     ui.provider.value = 'ollama'

@@ -180,6 +180,7 @@ beforeEach(() => {
         properties: {},
         folderId: null,
         isDeleted: 0,
+        isFavorites: 0,
       },
     ]
     state.folders[space] = [{ id: 3, name: 'Folder', parentId: null }]
@@ -489,9 +490,95 @@ it('paginates within a selected folder and excludes trash', () => {
   })
   expect(last.items).toHaveLength(4)
   expect(last.nextOffset).toBeNull()
-  expect(workspaceInventory({ space: 'http', folderId: null }).items).toEqual(
-    [],
+  expect(
+    workspaceInventory({ space: 'http', folderId: 'inbox' }).items,
+  ).toEqual([])
+})
+
+it('filters inventory by folder, inbox or all folders', () => {
+  state.records.code = [1, 2, null].map((folderId, index) => ({
+    id: index + 1,
+    name: `Snippet ${index}`,
+    folder: folderId === null ? null : { id: folderId, name: 'Folder' },
+    isDeleted: 0,
+  }))
+  const ids = (input: object) =>
+    workspaceInventory({ space: 'code', ...input }).items.map(
+      item => item.id,
+    )
+  expect(ids({ folderId: null })).toEqual([1, 2, 3])
+  expect(ids({})).toEqual([1, 2, 3])
+  expect(ids({ folderId: 'inbox' })).toEqual([3])
+  expect(ids({ folderId: 1 })).toEqual([1])
+  expect(
+    workspaceInventory({ space: 'code', folderId: 'inbox' }).items[0].folderId,
+  ).toBeNull()
+})
+
+it('rejects task filters outside Notes with a recoverable hint', () => {
+  expect(() => workspaceInventory({ space: 'code', taskType: 'task' })).toThrow(
+    'TASK_FILTER_NOTES_ONLY',
   )
+  expect(() =>
+    workspaceInventory({ space: 'http', taskStatus: 'todo' }),
+  ).toThrow('TASK_FILTER_NOTES_ONLY')
+  expect(workspaceToolError(new Error('TASK_FILTER_NOTES_ONLY'))).toMatchObject(
+    {
+      error: 'TASK_FILTER_NOTES_ONLY',
+      hint: expect.stringContaining('Notes'),
+    },
+  )
+  state.records.http!.push({
+    ...state.records.http![0],
+    id: 4,
+    name: 'Favorite',
+    isFavorites: 1,
+  })
+  expect(
+    workspaceInventory({ space: 'http', isFavorites: false }).items.map(
+      item => item.id,
+    ),
+  ).toEqual([1])
+})
+
+it('treats null inventory filters as no filter', () => {
+  const unfiltered = {
+    status: 'active',
+    isFavorites: null,
+    taskType: null,
+    taskStatus: null,
+    offset: 0,
+  }
+  const ids = (input: object) =>
+    workspaceInventory(input).items.map(item => item.id)
+  expect(ids({ space: 'code', ...unfiltered })).toEqual([1])
+  expect(ids({ space: 'http', ...unfiltered })).toEqual([1])
+  state.records.http!.push({
+    ...state.records.http![0],
+    id: 4,
+    name: 'Favorite',
+    isFavorites: 1,
+  })
+  expect(ids({ space: 'http', isFavorites: null })).toEqual([1, 4])
+  expect(ids({ space: 'http', isFavorites: false })).toEqual([1])
+  state.records.notes!.push({
+    ...state.records.notes![0],
+    id: 5,
+    name: 'Task',
+    properties: { type: 'task', status: 'todo' },
+  })
+  expect(
+    ids({
+      space: 'notes',
+      taskType: 'task',
+      taskStatus: null,
+      isFavorites: null,
+    }),
+  ).toEqual([5])
+  expect(ids({ space: 'notes', ...unfiltered, folderId: null })).toEqual([
+    1,
+    5,
+  ])
 })
 
 it('redacts secret fields from model reads and rejects placeholders in writes', () => {

@@ -18,6 +18,7 @@ import {
   streamText,
   TypeValidationError,
 } from 'ai'
+import { ZodError } from 'zod'
 import { AI_LIMITS, aiProtocolCallSchema } from '../../shared/ai'
 import { aiSdkReplaySchema } from '../../shared/aiSdkReplay'
 import { AiError } from './errors'
@@ -218,9 +219,15 @@ export async function generateSdkResponse(
     }
     signal.throwIfAborted()
     const reason = await result.finishReason
+    if (reason === 'length')
+      throw new AiError('outputLimit')
     if (!['stop', 'tool-calls'].includes(reason)) {
+      const raw = await result.rawFinishReason
       throw new AiError(
-        reason === 'length' ? 'outputLimit' : 'invalidResponse',
+        'invalidResponse',
+        raw && /^[\w.-]{1,32}$/.test(raw)
+          ? `finish:${reason}:${raw}`
+          : `finish:${reason}`,
       )
     }
     const response = await result.response
@@ -228,7 +235,7 @@ export async function generateSdkResponse(
       message => message.role === 'assistant',
     )
     if (!assistant || typeof assistant.content === 'string')
-      throw new AiError('invalidResponse')
+      throw new AiError('invalidResponse', 'noAssistantMessage')
     // Providers may leave undefined-valued keys (e.g. OpenRouter merged
     // reasoning_details without signature) that z.json() rejects.
     const replay = aiSdkReplaySchema.parse({
@@ -253,14 +260,18 @@ export async function generateSdkResponse(
           ]
         : [],
     )
-    if (
-      calls.length > 8
-      || new Set(calls.map(call => call.id)).size !== calls.length
-    ) {
-      throw new AiError('invalidResponse')
+    if (calls.length > AI_LIMITS.toolCalls)
+      throw new AiError('invalidResponse', `toolCalls:${calls.length}`)
+    if (new Set(calls.map(call => call.id)).size !== calls.length)
+      throw new AiError('invalidResponse', 'duplicateToolCallIds')
+    if (!answer && !calls.length) {
+      throw new AiError(
+        'invalidResponse',
+        replay.content.some(part => part.type === 'reasoning')
+          ? 'emptyResponse:reasoningOnly'
+          : 'emptyResponse',
+      )
     }
-    if (!answer && !calls.length)
-      throw new AiError('invalidResponse')
     connection.trace?.event(
       'request.complete',
       {
@@ -274,47 +285,58 @@ export async function generateSdkResponse(
     return { answer, calls, replay, usage: undefined }
   }
   catch (error) {
+    const failure = sdkFailure(error, options.signal)
     connection.trace?.event(
       options.signal.aborted ? 'request.cancelled' : 'request.error',
       {
         span,
         durationMs: Date.now() - started,
-        code: error instanceof AiError ? error.code : 'upstream',
+        code: failure?.code ?? 'upstream',
+        diagnostic: failure?.diagnostic,
       },
     )
-    if (error instanceof AiError)
-      throw error
-    if (APICallError.isInstance(error)) {
-      const status = error.statusCode
-      if (status === undefined)
-        throw new AiError('connection')
-      throw new AiError(
-        status === 401 || status === 403
-          ? 'authentication'
-          : status === 429 || status === 402
-            ? 'rateLimit'
-            : status === 404
-              ? 'modelUnavailable'
-              : 'upstream',
-        status ? `HTTP ${status}` : undefined,
-      )
-    }
-    if (options.signal.aborted)
+    if (!failure)
       options.signal.throwIfAborted()
-    if (error instanceof TypeError)
-      throw new AiError('connection')
-    if (
-      InvalidResponseDataError.isInstance(error)
-      || JSONParseError.isInstance(error)
-      || TypeValidationError.isInstance(error)
-      || EmptyResponseBodyError.isInstance(error)
-      || NoContentGeneratedError.isInstance(error)
-    ) {
-      throw new AiError('invalidResponse')
-    }
-    throw new AiError('upstream')
+    throw failure ?? new AiError('upstream')
   }
   finally {
     controller.abort()
   }
+}
+
+// Diagnostic содержит только машинные коды: без текста ответа и message ошибок.
+function sdkFailure(error: unknown, signal: AbortSignal): AiError | undefined {
+  if (error instanceof AiError)
+    return error
+  if (APICallError.isInstance(error)) {
+    const status = error.statusCode
+    if (status === undefined)
+      return new AiError('connection')
+    return new AiError(
+      status === 401 || status === 403
+        ? 'authentication'
+        : status === 429 || status === 402
+          ? 'rateLimit'
+          : status === 404
+            ? 'modelUnavailable'
+            : 'upstream',
+      status ? `HTTP ${status}` : undefined,
+    )
+  }
+  if (signal.aborted)
+    return undefined
+  if (error instanceof TypeError)
+    return new AiError('connection')
+  if (
+    InvalidResponseDataError.isInstance(error)
+    || JSONParseError.isInstance(error)
+    || TypeValidationError.isInstance(error)
+    || EmptyResponseBodyError.isInstance(error)
+    || NoContentGeneratedError.isInstance(error)
+  ) {
+    return new AiError('invalidResponse', `sdk:${error.name}`)
+  }
+  if (error instanceof ZodError)
+    return new AiError('upstream', 'replaySchema')
+  return new AiError('upstream')
 }

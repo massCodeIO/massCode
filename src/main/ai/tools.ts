@@ -1,5 +1,5 @@
 import type { AiToolCall } from '../../shared/ai'
-import { aiProposalSchema, aiToolCallSchema } from '../../shared/ai'
+import { AI_LIMITS, aiProposalSchema, aiToolCallSchema } from '../../shared/ai'
 import { AiError } from './errors'
 
 // Some chat templates parse historical arguments as JSON before generation.
@@ -57,7 +57,7 @@ export function validateToolCalls(
   calls: unknown[],
   contextId?: string,
 ): AiToolCall[] {
-  if (!contextId || calls.length > 8)
+  if (!contextId || calls.length > AI_LIMITS.toolCalls)
     throw new AiError('invalidResponse')
   try {
     const ids = new Set<string>()

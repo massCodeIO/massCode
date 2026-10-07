@@ -83,7 +83,7 @@ export function buildAiInstructions(toolNames: string[], remaining?: number) {
   }
   if (toolNames.includes('read_current_workspace')) {
     sections.push(
-      'Use read_current_workspace to resolve the captured selection, folder and library. Selection is a list of IDs, not a copy of every item. Inventory supports taskType/taskStatus/isFavorites and returns properties. A workspace review holds at most 30 operations: finish each reviewed batch and report any remainder explicitly. Notes tags can be created or renamed with kind tag; Code tags have no rename operation. Code folders support defaultLanguage.',
+      'Use read_current_workspace to resolve the captured selection, folder and library. Selection is a list of IDs, not a copy of every item. Inventory returns properties; pass isFavorites, and for Notes only taskType/taskStatus, only when the user explicitly requested that filter. A workspace review holds at most 30 operations: finish each reviewed batch and report any remainder explicitly. Notes tags can be created or renamed with kind tag; Code tags have no rename operation. Code folders support defaultLanguage.',
     )
   }
   if (toolNames.includes('perform_native_action')) {

@@ -190,6 +190,92 @@ it('openrouter keeps unsigned reasoning when the answer has no tool call', async
   expect(result.calls).toEqual([])
   expect(JSON.stringify(result.replay)).toContain('Думаю дальше')
 })
+function openRouterToolCalls(count: number) {
+  const chunk = (delta: object, finish_reason: string | null = null) => ({
+    id: 'msg1',
+    model: 'test',
+    created: 1,
+    choices: [{ index: 0, delta, finish_reason }],
+  })
+  const wire = [
+    chunk({ role: 'assistant', content: 'Секретный ответ' }),
+    ...Array.from({ length: count }, (_, index) =>
+      chunk({
+        tool_calls: [
+          {
+            index,
+            id: `call${index}`,
+            type: 'function',
+            function: { name: 'read_http_context', arguments: '{}' },
+          },
+        ],
+      })),
+    chunk({}, 'tool_calls'),
+  ]
+    .map(event => `data: ${JSON.stringify(event)}\n\n`)
+    .join('')
+  return new Response(`${wire}data: [DONE]\n\n`, {
+    headers: { 'content-type': 'text/event-stream' },
+  })
+}
+it('openrouter accepts more than eight tool calls in one response', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => openRouterToolCalls(9)),
+  )
+  const result = await generateAiResponse(
+    {
+      provider: 'openrouter',
+      baseURL: AI_DEFAULT_URLS.openrouter,
+      model: 'test',
+      apiKey: 'synthetic',
+    },
+    {
+      instructions: 'test',
+      messages: [{ role: 'user', content: 'hello' }],
+      tools: [tool],
+      signal: new AbortController().signal,
+      onDelta: () => {},
+      operation: 'test',
+    },
+  )
+  expect(result.calls).toHaveLength(9)
+})
+it('openrouter rejects too many tool calls with a content-free diagnostic', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => openRouterToolCalls(17)),
+  )
+  const event = vi.fn()
+  await expect(
+    generateAiResponse(
+      {
+        provider: 'openrouter',
+        baseURL: AI_DEFAULT_URLS.openrouter,
+        model: 'test',
+        apiKey: 'synthetic',
+        trace: { nextSpan: () => 1, event },
+      },
+      {
+        instructions: 'test',
+        messages: [{ role: 'user', content: 'hello' }],
+        tools: [tool],
+        signal: new AbortController().signal,
+        onDelta: () => {},
+        operation: 'test',
+      },
+    ),
+  ).rejects.toMatchObject({
+    code: 'invalidResponse',
+    diagnostic: 'toolCalls:17',
+  })
+  const failure = event.mock.calls.find(([name]) => name === 'request.error')
+  expect(failure?.[1]).toMatchObject({
+    code: 'invalidResponse',
+    diagnostic: 'toolCalls:17',
+  })
+  expect(JSON.stringify(failure)).not.toContain('Секретный ответ')
+})
 it.each(providers)(
   '%s maps exhausted credits to the quota error',
   async (provider) => {
@@ -565,9 +651,26 @@ it.each(providers)(
           operation: 'test',
         },
       ),
-    ).rejects.toMatchObject({ code: 'invalidResponse' })
+    ).rejects.toMatchObject({
+      code: 'invalidResponse',
+      diagnostic: expect.stringMatching(/^(finish:|emptyResponse)/),
+    })
   },
 )
+
+it('accepts assistant messages with more than eight tool calls', () => {
+  const message = (count: number) => ({
+    role: 'assistant',
+    content: '',
+    tool_calls: Array.from({ length: count }, (_, index) => ({
+      id: `call${index}`,
+      type: 'function',
+      function: { name: 'read_http_context', arguments: '{}' },
+    })),
+  })
+  expect(aiMessageSchema.safeParse(message(9)).success).toBe(true)
+  expect(aiMessageSchema.safeParse(message(17)).success).toBe(false)
+})
 
 it('replays malformed arguments with their failure result instead of crashing JSON parsing', () => {
   const message = aiMessageSchema.parse({

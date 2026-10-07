@@ -179,7 +179,7 @@ export async function readResponsesStream(
         : [],
     )
     if (
-      calls.length > 8
+      calls.length > AI_LIMITS.toolCalls
       || new Set(calls.map(call => call.id)).size !== calls.length
     ) {
       throw new AiError('invalidResponse')

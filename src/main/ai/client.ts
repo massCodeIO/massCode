@@ -50,7 +50,11 @@ const chunkSchema = z.object({
           tool_calls: z
             .array(
               z.object({
-                index: z.number().int().min(0).max(7),
+                index: z
+                  .number()
+                  .int()
+                  .min(0)
+                  .max(AI_LIMITS.toolCalls - 1),
                 id: z.string().optional(),
                 type: z.literal('function').optional(),
                 function: z
@@ -61,7 +65,7 @@ const chunkSchema = z.object({
                   .optional(),
               }),
             )
-            .max(8)
+            .max(AI_LIMITS.toolCalls)
             .optional(),
           content: z.string().nullable().optional(),
           refusal: z.string().nullable().optional(),

@@ -46,6 +46,7 @@ export const AI_LIMITS = {
   outputBytes: 1024 * 1024,
   eventBytes: 256 * 1024,
   timeoutMs: 10 * 60 * 1000,
+  toolCalls: 16,
 } as const
 
 export const aiConfigureSchema = z
@@ -102,7 +103,11 @@ export const aiMessageSchema = z
   .object({
     role: z.enum(['user', 'assistant', 'tool']),
     content: z.string().max(AI_LIMITS.inputBytes),
-    tool_calls: z.array(aiProtocolCallSchema).min(1).max(8).optional(),
+    tool_calls: z
+      .array(aiProtocolCallSchema)
+      .min(1)
+      .max(AI_LIMITS.toolCalls)
+      .optional(),
     tool_call_id: z.string().min(1).max(256).optional(),
     openaiResponse: aiResponseReplaySchema.optional(),
     sdkResponse: aiSdkReplaySchema.optional(),

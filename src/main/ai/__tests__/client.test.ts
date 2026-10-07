@@ -181,6 +181,17 @@ describe('streamed tool calls', () => {
     expect(calls).toHaveLength(2)
     expect(calls.map(call => call.function.arguments)).toEqual([args, args])
   })
+  it('accepts up to the tool call limit in one response', async () => {
+    const calls = await readAiStream(
+      stream([
+        ...Array.from({ length: AI_LIMITS.toolCalls }, (_, index) =>
+          toolDelta(index, args, true)),
+        toolFinish,
+      ]),
+      () => {},
+    )
+    expect(calls).toHaveLength(AI_LIMITS.toolCalls)
+  })
   it('rejects calls without a successful finish and limits tool bytes', async () => {
     await expect(
       readAiStream(

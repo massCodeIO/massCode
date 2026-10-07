@@ -23,8 +23,8 @@
   "error": {
   },
   "description": {
-    "storageVault": "Choose the vault directory. To sync between devices, select a folder in iCloud Drive, Google Drive or Dropbox.",
-    "language": "To apply language changes, you need to reload the app."
+    "storageVault": "Choisissez le répertoire du coffre-fort. Pour synchroniser entre les appareils, sélectionnez un dossier dans iCloud Drive, Google Drive ou Dropbox.",
+    "language": "Pour appliquer les changements de langue, vous devez relancer l'application."
   },
   "special": {
     "unsponsored": "Non sponsorisé"
@@ -34,4 +34,4 @@
     "available": "La version {{newVersion}} est maintenant disponible au téléchargement.\nVotre version est {{oldVersion}}.",
     "noAvailable": "Il n'y a actuellement aucune mise à jour disponible."
   }
-}
+ }

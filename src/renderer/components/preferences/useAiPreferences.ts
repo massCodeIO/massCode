@@ -129,22 +129,29 @@ export function useAiPreferences() {
       const result = (await ipc.invoke('system:ai:models', null)) as AiResult<
         string[]
       >
-      if (!result.ok)
-        throw new Error(i18n.t(`ai.errors.${result.error}`))
+      if (!result.ok) {
+        sonner({
+          type: 'error',
+          message: !afterSave
+            ? i18n.t(`ai.errors.${result.error}`)
+            : result.error === 'authentication'
+              ? i18n.t('ai.savedKeyRejected')
+              : i18n.t('ai.savedModelsFailed'),
+        })
+        return false
+      }
       if (settings.value)
         settings.value.profiles[provider.value].models = result.data
       if (!afterSave)
         sonner({ type: 'success', message: i18n.t('ai.modelsRefreshed') })
       return true
     }
-    catch (error) {
+    catch {
       sonner({
         type: 'error',
-        message: afterSave
-          ? i18n.t('ai.savedModelsFailed')
-          : error instanceof Error
-            ? error.message
-            : i18n.t('ai.errors.connection'),
+        message: i18n.t(
+          afterSave ? 'ai.savedModelsFailed' : 'ai.errors.connection',
+        ),
       })
       return false
     }

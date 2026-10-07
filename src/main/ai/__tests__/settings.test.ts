@@ -206,6 +206,7 @@ it('pins cloud credentials to official provider endpoints', async () => {
     'deepseek',
     'mistral',
     'xai',
+    'openrouter',
   ] as const) {
     expect(() =>
       canonicalAiURL(provider, 'https://unrelated.invalid/v1'),

@@ -16,6 +16,7 @@ Open **Preferences → AI assistant** and choose a provider.
 | Provider | Connection |
 | --- | --- |
 | OpenAI, Anthropic, Google Gemini, DeepSeek, Mistral, xAI | Enter your provider API key. Requests use that provider’s API account and billing. |
+| OpenRouter | Enter your OpenRouter API key. Requests use your OpenRouter account and billing. The model list includes only models with tool calling support; IDs use the `vendor/model` format, for example `anthropic/claude-sonnet-5.5`. |
 | Ollama | Start the server and enter its API address, usually `http://localhost:11434/v1`. |
 | LM Studio | Start its API server and enter the address, usually `http://localhost:1234/v1`. Enter a key if the server requires one. |
 

@@ -1492,7 +1492,8 @@
       "gemini": "Google Gemini",
       "deepseek": "DeepSeek",
       "mistral": "Mistral",
-      "xai": "xAI"
+      "xai": "xAI",
+      "openrouter": "OpenRouter"
     },
     "baseURL": "Адрес сервера",
     "apiKey": "API-ключ",
@@ -1507,6 +1508,7 @@
     "noModelsFound": "Модели не найдены",
     "refreshModels": "Обновить список моделей",
     "savedModelsFailed": "Подключение сохранено, но список моделей не удалось загрузить. Повторите попытку или введите ID модели вручную.",
+    "savedKeyRejected": "Подключение сохранено, но провайдер отклонил API-ключ. Проверьте ключ и сохраните его снова.",
     "chooseFromList": "Выбрать из списка",
     "enterModelId": "Указать ID вручную…",
     "saveConnectionFirst": "Сохраните подключение, чтобы выбрать модель.",

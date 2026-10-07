@@ -94,7 +94,7 @@ export async function checkResponse(response: Response) {
   const code
     = response.status === 401 || response.status === 403
       ? 'authentication'
-      : response.status === 429
+      : response.status === 429 || response.status === 402
         ? 'rateLimit'
         : response.status === 404
           ? 'modelUnavailable'
@@ -205,7 +205,20 @@ export async function listAiModels(
 ): Promise<string[]> {
   if (page >= 20)
     throw new AiError('outputLimit')
+  // OpenRouter serves /models without authentication, so it cannot confirm the key.
+  if (connection.provider === 'openrouter' && !cursor) {
+    const keyResponse = await fetch(`${connection.baseURL}/key`, {
+      headers: headers(connection),
+      redirect: 'error',
+      signal,
+    })
+    await checkResponse(keyResponse)
+    await keyResponse.body?.cancel().catch(() => {})
+  }
   const url = new URL(`${connection.baseURL}/models`)
+  // The full OpenRouter catalog includes models that cannot run the assistant's tools.
+  if (connection.provider === 'openrouter')
+    url.searchParams.set('supported_parameters', 'tools')
   if (cursor) {
     url.searchParams.set(
       connection.provider === 'gemini' ? 'pageToken' : 'after_id',
@@ -249,6 +262,9 @@ export async function listAiModels(
     else {
       const parsed = modelsSchema.parse(JSON.parse(body))
       names = parsed.data.map(model => model.id)
+      // Batch variants are not served by chat completions and fail with 404.
+      if (connection.provider === 'openrouter')
+        names = names.filter(name => !name.endsWith(':batch'))
       if (connection.provider === 'anthropic' && parsed.has_more) {
         if (!parsed.last_id)
           throw new AiError('invalidResponse')

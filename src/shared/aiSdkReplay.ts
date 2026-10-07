@@ -8,7 +8,14 @@ const text = z.string().max(1024 * 1024)
 const id = z.string().min(1).max(256)
 export const aiSdkReplaySchema = z
   .object({
-    provider: z.enum(['anthropic', 'gemini', 'deepseek', 'mistral', 'xai']),
+    provider: z.enum([
+      'anthropic',
+      'gemini',
+      'deepseek',
+      'mistral',
+      'xai',
+      'openrouter',
+    ]),
     model: id,
     content: z
       .array(

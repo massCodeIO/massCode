@@ -1489,7 +1489,8 @@
       "gemini": "Google Gemini",
       "deepseek": "DeepSeek",
       "mistral": "Mistral",
-      "xai": "xAI"
+      "xai": "xAI",
+      "openrouter": "OpenRouter"
     },
     "baseURL": "Server URL",
     "apiKey": "API key",
@@ -1504,6 +1505,7 @@
     "noModelsFound": "No models found",
     "refreshModels": "Refresh models",
     "savedModelsFailed": "Connection saved, but the model list could not be loaded. Retry or enter a model ID manually.",
+    "savedKeyRejected": "Connection saved, but the provider rejected the API key. Check the key and save it again.",
     "chooseFromList": "Choose from list",
     "enterModelId": "Enter model ID manually…",
     "saveConnectionFirst": "Save the connection before choosing a model.",

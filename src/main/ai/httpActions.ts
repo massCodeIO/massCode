@@ -26,6 +26,7 @@ import {
 import { executeOwnedHttpRequest } from '../http/runtime/ownedExecution'
 import { readHttpSession } from '../http/runtime/session'
 import { useHttpStorage } from '../storage'
+import { getVaultPath } from '../storage/providers/markdown/runtime/paths'
 import { store } from '../store'
 import {
   applyHttpAux,
@@ -113,7 +114,7 @@ export function createHttpActionManager(
         runtime ?? db.requests.getRequestById(id)?.runtime ?? undefined,
       ),
       session: readHttpSession(
-        String(vaultIdentity()),
+        getVaultPath(),
         db.environments.getActiveEnvironmentId(),
       ),
     })

@@ -35,6 +35,7 @@ export {
   getVaultPath,
   normalizeDirectoryPath,
   resetPathsCache,
+  vaultIdentity,
 } from './paths'
 
 // Search

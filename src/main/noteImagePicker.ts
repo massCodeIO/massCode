@@ -8,7 +8,10 @@ import {
   getNotesPaths,
   writeNotesAsset,
 } from './storage/providers/markdown/notes/runtime'
-import { getVaultPath } from './storage/providers/markdown/runtime'
+import {
+  getVaultPath,
+  vaultIdentity,
+} from './storage/providers/markdown/runtime'
 import { ensureFlatSpacesLayout } from './storage/providers/markdown/runtime/spaces'
 
 export function writeCapturedNoteImage(
@@ -16,10 +19,11 @@ export function writeCapturedNoteImage(
   buffer: ArrayBuffer,
   ext: string,
 ) {
-  if (typeof vault !== 'string' || getVaultPath() !== vault)
+  if (typeof vault !== 'string' || vaultIdentity() !== vault)
     throw new Error('Stale Notes asset vault')
-  ensureFlatSpacesLayout(vault)
-  return writeNotesAsset(getNotesPaths(vault), buffer, ext)
+  const vaultPath = getVaultPath()
+  ensureFlatSpacesLayout(vaultPath)
+  return writeNotesAsset(getNotesPaths(vaultPath), buffer, ext)
 }
 
 const inputSchema = z
@@ -33,7 +37,7 @@ export async function pickNoteImage(
   parent?: BrowserWindow,
 ): Promise<NoteImagePickerResult> {
   const { vault, source } = inputSchema.parse(input)
-  if (getVaultPath() !== vault)
+  if (vaultIdentity() !== vault)
     return { status: 'stale' }
   if (source === 'clipboardImage') {
     try {
@@ -48,7 +52,7 @@ export async function pickNoteImage(
         bytes.byteOffset + bytes.byteLength,
       ) as ArrayBuffer
       const url = await writeCapturedNoteImage(vault, payload, '.png')
-      return getVaultPath() === vault
+      return vaultIdentity() === vault
         ? { status: 'saved', url, bytes: bytes.length }
         : { status: 'stale' }
     }
@@ -65,7 +69,7 @@ export async function pickNoteImage(
     : await dialog.showOpenDialog(options)
   if (selected.canceled || selected.filePaths.length !== 1)
     return { status: 'cancelled' }
-  if (getVaultPath() !== vault)
+  if (vaultIdentity() !== vault)
     return { status: 'stale' }
   try {
     const path = selected.filePaths[0]
@@ -75,14 +79,14 @@ export async function pickNoteImage(
     const bytes = await readFile(path)
     if (bytes.length > 10 * 1024 * 1024)
       return { status: 'failed' }
-    if (getVaultPath() !== vault)
+    if (vaultIdentity() !== vault)
       return { status: 'stale' }
     const payload = bytes.buffer.slice(
       bytes.byteOffset,
       bytes.byteOffset + bytes.byteLength,
     ) as ArrayBuffer
     const url = await writeCapturedNoteImage(vault, payload, extname(path))
-    return getVaultPath() === vault
+    return vaultIdentity() === vault
       ? { status: 'saved', url, bytes: bytes.length }
       : { status: 'stale' }
   }

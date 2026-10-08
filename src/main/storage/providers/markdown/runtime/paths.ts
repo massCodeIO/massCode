@@ -36,6 +36,13 @@ export function getVaultPath(): string {
   return path.join(storagePath, 'markdown-vault')
 }
 
+// Токен vault для stale-проверок между renderer и main. Renderer видит только
+// сырую настройку, поэтому сравнивать его с getVaultPath() нельзя: при
+// дефолтном vault (null) они расходятся. Как путь в fs не использовать.
+export function vaultIdentity() {
+  return store.preferences.get('storage.vaultPath') ?? ''
+}
+
 interface LegacyStateFolderLike {
   id: number
   name: string

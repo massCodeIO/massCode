@@ -130,7 +130,7 @@ export function httpAuxBaseline(
           ),
         ),
         session: readHttpSession(
-          String(vaultIdentity()),
+          getVaultPath(),
           db.environments.getActiveEnvironmentId(),
         ),
       }
@@ -139,7 +139,7 @@ export function httpAuxBaseline(
       data = {
         record: db.requests.getRequestById(action.requestId),
         session: readHttpSession(
-          String(vaultIdentity()),
+          getVaultPath(),
           db.environments.getActiveEnvironmentId(),
         ),
         folders: db.folders.getFolders(),
@@ -168,7 +168,7 @@ export function httpAuxBaseline(
       break
     case 'clearSession': {
       const session = getHttpSession(
-        String(vaultIdentity()),
+        getVaultPath(),
         db.environments.getActiveEnvironmentId(),
       )
       data = session
@@ -360,7 +360,7 @@ export function prepareHttpAux(
     case 'clearSession':
       snapshot.preview = {
         names: getHttpSession(
-          String(vaultIdentity()),
+          getVaultPath(),
           db.environments.getActiveEnvironmentId(),
         ).names,
         irreversible: true,
@@ -437,7 +437,7 @@ export async function applyHttpAux(
       resetHttpSession()
       return {
         names: getHttpSession(
-          String(vaultIdentity()),
+          getVaultPath(),
           db.environments.getActiveEnvironmentId(),
         ).names,
       }
@@ -605,7 +605,7 @@ export function readHttpAuxState(
     case 'session':
       return {
         names: getHttpSession(
-          String(vaultIdentity()),
+          getVaultPath(),
           db.environments.getActiveEnvironmentId(),
         ).names,
       }

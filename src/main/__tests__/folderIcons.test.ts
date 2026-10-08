@@ -25,7 +25,11 @@ const {
   updateNotesFolder,
 } = vi.hoisted(() => ({
   createFromBuffer: vi.fn(),
-  folderIconValues: { code: null as string | null, vault: '/vault' },
+  folderIconValues: {
+    code: null as string | null,
+    vault: '/vault',
+    identity: undefined as string | undefined,
+  },
   fsMock: {
     lstat: vi.fn(),
     readFile: vi.fn(),
@@ -96,6 +100,7 @@ vi.mock('../storage', () => ({
 vi.mock('../storage/providers/markdown/runtime', () => ({
   getPaths: () => ({ vaultPath: '/vault/code' }),
   getVaultPath: () => folderIconValues.vault,
+  vaultIdentity: () => folderIconValues.identity ?? folderIconValues.vault,
 }))
 
 vi.mock('../storage/providers/markdown/notes', () => ({
@@ -110,6 +115,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   folderIconValues.code = null
   folderIconValues.vault = '/vault'
+  folderIconValues.identity = undefined
   fsMock.realpathSync.mockImplementation((value: string) => value)
   getFileAvailability.mockReturnValue({
     exists: false,
@@ -557,5 +563,33 @@ describe('native folder icon task Undo', () => {
         icon: null,
       }),
     ).toEqual({ status: 'stale' })
+  })
+  it('accepts the default vault identity and binds the receipt to the resolved path', async () => {
+    folderIconValues.vault = '/root/markdown-vault'
+    folderIconValues.identity = ''
+    const changed = await changeFolderIconWithUndo({
+      spaceId: 'code',
+      folderId: 1,
+      vault: '',
+      icon: 'emoji:📁',
+    })
+    if (changed.status !== 'done')
+      throw new Error('missing receipt')
+    expect(await undoFolderIconChange(changed.receiptId)).toEqual({
+      undone: true,
+    })
+    expect(folderIconValues.code).toBeNull()
+    const next = await changeFolderIconWithUndo({
+      spaceId: 'code',
+      folderId: 1,
+      vault: '',
+      icon: 'emoji:🌲',
+    })
+    if (next.status !== 'done')
+      throw new Error('missing receipt')
+    folderIconValues.vault = '/root/other-vault'
+    expect(await undoFolderIconChange(next.receiptId)).toEqual({
+      undone: false,
+    })
   })
 })

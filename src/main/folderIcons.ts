@@ -14,7 +14,11 @@ import { useHttpStorage, useNotesStorage, useStorage } from './storage'
 import { prioritizeCloudDownload } from './storage/providers/markdown/cloudDownloads'
 import { getHttpPaths } from './storage/providers/markdown/http'
 import { getNotesPaths } from './storage/providers/markdown/notes'
-import { getPaths, getVaultPath } from './storage/providers/markdown/runtime'
+import {
+  getPaths,
+  getVaultPath,
+  vaultIdentity,
+} from './storage/providers/markdown/runtime'
 import { rememberAppFileChange } from './storage/providers/markdown/runtime/shared/appChanges'
 import { getFileAvailability } from './storage/providers/markdown/runtime/shared/cloudFiles'
 import { buildFolderPathMap } from './storage/providers/markdown/runtime/shared/folderIndex'
@@ -514,11 +518,11 @@ export async function changeFolderIconWithUndo(
   if (
     !target
     || typeof input.vault !== 'string'
-    || input.vault !== getVaultPath()
+    || input.vault !== vaultIdentity()
   ) {
     return { status: 'stale' as const }
   }
-  const vault = input.vault
+  const vault = getVaultPath()
   let mutation = parseFolderIconSetPayload(payload) as
     | FolderIconSetPayload
     | FolderIconWritePayload

@@ -4,6 +4,8 @@ import { pickNoteImage, writeCapturedNoteImage } from '../noteImagePicker'
 
 const mock = vi.hoisted(() => ({
   vault: '/vault',
+  identity: undefined as string | undefined,
+  ensureLayout: vi.fn(),
   dialog: vi.fn(),
   stat: vi.fn(),
   read: vi.fn(),
@@ -17,9 +19,10 @@ vi.mock('electron', () => ({
 vi.mock('fs-extra', () => ({ lstat: mock.stat, readFile: mock.read }))
 vi.mock('../storage/providers/markdown/runtime', () => ({
   getVaultPath: () => mock.vault,
+  vaultIdentity: () => mock.identity ?? mock.vault,
 }))
 vi.mock('../storage/providers/markdown/runtime/spaces', () => ({
-  ensureFlatSpacesLayout: vi.fn(),
+  ensureFlatSpacesLayout: mock.ensureLayout,
 }))
 vi.mock('../storage/providers/markdown/notes/runtime', () => ({
   getNotesPaths: (vault: string) => ({ root: vault }),
@@ -28,6 +31,7 @@ vi.mock('../storage/providers/markdown/notes/runtime', () => ({
 beforeEach(() => {
   vi.resetAllMocks()
   mock.vault = '/vault'
+  mock.identity = undefined
   mock.dialog.mockResolvedValue({
     canceled: false,
     filePaths: ['/chosen/image.png'],
@@ -126,12 +130,10 @@ it('captures only the clipboard image as a PNG through the existing asset writer
   )
 })
 it('rejects empty or oversized clipboard images without writing assets', async () => {
-  mock.image
-    .mockReturnValueOnce({ isEmpty: () => true })
-    .mockReturnValueOnce({
-      isEmpty: () => false,
-      toPNG: () => Buffer.alloc(10 * 1024 * 1024 + 1),
-    })
+  mock.image.mockReturnValueOnce({ isEmpty: () => true }).mockReturnValueOnce({
+    isEmpty: () => false,
+    toPNG: () => Buffer.alloc(10 * 1024 * 1024 + 1),
+  })
   expect(
     await pickNoteImage({ vault: '/vault', source: 'clipboardImage' }),
   ).toEqual({ status: 'failed' })
@@ -156,4 +158,27 @@ it('rejects stale clipboard captures before reading and after an asynchronous as
   expect(
     await pickNoteImage({ vault: '/vault', source: 'clipboardImage' }),
   ).toEqual({ status: 'stale' })
+})
+it('accepts the default vault identity and writes into the resolved vault path', async () => {
+  mock.vault = '/root/markdown-vault'
+  mock.identity = ''
+  await writeCapturedNoteImage('', new ArrayBuffer(3), '.png')
+  expect(mock.ensureLayout).toHaveBeenCalledWith('/root/markdown-vault')
+  expect(mock.write).toHaveBeenCalledWith(
+    { root: '/root/markdown-vault' },
+    expect.any(ArrayBuffer),
+    '.png',
+  )
+  expect(() =>
+    writeCapturedNoteImage('/root/markdown-vault', new ArrayBuffer(3), '.png'),
+  ).toThrow('Stale')
+  mock.image.mockReturnValue({
+    isEmpty: () => false,
+    toPNG: () => Buffer.from([1]),
+  })
+  expect(await pickNoteImage({ vault: '', source: 'clipboardImage' })).toEqual({
+    status: 'saved',
+    url: 'masscode-asset://notes/image.png',
+    bytes: 1,
+  })
 })

@@ -16,7 +16,7 @@ import {
   maskHttpSecretVariables,
 } from '../../shared/httpVariables'
 import { useHttpStorage } from '../storage'
-import { store } from '../store'
+import { getVaultPath } from '../storage/providers/markdown/runtime/paths'
 import { resolveHttpCollection } from './collection'
 import { readHttpSession } from './runtime/session'
 import { scriptsTrusted } from './scripts/trust'
@@ -89,10 +89,7 @@ export function httpRequestPreview(
     .find(item => item.id === payload.environmentId)
   const session
     = options.includeSession !== false
-      ? readHttpSession(
-          String(store.preferences.get('storage.vaultPath') ?? ''),
-          payload.environmentId,
-        )
+      ? readHttpSession(getVaultPath(), payload.environmentId)
       : { variables: {}, names: [] }
   const variables = redactAiHttp({
     ...collectionVariables(collection?.config),

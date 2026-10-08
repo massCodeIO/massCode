@@ -3,7 +3,7 @@ import { computed, ref, shallowRef, watch } from 'vue'
 
 Object.assign(globalThis, { computed, ref, shallowRef, watch })
 
-async function setup() {
+async function setup(vaultPath: string | null = '/vault') {
   vi.resetModules()
   const currentRequest = shallowRef({
     id: 1,
@@ -66,7 +66,7 @@ async function setup() {
   }))
   vi.doMock('@/electron', () => ({
     ipc: { invoke },
-    store: { preferences: { get: () => '/vault' } },
+    store: { preferences: { get: () => vaultPath } },
     i18n: { t: (key: string) => key },
   }))
   vi.doMock('@/services/api', () => ({
@@ -226,6 +226,23 @@ it('consumes a saved response with its exact input without replacing the dirty d
     'https://example.test/saved',
   )
   expect(currentDraft.value.url).toBe('https://example.test/dirty')
+})
+it('consumes a saved response for the default vault (null preference)', async () => {
+  const { execute, currentDraft } = await setup(null)
+  const consume = execute.captureSavedExecutionResult()
+  const receipt = {
+    vault: '',
+    requestCreatedAt: 1,
+    payload: {
+      requestId: 1,
+      environmentId: null,
+      request: JSON.parse(JSON.stringify(currentDraft.value)),
+    },
+  }
+  expect(consume(receipt as any, { status: 200, body: 'ok' } as any)).toBe(
+    true,
+  )
+  expect(execute.lastResponse.value?.body).toBe('ok')
 })
 it('does not attach a late saved response to another or reselected request', async () => {
   const { execute, currentRequest, currentDraft, httpState } = await setup()

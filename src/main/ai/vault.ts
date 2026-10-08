@@ -4,7 +4,6 @@ import { z } from 'zod'
 import { aiVaultRefSchema } from '../../shared/ai'
 import { redactAiHttp } from '../../shared/aiHttp'
 import { useHttpStorage, useNotesStorage, useStorage } from '../storage'
-import { store } from '../store'
 
 export const vaultSearchSchema = z
   .object({
@@ -344,6 +343,4 @@ export async function executeVaultTool(name: string, args: string) {
   }
 }
 
-export function vaultIdentity() {
-  return store.preferences.get('storage.vaultPath') ?? ''
-}
+export { vaultIdentity } from '../storage/providers/markdown/runtime/paths'

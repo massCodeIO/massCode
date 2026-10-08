@@ -65,14 +65,16 @@ export async function executeFolderIconAction(
   }
   markPersistedStorageMutation()
   const refreshed
-    = vault === store.preferences.get('storage.vaultPath')
+    = vault === (store.preferences.get<string>('storage.vaultPath') ?? '')
       && (await refreshFolders(action.space))
   return { status: refreshed ? 'done' : 'failed', persisted: true, mutation }
 }
 export async function undoNativeFolderIcon(
   receipt: Extract<TaskMutation, { kind: 'folderIcon' }>,
 ) {
-  if (receipt.vault !== store.preferences.get('storage.vaultPath'))
+  if (
+    receipt.vault !== (store.preferences.get<string>('storage.vaultPath') ?? '')
+  )
     return ['folderIcon']
   const result = await ipc.invoke<{ id: string }, { undone: boolean }>(
     'fs:folder-icon:undo',

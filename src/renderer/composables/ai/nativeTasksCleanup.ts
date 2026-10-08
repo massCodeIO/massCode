@@ -7,7 +7,9 @@ import { ipc, store } from '@/electron'
 export async function undoNativeTasksCleanup(
   receipt: Extract<TaskMutation, { kind: 'tasksCleanup' }>,
 ) {
-  if (receipt.vault !== store.preferences.get('storage.vaultPath'))
+  if (
+    receipt.vault !== (store.preferences.get<string>('storage.vaultPath') ?? '')
+  )
     return ['tasksCleanup']
   const result = await ipc.invoke<{ id: string }, TaskCleanupUndoResult>(
     'system:tasks-cleanup-undo',

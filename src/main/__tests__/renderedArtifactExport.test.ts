@@ -14,7 +14,7 @@ vi.mock('electron', () => ({
   dialog: { showSaveDialog: fixture.save },
 }))
 vi.mock('../storage/providers/markdown/runtime', () => ({
-  getVaultPath: () => fixture.vault,
+  vaultIdentity: () => fixture.vault,
 }))
 vi.mock('../notesExport', () => ({
   sanitizeNoteExportFileName: (name: string) => `${name}.html`,
@@ -77,6 +77,18 @@ it('does not write on cancelled dialog or changed vault', async () => {
   })
   expect(fixture.write).not.toHaveBeenCalled()
   expect(fixture.save).toHaveBeenCalledTimes(2)
+})
+
+it('accepts the default vault identity', async () => {
+  fixture.vault = ''
+  fixture.save.mockResolvedValue({
+    canceled: false,
+    filePath: '/chosen/report.html',
+  })
+  fixture.write.mockResolvedValue(undefined)
+  await expect(
+    exportRenderedArtifact({ ...payload, vault: '' }),
+  ).resolves.toMatchObject({ status: 'saved' })
 })
 
 it('propagates a failed write instead of a saved receipt', async () => {

@@ -3,12 +3,19 @@ import { beforeEach, expect, it, vi } from 'vitest'
 import { emptyHttpRuntime } from '../../../shared/httpRuntime'
 import { HttpCookieJar } from '../../http/cookies/jar'
 import { httpConsole } from '../../http/devtools/console'
+import {
+  commitHttpSession,
+  getHttpSession,
+  isHttpSessionCurrent,
+  resetHttpSession,
+} from '../../http/runtime/session'
 import { createHttpActionManager } from '../httpActions'
 import { readHttpAuxState } from '../httpAuxActions'
 
 const state = vi.hoisted(() => ({
   jar: null as any,
   vault: '/vault',
+  vaultPath: null as string | null,
   env: 1,
   requests: [] as any[],
   trusted: false,
@@ -34,7 +41,7 @@ vi.mock('../../store', () => ({
 }))
 vi.mock('../vault', () => ({ vaultIdentity: () => state.vault }))
 vi.mock('../../storage/providers/markdown/runtime/paths', () => ({
-  getVaultPath: () => state.vault,
+  getVaultPath: () => state.vaultPath ?? state.vault,
 }))
 vi.mock('../../http/runtime/ownedExecution', () => ({
   executeOwnedHttpRequest: vi.fn(),
@@ -126,6 +133,7 @@ vi.mock('../../http/websocket/session', () => ({
 beforeEach(() => {
   vi.clearAllMocks()
   state.vault = '/vault'
+  state.vaultPath = null
   state.env = 1
   state.trusted = false
   state.ws = null
@@ -678,4 +686,24 @@ it('rejects a runner subset before any network execution', () => {
     }),
   ).toThrow('HTTP_RUN_INVALID_ORDER')
   expect(state.start).not.toHaveBeenCalled()
+})
+
+it('keys AI session reads by the resolved default vault path without resetting the live session', async () => {
+  resetHttpSession()
+  state.vault = ''
+  state.vaultPath = '/root/markdown-vault'
+  const live = getHttpSession('/root/markdown-vault', 1)
+  commitHttpSession(live.generation, new Map([['token', 'value']]))
+  expect(readHttpAuxState(1, { kind: 'session' })).toEqual({
+    names: ['token'],
+  })
+  const m = manager()
+  const proposal = m.propose({ action: 'clearSession', summary: 'Clear' })
+  expect(JSON.parse((proposal.preview as any).content).names).toEqual([
+    'token',
+  ])
+  expect(isHttpSessionCurrent(live.generation)).toBe(true)
+  expect(getHttpSession('/root/markdown-vault', 1).names).toEqual(['token'])
+  await m.apply(proposal.id)
+  expect(getHttpSession('/root/markdown-vault', 1).names).toEqual([])
 })

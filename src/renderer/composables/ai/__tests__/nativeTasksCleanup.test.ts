@@ -1,7 +1,7 @@
 import { beforeEach, expect, it, vi } from 'vitest'
 
 const mock = vi.hoisted(() => ({
-  vault: '/vault',
+  vault: '/vault' as string | null,
   invoke: vi.fn(),
   refresh: vi.fn(),
   selected: vi.fn(),
@@ -59,4 +59,18 @@ it('retains unresolved IDs for retry and refuses another vault', async () => {
   mock.vault = '/other'
   expect(await undoNativeTasksCleanup(receipt)).toEqual(['tasksCleanup'])
   expect(mock.invoke).toHaveBeenCalledOnce()
+})
+it('undoes a default-vault receipt when the preference is null', async () => {
+  mock.vault = null
+  mock.invoke.mockResolvedValue({ undone: true, restored: 1, conflicts: [] })
+  const receipt = {
+    kind: 'tasksCleanup' as const,
+    id: 'private',
+    vault: '',
+    undone: false,
+  }
+  expect(await undoNativeTasksCleanup(receipt)).toEqual([])
+  expect(mock.invoke).toHaveBeenCalledWith('system:tasks-cleanup-undo', {
+    id: 'private',
+  })
 })

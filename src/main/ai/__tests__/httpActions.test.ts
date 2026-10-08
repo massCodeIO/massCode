@@ -1,15 +1,17 @@
 import { EventEmitter } from 'node:events'
+import path from 'node:path'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { emptyHttpRuntime } from '../../../shared/httpRuntime'
 import {
   commitHttpSession,
   getHttpSession,
+  isHttpSessionCurrent,
   resetHttpSession,
 } from '../../http/runtime/session'
 import { createHttpActionManager } from '../httpActions'
 
 const fixture = vi.hoisted(() => ({
-  vault: '/vault',
+  vault: '/vault' as string | null,
   execute: vi.fn(),
   active: 1,
   record: {} as any,
@@ -28,14 +30,16 @@ vi.mock('../../http/runtime/ownedExecution', () => ({
 vi.mock('../../http/scripts/trust', () => ({
   scriptsTrusted: () => fixture.trusted,
 }))
-vi.mock('../vault', () => ({ vaultIdentity: () => fixture.vault }))
+vi.mock('../vault', () => ({ vaultIdentity: () => fixture.vault ?? '' }))
 vi.mock('../../store', () => ({
   store: {
     preferences: {
       get: (key: string) =>
         key === 'storage.vaultPath'
           ? fixture.vault
-          : { transport: {}, skipCertificateVerification: false },
+          : key === 'storage.rootPath'
+            ? '/root'
+            : { transport: {}, skipCertificateVerification: false },
     },
   },
 }))
@@ -528,6 +532,27 @@ it.each(['trust', 'session'])(
     expect(fixture.execute).not.toHaveBeenCalled()
   },
 )
+
+it('tracks the live session of the default vault by its resolved path', async () => {
+  fixture.vault = null
+  const live = getHttpSession(path.join('/root', 'markdown-vault'), 1)
+  const manager = createHttpActionManager(owner)
+  const proposal = manager.propose(intent)
+  expect(isHttpSessionCurrent(live.generation)).toBe(true)
+  commitHttpSession(live.generation, new Map([['id', 'new-session-id']]))
+  await expect(manager.apply(proposal.id)).rejects.toThrow('ACTION_STALE')
+  expect(fixture.execute).not.toHaveBeenCalled()
+})
+
+it('request preview resolves session variables of the default vault', () => {
+  fixture.vault = null
+  fixture.record.url = 'https://example.test/{{sessionId}}'
+  const live = getHttpSession(path.join('/root', 'markdown-vault'), 1)
+  commitHttpSession(live.generation, new Map([['sessionId', 'value']]))
+  const proposal = createHttpActionManager(owner).propose(intent)
+  expect(proposal.request?.url).not.toContain('{{sessionId}}')
+  expect(proposal.request?.url).not.toContain('value')
+})
 
 it('previewing a stale environment never clears the active session', () => {
   const captured = draft()

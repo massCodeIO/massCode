@@ -2,6 +2,7 @@ import { beforeEach, expect, it, vi } from 'vitest'
 
 const mock = vi.hoisted(() => ({
   vault: '/vault',
+  identity: undefined as string | undefined,
   records: new Map<
     number,
     {
@@ -24,6 +25,7 @@ vi.mock('../store', () => ({
 }))
 vi.mock('../storage/providers/markdown/runtime/paths', () => ({
   getVaultPath: () => mock.vault,
+  vaultIdentity: () => mock.identity ?? mock.vault,
 }))
 vi.mock('../storage', () => ({
   useNotesStorage: () => ({
@@ -64,6 +66,7 @@ beforeEach(() => {
   vi.resetModules()
   vi.clearAllMocks()
   mock.vault = '/vault'
+  mock.identity = undefined
   mock.folders = new Set([9])
   mock.failId = 0
   mock.records = new Map(
@@ -201,4 +204,23 @@ it('rejects another vault and retries only unresolved failed inverses', async ()
     restored: 1,
     conflicts: [],
   })
+})
+it('runs and undoes cleanup for the default vault identity', async () => {
+  const { runTasksCleanupWithUndo, undoTasksCleanup } = await import(
+    '../tasks'
+  )
+  mock.vault = '/root/markdown-vault'
+  mock.identity = ''
+  expect(runTasksCleanupWithUndo('/root/markdown-vault')).toEqual({
+    status: 'stale',
+    count: 0,
+  })
+  const result = runTasksCleanupWithUndo('')
+  expect(result).toMatchObject({ status: 'done', count: 2 })
+  expect(undoTasksCleanup(result.receiptId!)).toEqual({
+    undone: true,
+    restored: 2,
+    conflicts: [],
+  })
+  expect(mock.records.get(1)).toMatchObject({ folderId: 9, isDeleted: 0 })
 })

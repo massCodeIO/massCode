@@ -3,7 +3,10 @@ import type { TaskCleanupResult, TaskCleanupUndoResult } from './types/ipc'
 import { randomUUID } from 'node:crypto'
 import { useNotesStorage } from './storage'
 import { toNoteFileName } from './storage/providers/markdown/notes/runtime/notes'
-import { getVaultPath } from './storage/providers/markdown/runtime/paths'
+import {
+  getVaultPath,
+  vaultIdentity,
+} from './storage/providers/markdown/runtime/paths'
 import { store } from './store'
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -104,9 +107,9 @@ export function runTasksCleanupNow(): number {
 export function runTasksCleanupWithUndo(
   expectedVault: string,
 ): TaskCleanupResult {
-  const vault = getVaultPath()
-  if (vault !== expectedVault)
+  if (vaultIdentity() !== expectedVault)
     return { status: 'stale', count: 0 }
+  const vault = getVaultPath()
   const id = randomUUID()
   const receipt = { vault, entries: [] as CleanupEntry[] }
   // Keep only a bounded set of small positional receipts; no note content.

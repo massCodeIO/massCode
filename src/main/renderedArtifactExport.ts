@@ -5,7 +5,7 @@ import type {
 import { Buffer } from 'node:buffer'
 import { BrowserWindow, dialog } from 'electron'
 import { sanitizeNoteExportFileName, writeFileAtomically } from './notesExport'
-import { getVaultPath } from './storage/providers/markdown/runtime'
+import { vaultIdentity } from './storage/providers/markdown/runtime'
 
 const MAX_BYTES = 50 * 1024 * 1024
 
@@ -67,7 +67,7 @@ export async function exportRenderedArtifact(
   value: unknown,
 ): Promise<RenderedArtifactExportResult> {
   const { payload, bytes } = parseRenderedArtifact(value)
-  if (getVaultPath() !== payload.vault)
+  if (vaultIdentity() !== payload.vault)
     return { status: 'stale' }
   const options = {
     defaultPath: `${sanitizeNoteExportFileName(payload.name, 'html').slice(0, -5)}.${payload.format}`,
@@ -81,7 +81,7 @@ export async function exportRenderedArtifact(
     : await dialog.showSaveDialog(options)
   if (result.canceled || !result.filePath)
     return { status: 'cancelled' }
-  if (getVaultPath() !== payload.vault)
+  if (vaultIdentity() !== payload.vault)
     return { status: 'stale' }
   await writeFileAtomically(result.filePath, bytes)
   return { status: 'saved', filePath: result.filePath, bytes: bytes.length }

@@ -170,14 +170,14 @@ function captureSavedExecutionResult(): AiHttpResultConsumer {
   const token = executionToken
   const requestId = currentRequest.value?.id
   const createdAt = currentRequest.value?.createdAt
-  const vault = store.preferences.get('storage.vaultPath')
+  const vault = store.preferences.get<string>('storage.vaultPath') ?? ''
   const environmentId = activeEnvironmentId.value
   return (execution, response) => {
     if (
       response.discarded
       || token !== executionToken
       || execution.vault !== vault
-      || store.preferences.get('storage.vaultPath') !== vault
+      || (store.preferences.get<string>('storage.vaultPath') ?? '') !== vault
       || execution.payload.requestId !== requestId
       || currentRequest.value?.id !== requestId
       || execution.requestCreatedAt !== createdAt

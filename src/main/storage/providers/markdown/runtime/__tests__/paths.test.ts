@@ -3,8 +3,15 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { enqueueCloudDownload } from '../../cloudDownloads'
-import { getPaths, resetPathsCache } from '../paths'
+import {
+  getPaths,
+  getVaultPath,
+  resetPathsCache,
+  vaultIdentity,
+} from '../paths'
 import { setDatalessProbeForTests } from '../shared/cloudFiles'
+
+const preferences = vi.hoisted(() => ({}) as Record<string, unknown>)
 
 vi.mock('electron-store', () => {
   class MockStore {
@@ -59,7 +66,7 @@ vi.mock('electron', () => ({
 vi.mock('../../../../../store', () => ({
   store: {
     preferences: {
-      get: () => undefined,
+      get: (key: string) => preferences[key],
     },
   },
 }))
@@ -99,6 +106,26 @@ afterEach(() => {
       fs.removeSync(tempDir)
     }
   }
+})
+
+describe('vaultIdentity', () => {
+  afterEach(() => {
+    for (const key of Object.keys(preferences)) delete preferences[key]
+  })
+
+  it('keeps the raw preference as identity while the path resolves the default vault', () => {
+    preferences['storage.vaultPath'] = null
+    preferences['storage.rootPath'] = '/root'
+    expect(vaultIdentity()).toBe('')
+    expect(getVaultPath()).toBe(path.join('/root', 'markdown-vault'))
+  })
+
+  it('matches the path for an explicit vault', () => {
+    preferences['storage.vaultPath'] = '/v'
+    preferences['storage.rootPath'] = '/root'
+    expect(vaultIdentity()).toBe('/v')
+    expect(getVaultPath()).toBe('/v')
+  })
 })
 
 describe('getPaths', () => {

@@ -118,20 +118,20 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <button
+  <div
     v-if="!isSponsored"
-    type="button"
-    class="relative h-32 w-3 cursor-pointer border-0 bg-transparent p-0 focus-visible:outline-none"
-    :class="isDark ? 'text-amber-300/70' : 'text-violet-500/70'"
-    @click="openDonatePage"
+    class="flex min-h-0 flex-1 flex-col justify-end"
   >
-    <div
-      class="absolute top-0 left-0 flex h-3 w-32 origin-top-left translate-y-32 -rotate-90 items-center"
+    <button
+      type="button"
+      class="flex min-h-0 cursor-pointer flex-col border-0 bg-transparent p-0 focus-visible:outline-none"
+      :class="isDark ? 'text-amber-300/70' : 'text-violet-500/70'"
+      @click="openDonatePage"
     >
       <span
         ref="labelRef"
-        class="_uppercase font-mono text-[10px] leading-none font-semibold tracking-[0.14em] whitespace-nowrap select-none"
+        class="_uppercase min-h-0 rotate-180 overflow-hidden font-mono text-[10px] leading-none font-semibold tracking-[0.14em] text-ellipsis whitespace-nowrap select-none [writing-mode:vertical-rl]"
       />
-    </div>
-  </button>
+    </button>
+  </div>
 </template>

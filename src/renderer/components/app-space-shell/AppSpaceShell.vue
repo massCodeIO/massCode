@@ -67,7 +67,7 @@ interface Props {
 
 <template>
   <div
-    class="grid h-screen overflow-hidden"
+    class="grid h-screen grid-rows-1 overflow-hidden"
     :class="props.showRail ? 'grid-cols-[72px_1fr]' : 'grid-cols-[1fr]'"
   >
     <div

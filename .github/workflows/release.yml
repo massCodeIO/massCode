@@ -11,10 +11,16 @@ on:
         required: true
         default: v4.0.0
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    # Сертификат подписи и Apple-креды доступны только из environment,
+    # разрешённого для тегов v*.
+    environment: release
     env:
       NODE_OPTIONS: --max-old-space-size=4096
     strategy:

@@ -3,10 +3,16 @@ name: Deploy Docs
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     name: Build & Deploy
     runs-on: ubuntu-latest
+    # Секреты деплоя лежат в environment, который разрешён только для main:
+    # запуск с произвольной ветки не получит SSH-ключ сервера.
+    environment: docs-production
 
     steps:
       - name: Checkout code

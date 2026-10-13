@@ -1,6 +1,6 @@
 ---
 title: Search
-description: "Search snippets, notes, HTTP requests, spaces, and commands in massCode with scoped list search and Command Palette filters."
+description: "Search snippets, notes, HTTP requests, spaces, and commands in massCode with scoped list search, Command Palette filters, and search by meaning."
 ---
 
 # Search
@@ -44,7 +44,17 @@ The palette can search:
 - commands
 - recently opened items
 
-Results are ranked with recent usage, so items you open often move higher over time.
+Snippets, notes and HTTP requests are found by the words in their names and text:
+
+- snippets: name, description, fragment labels and fragment content
+- notes: name and content
+- HTTP requests: name, method, URL path and description; the host, headers, query parameters and body are not searched
+
+Words match whole words and their simple forms, so `test` also finds `tests` and `testing`. The last word you type also matches the beginning of longer words, so results appear while you are still typing. Part of a word inside a longer identifier, such as `auth` in `useAuthStore`, matches only in the record name.
+
+Among results with similar relevance, items you open often move higher over time.
+
+With [search by meaning](#search-by-meaning) turned on, the palette also finds records related to your query by meaning.
 
 ## Scope the palette to a space
 
@@ -107,3 +117,61 @@ Notes /Development #backend migration
 ```
 
 This searches Notes for `migration` inside the Development folder with the backend tag.
+
+## Search by meaning
+
+Search by words finds records that contain what you typed. With semantic search turned on, the palette also finds records related by meaning, for example a note about invoices when you search for `customer billing`. Results by words appear as you type; results by meaning replace them after a short pause. While this happens, the footer shows **Searching by meaning...**.
+
+All matches appear in one list. Each result shows why it was found:
+
+| Label | Meaning |
+| --- | --- |
+| **Matches the name** | The record name matches your query. |
+| **Has your words** | The record text contains your words. |
+| **By meaning** | The record is related to your query by meaning. |
+| **Words and meaning** | The record matches both by words and by meaning. |
+
+Under the title, a result shows a short excerpt from the record; words that matched are highlighted. A result found only by meaning shows the start of the matching part of the record without highlighting. A result that matches only by name has no excerpt.
+
+Weaker matches are collapsed into a **more weaker matches** row below the main results. Select it and press <kbd>Enter</kbd>, or click it, to show them. The footer shows how many results and weaker matches were found.
+
+If nothing matches, the palette suggests trying words you remember from the record or describing it in your own words. The create actions from [Create From Search](/documentation/command-palette#create-from-search) are still available.
+
+Space scopes such as `@notes`, tag filters and folder filters work with both kinds of search.
+
+The [AI assistant](/documentation/ai#choose-context-or-search-the-vault) uses the same search when it looks for records in the vault.
+
+### Turn on semantic search
+
+Run **Turn on semantic search** from the Command Palette. It downloads the built-in model and opens **Preferences → Semantic Search**, where you can follow the download and indexing progress. On Intel Macs, it opens the settings so you can set up a local server.
+
+To turn semantic search off, set **Source** to **Off** in **Preferences → Semantic Search**. The palette and the assistant keep searching by words.
+
+You can also open **Preferences → Semantic Search** and choose a **Source**:
+
+| Source | How it works |
+| --- | --- |
+| **Built-in model** | Click **Download model (~210 MB)**. The model is stored in the app data folder on this computer, outside your vault, and runs offline after download. Use **Remove model** to delete it and its index. |
+| **Local server** | Uses your own Ollama or LM Studio server, separate from the AI assistant connection. Choose the **Server**, check the **Server URL**, install an embedding model on the server, for example `ollama pull embeddinggemma`, click **Refresh models**, then choose it in **Embedding model**. You can also enter the model ID manually. |
+
+After you choose a source, massCode indexes your snippets, notes and HTTP requests in the background and shows progress under **Index**. Long records are split into chunks, so progress is counted in chunks, for example **Indexing 120 of 800 chunks**. When indexing finishes, **Index** shows the number of indexed records. The built-in model indexes on two threads to keep the computer responsive, and its indexing also starts shortly after the app launches. With a local server, indexing starts after you choose an embedding model, and continues when you search from the palette or the assistant if the index is not ready yet. For HTTP requests, only the name, method, URL path and description are indexed. Changed records are reindexed in the background when you search.
+
+Until the first index is ready, the palette finds records by words only and the footer shows **Semantic search is warming up...**.
+
+The index is stored only on this computer and is not synced with your vault. Switching the source, server or embedding model rebuilds it.
+
+The built-in model is not available on Intel Macs; use a local server instead.
+
+::: info Privacy
+The built-in model works offline after download. With a local server, indexing sends the text of every indexed record to that server, and palette and assistant searches send your queries to it.
+:::
+
+::: info Windows requirement
+The built-in model needs the Microsoft Visual C++ Redistributable. If the model cannot start, install it from Microsoft and click **Download model** again; files that were already downloaded are reused.
+:::
+
+### Troubleshooting
+
+- No **By meaning** results: check **Index** in **Preferences → Semantic Search**. If indexing failed, the error is shown there and the palette keeps searching by words.
+- With a local server, start the server and choose an embedding model, not a chat model.
+- If the built-in model fails to download, check your connection and try again.

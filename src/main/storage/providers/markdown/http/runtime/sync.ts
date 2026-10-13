@@ -306,9 +306,17 @@ function reconcileRequests(
   const existingByPath = new Map(
     state.requests.map(item => [item.filePath, item]),
   )
-  // A copied Markdown file can appear before its original in directory order.
-  // Reserve indexed IDs so the copy cannot displace the original in the cache.
-  const indexedIds = new Set(state.requests.map(item => item.id))
+  // Копия файла (например, 'Foo copy.md' из Finder) может идти по обходу
+  // раньше оригинала: id проиндексированных файлов, которые всё ещё на диске,
+  // резервируются, чтобы копия не отобрала id у оригинала. Id записей с
+  // исчезнувшим путём не резервируются: внешне переименованный файл должен
+  // сохранить свой frontmatter-id (и привязанную к нему историю).
+  const requestPathSet = new Set(requestRelativePaths)
+  const indexedIds = new Set(
+    state.requests
+      .filter(item => requestPathSet.has(item.filePath))
+      .map(item => item.id),
+  )
 
   // Один batch-вызов точной проверки dataless на весь список вместо
   // отдельного системного вызова на каждый подозрительный файл.
@@ -515,7 +523,7 @@ function reconcileRequests(
       nextRequestId = id
     }
   })
-  indexedIds.forEach((id) => {
+  state.requests.forEach(({ id }) => {
     if (id > nextRequestId) {
       nextRequestId = id
     }

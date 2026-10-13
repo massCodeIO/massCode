@@ -172,9 +172,23 @@ function syncStateAndSnippetsWithDisk(
   )
 
   const fileSet = new Set(relativeSnippetFiles)
-  const existingIdSet = new Set<number>(state.snippets.map(item => item.id))
+
+  // Новые id выдаются выше всех id старого индекса, включая записи с
+  // исчезнувшим путём: id удалённого сниппета не переиспользуется.
+  let nextSnippetId = state.counters.snippetId
+  state.snippets.forEach(({ id }) => {
+    if (id > nextSnippetId) {
+      nextSnippetId = id
+    }
+  })
 
   state.snippets = state.snippets.filter(item => fileSet.has(item.filePath))
+
+  // Копия файла (например, 'Foo copy.md' из Finder) не должна отобрать id у
+  // проиндексированного оригинала, который всё ещё на диске. Id записей с
+  // исчезнувшим путём не резервируются: внешне переименованный файл должен
+  // сохранить свой frontmatter-id.
+  const existingIdSet = new Set<number>(state.snippets.map(item => item.id))
 
   const knownSnippetFilePaths = new Set(
     state.snippets.map(item => item.filePath),
@@ -212,7 +226,6 @@ function syncStateAndSnippetsWithDisk(
     existingIdSet.add(frontmatterId)
   })
 
-  let nextSnippetId = state.counters.snippetId
   existingIdSet.forEach((id) => {
     if (id > nextSnippetId) {
       nextSnippetId = id

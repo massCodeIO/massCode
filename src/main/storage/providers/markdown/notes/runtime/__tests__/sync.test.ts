@@ -3,6 +3,8 @@ import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { stateContentCacheByPath } from '../../../runtime/cache'
+import { listEntryFirst } from '../../../runtime/shared/__tests__/listEntryFirst'
 import { waitForNotesAssetsMigrationForTests } from '../assetsMigration'
 import { createDefaultNotesState, saveNotesState } from '../state'
 import {
@@ -83,6 +85,7 @@ function createNotesPaths(): NotesPaths {
 }
 
 afterEach(() => {
+  vi.restoreAllMocks()
   resetNotesRuntimeCache()
   for (const dirPath of tempDirs.splice(0)) {
     fs.removeSync(dirPath)
@@ -294,13 +297,12 @@ describe('syncNotesWithDisk', () => {
     resetNotesRuntimeCache()
     expect(fs.existsSync(paths.statePath)).toBe(true)
 
-    // Копия из Finder ('Foo copy.md') при алфавитном обходе идёт раньше
-    // оригинала, но проверки не зависят от порядка обхода.
     const copyPath = path.join(paths.inboxDirPath, 'Foo copy.md')
     fs.copyFileSync(originalPath, copyPath)
     const sourcesBefore = [originalPath, copyPath].map(filePath =>
       fs.readFileSync(filePath, 'utf8'),
     )
+    listEntryFirst('Foo copy.md')
 
     const cache = syncNotesRuntimeWithDisk(paths)
     const idByName = new Map(
@@ -339,6 +341,40 @@ describe('syncNotesWithDisk', () => {
     expect(cache.state.notes).toHaveLength(1)
     expect(cache.state.notes[0].filePath).toBe('.masscode/inbox/Bar.md')
     expect(cache.state.notes[0].id).toBe(5)
+  })
+
+  it('hands out finite ids when the index has an entry without id', () => {
+    const paths = createNotesPaths()
+    fs.ensureDirSync(paths.inboxDirPath)
+    fs.writeFileSync(
+      path.join(paths.inboxDirPath, 'a.md'),
+      '---\nid: 5\nname: a\n---\nBody\n',
+      'utf8',
+    )
+    syncNotesRuntimeWithDisk(paths)
+    resetNotesRuntimeCache()
+
+    const rawState = JSON.parse(fs.readFileSync(paths.statePath, 'utf8')) as {
+      notes: Record<string, unknown>[]
+    }
+    rawState.notes.push({ filePath: 'ghost.md' })
+    fs.writeFileSync(paths.statePath, JSON.stringify(rawState), 'utf8')
+    stateContentCacheByPath.delete(paths.statePath)
+    resetNotesRuntimeCache()
+    fs.writeFileSync(
+      path.join(paths.inboxDirPath, 'b-without-id.md'),
+      '---\nname: b-without-id\n---\nBody\n',
+      'utf8',
+    )
+
+    const cache = syncNotesRuntimeWithDisk(paths)
+    const created = cache.state.notes.find(
+      entry => path.posix.basename(entry.filePath) === 'b-without-id.md',
+    )!
+
+    expect(Number.isInteger(created.id)).toBe(true)
+    expect(created.id).toBeGreaterThan(5)
+    expect(Number.isFinite(cache.state.counters.noteId)).toBe(true)
   })
 })
 

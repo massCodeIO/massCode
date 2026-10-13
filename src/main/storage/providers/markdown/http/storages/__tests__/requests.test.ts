@@ -5,6 +5,7 @@ import yaml from 'js-yaml'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { stateContentCacheByPath } from '../../../runtime/cache'
+import { listEntryFirst } from '../../../runtime/shared/__tests__/listEntryFirst'
 import {
   getFileAvailability,
   resetCloudFileExemptions,
@@ -529,6 +530,43 @@ describe('http requests storage', () => {
     ])
   })
 
+  it('keeps id and history of a request renamed outside the app', () => {
+    const requests = createHttpRequestsStorage()
+    const history = createHttpHistoryStorage()
+    const alpha = requests.createRequest({ name: 'Alpha', method: 'GET' })
+    history.appendEntry({
+      requestId: alpha.id,
+      method: 'GET',
+      url: 'https://qa.invalid/alpha',
+      status: 200,
+      durationMs: 1,
+      sizeBytes: 0,
+      requestedAt: 1,
+    })
+    flushPendingStateWrites()
+    resetHttpRuntimeCache()
+
+    const root = getHttpPaths(tempVaultPath).httpRoot
+    const oldFilePath = requests.getRequestById(alpha.id)!.filePath
+    const sourceBefore = fs.readFileSync(path.join(root, oldFilePath), 'utf8')
+    fs.renameSync(path.join(root, oldFilePath), path.join(root, 'Renamed.md'))
+    resetHttpRuntimeCache()
+
+    const list = requests.getRequests()
+
+    expect(list.find(item => item.filePath === 'Renamed.md')?.id).toBe(
+      alpha.id,
+    )
+    expect(list.some(item => item.filePath === oldFilePath)).toBe(false)
+    expect(fs.readFileSync(path.join(root, 'Renamed.md'), 'utf8')).toBe(
+      sourceBefore,
+    )
+    expect(history.getEntries()).toMatchObject([{ requestId: alpha.id }])
+    expect(fs.existsSync(path.join(root, '.history', String(alpha.id)))).toBe(
+      true,
+    )
+  })
+
   it('hands out finite ids when the index has an entry without id', () => {
     const requests = createHttpRequestsStorage()
     const existing = requests.createRequest({
@@ -586,17 +624,26 @@ describe('http requests storage', () => {
     flushPendingStateWrites()
     resetHttpRuntimeCache()
     expect(storage.getRequestById(id)?.runtime).toEqual(rules)
-    fs.copyFileSync(
-      path.join(root, request.filePath),
-      path.join(root, 'Copied.md'),
-    )
+    const originalPath = path.join(root, request.filePath)
+    const sourceBefore = fs.readFileSync(originalPath)
+    fs.copyFileSync(originalPath, path.join(root, 'Copied.md'))
     flushPendingStateWrites()
     resetHttpRuntimeCache()
-    const copied = storage
-      .getRequests()
-      .find(item => item.filePath === 'Copied.md')!
-    expect(copied.id).not.toBe(id)
-    expect(storage.getRequestById(copied.id)?.runtime).toEqual(rules)
+    // Копия идёт по обходу раньше оригинала: от захвата его id защищает
+    // только резервирование id проиндексированных путей.
+    const readdirSpy = listEntryFirst('Copied.md')
+    try {
+      const copied = storage
+        .getRequests()
+        .find(item => item.filePath === 'Copied.md')!
+      expect(copied.id).not.toBe(id)
+      expect(storage.getRequestById(copied.id)?.runtime).toEqual(rules)
+      expect(storage.getRequestById(id)?.filePath).toBe(request.filePath)
+    }
+    finally {
+      readdirSpy.mockRestore()
+    }
+    expect(fs.readFileSync(originalPath).equals(sourceBefore)).toBe(true)
   })
 
   it('preserves externally edited and unsupported inline runtime through metadata saves', () => {

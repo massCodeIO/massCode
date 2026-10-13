@@ -3,6 +3,8 @@ import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { stateContentCacheByPath } from '../cache'
+import { listEntryFirst } from '../shared/__tests__/listEntryFirst'
 import { resetRuntimeCache, syncRuntimeWithDisk } from '../sync'
 
 vi.mock('electron', () => ({
@@ -72,6 +74,7 @@ function writeSnippetFixture(
 }
 
 afterEach(() => {
+  vi.restoreAllMocks()
   resetRuntimeCache()
 
   for (const dirPath of tempDirs.splice(0)) {
@@ -151,5 +154,87 @@ describe('snippet id allocation on full sync', () => {
     expect(new Set(idByName.values()).size).toBe(5)
     expect(cache.state.counters.snippetId).toBe(9)
     expect(unchangedFiles.map(readSource)).toEqual(sourcesBefore)
+  })
+
+  it('keeps the frontmatter id of a snippet renamed outside the app', () => {
+    const paths = createPaths()
+    writeSnippetFixture(paths, 'a.md', 5)
+    syncRuntimeWithDisk(paths)
+    resetRuntimeCache()
+
+    const renamedPath = path.join(paths.inboxDirPath, 'b.md')
+    const sourceBefore = fs.readFileSync(
+      path.join(paths.inboxDirPath, 'a.md'),
+      'utf8',
+    )
+    fs.renameSync(path.join(paths.inboxDirPath, 'a.md'), renamedPath)
+
+    const cache = syncRuntimeWithDisk(paths)
+
+    expect(
+      cache.state.snippets.map(({ filePath, id }) => ({ filePath, id })),
+    ).toEqual([{ filePath: '.masscode/inbox/b.md', id: 5 }])
+    expect(cache.state.counters.snippetId).toBe(5)
+    expect(fs.readFileSync(renamedPath, 'utf8')).toBe(sourceBefore)
+  })
+
+  it('does not let a copy of an indexed snippet take the id of the original', () => {
+    const paths = createPaths()
+    writeSnippetFixture(paths, 'Foo.md', 5)
+    syncRuntimeWithDisk(paths)
+    resetRuntimeCache()
+
+    const originalPath = path.join(paths.inboxDirPath, 'Foo.md')
+    const copyPath = path.join(paths.inboxDirPath, 'Foo copy.md')
+    fs.copyFileSync(originalPath, copyPath)
+    const sourcesBefore = [originalPath, copyPath].map(filePath =>
+      fs.readFileSync(filePath, 'utf8'),
+    )
+    // Сейчас порядок обхода здесь не влияет на путь выполнения (известные
+    // пути пропускаются, id индекса собираются до цикла); копия ставится
+    // первой лишь как guard на случай смены реализации.
+    listEntryFirst('Foo copy.md')
+
+    const cache = syncRuntimeWithDisk(paths)
+    const idByName = new Map(
+      cache.state.snippets.map(item => [
+        path.posix.basename(item.filePath),
+        item.id,
+      ]),
+    )
+
+    expect(idByName.get('Foo.md')).toBe(5)
+    expect(idByName.get('Foo copy.md')).toBe(cache.state.counters.snippetId)
+    expect(cache.state.counters.snippetId).toBeGreaterThan(5)
+    expect(
+      [originalPath, copyPath].map(filePath =>
+        fs.readFileSync(filePath, 'utf8'),
+      ),
+    ).toEqual(sourcesBefore)
+  })
+
+  it('hands out finite ids when the index has an entry without id', () => {
+    const paths = createPaths()
+    writeSnippetFixture(paths, 'a.md', 5)
+    syncRuntimeWithDisk(paths)
+    resetRuntimeCache()
+
+    const rawState = JSON.parse(fs.readFileSync(paths.statePath, 'utf8')) as {
+      snippets: Record<string, unknown>[]
+    }
+    rawState.snippets.push({ filePath: 'ghost.md' })
+    fs.writeFileSync(paths.statePath, JSON.stringify(rawState), 'utf8')
+    stateContentCacheByPath.delete(paths.statePath)
+    resetRuntimeCache()
+    writeSnippetFixture(paths, 'b-without-id.md', null)
+
+    const cache = syncRuntimeWithDisk(paths)
+    const created = cache.state.snippets.find(
+      item => path.posix.basename(item.filePath) === 'b-without-id.md',
+    )!
+
+    expect(Number.isInteger(created.id)).toBe(true)
+    expect(created.id).toBeGreaterThan(5)
+    expect(Number.isFinite(cache.state.counters.snippetId)).toBe(true)
   })
 })

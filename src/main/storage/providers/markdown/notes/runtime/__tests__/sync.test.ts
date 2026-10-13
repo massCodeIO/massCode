@@ -3,6 +3,8 @@ import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { stateContentCacheByPath } from '../../../runtime/cache'
+import { listEntryFirst } from '../../../runtime/shared/__tests__/listEntryFirst'
 import { waitForNotesAssetsMigrationForTests } from '../assetsMigration'
 import { createDefaultNotesState, saveNotesState } from '../state'
 import {
@@ -83,6 +85,7 @@ function createNotesPaths(): NotesPaths {
 }
 
 afterEach(() => {
+  vi.restoreAllMocks()
   resetNotesRuntimeCache()
   for (const dirPath of tempDirs.splice(0)) {
     fs.removeSync(dirPath)
@@ -189,6 +192,189 @@ describe('syncNotesWithDisk', () => {
     const state = createDefaultNotesState()
     syncNotesWithDisk(paths, state)
     expect(state.notes).toHaveLength(0)
+  })
+
+  it('does not hand out ids already taken by frontmatter when state.json is missing', () => {
+    const paths = createNotesPaths()
+    fs.ensureDirSync(paths.inboxDirPath)
+    // Порядок обхода не гарантирован; при алфавитном (как на APFS) файлы
+    // без id встречаются раньше файлов с явными id.
+    const fixtures: [string, number | null][] = [
+      ['a-without-id.md', null],
+      ['b-with-id-1.md', 1],
+      ['c-with-id-2.md', 2],
+      ['d-without-id.md', null],
+    ]
+    for (const [fileName, id] of fixtures) {
+      fs.writeFileSync(
+        path.join(paths.inboxDirPath, fileName),
+        `---\n${id === null ? '' : `id: ${id}\n`}name: ${fileName}\n---\nBody\n`,
+        'utf8',
+      )
+    }
+
+    const cache = syncNotesRuntimeWithDisk(paths)
+    const idByName = new Map(
+      cache.state.notes.map(entry => [
+        path.posix.basename(entry.filePath),
+        entry.id,
+      ]),
+    )
+
+    expect(idByName.get('b-with-id-1.md')).toBe(1)
+    expect(idByName.get('c-with-id-2.md')).toBe(2)
+
+    const ids = cache.state.notes.map(entry => entry.id)
+    expect(ids).toHaveLength(4)
+    expect(new Set(ids).size).toBe(4)
+    expect(cache.noteById.size).toBe(4)
+    expect(cache.state.counters.noteId).toBe(Math.max(...ids))
+  })
+
+  it('keeps ids of indexed notes and allocates new ones above the counter when state.json exists', () => {
+    const paths = createNotesPaths()
+    fs.ensureDirSync(paths.inboxDirPath)
+    const writeNote = (fileName: string, id: number | null) =>
+      fs.writeFileSync(
+        path.join(paths.inboxDirPath, fileName),
+        `---\n${id === null ? '' : `id: ${id}\n`}name: ${fileName}\n---\nBody\n`,
+        'utf8',
+      )
+    writeNote('a.md', 5)
+    writeNote('b.md', 7)
+    syncNotesRuntimeWithDisk(paths)
+    resetNotesRuntimeCache()
+    expect(fs.existsSync(paths.statePath)).toBe(true)
+
+    // Порядок обхода не гарантирован; при алфавитном (как на APFS) новый
+    // файл без id встречается раньше файла с занятым id.
+    writeNote('c-without-id.md', null)
+    writeNote('d-free-id-3.md', 3)
+    writeNote('e-taken-id-5.md', 5)
+
+    const readSource = (fileName: string) =>
+      fs.readFileSync(path.join(paths.inboxDirPath, fileName), 'utf8')
+    const unchangedFiles = [
+      'a.md',
+      'b.md',
+      'd-free-id-3.md',
+      'e-taken-id-5.md',
+    ]
+    const sourcesBefore = unchangedFiles.map(readSource)
+
+    const cache = syncNotesRuntimeWithDisk(paths)
+    const idByName = new Map(
+      cache.state.notes.map(entry => [
+        path.posix.basename(entry.filePath),
+        entry.id,
+      ]),
+    )
+
+    expect(idByName.get('a.md')).toBe(5)
+    expect(idByName.get('b.md')).toBe(7)
+    expect(idByName.get('d-free-id-3.md')).toBe(3)
+    expect(
+      new Set([
+        idByName.get('c-without-id.md'),
+        idByName.get('e-taken-id-5.md'),
+      ]),
+    ).toEqual(new Set([8, 9]))
+    expect(new Set(idByName.values()).size).toBe(5)
+    expect(cache.state.counters.noteId).toBe(9)
+    expect(unchangedFiles.map(readSource)).toEqual(sourcesBefore)
+  })
+
+  it('does not let a copy of an indexed note take the id of the original', () => {
+    const paths = createNotesPaths()
+    fs.ensureDirSync(paths.inboxDirPath)
+    const originalPath = path.join(paths.inboxDirPath, 'Foo.md')
+    fs.writeFileSync(
+      originalPath,
+      '---\nid: 5\nname: Foo\n---\nBody\n',
+      'utf8',
+    )
+    syncNotesRuntimeWithDisk(paths)
+    resetNotesRuntimeCache()
+    expect(fs.existsSync(paths.statePath)).toBe(true)
+
+    const copyPath = path.join(paths.inboxDirPath, 'Foo copy.md')
+    fs.copyFileSync(originalPath, copyPath)
+    const sourcesBefore = [originalPath, copyPath].map(filePath =>
+      fs.readFileSync(filePath, 'utf8'),
+    )
+    listEntryFirst('Foo copy.md')
+
+    const cache = syncNotesRuntimeWithDisk(paths)
+    const idByName = new Map(
+      cache.state.notes.map(entry => [
+        path.posix.basename(entry.filePath),
+        entry.id,
+      ]),
+    )
+
+    expect(idByName.get('Foo.md')).toBe(5)
+    expect(idByName.get('Foo copy.md')).toBe(cache.state.counters.noteId)
+    expect(cache.state.counters.noteId).toBeGreaterThan(5)
+    expect(
+      [originalPath, copyPath].map(filePath =>
+        fs.readFileSync(filePath, 'utf8'),
+      ),
+    ).toEqual(sourcesBefore)
+  })
+
+  it('keeps the frontmatter id of an indexed note renamed outside the app', () => {
+    const paths = createNotesPaths()
+    fs.ensureDirSync(paths.inboxDirPath)
+    const originalPath = path.join(paths.inboxDirPath, 'Foo.md')
+    fs.writeFileSync(
+      originalPath,
+      '---\nid: 5\nname: Foo\n---\nBody\n',
+      'utf8',
+    )
+    syncNotesRuntimeWithDisk(paths)
+    resetNotesRuntimeCache()
+
+    fs.moveSync(originalPath, path.join(paths.inboxDirPath, 'Bar.md'))
+
+    const cache = syncNotesRuntimeWithDisk(paths)
+
+    expect(cache.state.notes).toHaveLength(1)
+    expect(cache.state.notes[0].filePath).toBe('.masscode/inbox/Bar.md')
+    expect(cache.state.notes[0].id).toBe(5)
+  })
+
+  it('hands out finite ids when the index has an entry without id', () => {
+    const paths = createNotesPaths()
+    fs.ensureDirSync(paths.inboxDirPath)
+    fs.writeFileSync(
+      path.join(paths.inboxDirPath, 'a.md'),
+      '---\nid: 5\nname: a\n---\nBody\n',
+      'utf8',
+    )
+    syncNotesRuntimeWithDisk(paths)
+    resetNotesRuntimeCache()
+
+    const rawState = JSON.parse(fs.readFileSync(paths.statePath, 'utf8')) as {
+      notes: Record<string, unknown>[]
+    }
+    rawState.notes.push({ filePath: 'ghost.md' })
+    fs.writeFileSync(paths.statePath, JSON.stringify(rawState), 'utf8')
+    stateContentCacheByPath.delete(paths.statePath)
+    resetNotesRuntimeCache()
+    fs.writeFileSync(
+      path.join(paths.inboxDirPath, 'b-without-id.md'),
+      '---\nname: b-without-id\n---\nBody\n',
+      'utf8',
+    )
+
+    const cache = syncNotesRuntimeWithDisk(paths)
+    const created = cache.state.notes.find(
+      entry => path.posix.basename(entry.filePath) === 'b-without-id.md',
+    )!
+
+    expect(Number.isInteger(created.id)).toBe(true)
+    expect(created.id).toBeGreaterThan(5)
+    expect(Number.isFinite(cache.state.counters.noteId)).toBe(true)
   })
 })
 

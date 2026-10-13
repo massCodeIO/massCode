@@ -10,6 +10,7 @@ import {
   commonMessageResponse,
 } from '../dto/common/response'
 import { snippetsDTO } from '../dto/snippets'
+import { toSnippetListItem } from '../listItems'
 
 const app = new Elysia({ prefix: '/snippets' })
 
@@ -87,16 +88,7 @@ app
           ? await storage.snippets.getSnippetsAsync(query)
           : storage.snippets.getSnippets(query)
 
-      // Тела фрагментов не сериализуются в список: контент выбранного
-      // сниппета загружается через GET /snippets/:id.
-      return result.map(snippet => ({
-        ...snippet,
-        contents: snippet.contents.map(({ id, label, language }) => ({
-          id,
-          label,
-          language,
-        })),
-      })) as SnippetsResponse
+      return result.map(toSnippetListItem) as SnippetsResponse
     },
     {
       query: 'snippetsQuery',

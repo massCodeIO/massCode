@@ -25,12 +25,26 @@
     "clearFilter": "Clear filter: {{filter}}",
     "searching": "Searching...",
     "empty": "No results found",
+    "emptyHint": "Try words you remember from the record, or describe it in your own words",
+    "weakerMatches_one": "{{count}} more weaker match",
+    "weakerMatches_other": "{{count}} more weaker matches",
+    "match": {
+      "name": "Matches the name",
+      "words": "Has your words",
+      "meaning": "By meaning",
+      "both": "Words and meaning"
+    },
+    "status": {
+      "meaningSearching": "Searching by meaning...",
+      "meaningWarming": "Semantic search is warming up..."
+    },
     "groups": {
       "recent": "Recent",
       "actions": "Actions",
       "spaces": "Spaces",
       "filters": "Filters",
       "results": "Results",
+      "possiblyRelated": "Possibly related",
       "snippets": "Snippets",
       "notes": "Notes",
       "httpRequests": "HTTP Requests"
@@ -56,6 +70,10 @@
       "importHttpCollectionSubtitle": "Import OpenAPI, Postman, or Bruno collection files",
       "openPreferences": "Open preferences",
       "openPreferencesSubtitle": "Change massCode settings",
+      "enableSemanticSearch": "Turn on semantic search",
+      "enableSemanticSearchSubtitle": "Download the built-in model (~210 MB) to find records by meaning",
+      "enableSemanticSearchReadySubtitle": "Use the downloaded built-in model to find records by meaning",
+      "enableSemanticSearchUnsupportedSubtitle": "Set up an embedding server to find records by meaning",
       "newHttpCollection": "New HTTP collection",
       "newHttpCollectionSubtitle": "Create a collection for requests and folders",
       "newHttpWebSocket": "New WebSocket request",
@@ -102,7 +120,12 @@
       "actions": "Actions",
       "apply": "Apply",
       "run": "Run",
-      "back": "Back"
+      "back": "Back",
+      "expand": "Show",
+      "resultsCount_one": "{{count}} result",
+      "resultsCount_other": "{{count}} results",
+      "weakCount_one": "{{count}} weaker",
+      "weakCount_other": "{{count}} weaker"
     }
   },
   "imports": {

@@ -25,12 +25,28 @@
     "clearFilter": "Сбросить фильтр: {{filter}}",
     "searching": "Поиск...",
     "empty": "Ничего не найдено",
+    "emptyHint": "Попробуйте слова, которые помните из записи, или опишите её своими словами",
+    "weakerMatches_one": "Ещё {{count}} слабое совпадение",
+    "weakerMatches_few": "Ещё {{count}} слабых совпадения",
+    "weakerMatches_many": "Ещё {{count}} слабых совпадений",
+    "weakerMatches_other": "Ещё {{count}} слабого совпадения",
+    "match": {
+      "name": "Совпадает с названием",
+      "words": "Есть ваши слова",
+      "meaning": "По смыслу",
+      "both": "Слова и смысл"
+    },
+    "status": {
+      "meaningSearching": "Ищу по смыслу...",
+      "meaningWarming": "Смысловой поиск прогревается..."
+    },
     "groups": {
       "recent": "Недавние",
       "actions": "Действия",
       "spaces": "Пространства",
       "filters": "Фильтры",
       "results": "Результаты",
+      "possiblyRelated": "Возможно, это",
       "snippets": "Сниппеты",
       "notes": "Заметки",
       "httpRequests": "HTTP-запросы"
@@ -56,6 +72,10 @@
       "importHttpCollectionSubtitle": "Импортировать файлы OpenAPI, Postman или Bruno",
       "openPreferences": "Открыть настройки",
       "openPreferencesSubtitle": "Изменить настройки massCode",
+      "enableSemanticSearch": "Включить поиск по смыслу",
+      "enableSemanticSearchSubtitle": "Скачать встроенную модель (~210 МБ), чтобы находить записи по смыслу",
+      "enableSemanticSearchReadySubtitle": "Использовать скачанную встроенную модель, чтобы находить записи по смыслу",
+      "enableSemanticSearchUnsupportedSubtitle": "Настроить сервер эмбеддингов, чтобы находить записи по смыслу",
       "newHttpCollection": "Новая HTTP-коллекция",
       "newHttpCollectionSubtitle": "Создать коллекцию для запросов и папок",
       "newHttpWebSocket": "Новый WebSocket-запрос",
@@ -102,7 +122,16 @@
       "actions": "Действия",
       "apply": "Применить",
       "run": "Выполнить",
-      "back": "Назад"
+      "back": "Назад",
+      "expand": "Показать",
+      "resultsCount_one": "{{count}} результат",
+      "resultsCount_few": "{{count}} результата",
+      "resultsCount_many": "{{count}} результатов",
+      "resultsCount_other": "{{count}} результата",
+      "weakCount_one": "{{count}} слабое",
+      "weakCount_few": "{{count}} слабых",
+      "weakCount_many": "{{count}} слабых",
+      "weakCount_other": "{{count}} слабого"
     }
   },
   "imports": {

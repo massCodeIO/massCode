@@ -120,9 +120,9 @@ This searches Notes for `migration` inside the Development folder with the backe
 
 ## Search by meaning
 
-Search by words finds records that contain what you typed. With semantic search turned on, the palette also finds records related by meaning, for example a note about invoices when you search for `customer billing`. Results by words appear as you type; results by meaning replace them after a short pause. While this happens, the footer shows **Searching by meaning...**.
+Search by words finds records that contain what you typed. With semantic search turned on, the palette also finds records related by meaning, for example a note about invoices when you search for `customer billing`. Results by words appear as you type. After a short pause, results by meaning are added below them; results already shown by words keep their order. While this happens, the footer shows **Searching by meaning...**.
 
-All matches appear in one list. Each result shows why it was found:
+Each result shows why it was found:
 
 | Label | Meaning |
 | --- | --- |
@@ -133,7 +133,9 @@ All matches appear in one list. Each result shows why it was found:
 
 Under the title, a result shows a short excerpt from the record; words that matched are highlighted. A result found only by meaning shows the start of the matching part of the record without highlighting. A result that matches only by name has no excerpt.
 
-Weaker matches are collapsed into a **more weaker matches** row below the main results. Select it and press <kbd>Enter</kbd>, or click it, to show them. The footer shows how many results and weaker matches were found.
+Strong matches appear under **Results**. Weaker matches appear below them under **Possibly related**: the first three are shown, and the rest are collapsed into a **N more weaker matches** row. Select it and press <kbd>Enter</kbd>, or click it, to show them. The footer shows how many results and weaker matches were found.
+
+Press <kbd>Enter</kbd> to open the selected result, including one under **Possibly related**. The first result is selected by default. While the palette is still searching for a changed query, <kbd>Enter</kbd> does not open results of the previous query and does not create a new item. Press <kbd>Shift+Enter</kbd> to create an item from the query instead. See [Create From Search](/documentation/command-palette#create-from-search).
 
 If nothing matches, the palette suggests trying words you remember from the record or describing it in your own words. The create actions from [Create From Search](/documentation/command-palette#create-from-search) are still available.
 
@@ -156,9 +158,11 @@ You can also open **Preferences → Semantic Search** and choose a **Source**:
 
 After you choose a source, massCode indexes your snippets, notes and HTTP requests in the background and shows progress under **Index**. Long records are split into chunks, so progress is counted in chunks, for example **Indexing 120 of 800 chunks**. When indexing finishes, **Index** shows the number of indexed records. The built-in model indexes on two threads to keep the computer responsive, and its indexing also starts shortly after the app launches. With a local server, indexing starts after you choose an embedding model, and continues when you search from the palette or the assistant if the index is not ready yet. For HTTP requests, only the name, method, URL path and description are indexed. Changed records are reindexed in the background when you search.
 
+While the built-in model downloads or the index is being built, an icon with the progress in percent appears at the bottom of the space rail. Hover it to see the progress; search by words already works at this time. The icon turns red if the download or indexing fails. Click it to open **Preferences → Semantic Search**. The icon is not shown for short updates that finish within a second or when everything is ready.
+
 Until the first index is ready, the palette finds records by words only and the footer shows **Semantic search is warming up...**.
 
-The index is stored only on this computer and is not synced with your vault. Switching the source, server or embedding model rebuilds it.
+The index is stored only on this computer and is not synced with your vault. Switching the source, server or embedding model rebuilds it. Switching to another vault also builds a new index: the built-in model starts indexing the new vault right away, and with a local server indexing starts with the first search. Moving the vault to another folder keeps the existing index.
 
 The built-in model is not available on Intel Macs; use a local server instead.
 

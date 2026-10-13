@@ -38,6 +38,10 @@ import {
   isBoundaryNativeAction,
   nativeTools,
 } from '../../shared/aiNativeActions'
+import {
+  aiSemanticConfigureSchema,
+  aiSemanticSearchSchema,
+} from '../../shared/aiSemantic'
 import { aiMutationResultSchema } from '../../shared/aiTask'
 import { workspaceCreationHistory } from '../../shared/aiWorkspace'
 import { isTrustedApiRequest } from '../api/requestIpc'
@@ -47,11 +51,26 @@ import { AiError, aiErrorCode } from './errors'
 import { createHttpActionManager, httpActionTools } from './httpActions'
 import { httpContextDocument } from './httpContextDocument'
 import { createHttpTools } from './httpTools'
+import { searchPalette } from './paletteSearch'
 import { replayFields } from './replay'
 import { isInvalidPlan, planVaultSearch, planVaultTurn } from './searchPlan'
 import {
+  cancelBuiltinDownload,
+  downloadBuiltinModel,
+  removeBuiltinModel,
+  resetBuiltinFailure,
+} from './semantic/builtin'
+import { isBuiltinSupported } from './semantic/builtinModel'
+import {
+  removeIndex,
+  restartIndex,
+  semanticStatus,
+} from './semantic/vectorIndex'
+import {
   configureAi,
+  configureAiSemantic,
   getAiConnection,
+  getAiSemanticSettings,
   getAiSettings,
   rememberAiModels,
 } from './settings'
@@ -525,15 +544,12 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
         }
       : next
     workspaceReceipts.set(input.id, result)
-    actionOwners
-      .get(input.id)
-      ?.wait
-      .settle(input.id, {
-        ...result,
-        previewAcceptedByUser: true,
-        status: result.failed === undefined ? 'applied' : 'failed',
-        persisted: result.failed === undefined,
-      })
+    actionOwners.get(input.id)?.wait.settle(input.id, {
+      ...result,
+      previewAcceptedByUser: true,
+      status: result.failed === undefined ? 'applied' : 'failed',
+      persisted: result.failed === undefined,
+    })
     owner.send('system:storage-synced')
     return result
   })
@@ -566,18 +582,58 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
     }
     return configureAi(configuration)
   })
-  handle('system:ai:models', async () => {
+  handle('system:ai:semantic', semanticStatus)
+  handle('system:ai:semantic-configure', (payload) => {
+    const parsed = aiSemanticConfigureSchema.safeParse(payload)
+    if (
+      !parsed.success
+      || (parsed.data.source === 'builtin' && !isBuiltinSupported())
+    ) {
+      throw new AiError('invalidRequest')
+    }
+    configureAiSemantic(parsed.data)
+    resetBuiltinFailure()
+    void restartIndex()
+    return semanticStatus()
+  })
+  handle('system:ai:semantic-download', () => {
+    if (!isBuiltinSupported())
+      throw new AiError('invalidRequest')
+    void downloadBuiltinModel().then((ready) => {
+      if (ready && getAiSemanticSettings().source === 'builtin')
+        void restartIndex()
+    })
+    return semanticStatus()
+  })
+  handle('system:ai:semantic-cancel', async () => {
+    await cancelBuiltinDownload()
+    return semanticStatus()
+  })
+  handle('system:ai:semantic-remove', async () => {
+    await removeBuiltinModel()
+    await removeIndex('builtin')
+    return semanticStatus()
+  })
+  // После ошибки индексации (например, сервер эмбеддингов ещё не был запущен) — повтор без смены источника.
+  handle('system:ai:semantic-retry', () => {
+    resetBuiltinFailure()
+    void restartIndex()
+    return semanticStatus()
+  })
+  handle('system:ai:semantic-search', (payload) => {
+    const parsed = aiSemanticSearchSchema.safeParse(payload)
+    if (!parsed.success)
+      throw new AiError('invalidRequest')
+    return searchPalette(parsed.data)
+  })
+  async function withModelsTimeout<T>(
+    request: (signal: AbortSignal) => Promise<T>,
+  ) {
     const controller = new AbortController()
     modelControllers.add(controller)
     const timeout = AbortSignal.timeout(30_000)
     try {
-      const connection = getAiConnection()
-      const models = await listAiModels(
-        connection,
-        AbortSignal.any([controller.signal, timeout]),
-      )
-      rememberAiModels(connection, models)
-      return models
+      return await request(AbortSignal.any([controller.signal, timeout]))
     }
     catch (error) {
       if (timeout.aborted)
@@ -587,7 +643,21 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
     finally {
       modelControllers.delete(controller)
     }
+  }
+  // Адрес берётся только из сохранённых настроек, чтобы renderer не мог направить запрос на произвольный хост.
+  handle('system:ai:semantic-models', () => {
+    const { kind, baseURL } = getAiSemanticSettings().provider
+    return withModelsTimeout(signal =>
+      listAiModels({ provider: kind, baseURL, model: '' }, signal),
+    )
   })
+  handle('system:ai:models', () =>
+    withModelsTimeout(async (signal) => {
+      const connection = getAiConnection()
+      const models = await listAiModels(connection, signal)
+      rememberAiModels(connection, models)
+      return models
+    }))
   async function run(
     request: AiStart,
     session: NonNullable<typeof active>,

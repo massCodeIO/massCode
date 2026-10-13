@@ -52,6 +52,16 @@ const mocks = vi.hoisted(() => ({
     }),
   ),
   retrieve: vi.fn(),
+  semanticSearch: vi.fn(),
+  restartIndex: vi.fn(),
+}))
+vi.mock('../semantic/searchVault', () => ({
+  searchVault: mocks.semanticSearch,
+}))
+vi.mock('../semantic/vectorIndex', () => ({
+  removeIndex: vi.fn(),
+  restartIndex: mocks.restartIndex,
+  semanticStatus: vi.fn(async () => ({ source: 'provider' })),
 }))
 vi.mock('../workspace', () => ({
   createWorkspaceManager: () => ({
@@ -72,6 +82,40 @@ vi.mock('../../store', () => ({
   store: { preferences: { get: () => '/vault' } },
 }))
 vi.mock('../../storage', () => ({
+  useStorage: () => ({
+    snippets: {
+      getSnippets: (query: { tagId?: number, folderId?: number }) =>
+        [
+          {
+            id: 1,
+            name: 'Tagged',
+            tags: [{ id: 7, name: 'ops' }],
+            folder: { id: 3, name: 'Infra' },
+            contents: [
+              { id: 10, label: 'a', language: 'ts', value: 'secret body' },
+            ],
+          },
+          { id: 2, name: 'Plain', tags: [], folder: null, contents: [] },
+        ].filter(
+          item =>
+            (!query.tagId || item.tags.some(tag => tag.id === query.tagId))
+            && (!query.folderId || item.folder?.id === query.folderId),
+        ),
+    },
+  }),
+  useNotesStorage: () => ({
+    notes: {
+      getNotes: () => [
+        {
+          id: 2,
+          name: 'Billing',
+          content: 'note body',
+          tags: [],
+          folder: null,
+        },
+      ],
+    },
+  }),
   useHttpStorage: () => ({
     folders: { getFolders: () => [] },
     environments: {
@@ -79,6 +123,15 @@ vi.mock('../../storage', () => ({
       getActiveEnvironmentId: () => null,
     },
     requests: {
+      getRequests: () => [
+        {
+          id: 4,
+          name: 'Orders',
+          method: 'GET',
+          url: '/orders',
+          body: 'payload',
+        },
+      ],
       getRequestById: () => ({
         id: 465,
         runtimeState: 'ready',
@@ -123,6 +176,14 @@ vi.mock('../settings', () => ({
   rememberAiModels: vi.fn(),
   getAiSettings: () => ({ provider: 'ollama' }),
   getAiConnection: () => ({ baseURL: 'http://localhost/v1', model: 'local' }),
+  getAiSemanticSettings: () => ({
+    source: 'provider',
+    provider: {
+      kind: 'lmstudio',
+      baseURL: 'http://127.0.0.1:1234/v1',
+      model: 'embed',
+    },
+  }),
 }))
 
 function setup() {
@@ -3209,4 +3270,160 @@ it('publishes one timeout after a completed HTTP receipt without done or replay'
   finally {
     vi.useRealTimers()
   }
+})
+
+describe('semantic search IPC', () => {
+  // Поддельный searchVault: отдаёт записи, которые пропускают фильтр типов и allow палитры.
+  function searchVaultFake(found: { ref: string, type: string, id: number }[]) {
+    mocks.semanticSearch.mockImplementation(
+      async (input: { types: string[], allow?: (ref: string) => boolean }) => {
+        const items = found
+          .filter(
+            item =>
+              input.types.includes(item.type)
+              && (!input.allow || input.allow(item.ref)),
+          )
+          .map(item => ({
+            ...item,
+            name: 'n',
+            score: 2,
+            reason: 'words',
+            excerpt: { text: 'billing run', ranges: [[0, 7]] },
+          }))
+        return { items, strongCount: items.length, meaning: 'ready' }
+      },
+    )
+  }
+  it('validates the palette query', async () => {
+    searchVaultFake([])
+    const { invoke } = setup()
+    const valid = {
+      query: ' billing ',
+      types: ['note', 'snippet'],
+      mode: 'words',
+    }
+    for (const payload of [
+      { ...valid, extra: true },
+      { ...valid, exclude: [] },
+      { ...valid, query: 'x'.repeat(501) },
+      { ...valid, query: '   ' },
+      { ...valid, types: ['folder'] },
+      { ...valid, types: [] },
+      { ...valid, mode: 'semantic' },
+      { ...valid, limit: 51 },
+      { ...valid, tagId: 7 },
+      { ...valid, types: ['http_request'], tagId: 7 },
+    ]) {
+      expect(await invoke('semantic-search', payload)).toEqual({
+        ok: false,
+        error: 'invalidRequest',
+      })
+    }
+    expect(mocks.semanticSearch).not.toHaveBeenCalled()
+    expect(
+      await invoke('semantic-search', { ...valid, limit: 50 }),
+    ).toMatchObject({ ok: true })
+    expect(mocks.semanticSearch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: 'billing',
+        types: ['note', 'snippet'],
+        mode: 'words',
+        limit: 50,
+      }),
+    )
+  })
+  it('returns list items without bodies with score, reason and excerpt', async () => {
+    searchVaultFake([
+      { ref: 'note:2', type: 'note', id: 2 },
+      { ref: 'snippet:1', type: 'snippet', id: 1 },
+      { ref: 'http_request:4', type: 'http_request', id: 4 },
+    ])
+    const { invoke } = setup()
+    const response = await invoke('semantic-search', {
+      query: 'billing',
+      types: ['note', 'snippet', 'http_request'],
+      mode: 'full',
+    })
+    expect(response).toEqual({
+      ok: true,
+      data: {
+        items: [
+          {
+            type: 'note',
+            item: { id: 2, name: 'Billing', tags: [], folder: null },
+            score: 2,
+            reason: 'words',
+            excerpt: { text: 'billing run', ranges: [[0, 7]] },
+          },
+          expect.objectContaining({
+            type: 'snippet',
+            item: expect.objectContaining({
+              id: 1,
+              contents: [{ id: 10, label: 'a', language: 'ts' }],
+            }),
+          }),
+          expect.objectContaining({
+            type: 'http_request',
+            item: { id: 4, name: 'Orders', method: 'GET', url: '/orders' },
+          }),
+        ],
+        strongCount: 3,
+        meaning: 'ready',
+      },
+    })
+    expect(JSON.stringify(response)).not.toMatch(
+      /secret body|note body|payload/,
+    )
+  })
+  it('restricts results to the tag or folder of the space', async () => {
+    searchVaultFake([
+      { ref: 'snippet:1', type: 'snippet', id: 1 },
+      { ref: 'snippet:2', type: 'snippet', id: 2 },
+    ])
+    const { invoke } = setup()
+    const ids = async (filter: Record<string, number>) => {
+      const response = (await invoke('semantic-search', {
+        query: 'x',
+        types: ['snippet'],
+        mode: 'words',
+        ...filter,
+      })) as { data: { items: { item: { id: number } }[] } }
+      return response.data.items.map(item => item.item.id)
+    }
+    expect(await ids({})).toEqual([1, 2])
+    expect(mocks.semanticSearch.mock.calls[0][0]).not.toHaveProperty('allow')
+    expect(await ids({ tagId: 7 })).toEqual([1])
+    expect(await ids({ folderId: 3 })).toEqual([1])
+    expect(await ids({ tagId: 8 })).toEqual([])
+  })
+  it('retries indexing after an error without changing the source', async () => {
+    const { invoke } = setup()
+    expect(await invoke('semantic-retry', null)).toEqual({
+      ok: true,
+      data: { source: 'provider' },
+    })
+    expect(mocks.restartIndex).toHaveBeenCalledTimes(1)
+  })
+  it('lists models of the saved embedding server only', async () => {
+    mocks.models.mockResolvedValue(['embed'])
+    const { invoke } = setup()
+    expect(
+      await invoke('semantic-models', { baseURL: 'http://evil.test/v1' }),
+    ).toEqual({ ok: true, data: ['embed'] })
+    expect(mocks.models).toHaveBeenCalledWith(
+      { provider: 'lmstudio', baseURL: 'http://127.0.0.1:1234/v1', model: '' },
+      expect.any(AbortSignal),
+    )
+  })
+  it('does not restart the index when the chat provider changes', async () => {
+    mocks.configure.mockReturnValue({})
+    const { invoke } = setup()
+    await invoke('configure', {
+      provider: 'ollama',
+      baseURL: 'http://localhost:11434/v1',
+      model: 'local',
+    })
+    expect(mocks.configure).toHaveBeenCalled()
+    expect(mocks.restartIndex).not.toHaveBeenCalled()
+  })
 })

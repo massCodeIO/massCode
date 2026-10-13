@@ -29,6 +29,8 @@ async function setup(
   const refreshHttpSpaceFromDisk = vi.fn(async () => undefined)
   const storageSyncBusy = { value: false }
   const shouldSkipStorageSyncRefresh = vi.fn(() => storageSyncBusy.value)
+  const setSemanticIndexingStatus = vi.fn()
+  const refreshSemanticIndexingStatus = vi.fn(async () => undefined)
 
   vi.doMock('@/composables', () => ({
     initCodeSpace: vi.fn(async () => undefined),
@@ -73,6 +75,10 @@ async function setup(
     useCloudDownloads: () => ({
       refreshCloudDownloadStatus: vi.fn(async () => undefined),
       setCloudDownloadStatus: vi.fn(),
+    }),
+    useSemanticIndexing: () => ({
+      refreshSemanticIndexingStatus,
+      setSemanticIndexingStatus,
     }),
     useHttpSpaceInit: () => ({
       refreshHttpSpaceFromDisk,
@@ -180,6 +186,8 @@ async function setup(
     isNotesSpaceInitialized,
     normalizeCodeSelectionState,
     normalizeNotesSelectionState,
+    refreshSemanticIndexingStatus,
+    setSemanticIndexingStatus,
     shouldSkipStorageSyncRefresh,
     storageSyncBusy,
   }
@@ -194,6 +202,22 @@ afterEach(() => {
 })
 
 describe('registerSystemListeners', () => {
+  it('requests the semantic indexing status and applies its progress events', async () => {
+    const {
+      ipcHandlers,
+      refreshSemanticIndexingStatus,
+      setSemanticIndexingStatus,
+    } = await setup(null)
+    expect(refreshSemanticIndexingStatus).toHaveBeenCalledTimes(1)
+    const payload = {
+      source: 'builtin',
+      builtin: { state: 'ready' },
+      index: { state: 'indexing', done: 1, total: 2 },
+    }
+    ipcHandlers.get('system:ai:semantic-progress')?.(undefined, payload)
+    expect(setSemanticIndexingStatus).toHaveBeenCalledWith(payload)
+  })
+
   it('paces busy retries after the max wait elapses', async () => {
     const context = await setup('tools')
     context.storageSyncBusy.value = true

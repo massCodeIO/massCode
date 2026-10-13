@@ -1,5 +1,6 @@
 import type { AiErrorCode } from '../../../shared/ai'
 import type {
+  AiSemanticProgress,
   AiSemanticSearchResult,
   AiSemanticStatus,
 } from '../../../shared/aiSemantic'
@@ -9,12 +10,12 @@ import type { PreparedVectors } from './score'
 import { randomUUID } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { app } from 'electron'
+import { app, BrowserWindow } from 'electron'
 import { z } from 'zod'
 import { AiError, aiErrorCode } from '../errors'
 import { getAiSemanticSettings } from '../settings'
 import { BATCH_LIMITS, planEmbeddingBatches } from './batching'
-import { builtinStatus } from './builtin'
+import { builtinStatus, onBuiltinFailure } from './builtin'
 import { chunkRecord } from './chunks'
 import { vaultCorpus } from './corpus'
 import { currentSemanticKey, embedTexts, sameSemanticKey } from './embeddings'
@@ -54,6 +55,7 @@ const BATCH_TIMEOUT_MS = 120_000
 const REMOVE_WAIT_MS = 5_000
 // В чанках: столько векторов может потеряться при аварийном выходе.
 const SAVE_EVERY = 200
+const PROGRESS_THROTTLE_MS = 250
 
 const indexFileSchema = z.object({
   version: z.literal(3),
@@ -92,6 +94,7 @@ let again = false
 let generation = 0
 let progress: Pick<AiSemanticStatus['index'], 'done' | 'total'> | undefined
 let failure: { code: AiErrorCode, key?: SemanticKey } | undefined
+let progressTimer: NodeJS.Timeout | undefined
 
 function indexPath() {
   return path.join(app.getPath('userData'), 'v2', 'ai-semantic', 'index.json')
@@ -250,6 +253,9 @@ function isStale(runGeneration: number, key: SemanticKey) {
 async function runOnce(runGeneration: number, key: SemanticKey) {
   const stale = () => isStale(runGeneration, key)
   let index = await readIndex()
+  // Пока шло чтение, vault мог переехать: индекс уже переписан на новый путь, и удалять его нельзя.
+  if (stale())
+    return
   if (!index || !sameSemanticKey(index.fingerprint, key)) {
     // Векторы другой модели или vault несопоставимы с новыми: файл удаляется, индекс строится заново.
     await fs.rm(indexPath(), { force: true })
@@ -261,6 +267,8 @@ async function runOnce(runGeneration: number, key: SemanticKey) {
   }
   cached = index
   changed()
+  // Индекс в памяти: снимок отличает сверку готового индекса от сборки, пока не началась сама сборка.
+  scheduleSemanticProgress()
   let unsaved = 0
   progress = undefined
   try {
@@ -311,8 +319,10 @@ async function runOnce(runGeneration: number, key: SemanticKey) {
     }
     changed()
     const current = { done: 0, total: items.length }
-    if (items.length)
+    if (items.length) {
       progress = current
+      scheduleSemanticProgress()
+    }
     for (const batch of planEmbeddingBatches(
       items,
       item => item.text,
@@ -344,6 +354,7 @@ async function runOnce(runGeneration: number, key: SemanticKey) {
       })
       changed()
       current.done += batch.length
+      scheduleSemanticProgress()
       unsaved += batch.length
       if (unsaved >= SAVE_EVERY) {
         await saveIndex(index)
@@ -388,9 +399,10 @@ export function syncIndex() {
         }
         catch (error) {
           // Ошибка прогона, который уже заменён новым поколением или ключом, не ошибка текущего индекса.
+          // Повтор только по новому поколению (условие цикла) или явному запросу (again): при смене vault
+          // или источника тексты нового vault не должны уйти на сервер эмбеддингов без поиска.
           if (!isStale(runGeneration, key))
             throw error
-          again = true
         }
       } while (again || runGeneration !== generation)
     }
@@ -399,8 +411,10 @@ export function syncIndex() {
     }
     finally {
       running = undefined
+      broadcastSemanticProgress()
     }
   })()
+  broadcastSemanticProgress()
   return running
 }
 
@@ -416,12 +430,29 @@ export function syncIndexInBackground(key: SemanticKey, afterChange = false) {
 // это заранее при любом источнике семантики, иначе всё чтение пришлось бы на первое нажатие в палитре.
 // Встроенная модель индексирует локально и бесплатно, поэтому её векторы тоже готовятся заранее.
 export function warmSemanticIndex() {
+  const key = currentSemanticKey()
+  // После смены vault ошибка старого ключа к новому не относится. Ошибка текущего ключа (поиск упал до
+  // прогрева, тот же путь выбран снова) остаётся: иначе фоновый sync повторял бы её без restartIndex.
+  if (failure && !(key && failedFor(key))) {
+    failure = undefined
+    broadcastSemanticProgress()
+  }
   void vaultCorpus
     .refresh()
     .catch(error => console.error('[masscode:semantic]', error))
-  const key = currentSemanticKey()
   if (key?.source === 'builtin')
     syncIndexInBackground(key)
+}
+
+// При переносе vault id и содержимое записей не меняются: индекс переходит на новый путь без эмбеддинга.
+// Выбор другого vault (set-vault-path) так делать не должен: там другие записи под теми же id.
+// Ключ не сверяется: источник может быть выключен, а индекс другой модели удалит ближайший прогон.
+export async function moveIndexVault(from: string, to: string) {
+  const index = await readIndex()
+  if (index?.fingerprint.vault !== from)
+    return
+  index.fingerprint.vault = to
+  await saveIndex(index)
 }
 
 export function restartIndex() {
@@ -497,3 +528,60 @@ export async function semanticStatus(): Promise<AiSemanticStatus> {
     index: await indexStatus(),
   }
 }
+
+// Снимок для индикатора без диска и без запуска sync: начальный запрос окна не должен читать index.json.
+export function semanticProgress(): AiSemanticProgress {
+  const { source } = getAiSemanticSettings()
+  const { state, progress: percent, error } = builtinStatus()
+  return {
+    source,
+    builtin: { state, progress: percent, error },
+    index: indexProgress(),
+  }
+}
+
+function indexProgress(): AiSemanticProgress['index'] {
+  const key = currentSemanticKey()
+  if (!key)
+    return { state: 'off' }
+  // cached выставляет прогон: готовый индекс без эмбеддинга сверяется, а не индексируется.
+  const complete = Boolean(
+    cached?.complete && sameSemanticKey(cached.fingerprint, key),
+  )
+  if (running && (progress || !complete))
+    return { state: 'indexing', ...progress }
+  if (failure)
+    return { state: 'error', error: failure.code }
+  return { state: 'idle' }
+}
+
+export function broadcastSemanticProgress() {
+  clearTimeout(progressTimer)
+  progressTimer = undefined
+  let status: AiSemanticProgress
+  try {
+    status = semanticProgress()
+  }
+  catch (error) {
+    console.error('[masscode:semantic]', error)
+    return
+  }
+  // Закрытое окно не должно ломать прогон индексации, из которого идёт рассылка.
+  try {
+    for (const window of BrowserWindow.getAllWindows()) {
+      if (window.isDestroyed())
+        continue
+      try {
+        window.webContents.send('system:ai:semantic-progress', status)
+      }
+      catch {}
+    }
+  }
+  catch {}
+}
+
+export function scheduleSemanticProgress() {
+  progressTimer ??= setTimeout(broadcastSemanticProgress, PROGRESS_THROTTLE_MS)
+}
+
+onBuiltinFailure(scheduleSemanticProgress)

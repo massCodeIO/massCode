@@ -15,7 +15,10 @@ const mocks = vi.hoisted(() => ({
     texts.map(() => Float32Array.from([1, 0])),
   ),
 }))
-vi.mock('electron', () => ({ app: { getPath: () => mocks.userData } }))
+vi.mock('electron', () => ({
+  app: { getPath: () => mocks.userData },
+  BrowserWindow: { getAllWindows: () => [] },
+}))
 vi.mock('../../../store', () => ({
   store: { preferences: { get: () => '/vault' } },
 }))

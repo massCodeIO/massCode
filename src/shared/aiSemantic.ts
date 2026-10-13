@@ -100,3 +100,10 @@ export interface AiSemanticStatus {
     error?: AiErrorCode
   }
 }
+
+// Рассылается во все окна для индикатора в рейке пространств, поэтому без настроек сервера и счётчиков.
+export interface AiSemanticProgress {
+  source: AiSemanticSource
+  builtin: Pick<AiSemanticStatus['builtin'], 'state' | 'progress' | 'error'>
+  index: Pick<AiSemanticStatus['index'], 'state' | 'done' | 'total' | 'error'>
+}

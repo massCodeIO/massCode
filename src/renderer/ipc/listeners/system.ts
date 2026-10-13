@@ -1,3 +1,4 @@
+import type { AiSemanticProgress } from '~/shared/aiSemantic'
 import {
   type CloudDownloadStatus,
   normalizeCodeSelectionState,
@@ -15,6 +16,7 @@ import {
   useNotesDashboard,
   useNotesGraph,
   useNoteTags,
+  useSemanticIndexing,
   useSnippets,
   useSnippetUpdate,
   useSonner,
@@ -57,6 +59,8 @@ const { getNotesGraph } = useNotesGraph()
 const { sonner } = useSonner()
 const { refreshCloudDownloadStatus, setCloudDownloadStatus }
   = useCloudDownloads()
+const { refreshSemanticIndexingStatus, setSemanticIndexingStatus }
+  = useSemanticIndexing()
 // Верхняя граница дебаунса refresh: облачная докачка большого vault даёт
 // поток storage-synced событий, который иначе бесконечно сбрасывал бы
 // debounce и откладывал обновление списка (облачные иконки висели бы до
@@ -237,6 +241,14 @@ export function registerSystemListeners() {
   // до загрузки renderer, могли быть пропущены.
   refreshCloudDownloadStatus().catch((error) => {
     console.error('Failed to get cloud download status:', error)
+  })
+
+  ipc.on('system:ai:semantic-progress', (_, payload: AiSemanticProgress) => {
+    setSemanticIndexingStatus(payload)
+  })
+
+  refreshSemanticIndexingStatus().catch((error) => {
+    console.error('Failed to get semantic indexing status:', error)
   })
 
   ipc.on('system:error', (_, payload) => {

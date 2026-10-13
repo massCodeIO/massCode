@@ -2066,6 +2066,13 @@
           "runtime": "Could not start the model. Try again or choose a local server.",
           "runtimeWindows": "Could not start the model. Install the Microsoft Visual C++ Redistributable, then try again."
         }
+      },
+      "rail": {
+        "downloading": "Downloading the semantic search model: {{percent}}%",
+        "indexing": "Indexing for semantic search: {{done}} of {{total}} chunks",
+        "preparing": "Preparing the semantic search index...",
+        "wordsReady": "Search by words already works",
+        "openSettings": "Click to open settings"
       }
     }
   }

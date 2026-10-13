@@ -54,13 +54,17 @@ const mocks = vi.hoisted(() => ({
   retrieve: vi.fn(),
   semanticSearch: vi.fn(),
   restartIndex: vi.fn(),
+  broadcastProgress: vi.fn(),
 }))
 vi.mock('../semantic/searchVault', () => ({
   searchVault: mocks.semanticSearch,
 }))
 vi.mock('../semantic/vectorIndex', () => ({
+  broadcastSemanticProgress: mocks.broadcastProgress,
   removeIndex: vi.fn(),
   restartIndex: mocks.restartIndex,
+  scheduleSemanticProgress: vi.fn(),
+  semanticProgress: vi.fn(async () => ({ source: 'provider' })),
   semanticStatus: vi.fn(async () => ({ source: 'provider' })),
 }))
 vi.mock('../workspace', () => ({
@@ -173,6 +177,7 @@ vi.mock('../searchPlan', async importOriginal => ({
 }))
 vi.mock('../settings', () => ({
   configureAi: mocks.configure,
+  configureAiSemantic: vi.fn(),
   rememberAiModels: vi.fn(),
   getAiSettings: () => ({ provider: 'ollama' }),
   getAiConnection: () => ({ baseURL: 'http://localhost/v1', model: 'local' }),
@@ -3403,6 +3408,17 @@ describe('semantic search IPC', () => {
       data: { source: 'provider' },
     })
     expect(mocks.restartIndex).toHaveBeenCalledTimes(1)
+    expect(mocks.broadcastProgress).toHaveBeenCalledTimes(1)
+  })
+  it('returns the indicator snapshot and broadcasts it after reconfiguring', async () => {
+    const { invoke } = setup()
+    expect(await invoke('semantic-progress-status', null)).toEqual({
+      ok: true,
+      data: { source: 'provider' },
+    })
+    expect(mocks.broadcastProgress).not.toHaveBeenCalled()
+    await invoke('semantic-configure', { source: 'off' })
+    expect(mocks.broadcastProgress).toHaveBeenCalledTimes(1)
   })
   it('lists models of the saved embedding server only', async () => {
     mocks.models.mockResolvedValue(['embed'])

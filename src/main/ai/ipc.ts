@@ -62,8 +62,11 @@ import {
 } from './semantic/builtin'
 import { isBuiltinSupported } from './semantic/builtinModel'
 import {
+  broadcastSemanticProgress,
   removeIndex,
   restartIndex,
+  scheduleSemanticProgress,
+  semanticProgress,
   semanticStatus,
 } from './semantic/vectorIndex'
 import {
@@ -583,6 +586,7 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
     return configureAi(configuration)
   })
   handle('system:ai:semantic', semanticStatus)
+  handle('system:ai:semantic-progress-status', semanticProgress)
   handle('system:ai:semantic-configure', (payload) => {
     const parsed = aiSemanticConfigureSchema.safeParse(payload)
     if (
@@ -594,30 +598,36 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
     configureAiSemantic(parsed.data)
     resetBuiltinFailure()
     void restartIndex()
+    broadcastSemanticProgress()
     return semanticStatus()
   })
   handle('system:ai:semantic-download', () => {
     if (!isBuiltinSupported())
       throw new AiError('invalidRequest')
-    void downloadBuiltinModel().then((ready) => {
+    void downloadBuiltinModel(scheduleSemanticProgress).then((ready) => {
+      broadcastSemanticProgress()
       if (ready && getAiSemanticSettings().source === 'builtin')
         void restartIndex()
     })
+    broadcastSemanticProgress()
     return semanticStatus()
   })
   handle('system:ai:semantic-cancel', async () => {
     await cancelBuiltinDownload()
+    broadcastSemanticProgress()
     return semanticStatus()
   })
   handle('system:ai:semantic-remove', async () => {
     await removeBuiltinModel()
     await removeIndex('builtin')
+    broadcastSemanticProgress()
     return semanticStatus()
   })
   // После ошибки индексации (например, сервер эмбеддингов ещё не был запущен) — повтор без смены источника.
   handle('system:ai:semantic-retry', () => {
     resetBuiltinFailure()
     void restartIndex()
+    broadcastSemanticProgress()
     return semanticStatus()
   })
   handle('system:ai:semantic-search', (payload) => {

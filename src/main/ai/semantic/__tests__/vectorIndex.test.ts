@@ -20,9 +20,18 @@ const mocks = vi.hoisted(() => ({
   embed: vi.fn(async (_key: unknown, texts: string[]) =>
     texts.map(() => Float32Array.from([1, 0])),
   ),
+  send: vi.fn(),
+  destroyedSend: vi.fn(),
+  failureListener: undefined as (() => void) | undefined,
 }))
 vi.mock('electron', () => ({
   app: { getPath: () => mocks.userData },
+  BrowserWindow: {
+    getAllWindows: () => [
+      { isDestroyed: () => true, webContents: { send: mocks.destroyedSend } },
+      { isDestroyed: () => false, webContents: { send: mocks.send } },
+    ],
+  },
 }))
 vi.mock('../../../store', () => ({
   store: { preferences: { get: () => '/vault' } },
@@ -36,6 +45,12 @@ vi.mock('../../settings', () => ({
       model: 'embed',
     },
   }),
+}))
+vi.mock('../builtin', async importOriginal => ({
+  ...(await importOriginal<typeof import('../builtin')>()),
+  onBuiltinFailure: (listener: () => void) => {
+    mocks.failureListener = listener
+  },
 }))
 vi.mock('../embeddings', async importOriginal => ({
   ...(await importOriginal<typeof import('../embeddings')>()),
@@ -71,6 +86,7 @@ beforeEach(() => {
     { id: 2, name: 'Two', content: 'second note about retries' },
   ]
   mocks.embed.mockReset()
+  mocks.send.mockReset()
 })
 afterEach(() => {
   fs.rmSync(mocks.userData, { recursive: true, force: true })
@@ -694,5 +710,323 @@ describe('syncIndex', () => {
     fs.mkdirSync(path.dirname(indexFile()), { recursive: true })
     fs.writeFileSync(indexFile(), '{"version":3,')
     expect(await loadIndex(indexFile())).toBeUndefined()
+  })
+})
+
+describe('semantic progress', () => {
+  const builtin = {
+    vault: '/vault',
+    source: 'builtin' as const,
+    model: 'embeddinggemma',
+  }
+  function sentStates() {
+    return mocks.send.mock.calls.map(
+      ([channel, status]) => `${channel}:${status.index.state}`,
+    )
+  }
+  it('reads the snapshot without the disk and without starting a sync, unlike the settings status', async () => {
+    const fsp = (await import('node:fs/promises')).default
+    const readFile = vi.spyOn(fsp, 'readFile')
+    const { semanticProgress, semanticStatus, syncIndex } = await import(
+      '../vectorIndex'
+    )
+    expect(semanticProgress()).toEqual({
+      source: 'provider',
+      builtin: expect.objectContaining({ state: expect.any(String) }),
+      index: { state: 'idle' },
+    })
+    expect(readFile).not.toHaveBeenCalled()
+    readFile.mockRestore()
+    await new Promise(resolve => setTimeout(resolve, 20))
+    expect(mocks.embed).not.toHaveBeenCalled()
+    expect((await semanticStatus()).index.state).toBe('indexing')
+    // Фоновый прогон, запущенный статусом, не должен писать в userData после afterEach.
+    await syncIndex()
+  })
+  it('broadcasts the start, the chunk progress and the end of a run', async () => {
+    let release!: () => void
+    mocks.embed.mockImplementationOnce(async (_key, texts) => {
+      await new Promise<void>((resolve) => {
+        release = resolve
+      })
+      return texts.map(() => Float32Array.from([1, 0]))
+    })
+    const { syncIndex } = await import('../vectorIndex')
+    const run = syncIndex()
+    await vi.waitFor(() =>
+      expect(sentStates()).toContain('system:ai:semantic-progress:indexing'),
+    )
+    // Прогресс уходит с троттлингом, после него в снимке есть число чанков.
+    await vi.waitFor(() =>
+      expect(mocks.send).toHaveBeenCalledWith(
+        'system:ai:semantic-progress',
+        expect.objectContaining({
+          index: expect.objectContaining({ state: 'indexing', total: 2 }),
+        }),
+      ),
+    )
+    release()
+    await run
+    await vi.waitFor(() =>
+      expect(sentStates().at(-1)).toBe('system:ai:semantic-progress:idle'),
+    )
+  })
+  it('broadcasts a failed run as an error', async () => {
+    const { AiError } = await import('../../errors')
+    mocks.embed.mockRejectedValueOnce(new AiError('connection'))
+    const { syncIndex } = await import('../vectorIndex')
+    await syncIndex()
+    await vi.waitFor(() =>
+      expect(mocks.send).toHaveBeenLastCalledWith(
+        'system:ai:semantic-progress',
+        expect.objectContaining({
+          index: expect.objectContaining({
+            state: 'error',
+            error: 'connection',
+          }),
+        }),
+      ),
+    )
+  })
+  it('throttles progress broadcasts into one per interval', async () => {
+    mocks.key = undefined
+    const { scheduleSemanticProgress } = await import('../vectorIndex')
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    try {
+      scheduleSemanticProgress()
+      scheduleSemanticProgress()
+      scheduleSemanticProgress()
+      vi.advanceTimersByTime(249)
+      await new Promise(resolve => setImmediate(resolve))
+      expect(mocks.send).not.toHaveBeenCalled()
+      vi.advanceTimersByTime(1)
+      await vi.waitFor(() => expect(mocks.send).toHaveBeenCalledTimes(1))
+    }
+    finally {
+      vi.useRealTimers()
+    }
+  })
+  it('indexes a newly selected vault right away for the built-in model', async () => {
+    mocks.key = builtin
+    const { readIndex, syncIndex, warmSemanticIndex } = await import(
+      '../vectorIndex'
+    )
+    await syncIndex()
+    mocks.vault = createMockVault()
+    // У настоящих сигнатур mtime, размер и updatedAt файла: у записи другого vault с тем же id они другие.
+    mocks.vault.notes = [
+      { id: 1, name: 'Other', content: 'other vault note', sig: 'other' },
+    ]
+    mocks.key = { ...builtin, vault: '/other' }
+    mocks.embed.mockClear()
+    warmSemanticIndex()
+    await vi.waitFor(async () => {
+      const index = await readIndex()
+      expect(index?.fingerprint.vault).toBe('/other')
+      expect(index?.complete).toBe(true)
+    })
+    expect([...(await readIndex())!.records.keys()]).toEqual(['note:1'])
+    expect(embeddedTexts().join(' ')).toContain('other vault note')
+  })
+  it('only refreshes the corpus of a newly selected vault for an embedding server', async () => {
+    const { warmSemanticIndex } = await import('../vectorIndex')
+    const { vaultCorpus } = await import('../corpus')
+    warmSemanticIndex()
+    await vi.waitFor(() => expect(vaultCorpus.entries.size).toBe(2))
+    await new Promise(resolve => setTimeout(resolve, 20))
+    expect(mocks.embed).not.toHaveBeenCalled()
+  })
+  it('skips destroyed windows when broadcasting', async () => {
+    const { broadcastSemanticProgress } = await import('../vectorIndex')
+    broadcastSemanticProgress()
+    expect(mocks.send).toHaveBeenCalledTimes(1)
+    expect(mocks.destroyedSend).not.toHaveBeenCalled()
+  })
+  it('keeps the vectors when the vault is moved', async () => {
+    mocks.key = builtin
+    const { moveIndexVault, readIndex, syncIndex } = await import(
+      '../vectorIndex'
+    )
+    await syncIndex()
+    mocks.embed.mockClear()
+    mocks.key = { ...builtin, vault: '/moved' }
+    await moveIndexVault('/vault', '/moved')
+    await syncIndex()
+    expect(mocks.embed).not.toHaveBeenCalled()
+    expect((await readIndex())?.fingerprint.vault).toBe('/moved')
+    expect((await readIndex())?.complete).toBe(true)
+    expect(
+      JSON.parse(fs.readFileSync(indexFile(), 'utf8')).fingerprint.vault,
+    ).toBe('/moved')
+  })
+  it('moves the index while the source is off', async () => {
+    const { syncIndex } = await import('../vectorIndex')
+    await syncIndex()
+    vi.resetModules()
+    mocks.key = undefined
+    const cold = await import('../vectorIndex')
+    await cold.moveIndexVault('/vault', '/moved')
+    expect(
+      JSON.parse(fs.readFileSync(indexFile(), 'utf8')).fingerprint.vault,
+    ).toBe('/moved')
+  })
+  it('broadcasts the idle state of a complete index loaded from disk before the run ends', async () => {
+    const first = await import('../vectorIndex')
+    await first.syncIndex()
+    mocks.embed.mockClear()
+    vi.resetModules()
+    const { syncIndex } = await import('../vectorIndex')
+    const { vaultCorpus } = await import('../corpus')
+    const refresh = vaultCorpus.refresh
+    let release!: () => void
+    vi.spyOn(vaultCorpus, 'refresh').mockImplementationOnce(async () => {
+      await new Promise<void>((resolve) => {
+        release = resolve
+      })
+      return refresh()
+    })
+    mocks.send.mockClear()
+    const run = syncIndex()
+    await vi.waitFor(() => expect(release).toBeDefined())
+    expect(sentStates()).toEqual(['system:ai:semantic-progress:indexing'])
+    await vi.waitFor(() =>
+      expect(sentStates().at(-1)).toBe('system:ai:semantic-progress:idle'),
+    )
+    release()
+    await run
+    expect(mocks.embed).not.toHaveBeenCalled()
+  })
+  it('keeps the moved index when a run of the old vault reads it after the move', async () => {
+    const first = await import('../vectorIndex')
+    await first.syncIndex()
+    mocks.embed.mockClear()
+    vi.resetModules()
+    const fsp = (await import('node:fs/promises')).default
+    const readFile = fsp.readFile
+    let release!: () => void
+    const spy = vi
+      .spyOn(fsp, 'readFile')
+      .mockImplementationOnce(async (...args: Parameters<typeof readFile>) => {
+        await new Promise<void>((resolve) => {
+          release = resolve
+        })
+        return readFile(...args)
+      })
+    const { moveIndexVault, readIndex, syncIndex } = await import(
+      '../vectorIndex'
+    )
+    // Перенос начал читать индекс раньше прогона, который стартовал ещё со старым vault.
+    const moving = moveIndexVault('/vault', '/moved')
+    const run = syncIndex()
+    mocks.key = { ...key, vault: '/moved' }
+    await vi.waitFor(() => expect(release).toBeDefined())
+    release()
+    await Promise.all([moving, run])
+    spy.mockRestore()
+    expect(
+      JSON.parse(fs.readFileSync(indexFile(), 'utf8')).fingerprint.vault,
+    ).toBe('/moved')
+    expect((await readIndex())?.complete).toBe(true)
+    expect(mocks.embed).not.toHaveBeenCalled()
+  })
+  it('ends with the moved index on disk when a run of the old vault is embedding', async () => {
+    mocks.key = builtin
+    let release!: () => void
+    mocks.embed.mockImplementationOnce(async (_key, texts) => {
+      await new Promise<void>((resolve) => {
+        release = resolve
+      })
+      return texts.map(() => Float32Array.from([1, 0]))
+    })
+    const { moveIndexVault, syncIndex, warmSemanticIndex } = await import(
+      '../vectorIndex'
+    )
+    const run = syncIndex()
+    await vi.waitFor(() => expect(release).toBeDefined())
+    mocks.key = { ...builtin, vault: '/moved' }
+    await moveIndexVault('/vault', '/moved')
+    warmSemanticIndex()
+    release()
+    await run
+    const saved = JSON.parse(fs.readFileSync(indexFile(), 'utf8'))
+    expect(saved.fingerprint.vault).toBe('/moved')
+    expect(saved.complete).toBe(true)
+  })
+  it('repeats a run of the old vault for the new one when the built-in model is warmed', async () => {
+    mocks.key = builtin
+    let release!: () => void
+    mocks.embed.mockImplementationOnce(async (_key, texts) => {
+      await new Promise<void>((resolve) => {
+        release = resolve
+      })
+      return texts.map(() => Float32Array.from([1, 0]))
+    })
+    const { readIndex, syncIndex, warmSemanticIndex } = await import(
+      '../vectorIndex'
+    )
+    const run = syncIndex()
+    await vi.waitFor(() => expect(release).toBeDefined())
+    mocks.vault = createMockVault()
+    mocks.vault.notes = [
+      { id: 1, name: 'Other', content: 'other vault note', sig: 'other' },
+    ]
+    mocks.key = { ...builtin, vault: '/other' }
+    warmSemanticIndex()
+    release()
+    await run
+    expect((await readIndex())?.fingerprint.vault).toBe('/other')
+    expect((await readIndex())?.complete).toBe(true)
+    expect(embeddedTexts().join(' ')).toContain('other vault note')
+  })
+  it('keeps the error of the current key when warmed', async () => {
+    const { AiError } = await import('../../errors')
+    mocks.embed.mockRejectedValueOnce(new AiError('connection'))
+    const { semanticProgress, syncIndex, warmSemanticIndex } = await import(
+      '../vectorIndex'
+    )
+    await syncIndex()
+    warmSemanticIndex()
+    expect(semanticProgress().index.state).toBe('error')
+    expect(mocks.embed).toHaveBeenCalledTimes(1)
+  })
+  it('broadcasts a runtime failure of the built-in model', async () => {
+    await import('../vectorIndex')
+    mocks.failureListener?.()
+    await vi.waitFor(() => expect(mocks.send).toHaveBeenCalledTimes(1))
+  })
+  it('does not send texts of a newly selected vault to the embedding server after a failed run', async () => {
+    const { AiError } = await import('../../errors')
+    let release!: () => void
+    mocks.embed.mockImplementationOnce(async () => {
+      await new Promise<void>((resolve) => {
+        release = resolve
+      })
+      throw new AiError('connection')
+    })
+    const { semanticProgress, syncIndex } = await import('../vectorIndex')
+    const run = syncIndex()
+    await vi.waitFor(() => expect(release).toBeDefined())
+    mocks.key = { ...key, vault: '/other' }
+    release()
+    await run
+    expect(mocks.embed).toHaveBeenCalledTimes(1)
+    expect(semanticProgress().index.state).toBe('idle')
+  })
+  it('clears the error of the previous vault when the vault changes', async () => {
+    const { AiError } = await import('../../errors')
+    mocks.embed.mockRejectedValueOnce(new AiError('connection'))
+    const { semanticProgress, syncIndex, warmSemanticIndex } = await import(
+      '../vectorIndex'
+    )
+    await syncIndex()
+    expect(semanticProgress().index.state).toBe('error')
+    mocks.key = { ...key, vault: '/other' }
+    warmSemanticIndex()
+    expect(semanticProgress().index.state).toBe('idle')
+    expect(mocks.send).toHaveBeenLastCalledWith(
+      'system:ai:semantic-progress',
+      expect.objectContaining({ index: { state: 'idle' } }),
+    )
+    expect(mocks.embed).toHaveBeenCalledTimes(1)
   })
 })

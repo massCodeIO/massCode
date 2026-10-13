@@ -52,6 +52,7 @@ let download:
   | undefined
 let failure: Failure | undefined
 let ready: boolean | undefined
+let failureListener: (() => void) | undefined
 
 function modelDir() {
   return path.join(
@@ -97,6 +98,16 @@ export function builtinStatus(): AiSemanticStatus['builtin'] {
   return { supported, state: isBuiltinReady() ? 'ready' : 'absent' }
 }
 
+// Сбой runtime вне индексации иначе не дошёл бы до индикатора: обратный импорт vectorIndex дал бы цикл.
+export function onBuiltinFailure(listener: () => void) {
+  failureListener = listener
+}
+
+function failRuntime() {
+  failure = 'runtime'
+  failureListener?.()
+}
+
 // Упавший runtime остаётся в ошибке, пока пользователь не перенастроит поиск или не скачает модель заново.
 export function resetBuiltinFailure() {
   if (!download)
@@ -140,7 +151,7 @@ function startWorker() {
     current.settleStart(true)
     if (current.stopping)
       return
-    failure = 'runtime'
+    failRuntime()
     for (const request of pending.values())
       request.reject(new AiError('modelUnavailable'))
     pending.clear()
@@ -177,7 +188,7 @@ async function embedLoaded(texts: string[], signal: AbortSignal) {
   }
   catch {
     if (!current.stopping) {
-      failure = 'runtime'
+      failRuntime()
       await stopWorker()
     }
     throw new AiError('modelUnavailable')
@@ -216,7 +227,7 @@ export async function embedBuiltin(texts: string[], signal: AbortSignal) {
   return embedLoaded(texts, signal)
 }
 
-export async function downloadBuiltinModel() {
+export async function downloadBuiltinModel(onProgress?: () => void) {
   if (download || !isBuiltinSupported())
     return false
   let finish!: () => void
@@ -238,7 +249,10 @@ export async function downloadBuiltinModel() {
     // Ни один файл не попадает в worker, пока не совпали размер и хэш всех закреплённых файлов.
     await downloadModelFiles(modelSnapshotDir(modelDir()), {
       signal: run.controller.signal,
-      onProgress: (file, loaded) => run.loaded.set(file, loaded),
+      onProgress: (file, loaded) => {
+        run.loaded.set(file, loaded)
+        onProgress?.()
+      },
     })
     if (run.cancelled)
       return false

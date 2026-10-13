@@ -4,6 +4,10 @@ import path from 'node:path'
 import process from 'node:process'
 import { app, BrowserWindow, clipboard, ipcMain, shell } from 'electron'
 import {
+  moveIndexVault,
+  warmSemanticIndex,
+} from '../../ai/semantic/vectorIndex'
+import {
   generateIntegrationToken,
   revokeIntegrationToken,
 } from '../../api/integrations/auth'
@@ -78,6 +82,17 @@ function setVaultPathAndRestartWatcher(vaultPath: string): void {
     }
 
     throw error
+  }
+}
+
+// Корпус и векторы привязаны к vault: встроенная модель индексирует новый сразу, сервер эмбеддингов
+// по-прежнему на первом поиске. Сбой прогрева не должен превращать уже выполненную смену vault в ошибку.
+function warmSemanticIndexForNewVault(): void {
+  try {
+    warmSemanticIndex()
+  }
+  catch (error) {
+    log('ai:semantic:vault-switch', error)
   }
 }
 
@@ -222,6 +237,7 @@ export function registerSystemHandlers() {
       }
 
       setVaultPathAndRestartWatcher(payload.vaultPath)
+      warmSemanticIndexForNewVault()
 
       return { vaultPath: payload.vaultPath }
     },
@@ -239,6 +255,10 @@ export function registerSystemHandlers() {
       }
 
       moveVaultAndRestartWatcher(sourcePath, payload.targetPath)
+      // Прогрев после переноса индекса, иначе прогон нового vault успел бы удалить ещё не перенесённый индекс.
+      void moveIndexVault(sourcePath, payload.targetPath)
+        .catch(error => log('ai:semantic:vault-move', error))
+        .then(warmSemanticIndexForNewVault)
 
       return { vaultPath: payload.targetPath }
     },

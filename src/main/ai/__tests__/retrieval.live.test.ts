@@ -61,14 +61,35 @@ const fixtures = vi.hoisted(() => [
     body: null,
   },
 ])
+// Смысловой поиск выключен: оценивается планирование запросов и поиск по словам.
+vi.mock('../semantic/embeddings', () => ({
+  currentSemanticKey: () => undefined,
+}))
+vi.mock('../semantic/vectorIndex', () => ({
+  meaningState: async () => 'off',
+  readPreparedVectors: async () => undefined,
+  syncIndexInBackground: () => {},
+}))
 vi.mock('../../store', () => ({
   store: { preferences: { get: () => '/fixture' } },
 }))
 vi.mock('../../storage', () => ({
-  useStorage: () => ({ snippets: { getSnippets: () => [] } }),
-  useNotesStorage: () => ({ notes: { getNotes: () => [] } }),
+  useStorage: () => ({
+    snippets: { getSnippets: () => [], getSnippetSignatures: () => new Map() },
+  }),
+  useNotesStorage: () => ({
+    notes: { getNotes: () => [], getNoteSignatures: () => new Map() },
+  }),
   useHttpStorage: () => ({
+    folders: { getFolders: () => [] },
     requests: {
+      getRequestSignatures: () =>
+        new Map(
+          fixtures.map(record => [
+            record.id,
+            { sig: 'fixture', pendingCloudDownload: false },
+          ]),
+        ),
       getRequests: () => fixtures,
       getRequestById: (id: number) =>
         fixtures.find(record => record.id === id),

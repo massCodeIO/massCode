@@ -79,6 +79,7 @@
     "@elysiajs/swagger": "^1.3.1",
     "@excalidraw/excalidraw": "^0.18.1",
     "@faker-js/faker": "^10.1.0",
+    "@huggingface/transformers": "4.3.1",
     "@internationalized/date": "3.7.0",
     "@lezer/highlight": "^1.2.3",
     "@lezer/markdown": "^1.6.3",
@@ -199,6 +200,10 @@
     "wait-on": "^9.0.4"
   },
   "pnpm": {
+    "ignoredBuiltDependencies": [
+      "onnxruntime-node",
+      "protobufjs"
+    ],
     "onlyBuiltDependencies": [
       "@parcel/watcher",
       "electron",
@@ -206,6 +211,13 @@
       "simple-git-hooks",
       "vue-demi"
     ],
+    "packageExtensions": {
+      "@huggingface/transformers@4.3.1": {
+        "dependencies": {
+          "onnxruntime-common": "1.30.0"
+        }
+      }
+    },
     "patchedDependencies": {
       "httpsnippet@3.0.10": "patches/httpsnippet@3.0.10.patch"
     }

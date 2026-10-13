@@ -19,6 +19,11 @@ interface RankOptions {
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
+const MAX_RECENCY_SCORE = 1_200
+const MAX_FREQUENCY_SCORE = 1_800
+const LAST_QUERY_SCORE = 1_200
+export const MAX_USAGE_SCORE
+  = MAX_RECENCY_SCORE + MAX_FREQUENCY_SCORE + LAST_QUERY_SCORE
 
 function normalizeSearchValue(value: string) {
   return value.trim().toLowerCase()
@@ -100,21 +105,27 @@ function getTextMatchScore(
   return 0
 }
 
-function getUsageScore(
+export function getCommandPaletteUsageScore(
   usage: CommandPaletteUsageScoreEntry | undefined,
-  query: string,
-  now: number,
+  rawQuery: string,
+  now = Date.now(),
 ) {
   if (!usage) {
     return 0
   }
 
+  const query = normalizeSearchValue(rawQuery)
   const ageDays = Math.max(0, (now - usage.openedAt) / DAY_MS)
-  const recencyScore = Math.max(0, 1_200 - ageDays * 120)
-  const frequencyScore = Math.min(1_800, Math.log2(usage.openCount + 1) * 450)
+  const recencyScore = Math.max(0, MAX_RECENCY_SCORE - ageDays * 120)
+  const frequencyScore = Math.min(
+    MAX_FREQUENCY_SCORE,
+    Math.log2(usage.openCount + 1) * 450,
+  )
   const lastQuery = normalizeSearchValue(usage.lastQuery || '')
   const lastQueryScore
-    = query && (lastQuery === query || lastQuery === `>${query}`) ? 1_200 : 0
+    = query && (lastQuery === query || lastQuery === `>${query}`)
+      ? LAST_QUERY_SCORE
+      : 0
 
   return recencyScore + frequencyScore + lastQueryScore
 }
@@ -128,7 +139,7 @@ export function getCommandPaletteResultScore(
 
   return (
     textScore
-    + getUsageScore(
+    + getCommandPaletteUsageScore(
       options.usageById?.get(result.id),
       query,
       options.now ?? Date.now(),
@@ -141,23 +152,4 @@ export function isCommandPaletteSearchMatch(
   query: string,
 ) {
   return getTextMatchScore(result, normalizeSearchValue(query)) > 0
-}
-
-export function rankCommandPaletteResults<
-  T extends CommandPaletteRankableResult,
->(results: T[], options: RankOptions) {
-  return results
-    .map((result, index) => ({
-      index,
-      result,
-      score: getCommandPaletteResultScore(result, options),
-    }))
-    .sort((a, b) => {
-      if (b.score !== a.score) {
-        return b.score - a.score
-      }
-
-      return a.index - b.index
-    })
-    .map(item => item.result)
 }

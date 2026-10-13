@@ -69,6 +69,8 @@ Workspace selection is captured when you send each message. Use it for requests 
 
 Attachments are optional and do not restrict vault search. Ask the assistant to find records across Code, Notes and HTTP, then click a record link in the answer or **Found records** to open it.
 
+The assistant uses the same search as the Command Palette: it matches words in record names and text, including HTTP methods, paths and descriptions. With [semantic search](/documentation/search#search-by-meaning) turned on, it also finds records related by meaning, for example a note about invoices when you ask about billing. Records whose name matches the query exactly rank first.
+
 ## Apply, Preview and Undo Changes
 
 The assistant can create and edit records, duplicate them, change tags and folders, move records to Trash and restore them. It can also update Code fragments and Notes [task properties](/documentation/notes/tasks), such as status, due date and priority.
@@ -145,6 +147,8 @@ Long conversations may exceed the request size limit. Older complete exchanges a
 The configured provider receives your messages, included history, custom instructions, attachments and records the assistant reads. HTTP data masks recognized credentials and known secret values, but arbitrary sensitive text in code, notes or response bodies may still be shared. Cookie values and protected environment values are not returned to the model. Selecting an upload file does not include its path or bytes in the model’s result.
 
 API keys are stored with operating-system encryption outside your vault and are not included in vault sync. If secure storage is unavailable, you can still use a connection that does not require a key.
+
+[Semantic search](/documentation/search#search-by-meaning) runs locally with the built-in model. With a local server, indexing sends the text of every indexed record and search queries to that embedding server.
 
 For local processing, use a model running on your computer. A local server address alone does not guarantee this: Ollama can also serve cloud-backed models. massCode does not automatically switch to a cloud provider when a local server is unavailable.
 

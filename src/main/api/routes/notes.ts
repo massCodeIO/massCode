@@ -7,6 +7,7 @@ import {
   commonMessageResponse,
 } from '../dto/common/response'
 import { notesDTO } from '../dto/notes'
+import { toNoteListItem } from '../listItems'
 
 const app = new Elysia({ prefix: '/notes' })
 
@@ -80,11 +81,7 @@ app
           ? await storage.notes.getNotesAsync(query)
           : storage.notes.getNotes(query)
 
-      // Контент заметок не сериализуется в список: контент выбранной
-      // заметки загружается через GET /notes/:id.
-      return result.map(
-        ({ content: _content, ...note }) => note,
-      ) as NotesResponse
+      return result.map(toNoteListItem) as NotesResponse
     },
     {
       query: 'notesQuery',

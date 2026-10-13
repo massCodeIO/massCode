@@ -6,6 +6,14 @@ import type {
   SnippetsResponse,
 } from '@/services/api/generated'
 import type { Component } from 'vue'
+import type { AiResult } from '~/shared/ai'
+import type {
+  AiSemanticConfigure,
+  AiSemanticSearchResult,
+  AiSemanticStatus,
+  PaletteMatchReason,
+  PaletteSearchItem,
+} from '~/shared/aiSemantic'
 import {
   useHttpApp,
   useHttpFolders,
@@ -19,7 +27,8 @@ import {
   useNoteSearch,
 } from '@/composables/spaces/notes'
 import { useImportDialog } from '@/composables/useImportDialog'
-import { i18n, store } from '@/electron'
+import { useSonner } from '@/composables/useSonner'
+import { i18n, ipc, store } from '@/electron'
 import { router, RouterName } from '@/router'
 import { api } from '@/services/api'
 import {
@@ -28,11 +37,31 @@ import {
   type SpaceId,
 } from '@/spaceDefinitions'
 import { useDebounceFn, useEventListener } from '@vueuse/core'
-import { Folder, Hash, Settings, Upload } from 'lucide-vue-next'
+import {
+  ChevronsDown,
+  Folder,
+  Hash,
+  ScanSearch,
+  Settings,
+  Upload,
+} from 'lucide-vue-next'
 import {
   createHttpRequestFromPalette,
   getHttpCommands,
 } from './command-palette/httpCommands'
+import {
+  acceptsPaletteResponse,
+  type AppliedPaletteResponse,
+  buildPaletteSearchPayload,
+  DEFERRED_WORDS_MAX_MS,
+  FULL_DELAY_MS,
+  mergeMeaningResults,
+  type PaletteSearchPhase,
+  shouldRunFullPhase,
+  splitPaletteResults,
+  WEAK_PREVIEW_LIMIT,
+  WORDS_DEBOUNCE_MS,
+} from './command-palette/paletteSearch'
 import {
   type CommandPaletteFolderFilter,
   type CommandPaletteFolderOption,
@@ -41,7 +70,7 @@ import {
   getActiveCommandPaletteFilterToken,
   parseCommandPaletteQuery,
 } from './command-palette/queryParser'
-import { rankCommandPaletteResults } from './command-palette/ranking'
+import { getCommandPaletteUsageScore } from './command-palette/ranking'
 import { LibraryFilter } from './types'
 
 type SnippetResult = SnippetsResponse[number]
@@ -103,6 +132,19 @@ interface CommandPaletteSpaceResult {
   spaceId: SpaceId
 }
 
+interface CommandPaletteWeakMatchesResult {
+  id: string
+  type: 'weak-matches'
+  title: string
+  subtitle: string
+  icon: Component
+}
+
+interface CommandPaletteMatch {
+  reason?: PaletteMatchReason
+  excerpt?: PaletteSearchItem['excerpt']
+}
+
 interface CommandPaletteRecentResult {
   id: string
   type: 'recent'
@@ -114,30 +156,30 @@ interface CommandPaletteRecentResult {
 
 export type CommandPaletteResult =
   | CommandPaletteSpaceResult
-  | {
+  | ({
     id: string
     type: 'snippet'
     title: string
     subtitle: string
     icon: Component
     item: SnippetResult
-  }
-  | {
+  } & CommandPaletteMatch)
+  | ({
     id: string
     type: 'note'
     title: string
     subtitle: string
     icon: Component
     item: NoteResult
-  }
-  | {
+  } & CommandPaletteMatch)
+  | ({
     id: string
     type: 'http-request'
     title: string
     subtitle: string
     icon: Component
     item: HttpRequestResult
-  }
+  } & CommandPaletteMatch)
   | {
     id: string
     type: 'command'
@@ -148,17 +190,50 @@ export type CommandPaletteResult =
   }
   | CommandPaletteTokenSuggestion
   | CommandPaletteRecentResult
+  | CommandPaletteWeakMatchesResult
+
+type CommandPaletteContentResult = Extract<
+  CommandPaletteResult,
+  { type: 'snippet' | 'note' | 'http-request' }
+>
 
 const isOpen = ref(false)
 const query = ref('')
 const searchScopeSpaceId = ref<SpaceId>()
 const searchTagFilter = ref<CommandPaletteTagFilter>()
 const searchFolderFilter = ref<CommandPaletteFolderFilter>()
+// Только фаза слов: пока её ответа нет, показанный список относится к прошлому вводу.
 const isSearching = ref(false)
-const settledSearchQuery = ref('')
-const snippets = shallowRef<SnippetResult[]>([])
-const notes = shallowRef<NoteResult[]>([])
-const httpRequests = shallowRef<HttpRequestResult[]>([])
+const searchItems = shallowRef<PaletteSearchItem[]>([])
+// Запрос применённого ответа: usage-тайбрейк не должен пересчитываться от ввода, пока ответа на него нет.
+const searchItemsQuery = ref('')
+const searchStrongCount = ref(0)
+const searchFixedCount = ref(0)
+const searchMeaning = ref<AiSemanticSearchResult['meaning']>()
+const isMeaningPending = ref(false)
+// Был ли ответ поиска с последнего сброса: пока он есть, ввод следующей буквы не перестраивает палитру.
+const hasSearchResponse = ref(false)
+const isWeakExpanded = ref(false)
+let appliedSearchResponse: AppliedPaletteResponse | undefined
+let wordsRequest:
+  | {
+    generation: number
+    response: Promise<AiSemanticSearchResult | undefined>
+  }
+  | undefined
+// Воркер эмбеддингов считает запросы по очереди: держим один full в полёте, из ожидающих живёт только последний.
+let isFullRequestInFlight = false
+let pendingFullSearch: { generation: number, search: string } | undefined
+// Пустой по словам ответ нового ввода, отложенный до full: применяется, если full не удался или не успел к сроку.
+let deferredWordsResponse:
+  | {
+    generation: number
+    search: string
+    response: AiSemanticSearchResult
+    timer: ReturnType<typeof setTimeout>
+  }
+  | undefined
+const semanticStatus = ref<AiSemanticStatus>()
 const recentEntries = shallowRef<CommandPaletteRecentEntry[]>(
   store.app.get<CommandPaletteRecentEntry[]>('commandPalette.recent') || [],
 )
@@ -184,6 +259,7 @@ const httpApp = useHttpApp()
 const httpData = useHttpRequests()
 const httpSearch = useHttpSearch()
 const importDialog = useImportDialog()
+const { sonner } = useSonner()
 
 const SEARCHABLE_SPACE_IDS = new Set<SpaceId>(['code', 'notes', 'http'])
 
@@ -643,52 +719,108 @@ const usageById = computed(
   () => new Map(usageEntries.value.map(entry => [entry.id, entry])),
 )
 
-const snippetResults = computed<CommandPaletteResult[]>(() =>
-  snippets.value.map(snippet => ({
+function toSnippetResult(snippet: SnippetResult) {
+  return {
     id: `snippet:${snippet.id}`,
     type: 'snippet',
     title: getResultTitle(snippet.name, i18n.t('snippet.untitled')),
     subtitle: snippet.folder?.name || i18n.t('common.library'),
     icon: getSpaceIcon('code'),
     item: snippet,
-  })),
-)
+  } satisfies CommandPaletteResult
+}
 
-const noteResults = computed<CommandPaletteResult[]>(() =>
-  notes.value.map(note => ({
+function toNoteResult(note: NoteResult) {
+  return {
     id: `note:${note.id}`,
     type: 'note',
     title: getResultTitle(note.name, i18n.t('notes.untitled')),
     subtitle: note.folder?.name || i18n.t('common.library'),
     icon: getSpaceIcon('notes'),
     item: note,
-  })),
-)
+  } satisfies CommandPaletteResult
+}
 
-const httpRequestResults = computed<CommandPaletteResult[]>(() =>
-  httpRequests.value.map(request => ({
+function toHttpRequestResult(request: HttpRequestResult) {
+  return {
     id: `http-request:${request.id}`,
     type: 'http-request',
     title: getResultTitle(request.name, i18n.t('spaces.http.untitledRequest')),
     subtitle: request.url || i18n.t('spaces.http.noUrl'),
     icon: getSpaceIcon('http'),
     item: request,
-  })),
+  } satisfies CommandPaletteResult
+}
+
+function toContentResult(
+  found: PaletteSearchItem,
+): CommandPaletteContentResult {
+  const match = {
+    reason: found.reason,
+    ...(found.excerpt ? { excerpt: found.excerpt } : {}),
+  }
+  if (found.type === 'snippet')
+    return { ...toSnippetResult(found.item as SnippetResult), ...match }
+  if (found.type === 'note')
+    return { ...toNoteResult(found.item as NoteResult), ...match }
+  return {
+    ...toHttpRequestResult(found.item as unknown as HttpRequestResult),
+    ...match,
+  }
+}
+
+const splitContentResults = computed(() => {
+  const now = Date.now()
+  const search = searchItemsQuery.value
+  return splitPaletteResults(
+    searchItems.value.map(found => ({
+      result: toContentResult(found),
+      score: found.score,
+    })),
+    searchStrongCount.value,
+    id => getCommandPaletteUsageScore(usageById.value.get(id), search, now),
+    searchFixedCount.value,
+  )
+})
+
+const strongResults = computed<CommandPaletteResult[]>(
+  () => splitContentResults.value.strong,
 )
 
-const contentResults = computed<CommandPaletteResult[]>(() =>
-  rankCommandPaletteResults(
-    [
-      ...snippetResults.value,
-      ...noteResults.value,
-      ...httpRequestResults.value,
-    ],
-    {
-      query: isSearching.value ? settledSearchQuery.value : query.value,
-      usageById: usageById.value,
-    },
-  ),
+const weakResults = computed<CommandPaletteResult[]>(
+  () => splitContentResults.value.weak,
 )
+
+// Первые слабые видны сразу, остальные за строкой «ещё N», раскрывающей их по Enter или клику.
+const weakSectionResults = computed<CommandPaletteResult[]>(() => {
+  const count = weakResults.value.length
+  if (isWeakExpanded.value || count <= WEAK_PREVIEW_LIMIT)
+    return weakResults.value
+  return [
+    ...weakResults.value.slice(0, WEAK_PREVIEW_LIMIT),
+    {
+      id: 'weak-matches',
+      type: 'weak-matches',
+      title: i18n.t('commandPalette.weakerMatches', {
+        count: count - WEAK_PREVIEW_LIMIT,
+      }),
+      subtitle: '',
+      icon: ChevronsDown,
+    },
+  ]
+})
+
+const meaningSearchStatus = computed<'searching' | 'warming' | undefined>(
+  () => {
+    if (isMeaningPending.value)
+      return 'searching'
+    return searchMeaning.value === 'warming' ? 'warming' : undefined
+  },
+)
+
+function expandWeakResults() {
+  isWeakExpanded.value = true
+}
 
 const hasQuery = computed(() => query.value.trim().length > 0)
 const isCommandMode = computed(
@@ -711,23 +843,132 @@ const createFallbackResults = computed<CommandPaletteResult[]>(() => {
 })
 
 function resetSearchResults() {
-  settledSearchQuery.value = ''
-  snippets.value = []
-  notes.value = []
-  httpRequests.value = []
+  searchItems.value = []
+  searchItemsQuery.value = ''
+  searchStrongCount.value = 0
+  searchFixedCount.value = 0
+  searchMeaning.value = undefined
+  isMeaningPending.value = false
+  isWeakExpanded.value = false
+  appliedSearchResponse = undefined
+  hasSearchResponse.value = false
+  wordsRequest = undefined
+  // Флаг полёта не сбрасываем: он отражает занятость воркера и снимается ответом самого запроса.
+  pendingFullSearch = undefined
+  clearDeferredWords()
+}
+
+function clearDeferredWords() {
+  if (deferredWordsResponse)
+    clearTimeout(deferredWordsResponse.timer)
+  deferredWordsResponse = undefined
+}
+
+// isMeaningPending не трогаем: full ещё идёт, футер продолжает показывать поиск по смыслу.
+function applyDeferredWordsOnTimeout(generation: number) {
+  const deferred = deferredWordsResponse
+  if (deferred?.generation !== generation)
+    return
+  clearDeferredWords()
+  if (
+    applySearchResponse(generation, 'words', deferred.search, deferred.response)
+  )
+    isSearching.value = false
+}
+
+async function requestPaletteSearch(
+  search: string,
+  mode: PaletteSearchPhase,
+): Promise<AiSemanticSearchResult | undefined> {
+  const payload = buildPaletteSearchPayload({
+    query: search,
+    mode,
+    scopeSpaceId: searchScopeSpaceId.value,
+    tagFilter: searchTagFilter.value,
+    folderFilter: searchFolderFilter.value,
+  })
+  if (!payload)
+    return { items: [], strongCount: 0, meaning: 'off' }
+  try {
+    const result = (await ipc.invoke(
+      'system:ai:semantic-search',
+      payload,
+    )) as AiResult<AiSemanticSearchResult>
+    return result.ok ? result.data : undefined
+  }
+  catch {
+    return undefined
+  }
+}
+
+function getSearchItemId(found: PaletteSearchItem) {
+  const type = found.type === 'http_request' ? 'http-request' : found.type
+  return `${type}:${String(found.item.id)}`
+}
+
+// Сильные слов в том порядке, в каком они уже показаны (после usage-тайбрейка).
+function getShownWordsStrongItems() {
+  const itemsById = new Map(
+    searchItems.value
+      .slice(0, searchStrongCount.value)
+      .map(found => [getSearchItemId(found), found]),
+  )
+  return strongResults.value.flatMap((result) => {
+    const found = itemsById.get(result.id)
+    return found ? [found] : []
+  })
+}
+
+function applySearchResponse(
+  generation: number,
+  phase: PaletteSearchPhase,
+  search: string,
+  response: AiSemanticSearchResult | undefined,
+) {
+  const accepted = acceptsPaletteResponse(searchRunId, appliedSearchResponse, {
+    generation,
+    phase,
+  })
+  if (!accepted)
+    return false
+  if (phase === 'full')
+    isMeaningPending.value = false
+  // Сбой full оставляет список слов; сбой words показывает пустой список, а не прошлый ввод.
+  if (!response && phase === 'full')
+    return true
+  // Раскрытые слабые сворачиваются вместе с заменой списка, а не на нажатие: иначе список дёргается на каждой букве.
+  if (appliedSearchResponse?.generation !== generation)
+    isWeakExpanded.value = false
+  const merged
+    = phase === 'full'
+      && response
+      && appliedSearchResponse?.generation === generation
+      && appliedSearchResponse.phase === 'words'
+      ? mergeMeaningResults({
+          wordsStrong: getShownWordsStrongItems(),
+          full: response.items,
+          fullStrongCount: response.strongCount,
+          getKey: getSearchItemId,
+        })
+      : undefined
+  appliedSearchResponse = { generation, phase }
+  hasSearchResponse.value = true
+  searchItems.value = merged?.items ?? response?.items ?? []
+  searchItemsQuery.value = search
+  searchStrongCount.value = merged?.strongCount ?? response?.strongCount ?? 0
+  searchFixedCount.value = merged?.fixedCount ?? 0
+  searchMeaning.value = response?.meaning
+  return true
 }
 
 async function runSearch(value: string) {
   const search = value.trim()
-  const scopeSpaceId = searchScopeSpaceId.value
-  const tagFilter = searchTagFilter.value
-  const folderFilter = searchFolderFilter.value
 
   if (search !== query.value.trim()) {
     return
   }
 
-  const runId = ++searchRunId
+  const generation = searchRunId
 
   if (!search) {
     resetSearchResults()
@@ -735,71 +976,150 @@ async function runSearch(value: string) {
     return
   }
 
-  isSearching.value = true
-
-  const shouldSearchSnippets = !scopeSpaceId || scopeSpaceId === 'code'
-  const shouldSearchNotes = !scopeSpaceId || scopeSpaceId === 'notes'
-  const shouldSearchHttpRequests = !scopeSpaceId || scopeSpaceId === 'http'
-  const snippetTagId = tagFilter?.spaceId === 'code' ? tagFilter.id : undefined
-  const noteTagId = tagFilter?.spaceId === 'notes' ? tagFilter.id : undefined
-  const snippetFolderId
-    = folderFilter?.spaceId === 'code' ? folderFilter.id : undefined
-  const noteFolderId
-    = folderFilter?.spaceId === 'notes' ? folderFilter.id : undefined
-  const httpFolderId
-    = folderFilter?.spaceId === 'http' ? folderFilter.id : undefined
-  const [snippetsResult, notesResult, httpRequestsResult]
-    = await Promise.allSettled([
-      shouldSearchSnippets
-        ? api.snippets.getSnippets({
-            search,
-            searchNameOnly: 1,
-            folderId: snippetFolderId,
-            isDeleted: 0,
-            tagId: snippetTagId,
-          })
-        : Promise.resolve({ data: [] as SnippetResult[] }),
-      shouldSearchNotes
-        ? api.notes.getNotes({
-            search,
-            searchNameOnly: 1,
-            folderId: noteFolderId,
-            isDeleted: 0,
-            tagId: noteTagId,
-          })
-        : Promise.resolve({ data: [] as NoteResult[] }),
-      shouldSearchHttpRequests
-        ? api.httpRequests.getHttpRequests({
-            search,
-            searchNameOnly: 1,
-            folderId: httpFolderId,
-          })
-        : Promise.resolve({ data: [] as HttpRequestResult[] }),
-    ])
-
+  const response = requestPaletteSearch(search, 'words')
+  wordsRequest = { generation, response }
+  const data = await response
+  // Без сильных по словам, но со смысловой фазой впереди: пустой список на миг до full мигал бы.
+  // Прежний список остаётся как устаревший (isSearching держится, Enter по нему заблокирован) до ответа full.
   if (
-    runId !== searchRunId
-    || search !== query.value.trim()
-    || scopeSpaceId !== searchScopeSpaceId.value
-    || tagFilter?.id !== searchTagFilter.value?.id
-    || folderFilter?.id !== searchFolderFilter.value?.id
+    generation === searchRunId
+    && hasSearchResponse.value
+    && data
+    && data.strongCount === 0
+    && shouldRunFullPhase(data.meaning, search)
+  ) {
+    clearDeferredWords()
+    deferredWordsResponse = {
+      generation,
+      search,
+      response: data,
+      timer: setTimeout(
+        () => applyDeferredWordsOnTimeout(generation),
+        DEFERRED_WORDS_MAX_MS,
+      ),
+    }
+    isMeaningPending.value = true
+    return
+  }
+  if (!applySearchResponse(generation, 'words', search, data))
+    return
+  isSearching.value = false
+  isMeaningPending.value = Boolean(
+    data && shouldRunFullPhase(data.meaning, search),
+  )
+}
+
+async function runFullSearch(value: string) {
+  const search = value.trim()
+  const generation = searchRunId
+
+  if (!search || search !== query.value.trim()) {
+    return
+  }
+
+  // Смысловая фаза нужна, только если слова для этого же ввода сказали, что индекс готов.
+  const words
+    = wordsRequest?.generation === generation
+      ? await wordsRequest.response
+      : undefined
+  if (
+    !words
+    || !shouldRunFullPhase(words.meaning, search)
+    || generation !== searchRunId
   ) {
     return
   }
 
-  snippets.value
-    = snippetsResult.status === 'fulfilled' ? snippetsResult.value.data : []
-  notes.value
-    = notesResult.status === 'fulfilled' ? notesResult.value.data : []
-  httpRequests.value
-    = httpRequestsResult.status === 'fulfilled'
-      ? httpRequestsResult.value.data
-      : []
-  settledSearchQuery.value = search
-  isSearching.value = false
+  if (isFullRequestInFlight) {
+    pendingFullSearch = { generation, search }
+    return
+  }
+
+  isFullRequestInFlight = true
+  // requestPaletteSearch не бросает: сбой приходит как undefined, флаг снимется всегда.
+  const response = await requestPaletteSearch(search, 'full')
+  isFullRequestInFlight = false
+  const deferred
+    = deferredWordsResponse?.generation === generation
+      ? deferredWordsResponse.response
+      : undefined
+  if (applySearchResponse(generation, 'full', search, response) && deferred) {
+    clearDeferredWords()
+    if (!response)
+      applySearchResponse(generation, 'words', search, deferred)
+    isSearching.value = false
+  }
+
+  const pending = pendingFullSearch
+  pendingFullSearch = undefined
+  if (
+    pending
+    && pending.generation === searchRunId
+    && pending.search === query.value.trim()
+  ) {
+    void runFullSearch(pending.search)
+  }
 }
 
-const debouncedRunSearch = useDebounceFn(runSearch, 180)
+async function loadSemanticStatus() {
+  try {
+    const result = (await ipc.invoke(
+      'system:ai:semantic',
+      null,
+    )) as AiResult<AiSemanticStatus>
+    if (result.ok)
+      semanticStatus.value = result.data
+  }
+  catch {}
+}
+
+async function requestSemantic(
+  channel: 'system:ai:semantic-configure' | 'system:ai:semantic-download',
+  input: AiSemanticConfigure | null,
+) {
+  try {
+    const result = (await ipc.invoke(
+      channel,
+      input,
+    )) as AiResult<AiSemanticStatus>
+    if (!result.ok) {
+      sonner({ type: 'error', message: i18n.t(`ai.errors.${result.error}`) })
+      return
+    }
+    semanticStatus.value = result.data
+    return result.data
+  }
+  catch {
+    sonner({ type: 'error', message: i18n.t('ai.errors.connection') })
+  }
+}
+
+async function enableSemanticSearchFromPalette() {
+  if (semanticStatus.value?.builtin.supported) {
+    const status = await requestSemantic('system:ai:semantic-configure', {
+      source: 'builtin',
+    })
+    if (status?.builtin.state === 'ready') {
+      sonner({ type: 'success', message: i18n.t('ai.semantic.enabled') })
+    }
+    else if (status) {
+      if (status.builtin.state !== 'downloading')
+        await requestSemantic('system:ai:semantic-download', null)
+      sonner({ message: i18n.t('ai.semantic.enabling') })
+    }
+  }
+  // Раздел настроек показывает прогресс загрузки, а без встроенной модели в нём настраивается сервер.
+  await router.push({ name: RouterName.preferencesSemanticSearch })
+}
+
+const debouncedRunWordsSearch = useDebounceFn(runSearch, WORDS_DEBOUNCE_MS)
+const debouncedRunFullSearch = useDebounceFn(runFullSearch, FULL_DELAY_MS)
+
+// isMeaningPending меняют только ответы (words ставит, full снимает): сброс на нажатие мигал бы футером.
+function debouncedRunSearch(value: string) {
+  void debouncedRunWordsSearch(value)
+  void debouncedRunFullSearch(value)
+}
 
 function finishFilterSuggestion(search: string) {
   searchRunId += 1
@@ -927,11 +1247,13 @@ function setQuery(value: string) {
 function openPalette() {
   isOpen.value = true
   void loadCommandPaletteFilterOptions()
+  void loadSemanticStatus()
 }
 
 function openCommandMode() {
   isOpen.value = true
   setQuery('>')
+  void loadSemanticStatus()
 }
 
 function closePalette() {
@@ -942,6 +1264,7 @@ function togglePalette() {
   isOpen.value = !isOpen.value
   if (isOpen.value) {
     void loadCommandPaletteFilterOptions()
+    void loadSemanticStatus()
   }
 }
 
@@ -1252,6 +1575,24 @@ function getCommandDefinitions(): CommandPaletteCommand[] {
       keywords: ['settings', 'preferences'],
       run: openPreferencesFromPalette,
     },
+    ...(semanticStatus.value?.source === 'off'
+      ? [
+          {
+            id: 'enable-semantic-search',
+            title: i18n.t('commandPalette.actions.enableSemanticSearch'),
+            subtitle: i18n.t(
+              !semanticStatus.value.builtin.supported
+                ? 'commandPalette.actions.enableSemanticSearchUnsupportedSubtitle'
+                : semanticStatus.value.builtin.state === 'ready'
+                  ? 'commandPalette.actions.enableSemanticSearchReadySubtitle'
+                  : 'commandPalette.actions.enableSemanticSearchSubtitle',
+            ),
+            icon: ScanSearch,
+            keywords: ['semantic', 'meaning', 'search', 'embeddings', 'ai'],
+            run: enableSemanticSearchFromPalette,
+          },
+        ]
+      : []),
   ]
 }
 
@@ -1436,6 +1777,11 @@ async function openResult(result: CommandPaletteResult) {
     return
   }
 
+  if (result.type === 'weak-matches') {
+    expandWeakResults()
+    return
+  }
+
   closePalette()
   clearPalette()
 
@@ -1485,15 +1831,15 @@ watch(isOpen, (open) => {
 export function useCommandPalette() {
   return {
     commandResults,
-    contentResults,
     createFallbackResults,
+    expandWeakResults,
     hasQuery,
-    httpRequestResults,
+    hasSearchResponse,
     isOpen,
     isSearching,
     isSpaceMode,
     isTokenSuggestionMode,
-    noteResults,
+    meaningSearchStatus,
     openCommandMode,
     openPalette,
     openResult,
@@ -1509,9 +1855,11 @@ export function useCommandPalette() {
     clearSearchFilterToken,
     clearSearchScope,
     setQuery,
-    snippetResults,
     spaceResults,
+    strongResults,
     tokenSuggestionResults,
     usageById,
+    weakResults,
+    weakSectionResults,
   }
 }

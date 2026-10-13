@@ -9,9 +9,16 @@
     "build/renderer/**/*",
     "build/main/**/*",
     "build/shared/**/*",
-    "!build/**/*.map"
+    "!build/**/*.map",
+    "!**/node_modules/onnxruntime-web/**",
+    "!**/node_modules/onnxruntime-node/bin/napi-v6/darwin/arm64/libonnxruntime.1.30.0.dylib"
   ],
-  "asarUnpack": ["node_modules/@lydell/**/*"],
+  "asarUnpack": [
+    "node_modules/@lydell/**/*",
+    "**/node_modules/onnxruntime-node/**/*",
+    "**/node_modules/sharp/**/*",
+    "**/node_modules/@img/**/*"
+  ],
   "publish": {
     "provider": "github",
     "owner": "massCodeIO",
@@ -23,15 +30,24 @@
     "entitlements": "build/entitlements.mac.inherit.plist",
     "category": "public.app-category.productivity",
     "hardenedRuntime": true,
-    "notarize": true
+    "notarize": true,
+    "files": ["!**/node_modules/onnxruntime-node/bin/napi-v6/{linux,win32}/**"]
   },
   "win": {
     "target": ["nsis", "portable"],
-    "icon": "build/icons/icon.ico"
+    "icon": "build/icons/icon.ico",
+    "files": [
+      "!**/node_modules/onnxruntime-node/bin/napi-v6/{darwin,linux}/**",
+      "!**/node_modules/onnxruntime-node/bin/napi-v6/win32/arm64/**"
+    ]
   },
   "linux": {
     "target": ["AppImage"],
-    "icon": "build/icons/icon.png"
+    "icon": "build/icons/icon.png",
+    "files": [
+      "!**/node_modules/onnxruntime-node/bin/napi-v6/{darwin,win32}/**",
+      "!**/node_modules/onnxruntime-node/bin/napi-v6/linux/arm64/**"
+    ]
   },
   "nsis": {
     "oneClick": false,

@@ -26,6 +26,7 @@ import {
 } from '../../runtime/shared/cloudGuards'
 import { filterAndSortByQuery } from '../../runtime/shared/entityQuery'
 import { buildFolderPathMap } from '../../runtime/shared/folderIndex'
+import { buildRecordSignatures } from '../../runtime/shared/recordSignature'
 import {
   assertUniqueSiblingEntryName,
   assertVaultNotHydrating,
@@ -200,6 +201,15 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       })
 
       return filtered
+    },
+
+    getRequestSignatures() {
+      const { state, requestById } = getCache()
+      return buildRecordSignatures(
+        state.requests,
+        id => requestById.get(id),
+        state.folders,
+      )
     },
 
     getRequestById(id: number) {

@@ -54,6 +54,7 @@ import {
   emptyEntityTrashFromStateAndDisk,
   getEntityDeleteCounts,
 } from '../runtime/shared/entityStorage'
+import { buildRecordSignatures } from '../runtime/shared/recordSignature'
 import { querySearchIndex } from '../runtime/shared/searchEngine'
 
 function findContentIndexById(
@@ -117,27 +118,41 @@ export function createSnippetsStorage(): SnippetsStorage {
     },
     getSnippetsAsync: async (query) => {
       const search = query.search?.trim().toLowerCase()
-      if (!search || query.searchNameOnly) {
+      const fullText = Boolean(search && !query.searchNameOnly)
+      if (!fullText && !query.withContent) {
         return assembleSnippets(
           getRuntimeCache(getPaths(getVaultPath())),
           query,
           null,
         )
       }
+      // Подготовка полнотекстового поиска дочитывает тела с отдачей управления,
+      // поэтому withContent без поиска идёт тем же путём.
       while (true) {
         const prepared = await prepareSnippetSearchAsync(() =>
           getRuntimeCache(getPaths(getVaultPath())),
         )
         if (!prepared.isCurrent())
           continue
-        const ids = querySearchIndex(
-          prepared.items,
-          search,
-          prepared.index,
-          getSnippetSearchText,
-        )
+        const ids = fullText
+          ? querySearchIndex(
+              prepared.items,
+              search!,
+              prepared.index,
+              getSnippetSearchText,
+            )
+          : null
         return assembleSnippets(prepared.cache, query, ids)
       }
+    },
+    getSnippetSignatures: () => {
+      const { state, snippets } = getRuntimeCache(getPaths(getVaultPath()))
+      // findSnippetById, а не snippetById: карта пересобирается лениво и не видит только что созданные.
+      return buildRecordSignatures(
+        state.snippets,
+        id => findSnippetById(snippets, id),
+        state.folders,
+      )
     },
     getSnippetById: (id: number) => {
       const paths = getPaths(getVaultPath())

@@ -1,10 +1,22 @@
 import { describe, expect, it } from 'vitest'
 import {
+  type CommandPaletteRankableResult,
+  getCommandPaletteResultScore,
   isCommandPaletteSearchMatch,
-  rankCommandPaletteResults,
 } from '../ranking'
 
 const now = Date.UTC(2026, 4, 5)
+
+function rankCommandPaletteResults<T extends CommandPaletteRankableResult>(
+  results: T[],
+  options: Parameters<typeof getCommandPaletteResultScore>[1],
+) {
+  return [...results].sort(
+    (a, b) =>
+      getCommandPaletteResultScore(b, options)
+      - getCommandPaletteResultScore(a, options),
+  )
+}
 
 describe('command palette ranking', () => {
   it('keeps exact title match above usage boost', () => {

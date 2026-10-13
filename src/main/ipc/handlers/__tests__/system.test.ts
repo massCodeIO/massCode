@@ -35,6 +35,8 @@ const preferencesGet = vi.fn()
 const preferencesSet = vi.fn()
 const refreshDockBadge = vi.fn(() => ({ applied: true, count: 3 }))
 const scheduleDockBadgeRefresh = vi.fn()
+const warmSemanticIndex = vi.fn()
+const moveIndexVault = vi.fn(async () => undefined)
 
 vi.mock('electron', () => ({
   clipboard: { writeText },
@@ -62,6 +64,11 @@ vi.mock('electron', () => ({
     openExternal,
     showItemInFolder,
   },
+}))
+
+vi.mock('../../../ai/semantic/vectorIndex', () => ({
+  moveIndexVault,
+  warmSemanticIndex,
 }))
 
 vi.mock('../../../currencyRates', () => ({
@@ -299,6 +306,52 @@ describe('registerSystemHandlers', () => {
       '/next-vault',
     )
     expect(result).toEqual({ vaultPath: '/next-vault' })
+    // Индекс поиска по смыслу переходит на новый путь, и только потом прогрев нового vault.
+    expect(moveIndexVault).toHaveBeenCalledWith(
+      '/current-vault',
+      '/next-vault',
+    )
+    await vi.waitFor(() => expect(warmSemanticIndex).toHaveBeenCalledTimes(1))
+    expect(startMarkdownWatcher.mock.invocationCallOrder[0]).toBeLessThan(
+      moveIndexVault.mock.invocationCallOrder[0],
+    )
+  })
+
+  it('warms the moved vault only after its index has been moved', async () => {
+    let finish!: () => void
+    moveIndexVault.mockImplementationOnce(
+      () =>
+        new Promise<undefined>((resolve) => {
+          finish = () => resolve(undefined)
+        }),
+    )
+    const { registerSystemHandlers } = await import('../system')
+
+    registerSystemHandlers()
+    registeredHandlers.get('system:move-vault')?.(undefined, {
+      targetPath: '/next-vault',
+    })
+
+    await new Promise(resolve => setImmediate(resolve))
+    expect(warmSemanticIndex).not.toHaveBeenCalled()
+    finish()
+    await vi.waitFor(() => expect(warmSemanticIndex).toHaveBeenCalledTimes(1))
+  })
+
+  it('logs a failed index move and still warms the moved vault', async () => {
+    const error = new Error('save failed')
+    moveIndexVault.mockImplementationOnce(async () => {
+      throw error
+    })
+    const { registerSystemHandlers } = await import('../system')
+
+    registerSystemHandlers()
+    registeredHandlers.get('system:move-vault')?.(undefined, {
+      targetPath: '/next-vault',
+    })
+
+    await vi.waitFor(() => expect(warmSemanticIndex).toHaveBeenCalledTimes(1))
+    expect(log).toHaveBeenCalledWith('ai:semantic:vault-move', error)
   })
 
   it('switches the configured vault between watcher stop and restart', async () => {
@@ -323,7 +376,32 @@ describe('registerSystemHandlers', () => {
     expect(preferencesSet.mock.invocationCallOrder[0]).toBeLessThan(
       startMarkdownWatcher.mock.invocationCallOrder[0],
     )
+    expect(warmSemanticIndex).toHaveBeenCalledTimes(1)
+    expect(startMarkdownWatcher.mock.invocationCallOrder[0]).toBeLessThan(
+      warmSemanticIndex.mock.invocationCallOrder[0],
+    )
+    // Другой vault: записи под теми же id другие, векторы не переносятся.
+    expect(moveIndexVault).not.toHaveBeenCalled()
     expect(result).toEqual({ vaultPath: '/next-vault' })
+  })
+
+  it('keeps a successful vault switch when warming the semantic index fails', async () => {
+    warmSemanticIndex.mockImplementationOnce(() => {
+      throw new Error('warm failed')
+    })
+    const { registerSystemHandlers } = await import('../system')
+
+    registerSystemHandlers()
+
+    expect(
+      registeredHandlers.get('system:set-vault-path')?.(undefined, {
+        vaultPath: '/next-vault',
+      }),
+    ).toEqual({ vaultPath: '/next-vault' })
+    expect(log).toHaveBeenCalledWith(
+      'ai:semantic:vault-switch',
+      expect.any(Error),
+    )
   })
 
   it('localizes an invalid vault path without restarting storage', async () => {
@@ -341,6 +419,7 @@ describe('registerSystemHandlers', () => {
     expect(preferencesSet).not.toHaveBeenCalled()
     expect(stopMarkdownWatcher).not.toHaveBeenCalled()
     expect(startMarkdownWatcher).not.toHaveBeenCalled()
+    expect(warmSemanticIndex).not.toHaveBeenCalled()
   })
 
   it('restores the previous vault when its watcher cannot start', async () => {
@@ -362,6 +441,7 @@ describe('registerSystemHandlers', () => {
     ])
     expect(stopMarkdownWatcher).toHaveBeenCalledTimes(2)
     expect(startMarkdownWatcher).toHaveBeenCalledTimes(2)
+    expect(warmSemanticIndex).not.toHaveBeenCalled()
   })
 
   it('preserves the vault switch error when watcher recovery also fails', async () => {

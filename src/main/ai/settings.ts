@@ -1,4 +1,9 @@
 import type { AiConfigure, AiProvider, AiSettings } from '../../shared/ai'
+import type {
+  AiSemanticConfigure,
+  AiSemanticProvider,
+  AiSemanticSource,
+} from '../../shared/aiSemantic'
 import { Buffer } from 'node:buffer'
 import process from 'node:process'
 import { safeStorage } from 'electron'
@@ -10,6 +15,7 @@ import {
 } from '../../shared/ai'
 import { isSafeStorageUsable } from '../store/module/httpSecretsAvailability'
 import { AiError } from './errors'
+import { isBuiltinSupported } from './semantic/builtinModel'
 
 interface SavedProfile {
   baseURL: string
@@ -20,6 +26,8 @@ interface SavedProfile {
 interface SavedSettings {
   userInstructions: string
   provider: AiProvider
+  semanticSource: AiSemanticSource
+  semanticProvider: AiSemanticProvider
   profiles: Record<AiProvider, SavedProfile>
 }
 const settings = new Store<SavedSettings>({
@@ -28,6 +36,12 @@ const settings = new Store<SavedSettings>({
   defaults: {
     provider: 'openai',
     userInstructions: '',
+    semanticSource: 'off',
+    semanticProvider: {
+      kind: 'ollama',
+      baseURL: AI_DEFAULT_URLS.ollama,
+      model: '',
+    },
     profiles: Object.fromEntries(
       AI_PROVIDERS.map(provider => [
         provider,
@@ -185,4 +199,23 @@ export function rememberAiModels(
     ...profiles,
     [connection.provider]: { ...profile, models },
   })
+}
+
+export function getAiSemanticSettings() {
+  const source = settings.get('semanticSource') ?? 'off'
+  return {
+    // Настройки, перенесённые с Mac на Apple silicon, сохраняют выбор, который Intel Mac не может выполнить.
+    source: source === 'builtin' && !isBuiltinSupported() ? 'off' : source,
+    provider: settings.get('semanticProvider'),
+  }
+}
+
+export function configureAiSemantic(input: AiSemanticConfigure) {
+  const provider = input.provider && {
+    ...input.provider,
+    baseURL: canonicalAiURL(input.provider.kind, input.provider.baseURL),
+  }
+  settings.set('semanticSource', input.source)
+  if (provider)
+    settings.set('semanticProvider', provider)
 }

@@ -293,6 +293,73 @@ export async function listAiModels(
   }
 }
 
+const embeddingsSchema = z.object({
+  data: z
+    .array(
+      z.object({
+        index: z.number().int().min(0),
+        embedding: z.array(z.number()).min(1).max(8192),
+      }),
+    )
+    .max(256),
+})
+// Батч из 16 векторов размерности 4096 в JSON превышает AI_LIMITS.outputBytes.
+const EMBEDDINGS_RESPONSE_BYTES = 8 * 1024 * 1024
+
+export async function requestAiEmbeddings(
+  connection: AiConnection,
+  model: string,
+  texts: string[],
+  signal: AbortSignal,
+): Promise<number[][]> {
+  const response = await fetch(`${connection.baseURL}/embeddings`, {
+    method: 'POST',
+    headers: headers(connection),
+    body: JSON.stringify({ model, input: texts }),
+    redirect: 'error',
+    signal,
+  })
+  await checkResponse(response)
+  if (!response.body)
+    throw new AiError('invalidResponse')
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let body = ''
+  let bytes = 0
+  try {
+    while (true) {
+      const { value, done } = await reader.read()
+      if (done)
+        break
+      bytes += value.byteLength
+      if (bytes > EMBEDDINGS_RESPONSE_BYTES)
+        throw new AiError('invalidResponse')
+      body += decoder.decode(value, { stream: true })
+    }
+    body += decoder.decode()
+    const data = embeddingsSchema
+      .parse(JSON.parse(body))
+      .data
+      .toSorted((a, b) => a.index - b.index)
+    if (
+      data.length !== texts.length
+      || data.some((item, index) => item.index !== index)
+    ) {
+      throw new AiError('invalidResponse')
+    }
+    return data.map(item => item.embedding)
+  }
+  catch (error) {
+    if (error instanceof SyntaxError || error instanceof z.ZodError)
+      throw new AiError('invalidResponse')
+    throw error
+  }
+  finally {
+    await reader.cancel().catch(() => {})
+    reader.releaseLock()
+  }
+}
+
 export async function readAiStream(
   body: ReadableStream<Uint8Array>,
   onDelta: (text: string) => void,

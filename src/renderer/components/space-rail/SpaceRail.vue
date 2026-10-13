@@ -89,6 +89,7 @@ watch(
         <MessageSquare class="size-4" />
       </UiActionButton>
       <SpaceRailCloudDownloads />
+      <SpaceRailSemanticIndexing />
       <RouterLink
         v-slot="{ navigate }"
         custom

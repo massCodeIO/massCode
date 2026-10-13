@@ -13,7 +13,7 @@ Open it with <kbd>Cmd+P</kbd> on macOS or <kbd>Ctrl+P</kbd> on Windows and Linux
 
 ## What You Can Find
 
-The palette searches by title across searchable content:
+The palette searches across searchable content:
 
 - snippets in Code
 - notes in Notes
@@ -22,9 +22,13 @@ The palette searches by title across searchable content:
 - commands
 - recently opened items
 
-Search results are ranked with your recent usage, so items you open often move higher over time.
+Snippets, notes and HTTP requests are found by words in their names and text. Each result shows why it was found, such as **Matches the name** or **Has your words**, and can show a short excerpt from the record; words that matched are highlighted. Weaker matches appear under **Possibly related**; after the first three, they are collapsed into a single row that you can expand.
+
+Among results with similar relevance, items you open often move higher over time.
 
 Palette search also supports space scopes. In massCode 5.6 and later, it can also use tag and folder filters. See [Search](/documentation/search#search-from-the-command-palette) for the full search workflow.
+
+With semantic search turned on, the palette also finds records related to your query by meaning. Run **Turn on semantic search** to set it up. See [Search by meaning](/documentation/search#search-by-meaning).
 
 ## Run Commands
 
@@ -53,14 +57,14 @@ Press <kbd>Esc</kbd> to leave command mode and return to the full palette.
 
 ## Create From Search
 
-If a search has no exact match, the palette can create a new item from the query.
+When you search for content, the palette also offers to create a new item from the query. The create actions are pinned at the bottom of the palette, above the footer.
 
 - Create a snippet in Code Inbox.
 - Create a note in Notes Inbox.
 - Create an HTTP request in HTTP Inbox.
 - Create an HTTP request from a URL.
 
-When create fallbacks are shown, press <kbd>Shift+Enter</kbd> to run the first create action.
+Press <kbd>Shift+Enter</kbd> to run the first create action without moving the selection to it. <kbd>Enter</kbd> runs a create action only when it is selected and the search for the current query has finished.
 
 ## Actions Panel
 

@@ -45,7 +45,7 @@ type MainMenuAction =
   | 'goto-math-notebook'
 
 type SystemAction =
-  | `ai:${'settings' | 'configure' | 'models' | 'context-search' | 'start' | 'cancel' | 'event' | 'workspace-apply' | 'workspace-undo' | 'http-apply' | 'http-complete' | 'http-cancel' | 'data-complete' | 'mutation-complete' | 'mutation-start' | 'native-start' | 'native-complete' | 'workspace-cancel' | 'workspace-undo-partial' | 'steer' | 'answer'}`
+  | `ai:${'settings' | 'configure' | 'models' | 'context-search' | 'start' | 'cancel' | 'event' | 'workspace-apply' | 'workspace-undo' | 'http-apply' | 'http-complete' | 'http-cancel' | 'data-complete' | 'mutation-complete' | 'mutation-start' | 'native-start' | 'native-complete' | 'workspace-cancel' | 'workspace-undo-partial' | 'steer' | 'answer' | 'semantic' | 'semantic-configure' | 'semantic-download' | 'semantic-cancel' | 'semantic-remove' | 'semantic-retry' | 'semantic-search' | 'semantic-models' | 'semantic-progress' | 'semantic-progress-status'}`
   | 'activate-license'
   | 'api-request'
   | 'api-token-generate'

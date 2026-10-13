@@ -281,3 +281,61 @@ it('stores global user preferences across provider changes and supports clearing
   configureAi({ ...input, userInstructions: '' })
   expect(getAiConnection().userInstructions).toBe('')
 })
+
+it('keeps the embedding server apart from the chat provider', async () => {
+  const { configureAi, configureAiSemantic, getAiSemanticSettings }
+    = await import('../settings')
+  expect(getAiSemanticSettings()).toEqual({
+    source: 'off',
+    provider: {
+      kind: 'ollama',
+      baseURL: 'http://localhost:11434/v1',
+      model: '',
+    },
+  })
+  configureAiSemantic({
+    source: 'provider',
+    provider: {
+      kind: 'lmstudio',
+      baseURL: 'http://127.0.0.1:1234/v1/',
+      model: 'embeddinggemma',
+    },
+  })
+  configureAi({
+    provider: 'ollama',
+    baseURL: 'http://localhost:9999/v1',
+    model: 'chat',
+  })
+  expect(getAiSemanticSettings()).toEqual({
+    source: 'provider',
+    provider: {
+      kind: 'lmstudio',
+      baseURL: 'http://127.0.0.1:1234/v1',
+      model: 'embeddinggemma',
+    },
+  })
+  configureAiSemantic({ source: 'off' })
+  expect(getAiSemanticSettings().provider.model).toBe('embeddinggemma')
+})
+
+it('rejects embedding server addresses with credentials or a query', async () => {
+  const { configureAiSemantic, getAiSemanticSettings } = await import(
+    '../settings'
+  )
+  for (const baseURL of [
+    'http://user:secret@localhost:11434/v1',
+    'http://localhost:11434/v1?token=1',
+    'file:///etc/passwd',
+  ]) {
+    expect(() =>
+      configureAiSemantic({
+        source: 'provider',
+        provider: { kind: 'ollama', baseURL, model: 'embed' },
+      }),
+    ).toThrow()
+  }
+  expect(getAiSemanticSettings()).toMatchObject({
+    source: 'off',
+    provider: { baseURL: 'http://localhost:11434/v1', model: '' },
+  })
+})

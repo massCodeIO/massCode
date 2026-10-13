@@ -40,6 +40,14 @@ vi.mock('@/composables', () => ({
 vi.mock('@/composables/spaces/http/useHttpPanels', () => ({
   useHttpPanels: () => ({ bottomOpen: ref(false), inspectorOpen: ref(false) }),
 }))
+vi.mock('@/composables/useSpacePanels', () => ({
+  useSpacePanels: () => ({
+    primaryAvailable: ref(true),
+    primaryOpen: ref(true),
+    secondaryAvailable: ref(true),
+    secondaryOpen: ref(false),
+  }),
+}))
 it('synchronizes format availability for supported, loaded single-selection fragments only', async () => {
   mock.app = {
     state: reactive({ snippetId: 1 }),

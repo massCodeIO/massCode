@@ -4,6 +4,8 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { app, BrowserWindow, Menu, protocol, screen } from 'electron'
 import { registerAiHandlers } from './ai/ipc'
+import { stopBuiltinModel } from './ai/semantic/builtin'
+import { warmSemanticIndex } from './ai/semantic/vectorIndex'
 import { initApi } from './api'
 import { registerApiRequestHandler } from './api/requestIpc'
 import { resolveApiSessionToken } from './api/sessionAuth'
@@ -121,6 +123,7 @@ export function prepareQuit(): boolean {
   stopThemeWatcher()
   stopTasksCleanupScheduler()
   cleanupDockBadge()
+  stopBuiltinModel()
   return true
 }
 
@@ -270,6 +273,16 @@ else {
     catch (error) {
       log('Error creating window', error)
     }
+
+    // Прогрев индекса откладывается, чтобы не отнимать CPU у первичного скана vault и старта окна.
+    setTimeout(() => {
+      try {
+        warmSemanticIndex()
+      }
+      catch (error) {
+        log('Error warming semantic index', error)
+      }
+    }, 15_000)
 
     // Первичный скан vault уходит из критического пути старта: окно
     // появляется сразу, а скан (уже без блокирующих чтений облачных

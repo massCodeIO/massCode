@@ -10,6 +10,7 @@ import {
   commonMessageResponse,
 } from '../dto/common/response'
 import { httpRequestsDTO } from '../dto/http-requests'
+import { toHttpRequestListItem } from '../listItems'
 
 const app = new Elysia({ prefix: '/http-requests' })
 
@@ -77,11 +78,7 @@ app
       const storage = useHttpStorage()
       const result = storage.requests.getRequests(query)
 
-      // body не сериализуется в список (остаётся ленивым на диске): полная
-      // запись выбранного запроса загружается через GET /http-requests/:id.
-      return result.map(
-        ({ body: _body, ...request }) => request,
-      ) as HttpRequestsResponse
+      return result.map(toHttpRequestListItem) as HttpRequestsResponse
     },
     {
       query: 'httpRequestsQuery',

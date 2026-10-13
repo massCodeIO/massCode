@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AI_LIMITS } from '../../../shared/ai'
-import { listAiModels, readAiStream, streamAiChat } from '../client'
+import {
+  listAiModels,
+  readAiStream,
+  requestAiEmbeddings,
+  streamAiChat,
+} from '../client'
 
 const encoder = new TextEncoder()
 function stream(chunks: string[] | Uint8Array[]) {
@@ -1157,4 +1162,78 @@ it('preserves completed and unknown receipts for a tool-free budget final withou
     content: JSON.stringify(receipts[1]),
   })
   expect(responses).toHaveBeenCalledTimes(1)
+})
+
+describe('embeddings', () => {
+  const connection = {
+    provider: 'ollama' as const,
+    baseURL: 'http://localhost:11434/v1',
+    model: 'chat',
+    apiKey: 'secret',
+  }
+  const signal = new AbortController().signal
+  function respond(body: unknown, status = 200) {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(typeof body === 'string' ? body : JSON.stringify(body), {
+          status,
+        }),
+      )
+    vi.stubGlobal('fetch', fetch)
+    return fetch
+  }
+  it('posts the batch with bearer auth and orders vectors by index', async () => {
+    const fetch = respond({
+      data: [
+        { index: 1, embedding: [0, 1] },
+        { index: 0, embedding: [1, 0] },
+      ],
+    })
+    expect(
+      await requestAiEmbeddings(connection, 'embed', ['a', 'b'], signal),
+    ).toEqual([
+      [1, 0],
+      [0, 1],
+    ])
+    const [url, options] = fetch.mock.calls[0]
+    expect(url).toBe('http://localhost:11434/v1/embeddings')
+    expect(options.method).toBe('POST')
+    expect(options.redirect).toBe('error')
+    expect(options.headers.Authorization).toBe('Bearer secret')
+    expect(JSON.parse(options.body)).toEqual({
+      model: 'embed',
+      input: ['a', 'b'],
+    })
+  })
+  it('rejects mismatched, non-numeric and oversized responses', async () => {
+    for (const body of [
+      { data: [{ index: 0, embedding: [1] }] },
+      {
+        data: [
+          { index: 0, embedding: [1] },
+          { index: 0, embedding: [1] },
+        ],
+      },
+      {
+        data: [
+          { index: 0, embedding: ['1'] },
+          { index: 1, embedding: [1] },
+        ],
+      },
+      'not json',
+      'x'.repeat(8 * 1024 * 1024 + 1),
+    ]) {
+      respond(body)
+      await expect(
+        requestAiEmbeddings(connection, 'embed', ['a', 'b'], signal),
+      ).rejects.toMatchObject({ code: 'invalidResponse' })
+    }
+  })
+  it('reports a missing embedding model', async () => {
+    respond('model not found', 404)
+    await expect(
+      requestAiEmbeddings(connection, 'missing', ['a'], signal),
+    ).rejects.toMatchObject({ code: 'modelUnavailable' })
+  })
 })

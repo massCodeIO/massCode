@@ -110,9 +110,23 @@ export function syncNotesWithDisk(paths: NotesPaths, state: NotesState): void {
   // Build existing path -> entry map from state
   const existingByPath = new Map<string, NotesIndexItem>()
   state.notes.forEach(entry => existingByPath.set(entry.filePath, entry))
+  // Копия файла (например, 'Foo copy.md' из Finder) может идти по обходу
+  // раньше оригинала: id проиндексированных файлов, которые всё ещё на диске,
+  // резервируются, чтобы копия не отобрала id у оригинала. Id записей с
+  // исчезнувшим путём не резервируются: внешне переименованный файл должен
+  // сохранить свой frontmatter-id.
+  const mdFilePaths = new Set(mdFiles)
+  const indexedIds = new Set(
+    state.notes
+      .filter(entry => mdFilePaths.has(entry.filePath))
+      .map(entry => entry.id),
+  )
 
   const nextNotes: NotesIndexItem[] = []
   const usedIds = new Set<number>()
+  // Новые id выдаются только после прохода: иначе файл без id мог бы занять
+  // id, явно записанный во frontmatter файла, который идёт позже по обходу.
+  const entriesWithoutId: NotesIndexItem[] = []
 
   for (const filePath of mdFiles) {
     const existingEntry = existingByPath.get(filePath)
@@ -131,14 +145,20 @@ export function syncNotesWithDisk(paths: NotesPaths, state: NotesState): void {
         continue
       }
 
-      if (frontmatterId && !usedIds.has(frontmatterId)) {
+      if (
+        frontmatterId
+        && !usedIds.has(frontmatterId)
+        && !indexedIds.has(frontmatterId)
+      ) {
         noteId = frontmatterId
       }
     }
 
     if (!noteId || usedIds.has(noteId)) {
-      state.counters.noteId += 1
-      noteId = state.counters.noteId
+      const entry = { filePath, id: 0 }
+      entriesWithoutId.push(entry)
+      nextNotes.push(entry)
+      continue
     }
 
     usedIds.add(noteId)
@@ -156,6 +176,23 @@ export function syncNotesWithDisk(paths: NotesPaths, state: NotesState): void {
       ...(carriedMeta ? { meta: carriedMeta } : {}),
     })
   }
+
+  let nextNoteId = state.counters.noteId
+  usedIds.forEach((id) => {
+    if (id > nextNoteId) {
+      nextNoteId = id
+    }
+  })
+  state.notes.forEach(({ id }) => {
+    if (id > nextNoteId) {
+      nextNoteId = id
+    }
+  })
+  entriesWithoutId.forEach((entry) => {
+    nextNoteId += 1
+    entry.id = nextNoteId
+  })
+  state.counters.noteId = nextNoteId
 
   state.notes = nextNotes
 }

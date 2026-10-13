@@ -319,6 +319,12 @@ function reconcileRequests(
   )
 
   const usedIds = new Set<number>()
+  // Новые id выдаются только после прохода: иначе файл без id мог бы занять
+  // id, явно записанный во frontmatter файла, который идёт позже по обходу.
+  const recordsWithoutId: {
+    indexEntry: HttpState['requests'][number]
+    record: HttpRequestRecord
+  }[] = []
   const records: HttpRequestRecord[] = []
   const indexEntries: HttpState['requests'] = []
   const now = Date.now()
@@ -435,28 +441,20 @@ function reconcileRequests(
       = existingEntry && !usedIds.has(existingEntry.id)
         ? existingEntry.id
         : undefined
-    let needsRewrite = !parsed.hasFrontmatter
 
-    if (!id) {
-      if (
-        typeof fmId === 'number'
-        && fmId > 0
-        && !usedIds.has(fmId)
-        && !indexedIds.has(fmId)
-      ) {
-        id = fmId
-      }
-      else {
-        state.counters.requestId += 1
-        id = state.counters.requestId
-        needsRewrite = true
-      }
+    if (
+      !id
+      && typeof fmId === 'number'
+      && fmId > 0
+      && !usedIds.has(fmId)
+      && !indexedIds.has(fmId)
+    ) {
+      id = fmId
     }
 
-    if (id > state.counters.requestId) {
-      state.counters.requestId = id
+    if (id) {
+      usedIds.add(id)
     }
-    usedIds.add(id)
 
     const folderId = resolveFolderId(relativePath)
 
@@ -465,7 +463,7 @@ function reconcileRequests(
     const fmUpdatedAt = parsed.frontmatter.updatedAt
 
     const record: HttpRequestRecord = {
-      id,
+      id: id ?? 0,
       name: parsed.frontmatter.name || fileName,
       folderId,
       protocol: parsed.normalized.protocol,
@@ -485,25 +483,50 @@ function reconcileRequests(
       updatedAt: typeof fmUpdatedAt === 'number' ? fmUpdatedAt : now,
     }
 
-    if (
-      needsRewrite
-      || serializeRequestFile(record, parsed.frontmatter.runtime) !== source
-    ) {
-      writeRequestFile(paths.httpRoot, record, { skipIfUnavailable: true })
-    }
-
     records.push(record)
     // Индекс обновляется по реально прочитанному файлу: следующий холодный
-    // старт соберёт запись без чтения. Write-back выше сдвигает mtime после
+    // старт соберёт запись без чтения. Write-back сдвигает mtime после
     // снятой сигнатуры — такой файл будет перечитан один раз и заживёт.
-    indexEntries.push({
-      id,
+    const indexEntry = {
+      id: record.id,
       filePath: relativePath,
       meta: availability.stats
         ? buildHttpRequestIndexMetadata(record, availability.stats)
         : undefined,
-    })
+    }
+    indexEntries.push(indexEntry)
+
+    if (!id) {
+      recordsWithoutId.push({ indexEntry, record })
+      continue
+    }
+
+    if (
+      !parsed.hasFrontmatter
+      || serializeRequestFile(record, parsed.frontmatter.runtime) !== source
+    ) {
+      writeRequestFile(paths.httpRoot, record, { skipIfUnavailable: true })
+    }
   }
+
+  let nextRequestId = state.counters.requestId
+  usedIds.forEach((id) => {
+    if (id > nextRequestId) {
+      nextRequestId = id
+    }
+  })
+  indexedIds.forEach((id) => {
+    if (id > nextRequestId) {
+      nextRequestId = id
+    }
+  })
+  for (const { indexEntry, record } of recordsWithoutId) {
+    nextRequestId += 1
+    record.id = nextRequestId
+    indexEntry.id = nextRequestId
+    writeRequestFile(paths.httpRoot, record, { skipIfUnavailable: true })
+  }
+  state.counters.requestId = nextRequestId
 
   state.requests = indexEntries
   return records

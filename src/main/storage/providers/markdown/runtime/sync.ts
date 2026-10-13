@@ -179,6 +179,9 @@ function syncStateAndSnippetsWithDisk(
   const knownSnippetFilePaths = new Set(
     state.snippets.map(item => item.filePath),
   )
+  // Новые id выдаются только после прохода: иначе файл без id мог бы занять
+  // id, явно записанный во frontmatter файла, который идёт позже по обходу.
+  const entriesWithoutId: MarkdownState['snippets'] = []
 
   relativeSnippetFiles.forEach((filePath) => {
     if (knownSnippetFilePaths.has(filePath)) {
@@ -197,16 +200,29 @@ function syncStateAndSnippetsWithDisk(
       return
     }
 
-    let snippetId = frontmatterId
+    const entry = { filePath, id: 0 }
+    state.snippets.push(entry)
 
-    if (!snippetId || existingIdSet.has(snippetId)) {
-      snippetId = state.counters.snippetId + 1
-      state.counters.snippetId = snippetId
+    if (!frontmatterId || existingIdSet.has(frontmatterId)) {
+      entriesWithoutId.push(entry)
+      return
     }
 
-    existingIdSet.add(snippetId)
-    state.snippets.push({ filePath, id: snippetId })
+    entry.id = frontmatterId
+    existingIdSet.add(frontmatterId)
   })
+
+  let nextSnippetId = state.counters.snippetId
+  existingIdSet.forEach((id) => {
+    if (id > nextSnippetId) {
+      nextSnippetId = id
+    }
+  })
+  entriesWithoutId.forEach((entry) => {
+    nextSnippetId += 1
+    entry.id = nextSnippetId
+  })
+  state.counters.snippetId = nextSnippetId
 
   const snippets = loadSnippets(paths, state, options)
   syncCounters(state, snippets)

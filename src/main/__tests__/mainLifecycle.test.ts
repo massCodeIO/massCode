@@ -11,6 +11,7 @@ const context = vi.hoisted(() => {
     cleanupDockBadge: vi.fn(),
     log: vi.fn(),
     setQuitting: vi.fn(),
+    stopBuiltinModel: vi.fn(),
     stopMarkdownWatcher: vi.fn(),
     stopTasksCleanupScheduler: vi.fn(),
     stopThemeWatcher: vi.fn(),
@@ -48,6 +49,11 @@ vi.mock('electron', () => ({
   },
 }))
 
+vi.mock('../ai/ipc', () => ({ registerAiHandlers: vi.fn() }))
+vi.mock('../ai/semantic/builtin', () => ({
+  stopBuiltinModel: context.stopBuiltinModel,
+}))
+vi.mock('../ai/semantic/vectorIndex', () => ({ warmSemanticIndex: vi.fn() }))
 vi.mock('../api', () => ({ initApi: vi.fn() }))
 vi.mock('../dockBadge', () => ({
   cleanupDockBadge: context.cleanupDockBadge,
@@ -133,6 +139,7 @@ describe('main process safe quit lifecycle', () => {
     expect(context.stopThemeWatcher).not.toHaveBeenCalled()
     expect(context.stopTasksCleanupScheduler).not.toHaveBeenCalled()
     expect(context.cleanupDockBadge).not.toHaveBeenCalled()
+    expect(context.stopBuiltinModel).not.toHaveBeenCalled()
   })
 
   it('continues normal cleanup after state flush succeeds', () => {
@@ -145,6 +152,7 @@ describe('main process safe quit lifecycle', () => {
     expect(context.stopThemeWatcher).toHaveBeenCalledTimes(1)
     expect(context.stopTasksCleanupScheduler).toHaveBeenCalledTimes(1)
     expect(context.cleanupDockBadge).toHaveBeenCalledTimes(1)
+    expect(context.stopBuiltinModel).toHaveBeenCalledTimes(1)
     expect(context.appQuit).not.toHaveBeenCalled()
   })
 

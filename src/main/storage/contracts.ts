@@ -19,6 +19,14 @@ import type {
   NotesFolderTreeRecord,
 } from './providers/markdown/notes/runtime/types'
 
+// Сигнатура записи для поиска по vault: меняется при правке файла извне (mtimeMs, size из
+// метаданных state) и при правке в приложении (updatedAt записи: метаданные state приложение
+// не обновляет). Только записи не в корзине.
+export interface RecordSignature {
+  sig: string
+  pendingCloudDownload: boolean
+}
+
 export interface TagRecord {
   id: number
   name: string
@@ -109,6 +117,9 @@ export interface SnippetsQueryInput {
   isFavorites?: number
   isDeleted?: number
   isInbox?: number
+  // Server-only флаг (не HTTP-параметр): дочитать тела фрагментов с отдачей
+  // управления, как перед полнотекстовым поиском. Список работает без тел.
+  withContent?: boolean
 }
 
 export interface SnippetCreateInput {
@@ -188,6 +199,7 @@ export interface SnippetsStorage {
   getSnippetById: (id: number) => SnippetRecord | null
   getSnippets: (query: SnippetsQueryInput) => SnippetRecord[]
   getSnippetsAsync?: (query: SnippetsQueryInput) => Promise<SnippetRecord[]>
+  getSnippetSignatures?: () => Map<number, RecordSignature>
   getSnippetsCounts: () => SnippetsCount
   reorderSnippetContents: (snippetId: number, contentIds: number[]) => void
   updateSnippet: (id: number, input: SnippetUpdateInput) => SnippetUpdateResult
@@ -255,7 +267,8 @@ export interface NotesQueryInput {
   hideCompletedTasks?: number
   // Server-only флаг (не HTTP-параметр): дочитать тела заметок перед
   // построением records — для потоков, которым нужен content (graph,
-  // dashboard). Список работает без тел.
+  // dashboard). Список работает без тел. В getNotesAsync запись с телом,
+  // которое так и не прочиталось, приходит с pendingCloudDownload.
   withContent?: boolean
 }
 
@@ -348,6 +361,7 @@ export interface NotesStorage {
   getNoteById: (id: number) => NoteRecord | null
   getNotes: (query: NotesQueryInput) => NoteRecord[]
   getNotesAsync?: (query: NotesQueryInput) => Promise<NoteRecord[]>
+  getNoteSignatures?: () => Map<number, RecordSignature>
   getNotesCounts: () => NotesCount
   updateNote: (id: number, input: NoteUpdateInput) => NoteUpdateResult
   updateNoteContent: (id: number, content: string) => NoteUpdateResult
@@ -482,6 +496,7 @@ export interface HttpRequestsStorage {
     expectedRevision: string,
   ) => { notFound: boolean, runtimeRevision?: string }
   getRequests: (query?: HttpRequestsQueryInput) => HttpRequestRecord[]
+  getRequestSignatures?: () => Map<number, RecordSignature>
   updateRequest: (
     id: number,
     input: HttpRequestUpdateInput,

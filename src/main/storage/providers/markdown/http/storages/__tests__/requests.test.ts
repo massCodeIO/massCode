@@ -137,6 +137,26 @@ describe('http requests storage', () => {
     vi.clearAllMocks()
   })
 
+  it('changes request signatures on app edits and skips trashed requests', () => {
+    const requests = createHttpRequestsStorage()
+    const { id } = requests.createRequest({ name: 'Signed', method: 'GET' })
+    const trashed = requests.createRequest({ name: 'Trashed', method: 'GET' })
+    requests.updateRequest(trashed.id, { isDeleted: 1 })
+    resetHttpRuntimeCache()
+    const initial = requests.getRequestSignatures!()
+    expect([...initial.keys()]).toEqual([id])
+    expect(initial.get(id)).toEqual({
+      sig: expect.any(String),
+      pendingCloudDownload: false,
+    })
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000)
+    requests.updateRequest(id, { description: 'Lists orders' })
+    vi.restoreAllMocks()
+    expect(requests.getRequestSignatures!().get(id)!.sig).not.toBe(
+      initial.get(id)!.sig,
+    )
+  })
+
   it('migrates legacy history through the real state writer and survives a cold reload', () => {
     const requests = createHttpRequestsStorage()
     const { id } = requests.createRequest({

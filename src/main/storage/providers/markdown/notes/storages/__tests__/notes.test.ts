@@ -342,6 +342,87 @@ describe('notes storage validations', () => {
     }
   })
 
+  it('hydrates lazy bodies through withContent without a search', async () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Lazy List' })
+    storage.updateNoteContent(id, 'lazy note body')
+    const cache = resyncTwiceForLazyNotes()
+    expect(cache.notes[0].content).toBeNull()
+    const records = await storage.getNotesAsync!({
+      isDeleted: 0,
+      withContent: true,
+    })
+    expect(records.map(record => record.content)).toEqual(['lazy note body'])
+  })
+
+  it('marks a body that could not be read through async withContent', async () => {
+    const storage = createNotesNotesStorage()
+    for (const [name, body] of [
+      ['Readable', 'text'],
+      ['Empty', ''],
+      ['Failure', 'failedbody'],
+    ]) {
+      const { id } = storage.createNote({ name })
+      storage.updateNoteContent(id, body)
+    }
+    const cache = resyncTwiceForLazyNotes()
+    cancelNotesAssetsMigration()
+    const failed = cache.notes.find(item => item.name === 'Failure')!
+    const failedPath = path.join(cache.paths.notesRoot, failed.filePath)
+    vi.spyOn(cloudDownloads, 'enqueueCloudDownload').mockImplementation(
+      () => {},
+    )
+    const read = fs.readFileSync.bind(fs)
+    vi.spyOn(fs, 'readFileSync').mockImplementation(((
+      file: string,
+      ...args: any[]
+    ) => {
+      if (file === failedPath)
+        throw new Error('simulated read failure')
+      return (read as any)(file, ...args)
+    }) as typeof fs.readFileSync)
+    try {
+      const records = await storage.getNotesAsync!({
+        isDeleted: 0,
+        withContent: true,
+      })
+      expect(
+        Object.fromEntries(
+          records.map(record => [
+            record.name,
+            [record.content, record.pendingCloudDownload],
+          ]),
+        ),
+      ).toEqual({
+        Readable: ['text', false],
+        Empty: ['', false],
+        Failure: ['', true],
+      })
+      expect(failed.pendingCloudDownload).not.toBe(true)
+    }
+    finally {
+      vi.restoreAllMocks()
+    }
+  })
+
+  it('changes note signatures on app edits and skips trashed notes', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Signed' })
+    storage.updateNoteContent(id, 'first body')
+    const trashed = storage.createNote({ name: 'Trashed' })
+    storage.updateNote(trashed.id, { isDeleted: 1 })
+    resyncTwiceForLazyNotes()
+    const initial = storage.getNoteSignatures!()
+    expect([...initial.keys()]).toEqual([id])
+    expect(initial.get(id)!.sig).toEqual(expect.any(String))
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000)
+    storage.updateNoteContent(id, 'second body')
+    vi.restoreAllMocks()
+    expect(storage.getNoteSignatures!().get(id)!.sig).not.toBe(
+      initial.get(id)!.sig,
+    )
+  })
+
   it('materializes lazy note content on getNoteById', () => {
     const storage = createNotesNotesStorage()
     const { id } = storage.createNote({ name: 'Lazy Read' })

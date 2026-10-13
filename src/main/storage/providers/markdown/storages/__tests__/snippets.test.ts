@@ -392,6 +392,81 @@ describe('code snippets storage validations', () => {
     }
   })
 
+  it('hydrates lazy bodies through withContent without a search', async () => {
+    const storage = createSnippetsStorage()
+    const { id } = storage.createSnippet({ name: 'Lazy List' })
+    storage.createSnippetContent(id, {
+      label: 'Body',
+      language: 'text',
+      value: 'lazy body',
+    })
+    const cache = resyncTwiceForLazySnippets()
+    expect(cache.snippets[0].contents[0].value).toBeNull()
+    expect(
+      (await storage.getSnippetsAsync!({ isDeleted: 0 }))[0].contents[0].value,
+    ).toBeNull()
+    const records = await storage.getSnippetsAsync!({
+      isDeleted: 0,
+      withContent: true,
+    })
+    expect(records.map(record => record.contents[0].value)).toEqual([
+      'lazy body',
+    ])
+  })
+
+  it('changes record signatures on app and external edits only', () => {
+    const storage = createSnippetsStorage()
+    const { id } = storage.createSnippet({ name: 'Signed' })
+    const contentId = storage.createSnippetContent(id, {
+      label: 'Body',
+      language: 'text',
+      value: 'first body',
+    }).id
+    const trashed = storage.createSnippet({ name: 'Trashed' })
+    storage.updateSnippet(trashed.id, { isDeleted: 1 })
+    // Запись этой сессии ещё без метаданных state: сигнатура по updatedAt.
+    expect(storage.getSnippetSignatures!().get(id)!.sig).toMatch(/^u:\d+\|$/)
+    const cache = resyncTwiceForLazySnippets()
+    const initial = storage.getSnippetSignatures!()
+    expect([...initial.keys()]).toEqual([id])
+    expect(initial.get(id)).toEqual({
+      sig: expect.any(String),
+      pendingCloudDownload: false,
+    })
+    expect(storage.getSnippetSignatures!()).toEqual(initial)
+
+    // Приложение не обновляет метаданные state, сигнатуру меняет updatedAt записи.
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000)
+    storage.updateSnippetContent(id, contentId, { value: 'second body' })
+    vi.restoreAllMocks()
+    const edited = storage.getSnippetSignatures!().get(id)!.sig
+    expect(edited).not.toBe(initial.get(id)!.sig)
+
+    const snippet = cache.snippets.find(item => item.id === id)!
+    const absolutePath = path.join(cache.paths.vaultPath, snippet.filePath)
+    fs.writeFileSync(
+      absolutePath,
+      fs
+        .readFileSync(absolutePath, 'utf8')
+        .replace('second body', 'externally edited body'),
+    )
+    syncSnippetFileWithDisk(cache.paths, snippet.filePath)
+    expect(storage.getSnippetSignatures!().get(id)!.sig).not.toBe(edited)
+  })
+
+  it('changes the signature when the folder of a snippet is renamed', () => {
+    const storage = createSnippetsStorage()
+    const folders = createFoldersStorage()
+    const folder = folders.createFolder({ name: 'Background Jobs' })
+    const { id } = storage.createSnippet({ name: 'Pool', folderId: folder.id })
+    const before = storage.getSnippetSignatures!().get(id)!.sig
+    expect(before.endsWith('|Background Jobs')).toBe(true)
+    folders.updateFolder(folder.id, { name: 'Workers' })
+    expect(
+      storage.getSnippetSignatures!().get(id)!.sig.endsWith('|Workers'),
+    ).toBe(true)
+  })
+
   it('materializes lazy fragment bodies on getSnippetById', () => {
     const storage = createSnippetsStorage()
     const { id } = storage.createSnippet({ name: 'Lazy Read' })

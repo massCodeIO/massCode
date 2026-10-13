@@ -18,6 +18,7 @@ import {
   useHttpHistory,
   useHttpRequests,
   useMathNotebook,
+  useNavigationHistory,
   useNoteFolders,
   useNotes,
   useNoteTags,
@@ -35,6 +36,7 @@ import {
   waitForPreferenceUser,
 } from '@/composables/ai/nativePreferenceFlows'
 import { httpRuntimeNavigation } from '@/composables/spaces/http/runtimeNavigation'
+import { useCommandPalette } from '@/composables/useCommandPalette'
 import { i18n, ipc, store } from '@/electron'
 import { AlertTriangle, Check, LoaderCircle } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
@@ -66,6 +68,8 @@ const { resetNoteFoldersState } = useNoteFolders()
 const { clearNotesState, getNotes } = useNotes()
 const { resetNoteTags } = useNoteTags()
 const { getSnippets } = useSnippets()
+const { resetVaultHistory: resetCommandPaletteHistory } = useCommandPalette()
+const { clearHistory: clearNavigationHistory } = useNavigationHistory()
 const route = useRoute()
 const router = useRouter()
 const vaultDoctorSection
@@ -263,6 +267,13 @@ function storageOutcome(
   }
 }
 
+// История палитры и Back/Forward хранит id записей, которые в другом vault
+// ведут в никуда. Перенос того же vault (move) её не затрагивает.
+function resetVaultScopedHistory() {
+  resetCommandPaletteHistory()
+  clearNavigationHistory()
+}
+
 async function syncVaultPathAfterFailedChange() {
   // Main process мог сохранить новый путь до ошибки следующего шага
   // (например, запуска watcher после физического переноса). UI должен
@@ -273,7 +284,9 @@ async function syncVaultPathAfterFailedChange() {
   if (configuredVaultPath !== vaultPath.value) {
     vaultPath.value = configuredVaultPath
     await resetAndReloadVaultData()
+    return true
   }
+  return false
 }
 
 async function openVaultStorage(
@@ -309,6 +322,8 @@ async function openVaultStorage(
 
     operationCompleted = true
     vaultPath.value = result.vaultPath
+    if (result.vaultPath !== source)
+      resetVaultScopedHistory()
     const refreshed = await resetAndReloadVaultData()
 
     sonner({
@@ -325,7 +340,10 @@ async function openVaultStorage(
     )
   }
   catch (err) {
-    await syncVaultPathAfterFailedChange()
+    // Main откатывает настройку при сбое watcher; если откат не удался,
+    // активным остаётся уже другой vault.
+    if (await syncVaultPathAfterFailedChange())
+      resetVaultScopedHistory()
     const error = err as Error
     sonner({ message: error.message, type: 'error' })
     return storageOutcome('failed', source, operationCompleted, false, {

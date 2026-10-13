@@ -510,6 +510,24 @@ function saveUsageEntries(entries: CommandPaletteUsageEntry[]) {
   store.app.set('commandPalette.usage', JSON.parse(JSON.stringify(entries)))
 }
 
+// Записи сниппетов, заметок и запросов ссылаются на id конкретного vault.
+// Пространства и команды от vault не зависят, их историю сохраняем.
+function resetVaultHistory() {
+  saveRecentEntries(
+    recentEntries.value.filter(entry => entry.target === 'space'),
+  )
+  saveUsageEntries(
+    usageEntries.value.filter(
+      entry => entry.target === 'space' || entry.target === 'command',
+    ),
+  )
+}
+
+function forgetEntry(id: string) {
+  saveRecentEntries(recentEntries.value.filter(entry => entry.id !== id))
+  saveUsageEntries(usageEntries.value.filter(entry => entry.id !== id))
+}
+
 function getUsageEntryFromResult(
   result: CommandPaletteResult,
 ): Omit<CommandPaletteUsageEntry, 'openCount' | 'openedAt'> | null {
@@ -1747,26 +1765,67 @@ async function openHttpRequestInternal(request: HttpRequestResult) {
   await router.push({ name: RouterName.httpSpace })
 }
 
+const RECENT_MISSING_MESSAGE_KEYS = {
+  'snippet': 'internalLinks.missing.snippet',
+  'note': 'internalLinks.missing.note',
+  'http-request': 'internalLinks.missing.httpRequest',
+} as const
+
+function isNotFoundError(error: unknown) {
+  const response = (error as { response?: { status?: number } } | undefined)
+    ?.response
+  return response?.status === 404
+}
+
+async function loadRecentTarget(
+  target: Exclude<CommandPaletteRecentTarget, 'space'>,
+  id: string,
+) {
+  if (target === 'snippet') {
+    const { data } = await api.snippets.getSnippetsById(id)
+    return { target, item: data as SnippetItemResponse }
+  }
+
+  if (target === 'note') {
+    const { data } = await api.notes.getNotesById(id)
+    return { target, item: data as NoteItemResponse }
+  }
+
+  const { data } = await api.httpRequests.getHttpRequestsById(id)
+  return { target, item: data }
+}
+
 async function openRecent(entry: CommandPaletteRecentEntry) {
   if (entry.target === 'space') {
     await openSpace(entry.targetId as SpaceId)
-    return
+    return true
   }
 
-  if (entry.target === 'snippet') {
-    const { data } = await api.snippets.getSnippetsById(entry.targetId)
-    await openSnippet(data as SnippetItemResponse)
-    return
+  let loaded: Awaited<ReturnType<typeof loadRecentTarget>>
+  // Только загрузка по id означает «записи нет»: 404 из вложенных шагов
+  // открытия не должен удалять существующую запись.
+  try {
+    loaded = await loadRecentTarget(entry.target, entry.targetId)
+  }
+  catch (error) {
+    if (!isNotFoundError(error))
+      throw error
+
+    // Запись удалена вне палитры: убираем её, чтобы она не всплывала снова.
+    forgetEntry(entry.id)
+    sonner({
+      message: i18n.t(RECENT_MISSING_MESSAGE_KEYS[entry.target]),
+      type: 'warning',
+    })
+    return false
   }
 
-  if (entry.target === 'note') {
-    const { data } = await api.notes.getNotesById(entry.targetId)
-    await openNote(data as NoteItemResponse)
-    return
-  }
-
-  const { data } = await api.httpRequests.getHttpRequestsById(entry.targetId)
-  await openHttpRequest(data)
+  if (loaded.target === 'snippet')
+    await openSnippet(loaded.item)
+  else if (loaded.target === 'note')
+    await openNote(loaded.item)
+  else await openHttpRequest(loaded.item)
+  return true
 }
 
 async function openResult(result: CommandPaletteResult) {
@@ -1802,8 +1861,8 @@ async function openResult(result: CommandPaletteResult) {
     recordUsageResult(result, lastQuery)
     return
   }
-  else {
-    await openRecent(result.recent)
+  else if (!(await openRecent(result.recent))) {
+    return
   }
 
   recordRecentResult(result)
@@ -1845,6 +1904,7 @@ export function useCommandPalette() {
     openResult,
     query,
     recentResults,
+    resetVaultHistory,
     scopeSpaceResults,
     scopedRecentResults,
     scopedHomeFilterResults,

@@ -13,6 +13,7 @@ export const RouterName = {
   preferencesHttp: 'preferences/http',
   preferencesAPI: 'preferences/api',
   preferencesAI: 'preferences/ai',
+  preferencesSemanticSearch: 'preferences/semantic-search',
   preferencesUpdates: 'preferences/updates',
   preferencesSupporter: 'preferences/supporter',
   preferencesAbout: 'preferences/about',
@@ -104,6 +105,11 @@ const routes = [
         path: 'ai',
         name: RouterName.preferencesAI,
         component: () => import('@/components/preferences/AI.vue'),
+      },
+      {
+        path: 'semantic-search',
+        name: RouterName.preferencesSemanticSearch,
+        component: () => import('@/components/preferences/SemanticSearch.vue'),
       },
       {
         path: 'api',

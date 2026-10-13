@@ -16,6 +16,7 @@ import {
   Palette,
   Plug,
   RefreshCw,
+  ScanSearch,
   Send,
   Sparkles,
 } from 'lucide-vue-next'
@@ -69,6 +70,11 @@ const nav: { label: string, name: string, icon: Component }[] = [
     label: i18n.t('ai.title'),
     name: RouterName.preferencesAI,
     icon: Sparkles,
+  },
+  {
+    label: i18n.t('ai.semantic.title'),
+    name: RouterName.preferencesSemanticSearch,
+    icon: ScanSearch,
   },
   {
     label: i18n.t('preferences:api.label'),

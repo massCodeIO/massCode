@@ -2035,6 +2035,38 @@
       "label": "Prompt history limit",
       "off": "Off",
       "description": "Shared across all chats and saved between restarts. Use ↑ / ↓ at the first / last line to browse history. Disabling clears saved prompts."
+    },
+    "semantic": {
+      "title": "Semantic Search",
+      "description": "Finds vault records related by meaning, not only by matching words, in the command palette and when the assistant searches the vault. Vectors are stored only on this device and are not synced. The built-in model works offline after download. With your embedding server, indexing sends the text of every record to that server, and so do palette and assistant searches with their queries.",
+      "source": "Source",
+      "server": "Server",
+      "sources": {
+        "off": "Off",
+        "builtin": "Built-in model",
+        "provider": "Local server"
+      },
+      "embeddingModel": "Embedding model",
+      "embeddingModelHint": "Install an embedding model such as embeddinggemma on your server, then refresh the model list.",
+      "enabling": "Downloading the semantic search model...",
+      "enabled": "Semantic search is on",
+      "index": "Index",
+      "preparing": "Preparing index...",
+      "indexing": "Indexing {{done}} of {{total}} chunks",
+      "indexed_one": "{{count}} record indexed",
+      "indexed_other": "{{count}} records indexed",
+      "builtin": {
+        "download": "Download model (~210 MB)",
+        "downloading": "Downloading... {{percent}}%",
+        "ready": "Model ready",
+        "remove": "Remove model",
+        "unsupported": "The built-in model is not available on Intel Macs. Use a local server instead.",
+        "errors": {
+          "download": "Could not download the model. Check your connection and try again.",
+          "runtime": "Could not start the model. Try again or choose a local server.",
+          "runtimeWindows": "Could not start the model. Install the Microsoft Visual C++ Redistributable, then try again."
+        }
+      }
     }
   }
 }

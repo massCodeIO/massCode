@@ -110,6 +110,14 @@ describe('assertFolderMoveTargetValid', () => {
     )
   })
 
+  it('throws when moving folder into itself', () => {
+    const folders = [makeFolder(1, 'Root')]
+
+    expect(() => assertFolderMoveTargetValid(folders, 1, 1)).toThrow(
+      'INVALID_NAME',
+    )
+  })
+
   it('allows moving to null root parent', () => {
     const folders = [makeFolder(1, 'Root')]
 

@@ -16,6 +16,17 @@ import { createNotesFoldersStorage } from '../folders'
 import { createNotesNotesStorage } from '../notes'
 
 let tempVaultPath = ''
+const vaultSync = vi.hoisted(() => ({ ready: true }))
+
+vi.mock('../../runtime/sync', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../runtime/sync')>()
+  return {
+    ...actual,
+    isNotesVaultDiskReady: (
+      paths: Parameters<typeof actual.isNotesVaultDiskReady>[0],
+    ) => vaultSync.ready && actual.isNotesVaultDiskReady(paths),
+  }
+})
 
 function makeSparsePlaceholder(absolutePath: string, size = 4096): void {
   fs.removeSync(absolutePath)
@@ -131,6 +142,7 @@ describe('folders storage validations', () => {
   })
 
   afterEach(() => {
+    vaultSync.ready = true
     setDatalessProbeForTests(null)
     resetCloudFileExemptions()
     resetNotesRuntimeCache()
@@ -138,6 +150,28 @@ describe('folders storage validations', () => {
     if (tempVaultPath) {
       fs.removeSync(tempVaultPath)
     }
+  })
+
+  it('lists files in a folder directory that storage does not manage', () => {
+    const storage = createNotesFoldersStorage()
+    const { id } = storage.createFolder({ name: 'Docs' })
+    createNotesNotesStorage().createNote({ name: 'Known', folderId: id })
+    const folderPath = path.join(tempVaultPath, 'notes', 'Docs')
+    fs.ensureDirSync(path.join(folderPath, 'assets'))
+    fs.writeFileSync(path.join(folderPath, 'assets', 'image.png'), '')
+    fs.writeFileSync(path.join(folderPath, 'desktop.ini'), '')
+
+    expect(fs.readdirSync(folderPath)).toContain('Known.md')
+    expect(storage.getUnmanagedFiles(id)).toEqual(['Docs/assets/image.png'])
+    expect(storage.getUnmanagedFiles(999)).toEqual([])
+  })
+
+  it('refuses to list folder files while the vault is syncing', () => {
+    const storage = createNotesFoldersStorage()
+    const { id } = storage.createFolder({ name: 'Docs' })
+    vaultSync.ready = false
+
+    expect(() => storage.getUnmanagedFiles(id)).toThrow('VAULT_HYDRATING')
   })
 
   it('updateFolder with empty patch returns invalidInput', () => {

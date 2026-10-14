@@ -49,7 +49,7 @@ Use [AI Assistant](/documentation/ai) with your own provider or local model to e
 
 ## MCP
 
-Connect a coding agent through [MCP](/documentation/mcp) to search, read, and save snippets, notes, and HTTP requests. Create HTTP collections, edit and move requests, preview and send them, and inspect saved execution history.
+Connect a coding agent through [MCP](/documentation/mcp) to search, read, save, and update snippets, notes, and HTTP requests. Save notes and snippets into folders with tags, organize folders, move, trash, and restore items, and follow note links. Create HTTP collections, preview and send requests, and inspect saved execution history.
 
 ## General Settings
 

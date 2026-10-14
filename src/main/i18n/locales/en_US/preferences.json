@@ -317,7 +317,11 @@
       "label": "MCP",
       "enabled": {
         "label": "Enable MCP access",
-        "description": "Allow agents with your API token to read and create snippets, notes, and HTTP requests, and send saved requests using the active environment. Requires API integrations to be enabled."
+        "description": "Allow agents with your API token to read, create, and organize snippets, notes, and HTTP requests, and send saved requests using the active environment. Changing existing items requires the option below. Requires API integrations to be enabled."
+      },
+      "allowEdits": {
+        "label": "Allow MCP to modify existing items",
+        "description": "Allow agents to update and move existing snippets, notes, and HTTP requests, rename, move, and delete empty folders, move items to Trash, and restore them from Trash. Items are never deleted permanently."
       },
       "endpoint": {
         "label": "Server URL",

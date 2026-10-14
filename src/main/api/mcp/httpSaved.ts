@@ -6,7 +6,8 @@ import { httpCollectionSchema } from '../../../shared/httpCollection'
 import { httpRequestPreview } from '../../http/requestPreview'
 import { useHttpStorage } from '../../storage'
 import { getHttpItem, mcpHttpRuntime } from './httpItems'
-import { CONTENT_LIMIT, failure, notifyStorageSynced, safely } from './results'
+import { CONTENT_LIMIT, notifyStorageSynced, safely } from './results'
+import { editingDisabled, invalidNameFailure } from './vaultItems'
 
 const idSchema = z.number().int().positive().max(Number.MAX_SAFE_INTEGER)
 const pagination = {
@@ -55,7 +56,7 @@ export function registerHttpSavedTools(server: McpServer) {
     'update_http_request',
     {
       description:
-        'Update a saved HTTP request without sending it. Read get_item first and provide its contentRevision as expectedRevision. A stale revision returns CONFLICT; read and reconcile before retrying. Patch must be nonempty: omitted fields remain unchanged, arrays replace existing arrays, folderId null moves to Inbox. Moves preserve auth; set auth explicitly to change it. Supports text bodies only; no WebSocket, trash, runtime edits or local file uploads. Combined final body and description must fit 256 KiB UTF-8. Returns actual name, folderId and new contentRevision.',
+        'Update a saved HTTP request without sending it. Read get_item first and provide its contentRevision as expectedRevision. A stale revision returns CONFLICT; read and reconcile before retrying. Patch must be nonempty: omitted fields remain unchanged, arrays replace existing arrays, folderId null moves to Inbox. Moves preserve auth; set auth explicitly to change it. Supports text bodies only; WebSocket requests, runtime edits and local file uploads are not supported. To move a request to Trash, use trash_item. Combined final body and description must fit 256 KiB UTF-8. Returns actual name, folderId and new contentRevision. Requires "Allow MCP to modify existing items" in massCode Preferences.',
       inputSchema: {
         id: idSchema,
         expectedRevision: z.string().min(1),
@@ -69,8 +70,15 @@ export function registerHttpSavedTools(server: McpServer) {
       },
     },
     ({ id, expectedRevision, patch }) => {
-      if (patch.name !== undefined && getEntryNameValidationIssue(patch.name))
-        return failure('INVALID_NAME', 'The item name is invalid.')
+      const disabled = editingDisabled()
+      if (disabled)
+        return disabled
+      const issue
+        = patch.name === undefined
+          ? null
+          : getEntryNameValidationIssue(patch.name)
+      if (issue)
+        return invalidNameFailure(issue)
       return safely(() => {
         const item = getHttpItem(id, false)
         if (

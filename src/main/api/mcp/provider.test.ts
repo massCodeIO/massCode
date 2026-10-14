@@ -18,6 +18,7 @@ import { createMcpRoute } from './route'
 
 let vaultPath = ''
 let historyLimit = 20
+let allowEdits = true
 vi.mock('electron', () => ({
   app: { getPath: () => os.tmpdir(), isReady: () => false },
   BrowserWindow: { getAllWindows: () => [], getFocusedWindow: () => null },
@@ -30,7 +31,8 @@ vi.mock('../../store', () => ({
           ? vaultPath
           : key === 'http'
             ? { historyLimit }
-            : key === 'api.mcp.enabled',
+            : key === 'api.mcp.enabled'
+              || (key === 'api.mcp.allowEdits' && allowEdits),
     },
   },
 }))
@@ -55,6 +57,7 @@ vi.mock('../../http/secrets', () => ({ getEnvironmentSecrets: () => ({}) }))
 
 beforeEach(() => {
   historyLimit = 20
+  allowEdits = true
   vaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'masscode-mcp-'))
   resetRuntimeCache()
   resetNotesRuntimeCache()

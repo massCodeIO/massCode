@@ -70,13 +70,18 @@ export function storageFailure(error: unknown): CallToolResult {
     case 'NAME_CONFLICT':
       return failure(code, 'An item with this name already exists.')
     case 'INVALID_NAME':
-    case 'RESERVED_NAME':
       return failure(code, 'The item name is invalid.')
+    case 'RESERVED_NAME':
+      return failure(code, 'This folder name is reserved by massCode.')
     case 'HTTP_REQUEST_NOT_FOUND':
     case 'NOTE_NOT_FOUND':
     case 'SNIPPET_NOT_FOUND':
-    case 'FOLDER_NOT_FOUND':
       return failure('NOT_FOUND', 'Item not found.')
+    case 'FOLDER_NOT_FOUND':
+      return failure(
+        'NOT_FOUND',
+        'Folder not found. Use list_structure (notes, snippets) or list_http_collections (HTTP) to get folder IDs.',
+      )
     default:
       return failure('STORAGE_ERROR', 'The storage operation failed.')
   }

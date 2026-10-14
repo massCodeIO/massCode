@@ -38,6 +38,7 @@ import {
   getFolderPathsByDepth,
   getFoldersSortedByCreatedAt,
   getFoldersTreeSorted,
+  listUnmanagedFolderFiles,
   moveFolderDirectoryOnDisk,
   removeFolderPathsFromDisk,
   resolveFolderUpdateTargets,
@@ -57,6 +58,30 @@ export function createFoldersStorage(): FoldersStorage {
       const { state } = getRuntimeCache(paths)
 
       return getFoldersTreeSorted(state.folders)
+    },
+    getUnmanagedFiles: (id) => {
+      const paths = getPaths(getVaultPath())
+
+      // До сверки список записей provisional и пуст: файлы настоящих
+      // сниппетов выглядели бы посторонними.
+      if (!isCodeVaultDiskReady(paths)) {
+        throwStorageError(
+          'VAULT_HYDRATING',
+          'Vault is still syncing, folder contents are not known yet',
+        )
+      }
+
+      const { state, snippets } = getRuntimeCache(paths)
+      const folderPath = buildFolderPathMap(state).get(id)
+      if (!folderPath) {
+        return []
+      }
+
+      return listUnmanagedFolderFiles(
+        paths.vaultPath,
+        folderPath,
+        new Set(snippets.map(snippet => snippet.filePath)),
+      )
     },
     createFolder: (input) => {
       const paths = getPaths(getVaultPath())

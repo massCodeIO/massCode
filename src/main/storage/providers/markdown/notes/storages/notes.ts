@@ -37,6 +37,7 @@ import {
   deleteTagFromEntity,
   emptyEntityTrashFromStateAndDisk,
   getEntityDeleteCounts,
+  persistOrRestore,
 } from '../../runtime/shared/entityStorage'
 import { buildRecordSignatures } from '../../runtime/shared/recordSignature'
 import { querySearchIndex } from '../../runtime/shared/searchEngine'
@@ -564,6 +565,10 @@ export function createNotesNotesStorage(): NotesStorage {
       // устареть после eviction.
       assertEntityFileWritable(path.join(paths.notesRoot, note.filePath), note)
 
+      const snapshot = {
+        properties: { ...note.properties },
+        updatedAt: note.updatedAt,
+      }
       const hasAnyField = applyNotePropertiesUpdate(note, input)
 
       if (!hasAnyField) {
@@ -571,7 +576,7 @@ export function createNotesNotesStorage(): NotesStorage {
       }
 
       note.updatedAt = Date.now()
-      writeNoteToFile(paths, note)
+      persistOrRestore(note, snapshot, () => writeNoteToFile(paths, note))
       scheduleDockBadgeRefresh()
 
       return { invalidInput: false, notFound: false }

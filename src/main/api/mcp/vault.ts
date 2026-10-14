@@ -389,8 +389,8 @@ function updateItem(
       }
       return storageFailure(error)
     }
-    // Storage может изменить runtime-кэш до записи файла: после сбоя на шаге
-    // content massCode иногда показывает новое тело, хотя на диске старое.
+    // Сбой на шаге content не гарантирует, что файл не изменился: запись могла
+    // пройти частично, а у сниппета упасть уже сохранение state после записи.
     const message
       = step === 'readback'
         ? 'All changes were saved, but reading the item back failed. Read it again with get_item.'

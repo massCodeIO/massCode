@@ -53,6 +53,7 @@ import {
   deleteTagFromEntity,
   emptyEntityTrashFromStateAndDisk,
   getEntityDeleteCounts,
+  persistOrRestore,
 } from '../runtime/shared/entityStorage'
 import { buildRecordSignatures } from '../runtime/shared/recordSignature'
 import { querySearchIndex } from '../runtime/shared/searchEngine'
@@ -442,7 +443,12 @@ export function createSnippetsStorage(): SnippetsStorage {
         throwCloudContentUnavailable()
       }
 
-      const content = snippet.contents[contentIndex]
+      const snapshot = {
+        contents: [...snippet.contents],
+        updatedAt: snippet.updatedAt,
+      }
+      // Фрагмент заменяется копией, чтобы snapshot сохранил прежний объект.
+      const content = { ...snippet.contents[contentIndex] }
 
       if ('label' in input) {
         content.label = input.label || content.label
@@ -456,8 +462,10 @@ export function createSnippetsStorage(): SnippetsStorage {
         content.language = input.language || content.language
       }
 
+      snippet.contents[contentIndex] = content
       snippet.updatedAt = Date.now()
-      writeSnippetToFile(paths, snippet)
+      persistOrRestore(snippet, snapshot, () =>
+        writeSnippetToFile(paths, snippet))
       saveState(paths, state, { searchIndexUpdate: snippet })
 
       return {
@@ -594,9 +602,14 @@ export function createSnippetsStorage(): SnippetsStorage {
         throwCloudContentUnavailable()
       }
 
+      const snapshot = {
+        contents: [...snippet.contents],
+        updatedAt: snippet.updatedAt,
+      }
       snippet.contents.splice(contentIndex, 1)
       snippet.updatedAt = Date.now()
-      writeSnippetToFile(paths, snippet)
+      persistOrRestore(snippet, snapshot, () =>
+        writeSnippetToFile(paths, snippet))
       saveState(paths, state)
 
       return { deleted: true }

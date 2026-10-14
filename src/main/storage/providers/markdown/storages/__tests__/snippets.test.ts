@@ -214,6 +214,53 @@ describe('code snippets storage validations', () => {
     }
   })
 
+  it('rolls back runtime fragments when the snippet file write fails', () => {
+    const storage = createSnippetsStorage()
+    const { id } = storage.createSnippet({ name: 'Rollback' })
+    const first = storage.createSnippetContent(id, {
+      label: 'First',
+      language: 'text',
+      value: 'one',
+    }).id
+    storage.createSnippetContent(id, {
+      label: 'Second',
+      language: 'text',
+      value: 'two',
+    })
+    const record = getRuntimeCache(getPaths(tempVaultPath)).snippets[0]
+    const before = structuredClone(record)
+    const write = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {
+      throw new Error('ENOSPC')
+    })
+
+    try {
+      expect(() =>
+        storage.updateSnippetContent(id, first, {
+          label: 'Changed',
+          language: 'python',
+          value: 'changed',
+        }),
+      ).toThrow('ENOSPC')
+      expect(() =>
+        storage.createSnippetContent(id, {
+          label: 'Third',
+          language: 'text',
+          value: 'three',
+        }),
+      ).toThrow('ENOSPC')
+      expect(() => storage.deleteSnippetContent(id, first)).toThrow('ENOSPC')
+      expect(record).toEqual(before)
+    }
+    finally {
+      write.mockRestore()
+    }
+
+    resetRuntimeCache()
+    expect(
+      storage.getSnippetById(id)?.contents.map(content => content.value),
+    ).toEqual(['one', 'two'])
+  })
+
   it('updateSnippet with empty patch returns invalidInput', () => {
     const storage = createSnippetsStorage()
     const { id } = storage.createSnippet({ name: 'Test Snippet' })

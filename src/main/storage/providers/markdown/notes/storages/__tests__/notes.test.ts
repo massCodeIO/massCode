@@ -21,6 +21,7 @@ import {
 } from '../../runtime/sync'
 import { createNotesFoldersStorage } from '../folders'
 import { createNotesNotesStorage } from '../notes'
+import { createNoteTagsStorage } from '../tags'
 
 let tempVaultPath = ''
 
@@ -591,6 +592,42 @@ describe('notes storage validations', () => {
     )
     expect(rawAfter).toContain('[[Renamed Target]]')
     expect(rawAfter).not.toContain('[[Target]]')
+  })
+
+  it('rolls back runtime fields when the note file write fails', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Rollback' })
+    storage.updateNoteContent(id, 'old body')
+    storage.updateNoteProperties(id, { properties: { status: 'todo' } })
+    const tag = createNoteTagsStorage().createTag('Fresh')
+    const note = getNotesRuntimeCache(getNotesPaths(tempVaultPath)).notes.find(
+      note => note.id === id,
+    )!
+    const before = structuredClone(note)
+    const write = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {
+      throw new Error('ENOSPC')
+    })
+
+    try {
+      expect(() => storage.updateNoteContent(id, 'new body')).toThrow('ENOSPC')
+      expect(() =>
+        storage.updateNoteProperties(id, {
+          properties: { priority: 'high', status: 'done' },
+        }),
+      ).toThrow('ENOSPC')
+      expect(() => storage.addTagToNote(id, tag.id)).toThrow('ENOSPC')
+      expect(note).toEqual(before)
+    }
+    finally {
+      write.mockRestore()
+    }
+
+    resetNotesRuntimeCache()
+    expect(storage.getNoteById(id)).toMatchObject({
+      content: 'old body',
+      properties: { status: 'todo' },
+      tags: [],
+    })
   })
 
   it('createNote with bad folderId throws FOLDER_NOT_FOUND', () => {

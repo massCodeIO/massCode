@@ -153,7 +153,7 @@ describe('applyEntityUpdateFields', () => {
     expect(result).toEqual({
       hasAnyField: false,
       pathMayChange: false,
-      previousIsDeleted: 0,
+      snapshot: entity,
     })
   })
 
@@ -187,7 +187,13 @@ describe('applyEntityUpdateFields', () => {
     expect(result).toEqual({
       hasAnyField: true,
       pathMayChange: true,
-      previousIsDeleted: 0,
+      snapshot: {
+        description: 'Old',
+        folderId: null,
+        isDeleted: 0,
+        isFavorites: 0,
+        name: 'Old name',
+      },
     })
     expect(entity).toEqual({
       description: 'New',
@@ -226,7 +232,13 @@ describe('applyEntityUpdateFields', () => {
     expect(result).toEqual({
       hasAnyField: true,
       pathMayChange: true,
-      previousIsDeleted: 1,
+      snapshot: {
+        description: 'Old',
+        folderId: null,
+        isDeleted: 1,
+        isFavorites: 1,
+        name: 'Current',
+      },
     })
     expect(entity).toEqual({
       description: null,
@@ -235,6 +247,32 @@ describe('applyEntityUpdateFields', () => {
       isFavorites: 0,
       name: 'Current',
     })
+  })
+
+  it('rejects a missing folder before mutating other fields', () => {
+    const entity = {
+      description: 'Old',
+      folderId: null as number | null,
+      isDeleted: 0,
+      isFavorites: 0,
+      name: 'Old name',
+    }
+    const before = { ...entity }
+
+    expect(() =>
+      applyEntityUpdateFields({
+        entity,
+        fieldPresence: 'defined',
+        folderExists: () => false,
+        input: { description: 'New', folderId: 404, name: 'New name' },
+        normalizeFlag: value => value ?? 0,
+        onMissingFolder: () => {
+          throw new Error('FOLDER_NOT_FOUND')
+        },
+        resolveName: inputName => inputName!,
+      }),
+    ).toThrow('FOLDER_NOT_FOUND')
+    expect(entity).toEqual(before)
   })
 })
 

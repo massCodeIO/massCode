@@ -494,18 +494,22 @@ export function createNotesNotesStorage(): NotesStorage {
         return { invalidInput: true, notFound: false }
       }
 
+      // filePath и индекс state persistNote откатывает сам вместе с файлом.
+      const snapshot = { ...updateResult.snapshot, updatedAt: note.updatedAt }
       note.updatedAt = Date.now()
 
-      if (updateResult.pathMayChange) {
-        persistNote(paths, state, note, previousFilePath, {
-          allowRenameOnConflict: true,
-          // assertEntityFileWritable выше уже проверил source до mutation.
-          sourceFileVerifiedLocal: true,
-        })
-      }
-      else {
-        writeNoteToFile(paths, note)
-      }
+      persistOrRestore(note, snapshot, () => {
+        if (updateResult.pathMayChange) {
+          persistNote(paths, state, note, previousFilePath, {
+            allowRenameOnConflict: true,
+            // assertEntityFileWritable выше уже проверил source до mutation.
+            sourceFileVerifiedLocal: true,
+          })
+        }
+        else {
+          writeNoteToFile(paths, note)
+        }
+      })
 
       if (note.name !== previousName || note.folderId !== previousFolderId) {
         rewriteBacklinksAfterNoteUpdate({

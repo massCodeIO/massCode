@@ -296,15 +296,20 @@ describe('updating notes', () => {
     expect(response.message).toContain('may not be saved')
     expect(JSON.stringify(response)).not.toContain('/private')
     expect(response.contentRevision).toMatch(/^[a-f0-9]{64}$/)
-    // Runtime-кэш уже содержит новое тело до записи файла, поэтому сверяемся с диском.
+    // Сбой записи откатывает тело в runtime-кэше: кэш, ревизия и диск совпадают.
+    expect(notes().notes.getNoteById(note.id)).toMatchObject({
+      name: 'Final',
+      content: 'old',
+    })
     resetCaches()
+    expect(await revision('note', note.id)).toBe(response.contentRevision)
     expect(notes().notes.getNoteById(note.id)).toMatchObject({
       name: 'Final',
       content: 'old',
     })
   })
 
-  it('saves the content when resent with the returned revision', async () => {
+  it('keeps the revision when a content-only write fails', async () => {
     const note = await call('create_note', { name: 'Draft', content: 'old' })
     const writeFile = fs.writeFileSync
     vi.spyOn(fs, 'writeFileSync').mockImplementation((...args) => {
@@ -313,17 +318,20 @@ describe('updating notes', () => {
       }
       return writeFile(...args)
     })
-    const partial = await failed('update_note', {
+    const response = await failed('update_note', {
       id: note.id,
       expectedRevision: note.contentRevision,
       patch: { content: 'NEW BODY' },
     })
     vi.restoreAllMocks()
-    expect(partial).toMatchObject({ code: 'PARTIAL_UPDATE', persisted: false })
+    // Откат runtime-кэша: ничего не изменилось, поэтому это не PARTIAL_UPDATE.
+    expect(response).toMatchObject({ code: 'STORAGE_ERROR' })
+    expect(JSON.stringify(response)).not.toContain('/private')
+    expect(await revision('note', note.id)).toBe(note.contentRevision)
 
     await call('update_note', {
       id: note.id,
-      expectedRevision: partial.contentRevision,
+      expectedRevision: note.contentRevision,
       patch: { content: 'NEW BODY' },
     })
     resetCaches()

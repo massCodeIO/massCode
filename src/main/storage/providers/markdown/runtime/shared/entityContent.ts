@@ -1,4 +1,5 @@
 import { assertEntityContentAvailable } from './cloudGuards'
+import { persistOrRestore } from './entityStorage'
 
 interface EntityWithBodyContent {
   // null — ленивое тело, ещё не дочитанное из индекса метаданных.
@@ -35,9 +36,12 @@ export function updateEntityBodyContent<
 
   assertEntityContentAvailable(input.entity)
 
-  input.entity.content = input.content
-  input.entity.updatedAt = Date.now()
-  input.persistEntity(input.entity)
+  const entity = input.entity
+  const snapshot = { content: entity.content, updatedAt: entity.updatedAt }
+  entity.content = input.content
+  entity.updatedAt = Date.now()
+  persistOrRestore(entity, snapshot as Partial<TEntity>, () =>
+    input.persistEntity(entity))
   input.onAfterPersist?.()
 
   return { notFound: false }
@@ -58,10 +62,16 @@ export function createNestedContent<
 
   assertEntityContentAvailable(input.owner)
 
+  const owner = input.owner
+  const snapshot = {
+    contents: [...owner.contents],
+    updatedAt: owner.updatedAt,
+  }
   const contentId = input.nextContentId()
-  input.owner.contents.push(input.createContent(contentId))
-  input.owner.updatedAt = Date.now()
-  input.persistOwner(input.owner)
+  owner.contents.push(input.createContent(contentId))
+  owner.updatedAt = Date.now()
+  persistOrRestore(owner, snapshot as Partial<TOwner>, () =>
+    input.persistOwner(owner))
 
   return { id: contentId }
 }

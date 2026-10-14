@@ -11,6 +11,7 @@ import {
   prioritizeCloudDownload,
 } from '../../cloudDownloads'
 import { rememberAppFileChange } from '../../runtime/shared/appChanges'
+import { writeFileAtomicSync } from '../../runtime/shared/atomicWrite'
 import {
   getFileAvailability,
   markAppWrittenFileAsLocal,
@@ -92,7 +93,7 @@ export function writeNotesFolderMetadataFile(
   }
 
   fs.ensureDirSync(folderAbsPath)
-  fs.writeFileSync(metaPath, nextContent, 'utf8')
+  writeFileAtomicSync(metaPath, nextContent)
   markAppWrittenFileAsLocal(metaPath)
   rememberAppFileChange(metaPath)
 }

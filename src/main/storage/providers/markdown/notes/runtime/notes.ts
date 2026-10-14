@@ -18,6 +18,7 @@ import { enqueueCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { splitFrontmatter } from '../../runtime/parser'
 import { rememberAppFileChange } from '../../runtime/shared/appChanges'
+import { writeFileAtomicSync } from '../../runtime/shared/atomicWrite'
 import {
   getFileAvailability,
   markAppWrittenFileAsLocal,
@@ -634,7 +635,7 @@ export function writeNoteToFile(
   }
 
   fs.ensureDirSync(path.dirname(absolutePath))
-  fs.writeFileSync(absolutePath, nextContent, 'utf8')
+  writeFileAtomicSync(absolutePath, nextContent)
   rememberAppFileChange(absolutePath)
   markAppWrittenFileAsLocal(absolutePath)
 

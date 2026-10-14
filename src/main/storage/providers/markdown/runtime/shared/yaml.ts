@@ -2,6 +2,7 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
 import { enqueueCloudDownload } from '../../cloudDownloads'
+import { writeFileAtomicSync } from './atomicWrite'
 import { getFileAvailability } from './cloudFiles'
 
 // Файл существует, но недокачан из облака: содержимое сейчас не прочитать.
@@ -57,5 +58,5 @@ export function writeYamlObjectFile(
     .trim()
 
   fs.ensureDirSync(path.dirname(filePath))
-  fs.writeFileSync(filePath, `${body}\n`, 'utf8')
+  writeFileAtomicSync(filePath, `${body}\n`)
 }

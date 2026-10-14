@@ -321,6 +321,83 @@ describe('code snippets storage validations', () => {
     })
   })
 
+  it('keeps the snippet file on disk intact when the write fails midway', () => {
+    const storage = createSnippetsStorage()
+    const { id } = storage.createSnippet({ name: 'Partial' })
+    const contentId = storage.createSnippetContent(id, {
+      label: 'Main',
+      language: 'text',
+      value: 'old body',
+    }).id
+    const paths = getPaths(tempVaultPath)
+    const snippet = getRuntimeCache(paths).snippets.find(
+      snippet => snippet.id === id,
+    )!
+    const absolutePath = path.join(paths.vaultPath, snippet.filePath)
+    const rawBefore = fs.readFileSync(absolutePath, 'utf8')
+    const entriesBefore = fs.readdirSync(path.dirname(absolutePath)).sort()
+    const writeFileSync = fs.writeFileSync.bind(fs)
+    const write = vi
+      .spyOn(fs, 'writeFileSync')
+      .mockImplementation((file, data, options) => {
+        const text = String(data)
+        writeFileSync(file, text.slice(0, text.length / 2), options)
+        throw new Error('ENOSPC')
+      })
+
+    try {
+      expect(() =>
+        storage.updateSnippetContent(id, contentId, { value: 'new body' }),
+      ).toThrow('ENOSPC')
+    }
+    finally {
+      write.mockRestore()
+    }
+
+    expect(fs.readFileSync(absolutePath, 'utf8')).toBe(rawBefore)
+    expect(fs.readdirSync(path.dirname(absolutePath)).sort()).toEqual(
+      entriesBefore,
+    )
+  })
+
+  it('keeps the snippet file on disk intact when replacing it fails', () => {
+    const storage = createSnippetsStorage()
+    const { id } = storage.createSnippet({ name: 'Rename Fails' })
+    const contentId = storage.createSnippetContent(id, {
+      label: 'Main',
+      language: 'text',
+      value: 'old body',
+    }).id
+    const paths = getPaths(tempVaultPath)
+    const snippet = getRuntimeCache(paths).snippets.find(
+      snippet => snippet.id === id,
+    )!
+    const absolutePath = path.join(paths.vaultPath, snippet.filePath)
+    const rawBefore = fs.readFileSync(absolutePath, 'utf8')
+    const entriesBefore = fs.readdirSync(path.dirname(absolutePath)).sort()
+    const rename = vi.spyOn(fs, 'renameSync').mockImplementation(() => {
+      throw new Error('EIO')
+    })
+
+    try {
+      expect(() =>
+        storage.updateSnippetContent(id, contentId, { value: 'new body' }),
+      ).toThrow('EIO')
+    }
+    finally {
+      rename.mockRestore()
+    }
+
+    expect(fs.readFileSync(absolutePath, 'utf8')).toBe(rawBefore)
+    expect(fs.readdirSync(path.dirname(absolutePath)).sort()).toEqual(
+      entriesBefore,
+    )
+    resetRuntimeCache()
+    expect(storage.getSnippetById(id)).toMatchObject({
+      contents: [{ value: 'old body' }],
+    })
+  })
+
   it('updateSnippet with empty patch returns invalidInput', () => {
     const storage = createSnippetsStorage()
     const { id } = storage.createSnippet({ name: 'Test Snippet' })

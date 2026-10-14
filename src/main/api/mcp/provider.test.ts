@@ -80,12 +80,12 @@ it('reports the persisted note ID when backlink rewriting fails during creation'
   notes.createNote({ name: 'Foo', folderId: folder.id })
   const linker = notes.createNote({ name: 'Linker', folderId: folder.id })
   notes.updateNoteContent(linker.id, 'See [[Foo]]')
-  const writeFile = fs.writeFileSync
-  vi.spyOn(fs, 'writeFileSync').mockImplementation((...args) => {
-    if (String(args[0]).endsWith('/Linker.md')) {
+  const rename = fs.renameSync
+  vi.spyOn(fs, 'renameSync').mockImplementation((...args) => {
+    if (String(args[1]).endsWith('/Linker.md')) {
       throw new Error('EACCES: private linker path')
     }
-    return writeFile(...args)
+    return rename(...args)
   })
 
   const response = await toolCall('create_note', {

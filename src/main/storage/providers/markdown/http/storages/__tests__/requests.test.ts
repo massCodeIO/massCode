@@ -690,15 +690,19 @@ describe('http requests storage', () => {
           bodyType: 'text',
         }),
       ).not.toThrow()
-      const sourceIdentity = fs.lstatSync(sourcePath, { bigint: true })
+      const move = vi.spyOn(fs, 'moveSync')
       expect(() =>
         storage.updateRequest(id, { name: 'Resident Renamed' }),
       ).not.toThrow()
 
+      // Файл переносится, а не создаётся заново. Inode сравнивать нельзя:
+      // атомарная запись после переноса заменяет файл новым.
       const targetPath = path.join(paths.httpRoot, 'Resident Renamed.md')
-      const targetIdentity = fs.lstatSync(targetPath, { bigint: true })
-      expect(targetIdentity.dev).toBe(sourceIdentity.dev)
-      expect(targetIdentity.ino).toBe(sourceIdentity.ino)
+      expect(move).toHaveBeenCalledWith(sourcePath, targetPath, {
+        overwrite: false,
+      })
+      move.mockRestore()
+      expect(fs.pathExistsSync(sourcePath)).toBe(false)
       expect(fs.readFileSync(targetPath, 'utf8')).toContain('resident body')
       expect(getFileAvailability(targetPath).isCloudPlaceholder).toBe(false)
     }
@@ -751,14 +755,14 @@ describe('http requests storage', () => {
     const targetPath = path.join(paths.httpRoot, 'Write Target.md')
     const cloudFiles = await import('../../../runtime/shared/cloudFiles')
     const markSpy = vi.spyOn(cloudFiles, 'markAppWrittenFileAsLocal')
-    const writeFileSync = fs.writeFileSync.bind(fs)
+    const renameSync = fs.renameSync.bind(fs)
     const writeSpy = vi
-      .spyOn(fs, 'writeFileSync')
-      .mockImplementation((filePath, data, options?) => {
-        if (filePath === targetPath) {
+      .spyOn(fs, 'renameSync')
+      .mockImplementation((from, to) => {
+        if (to === targetPath) {
           throw new Error('trusted destination write failed')
         }
-        return writeFileSync(filePath, data, options as never)
+        return renameSync(from, to)
       })
 
     try {

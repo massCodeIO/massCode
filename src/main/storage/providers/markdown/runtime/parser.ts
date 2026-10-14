@@ -16,6 +16,7 @@ import {
 } from '../cloudDownloads'
 import { LEGACY_FOLDER_META_FILE_NAME, META_FILE_NAME } from './constants'
 import { rememberAppFileChange } from './shared/appChanges'
+import { writeFileAtomicSync } from './shared/atomicWrite'
 import {
   getFileAvailability,
   markAppWrittenFileAsLocal,
@@ -144,7 +145,7 @@ export function writeFolderMetadataFile(
   }
 
   fs.ensureDirSync(folderAbsPath)
-  fs.writeFileSync(metaPath, nextContent, 'utf8')
+  writeFileAtomicSync(metaPath, nextContent)
   markAppWrittenFileAsLocal(metaPath)
   rememberAppFileChange(metaPath)
 

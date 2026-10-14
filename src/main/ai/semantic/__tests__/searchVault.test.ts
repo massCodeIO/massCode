@@ -7,8 +7,7 @@ import { createMockVault } from './storageMock'
 
 const KEY = {
   vault: '/vault',
-  source: 'provider' as const,
-  baseURL: 'http://localhost',
+  source: 'builtin' as const,
   model: 'embed',
 }
 
@@ -34,7 +33,7 @@ vi.mock('../../../store', () => ({
   store: { preferences: { get: () => '/vault' } },
 }))
 vi.mock('../../settings', () => ({
-  getAiSemanticSettings: () => ({ source: 'provider', provider: {} }),
+  getAiSemanticSettings: () => ({ source: 'builtin' }),
 }))
 vi.mock('../embeddings', async importOriginal => ({
   ...(await importOriginal<typeof import('../embeddings')>()),
@@ -243,10 +242,10 @@ describe('searchVault', () => {
 
   it('shows the start of the note text when its name vector matched', async () => {
     mocks.key = KEY
-    // Совпадает только вектор чанка-названия: формат документа «название\nтекст».
+    // Совпадает только вектор чанка-названия: в нём текст повторяет название.
     mocks.embed.mockImplementation(async (_key: unknown, texts: string[]) =>
       texts.map(text =>
-        text === 'Release checklist\nRelease checklist'
+        text === 'title: Release checklist | text: Release checklist'
           ? Float32Array.from([1, 0, 0])
           : Float32Array.from([0, 0, 1]),
       ),

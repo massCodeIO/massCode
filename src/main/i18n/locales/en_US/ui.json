@@ -73,7 +73,6 @@
       "enableSemanticSearch": "Turn on semantic search",
       "enableSemanticSearchSubtitle": "Download the built-in model (~210 MB) to find records by meaning",
       "enableSemanticSearchReadySubtitle": "Use the downloaded built-in model to find records by meaning",
-      "enableSemanticSearchUnsupportedSubtitle": "Set up an embedding server to find records by meaning",
       "newHttpCollection": "New HTTP collection",
       "newHttpCollectionSubtitle": "Create a collection for requests and folders",
       "newHttpWebSocket": "New WebSocket request",
@@ -2038,16 +2037,12 @@
     },
     "semantic": {
       "title": "Semantic Search",
-      "description": "Finds vault records related by meaning, not only by matching words, in the command palette and when the assistant searches the vault. Vectors are stored only on this device and are not synced. The built-in model works offline after download. With your embedding server, indexing sends the text of every record to that server, and so do palette and assistant searches with their queries.",
+      "description": "Finds vault records related by meaning, not only by matching words, in the command palette and when the assistant searches the vault. The built-in model works offline after download. Vectors are stored only on this device and are not synced.",
       "source": "Source",
-      "server": "Server",
       "sources": {
         "off": "Off",
-        "builtin": "Built-in model",
-        "provider": "Local server"
+        "builtin": "Built-in model"
       },
-      "embeddingModel": "Embedding model",
-      "embeddingModelHint": "Install an embedding model such as embeddinggemma on your server, then refresh the model list.",
       "enabling": "Downloading the semantic search model...",
       "enabled": "Semantic search is on",
       "index": "Index",
@@ -2060,10 +2055,10 @@
         "downloading": "Downloading... {{percent}}%",
         "ready": "Model ready",
         "remove": "Remove model",
-        "unsupported": "The built-in model is not available on Intel Macs. Use a local server instead.",
+        "unsupported": "Semantic search is not available on Intel Macs. The command palette and the assistant keep searching by words.",
         "errors": {
           "download": "Could not download the model. Check your connection and try again.",
-          "runtime": "Could not start the model. Try again or choose a local server.",
+          "runtime": "Could not start the model. Try again.",
           "runtimeWindows": "Could not start the model. Install the Microsoft Visual C++ Redistributable, then try again."
         }
       },

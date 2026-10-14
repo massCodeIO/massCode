@@ -1113,20 +1113,18 @@ async function requestSemantic(
 }
 
 async function enableSemanticSearchFromPalette() {
-  if (semanticStatus.value?.builtin.supported) {
-    const status = await requestSemantic('system:ai:semantic-configure', {
-      source: 'builtin',
-    })
-    if (status?.builtin.state === 'ready') {
-      sonner({ type: 'success', message: i18n.t('ai.semantic.enabled') })
-    }
-    else if (status) {
-      if (status.builtin.state !== 'downloading')
-        await requestSemantic('system:ai:semantic-download', null)
-      sonner({ message: i18n.t('ai.semantic.enabling') })
-    }
+  const status = await requestSemantic('system:ai:semantic-configure', {
+    source: 'builtin',
+  })
+  if (status?.builtin.state === 'ready') {
+    sonner({ type: 'success', message: i18n.t('ai.semantic.enabled') })
   }
-  // Раздел настроек показывает прогресс загрузки, а без встроенной модели в нём настраивается сервер.
+  else if (status) {
+    if (status.builtin.state !== 'downloading')
+      await requestSemantic('system:ai:semantic-download', null)
+    sonner({ message: i18n.t('ai.semantic.enabling') })
+  }
+  // Раздел настроек показывает прогресс загрузки.
   await router.push({ name: RouterName.preferencesSemanticSearch })
 }
 
@@ -1594,16 +1592,15 @@ function getCommandDefinitions(): CommandPaletteCommand[] {
       run: openPreferencesFromPalette,
     },
     ...(semanticStatus.value?.source === 'off'
+      && semanticStatus.value.builtin.supported
       ? [
           {
             id: 'enable-semantic-search',
             title: i18n.t('commandPalette.actions.enableSemanticSearch'),
             subtitle: i18n.t(
-              !semanticStatus.value.builtin.supported
-                ? 'commandPalette.actions.enableSemanticSearchUnsupportedSubtitle'
-                : semanticStatus.value.builtin.state === 'ready'
-                  ? 'commandPalette.actions.enableSemanticSearchReadySubtitle'
-                  : 'commandPalette.actions.enableSemanticSearchSubtitle',
+              semanticStatus.value.builtin.state === 'ready'
+                ? 'commandPalette.actions.enableSemanticSearchReadySubtitle'
+                : 'commandPalette.actions.enableSemanticSearchSubtitle',
             ),
             icon: ScanSearch,
             keywords: ['semantic', 'meaning', 'search', 'embeddings', 'ai'],

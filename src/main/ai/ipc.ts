@@ -619,11 +619,11 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
   })
   handle('system:ai:semantic-remove', async () => {
     await removeBuiltinModel()
-    await removeIndex('builtin')
+    await removeIndex()
     broadcastSemanticProgress()
     return semanticStatus()
   })
-  // После ошибки индексации (например, сервер эмбеддингов ещё не был запущен) — повтор без смены источника.
+  // После ошибки индексации — повтор без смены источника.
   handle('system:ai:semantic-retry', () => {
     resetBuiltinFailure()
     void restartIndex()
@@ -654,13 +654,6 @@ export function registerAiHandlers(owner: WebContents, rendererUrl: string) {
       modelControllers.delete(controller)
     }
   }
-  // Адрес берётся только из сохранённых настроек, чтобы renderer не мог направить запрос на произвольный хост.
-  handle('system:ai:semantic-models', () => {
-    const { kind, baseURL } = getAiSemanticSettings().provider
-    return withModelsTimeout(signal =>
-      listAiModels({ provider: kind, baseURL, model: '' }, signal),
-    )
-  })
   handle('system:ai:models', () =>
     withModelsTimeout(async (signal) => {
       const connection = getAiConnection()

@@ -61,8 +61,7 @@ const indexFileSchema = z.object({
   version: z.literal(3),
   fingerprint: z.object({
     vault: z.string(),
-    source: z.enum(['builtin', 'provider']),
-    baseURL: z.string().optional(),
+    source: z.literal('builtin'),
     model: z.string(),
     dims: z.number().int().min(0),
     chunking: z.literal(CHUNKING),
@@ -313,7 +312,7 @@ async function runOnce(runGeneration: number, key: SemanticKey) {
         items.push({
           ref: entry.ref,
           n: chunk.n,
-          text: formatDocument(key.model, chunk.title, chunk.text),
+          text: formatDocument(chunk.title, chunk.text),
         })
       }
     }
@@ -326,7 +325,7 @@ async function runOnce(runGeneration: number, key: SemanticKey) {
     for (const batch of planEmbeddingBatches(
       items,
       item => item.text,
-      BATCH_LIMITS[key.source],
+      BATCH_LIMITS,
     )) {
       if (stale())
         return
@@ -440,7 +439,7 @@ export function warmSemanticIndex() {
   void vaultCorpus
     .refresh()
     .catch(error => console.error('[masscode:semantic]', error))
-  if (key?.source === 'builtin')
+  if (key)
     syncIndexInBackground(key)
 }
 
@@ -462,9 +461,8 @@ export function restartIndex() {
 }
 
 // Векторы удалённой модели больше никогда не будут запрошены.
-export async function removeIndex(source: SemanticKey['source']) {
-  const index = await readIndex()
-  if (index?.fingerprint.source !== source)
+export async function removeIndex() {
+  if (!(await readIndex()))
     return
   generation++
   cached = undefined
@@ -479,19 +477,7 @@ export async function removeIndex(source: SemanticKey['source']) {
       new Promise(resolve => setTimeout(resolve, REMOVE_WAIT_MS)),
     ])
   }
-  // За окно ожидания мог стартовать прогон другого источника: файл и кэш теперь его.
-  // Приведение нужно, потому что TS не видит записи в cached во время await и сужает его до undefined.
-  const owner = cached as SemanticIndex | undefined
-  if (owner && owner.fingerprint.source !== source)
-    return
   await fs.rm(indexPath(), { force: true })
-  // Пока шло удаление, кэш мог занять прогон другого источника: его не трогаем,
-  // а файл, который он успел сохранить и который мы только что удалили, пишем заново.
-  const ownerAfterRemove = cached as SemanticIndex | undefined
-  if (ownerAfterRemove && ownerAfterRemove.fingerprint.source !== source) {
-    await saveIndex(ownerAfterRemove).catch(() => {})
-    return
-  }
   // Прогон, начавшийся в окно ожидания, мог успеть прочитать ещё не удалённый файл.
   cached = undefined
   loading = undefined
@@ -520,10 +506,9 @@ async function indexStatus(): Promise<AiSemanticStatus['index']> {
 }
 
 export async function semanticStatus(): Promise<AiSemanticStatus> {
-  const { source, provider } = getAiSemanticSettings()
+  const { source } = getAiSemanticSettings()
   return {
     source,
-    provider,
     builtin: builtinStatus(),
     index: await indexStatus(),
   }

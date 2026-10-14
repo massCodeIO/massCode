@@ -120,7 +120,9 @@ This searches Notes for `migration` inside the Development folder with the backe
 
 ## Search by meaning
 
-Search by words finds records that contain what you typed. With semantic search turned on, the palette also finds records related by meaning, for example a note about invoices when you search for `customer billing`. Results by words appear as you type. After a short pause, results by meaning are added below them; results already shown by words keep their order. While this happens, the footer shows **Searching by meaning...**.
+Search by words finds records that contain what you typed. With semantic search turned on, the palette also finds records related by meaning, even when the query is in another language. For example, `дорожная карта` (Russian for "roadmap") finds the **Orbit roadmap** note. Results by words appear as you type. After a short pause, results by meaning are added below them; results already shown by words keep their order. While this happens, the footer shows **Searching by meaning...**.
+
+<img class="screenshot" :src="withBase('/search-by-meaning.png')" alt="Command Palette finding the Orbit roadmap note by meaning for a query in another language">
 
 Each result shows why it was found:
 
@@ -145,29 +147,24 @@ The [AI assistant](/documentation/ai#choose-context-or-search-the-vault) uses th
 
 ### Turn on semantic search
 
-Run **Turn on semantic search** from the Command Palette. It downloads the built-in model and opens **Preferences → Semantic Search**, where you can follow the download and indexing progress. On Intel Macs, it opens the settings so you can set up a local server.
+Run **Turn on semantic search** from the Command Palette. It downloads the built-in model and opens **Preferences → Semantic Search**, where you can follow the download and indexing progress.
 
-To turn semantic search off, set **Source** to **Off** in **Preferences → Semantic Search**. The palette and the assistant keep searching by words.
+You can also open **Preferences → Semantic Search**, set **Source** to **Built-in model** and click **Download model (~210 MB)**. The model is stored in the app data folder on this computer, outside your vault, and runs offline after download. Use **Remove model** to delete it and its index.
 
-You can also open **Preferences → Semantic Search** and choose a **Source**:
+To turn semantic search off, set **Source** to **Off**. The palette and the assistant keep searching by words.
 
-| Source | How it works |
-| --- | --- |
-| **Built-in model** | Click **Download model (~210 MB)**. The model is stored in the app data folder on this computer, outside your vault, and runs offline after download. Use **Remove model** to delete it and its index. |
-| **Local server** | Uses your own Ollama or LM Studio server, separate from the AI assistant connection. Choose the **Server**, check the **Server URL**, install an embedding model on the server, for example `ollama pull embeddinggemma`, click **Refresh models**, then choose it in **Embedding model**. You can also enter the model ID manually. |
+After the model is ready, massCode indexes your snippets, notes and HTTP requests in the background and shows progress under **Index**. Long records are split into chunks, so progress is counted in chunks, for example **Indexing 120 of 800 chunks**. When indexing finishes, **Index** shows the number of indexed records. The model indexes on two threads to keep the computer responsive, and indexing also starts shortly after the app launches. For HTTP requests, only the name, method, URL path and description are indexed. Changed records are reindexed in the background when you search.
 
-After you choose a source, massCode indexes your snippets, notes and HTTP requests in the background and shows progress under **Index**. Long records are split into chunks, so progress is counted in chunks, for example **Indexing 120 of 800 chunks**. When indexing finishes, **Index** shows the number of indexed records. The built-in model indexes on two threads to keep the computer responsive, and its indexing also starts shortly after the app launches. With a local server, indexing starts after you choose an embedding model, and continues when you search from the palette or the assistant if the index is not ready yet. For HTTP requests, only the name, method, URL path and description are indexed. Changed records are reindexed in the background when you search.
-
-While the built-in model downloads or the index is being built, an icon with the progress in percent appears at the bottom of the space rail. Hover it to see the progress; search by words already works at this time. The icon turns red if the download or indexing fails. Click it to open **Preferences → Semantic Search**. The icon is not shown for short updates that finish within a second or when everything is ready.
+While the model downloads or the index is being built, an icon with the progress in percent appears at the bottom of the space rail. Hover it to see the progress; search by words already works at this time. The icon turns red if the download or indexing fails. Click it to open **Preferences → Semantic Search**. The icon is not shown for short updates that finish within a second or when everything is ready.
 
 Until the first index is ready, the palette finds records by words only and the footer shows **Semantic search is warming up...**.
 
-The index is stored only on this computer and is not synced with your vault. Switching the source, server or embedding model rebuilds it. Switching to another vault also builds a new index: the built-in model starts indexing the new vault right away, and with a local server indexing starts with the first search. Moving the vault to another folder keeps the existing index.
+The index is stored only on this computer and is not synced with your vault. Switching to another vault builds a new index right away. Moving the vault to another folder keeps the existing index.
 
-The built-in model is not available on Intel Macs; use a local server instead.
+Semantic search is not available on Intel Macs. There, **Preferences → Semantic Search** explains this, and the palette and the assistant search by words.
 
 ::: info Privacy
-The built-in model works offline after download. With a local server, indexing sends the text of every indexed record to that server, and palette and assistant searches send your queries to it.
+The built-in model works offline after download. Your records and queries are not sent anywhere for semantic search.
 :::
 
 ::: info Windows requirement
@@ -177,5 +174,8 @@ The built-in model needs the Microsoft Visual C++ Redistributable. If the model 
 ### Troubleshooting
 
 - No **By meaning** results: check **Index** in **Preferences → Semantic Search**. If indexing failed, the error is shown there and the palette keeps searching by words.
-- With a local server, start the server and choose an embedding model, not a chat model.
 - If the built-in model fails to download, check your connection and try again.
+
+<script setup>
+import { withBase } from 'vitepress'
+</script>

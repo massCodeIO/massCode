@@ -16,20 +16,10 @@ describe('semantic text', () => {
     ).toBe('/orders/{{id}}')
     expect(httpSearchPath('{{baseUrl}}/users')).toBe('/users')
   })
-  it('applies EmbeddingGemma task prompts and leaves other models plain', () => {
-    expect(formatQuery('embeddinggemma:latest', 'orders')).toBe(
-      'task: search result | query: orders',
-    )
-    expect(formatDocument('EmbeddingGemma', '', 'body')).toBe(
-      'title: none | text: body',
-    )
-    expect(formatDocument('embeddinggemma', 'Name', 'body')).toBe(
-      'title: Name | text: body',
-    )
-    expect(formatQuery('nomic-embed-text', 'orders')).toBe('orders')
-    expect(formatDocument('nomic-embed-text', 'Name', 'body')).toBe(
-      'Name\nbody',
-    )
+  it('applies EmbeddingGemma task prompts', () => {
+    expect(formatQuery('orders')).toBe('task: search result | query: orders')
+    expect(formatDocument('', 'body')).toBe('title: none | text: body')
+    expect(formatDocument('Name', 'body')).toBe('title: Name | text: body')
   })
   it('normalizes vectors and keeps zero vectors finite', () => {
     const vector = normalize([3, 4])

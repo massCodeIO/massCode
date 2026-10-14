@@ -8,21 +8,13 @@ export function httpSearchPath(url: string) {
     .split(/[?#]/)[0]
 }
 
-// EmbeddingGemma обучена с task-промптами, остальные модели ждут обычный текст.
-function usesTaskPrompts(model: string) {
-  return /embeddinggemma/i.test(model)
+// EmbeddingGemma обучена с task-промптами.
+export function formatQuery(query: string) {
+  return `task: search result | query: ${query}`
 }
 
-export function formatQuery(model: string, query: string) {
-  return usesTaskPrompts(model)
-    ? `task: search result | query: ${query}`
-    : query
-}
-
-export function formatDocument(model: string, name: string, text: string) {
-  return usesTaskPrompts(model)
-    ? `title: ${name.trim() || 'none'} | text: ${text}`
-    : [name.trim(), text].filter(Boolean).join('\n')
+export function formatDocument(name: string, text: string) {
+  return `title: ${name.trim() || 'none'} | text: ${text}`
 }
 
 export function normalize(vector: ArrayLike<number>) {

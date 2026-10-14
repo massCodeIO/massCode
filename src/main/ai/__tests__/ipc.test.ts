@@ -64,8 +64,8 @@ vi.mock('../semantic/vectorIndex', () => ({
   removeIndex: vi.fn(),
   restartIndex: mocks.restartIndex,
   scheduleSemanticProgress: vi.fn(),
-  semanticProgress: vi.fn(async () => ({ source: 'provider' })),
-  semanticStatus: vi.fn(async () => ({ source: 'provider' })),
+  semanticProgress: vi.fn(async () => ({ source: 'builtin' })),
+  semanticStatus: vi.fn(async () => ({ source: 'builtin' })),
 }))
 vi.mock('../workspace', () => ({
   createWorkspaceManager: () => ({
@@ -181,14 +181,7 @@ vi.mock('../settings', () => ({
   rememberAiModels: vi.fn(),
   getAiSettings: () => ({ provider: 'ollama' }),
   getAiConnection: () => ({ baseURL: 'http://localhost/v1', model: 'local' }),
-  getAiSemanticSettings: () => ({
-    source: 'provider',
-    provider: {
-      kind: 'lmstudio',
-      baseURL: 'http://127.0.0.1:1234/v1',
-      model: 'embed',
-    },
-  }),
+  getAiSemanticSettings: () => ({ source: 'builtin' }),
 }))
 
 function setup() {
@@ -3405,7 +3398,7 @@ describe('semantic search IPC', () => {
     const { invoke } = setup()
     expect(await invoke('semantic-retry', null)).toEqual({
       ok: true,
-      data: { source: 'provider' },
+      data: { source: 'builtin' },
     })
     expect(mocks.restartIndex).toHaveBeenCalledTimes(1)
     expect(mocks.broadcastProgress).toHaveBeenCalledTimes(1)
@@ -3414,22 +3407,11 @@ describe('semantic search IPC', () => {
     const { invoke } = setup()
     expect(await invoke('semantic-progress-status', null)).toEqual({
       ok: true,
-      data: { source: 'provider' },
+      data: { source: 'builtin' },
     })
     expect(mocks.broadcastProgress).not.toHaveBeenCalled()
     await invoke('semantic-configure', { source: 'off' })
     expect(mocks.broadcastProgress).toHaveBeenCalledTimes(1)
-  })
-  it('lists models of the saved embedding server only', async () => {
-    mocks.models.mockResolvedValue(['embed'])
-    const { invoke } = setup()
-    expect(
-      await invoke('semantic-models', { baseURL: 'http://evil.test/v1' }),
-    ).toEqual({ ok: true, data: ['embed'] })
-    expect(mocks.models).toHaveBeenCalledWith(
-      { provider: 'lmstudio', baseURL: 'http://127.0.0.1:1234/v1', model: '' },
-      expect.any(AbortSignal),
-    )
   })
   it('does not restart the index when the chat provider changes', async () => {
     mocks.configure.mockReturnValue({})

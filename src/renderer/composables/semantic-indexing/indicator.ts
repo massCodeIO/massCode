@@ -16,13 +16,10 @@ export function semanticIndicatorPhase(
 ): SemanticIndicatorPhase {
   if (status.source === 'off')
     return 'hidden'
-  // Модель может скачиваться или упасть и при другом источнике, но поиск её тогда не использует.
-  if (status.source === 'builtin') {
-    if (status.builtin.state === 'downloading')
-      return 'downloading'
-    if (status.builtin.state === 'error')
-      return 'error'
-  }
+  if (status.builtin.state === 'downloading')
+    return 'downloading'
+  if (status.builtin.state === 'error')
+    return 'error'
   if (status.index.state === 'error')
     return 'error'
   if (status.index.state === 'indexing')
@@ -93,7 +90,7 @@ export function semanticIndicatorTooltip(
   }
   if (phase === 'error') {
     const builtinError
-      = status.source === 'builtin' && status.builtin.state === 'error'
+      = status.builtin.state === 'error'
         ? (status.builtin.error ?? 'download')
         : undefined
     const error = builtinError

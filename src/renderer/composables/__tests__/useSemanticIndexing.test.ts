@@ -8,8 +8,8 @@ const { invoke } = vi.hoisted(() => ({ invoke: vi.fn() }))
 vi.mock('@/electron', () => ({ ipc: { invoke } }))
 
 const indexing: AiSemanticProgress = {
-  source: 'provider',
-  builtin: { state: 'absent' },
+  source: 'builtin',
+  builtin: { state: 'ready' },
   index: { state: 'indexing', done: 1, total: 4 },
 }
 const idle: AiSemanticProgress = { ...indexing, index: { state: 'idle' } }

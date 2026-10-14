@@ -44,10 +44,7 @@ export interface BatchLimits {
 // (64 текста по 89 токенов; 4 текста, самый длинный 1059), прежние батчи по 8 падали и отсортированными.
 // Время эмбеддинга линейно по токенам (~200 мс на 1800 символов при любом размере батча),
 // поэтому двукратный запас по бюджету скорость не снижает.
-export const BATCH_LIMITS = {
-  builtin: { tokens: 2000, items: 16 },
-  provider: { tokens: Number.POSITIVE_INFINITY, items: 16 },
-}
+export const BATCH_LIMITS: BatchLimits = { tokens: 2000, items: 16 }
 
 // Тексты сортируются по длине, чтобы паддинг не раздувал короткие. Текст длиннее бюджета идёт один.
 export function planEmbeddingBatches<T>(

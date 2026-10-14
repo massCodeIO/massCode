@@ -1,5 +1,4 @@
 import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
-import { requestAiEmbeddings } from '../client'
 import { AiError } from '../errors'
 import { getAiSemanticSettings } from '../settings'
 import { embedBuiltin, isBuiltinReady } from './builtin'
@@ -8,40 +7,22 @@ import { formatQuery, normalize } from './text'
 
 export interface SemanticKey {
   vault: string
-  source: 'builtin' | 'provider'
-  baseURL?: string
+  source: 'builtin'
   model: string
 }
 
 export function sameSemanticKey(a: SemanticKey, b: SemanticKey) {
-  return (
-    a.vault === b.vault
-    && a.source === b.source
-    && a.baseURL === b.baseURL
-    && a.model === b.model
-  )
+  return a.vault === b.vault && a.source === b.source && a.model === b.model
 }
 
 export function currentSemanticKey(): SemanticKey | undefined {
-  const { source, provider } = getAiSemanticSettings()
+  if (getAiSemanticSettings().source !== 'builtin' || !isBuiltinReady())
+    return undefined
   try {
-    if (source === 'builtin') {
-      // В имени модели остаётся «embeddinggemma», поэтому документы и запросы получают её task-промпты.
-      return isBuiltinReady()
-        ? {
-            vault: getVaultPath(),
-            source,
-            model: `${BUILTIN_MODEL.id}@${BUILTIN_MODEL.revision}`,
-          }
-        : undefined
-    }
-    if (source !== 'provider' || !provider.model)
-      return undefined
     return {
       vault: getVaultPath(),
-      source,
-      baseURL: provider.baseURL,
-      model: provider.model,
+      source: 'builtin',
+      model: `${BUILTIN_MODEL.id}@${BUILTIN_MODEL.revision}`,
     }
   }
   catch {
@@ -54,23 +35,7 @@ export async function embedTexts(
   texts: string[],
   signal: AbortSignal,
 ) {
-  let vectors: number[][]
-  if (key.source === 'builtin') {
-    vectors = await embedBuiltin(texts, signal)
-  }
-  else {
-    const { provider } = getAiSemanticSettings()
-    // Настройки могут смениться между вычислением ключа и отправкой батча.
-    if (provider.baseURL !== key.baseURL)
-      throw new AiError('invalidRequest')
-    // Без apiKey: ключ чатового провайдера не должен уходить на сервер эмбеддингов.
-    vectors = await requestAiEmbeddings(
-      { provider: provider.kind, baseURL: provider.baseURL, model: key.model },
-      key.model,
-      texts,
-      signal,
-    )
-  }
+  const vectors = await embedBuiltin(texts, signal)
   if (vectors.length !== texts.length)
     throw new AiError('invalidResponse')
   if (vectors.some(vector => vector.length !== vectors[0].length))
@@ -87,8 +52,8 @@ export async function embedQuery(
   query: string,
   signal: AbortSignal,
 ) {
-  const text = formatQuery(key.model, query)
-  const cacheKey = JSON.stringify([key.source, key.baseURL, key.model, text])
+  const text = formatQuery(query)
+  const cacheKey = JSON.stringify([key.model, text])
   const cached = queryVectors.get(cacheKey)
   if (cached) {
     queryVectors.delete(cacheKey)

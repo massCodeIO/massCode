@@ -2,22 +2,12 @@ import type { AiErrorCode, AiVaultRef } from './ai'
 import { z } from 'zod'
 import { aiVaultRefSchema } from './ai'
 
-export const aiSemanticSourceSchema = z.enum(['off', 'builtin', 'provider'])
+export const aiSemanticSourceSchema = z.enum(['off', 'builtin'])
 export type AiSemanticSource = z.infer<typeof aiSemanticSourceSchema>
-
-export const aiSemanticProviderSchema = z
-  .object({
-    kind: z.enum(['ollama', 'lmstudio']),
-    baseURL: z.string().trim().min(1).max(2048),
-    model: z.string().trim().max(256),
-  })
-  .strict()
-export type AiSemanticProvider = z.infer<typeof aiSemanticProviderSchema>
 
 export const aiSemanticConfigureSchema = z
   .object({
     source: aiSemanticSourceSchema,
-    provider: aiSemanticProviderSchema.optional(),
   })
   .strict()
 export type AiSemanticConfigure = z.infer<typeof aiSemanticConfigureSchema>
@@ -82,7 +72,6 @@ export interface AiSemanticSearchResult {
 
 export interface AiSemanticStatus {
   source: AiSemanticSource
-  provider: AiSemanticProvider
   builtin: {
     supported: boolean
     state: 'absent' | 'downloading' | 'ready' | 'error'
@@ -101,7 +90,7 @@ export interface AiSemanticStatus {
   }
 }
 
-// Рассылается во все окна для индикатора в рейке пространств, поэтому без настроек сервера и счётчиков.
+// Рассылается во все окна для индикатора в рейке пространств, поэтому без счётчиков.
 export interface AiSemanticProgress {
   source: AiSemanticSource
   builtin: Pick<AiSemanticStatus['builtin'], 'state' | 'progress' | 'error'>

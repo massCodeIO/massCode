@@ -42,30 +42,21 @@ describe('semantic indicator phase', () => {
     ).toBe('hidden')
   })
 
-  it('shows the model download and its failure only for the built-in source', () => {
+  it('shows the model download and its failure', () => {
     expect(
       semanticIndicatorPhase(progress({ builtin: { state: 'downloading' } })),
     ).toBe('downloading')
     expect(
       semanticIndicatorPhase(progress({ builtin: { state: 'error' } })),
     ).toBe('error')
-    expect(
-      semanticIndicatorPhase(
-        progress({ source: 'provider', builtin: { state: 'downloading' } }),
-      ),
-    ).toBe('hidden')
   })
 
   it('shows indexing and index errors', () => {
     expect(
-      semanticIndicatorPhase(
-        progress({ source: 'provider', index: { state: 'indexing' } }),
-      ),
+      semanticIndicatorPhase(progress({ index: { state: 'indexing' } })),
     ).toBe('indexing')
     expect(
-      semanticIndicatorPhase(
-        progress({ source: 'provider', index: { state: 'error' } }),
-      ),
+      semanticIndicatorPhase(progress({ index: { state: 'error' } })),
     ).toBe('error')
   })
 })
@@ -164,10 +155,7 @@ describe('semantic indicator tooltip', () => {
     )
     expect(
       semanticIndicatorTooltip(
-        progress({
-          source: 'provider',
-          index: { state: 'error', error: 'timeout' },
-        }),
+        progress({ index: { state: 'error', error: 'timeout' } }),
         'error',
         t,
         false,

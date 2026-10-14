@@ -630,6 +630,60 @@ describe('notes storage validations', () => {
     })
   })
 
+  it('moves the note file back when the write after rename or move fails', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+    const source = folders.createFolder({ name: 'Source', parentId: null })
+    const target = folders.createFolder({ name: 'Target', parentId: null })
+    const { id } = storage.createNote({ folderId: source.id, name: 'Moving' })
+    storage.updateNoteContent(id, 'body')
+    const paths = getNotesPaths(tempVaultPath)
+    const { notes, state } = getNotesRuntimeCache(paths)
+    const note = notes.find(note => note.id === id)!
+    const before = structuredClone(note)
+    const indexBefore = structuredClone(state.notes)
+    const listMarkdownFiles = () =>
+      (fs.readdirSync(paths.notesRoot, { recursive: true }) as string[])
+        .filter(file => file.endsWith('.md'))
+        .sort()
+    const filesBefore = listMarkdownFiles()
+    const write = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {
+      throw new Error('EACCES')
+    })
+
+    try {
+      expect(() =>
+        storage.updateNote(id, {
+          folderId: target.id,
+          isFavorites: 1,
+          name: 'Moved',
+        }),
+      ).toThrow('EACCES')
+      expect(() => storage.updateNote(id, { isDeleted: 1 })).toThrow('EACCES')
+      expect(() =>
+        storage.updateNote(id, { name: 'X', folderId: 99999 }),
+      ).toThrow('Folder not found')
+      // Запись нового файла тоже падает: индекс не должен получить запись
+      // без файла.
+      expect(() => storage.createNote({ name: 'Ghost' })).toThrow('EACCES')
+      expect(note).toEqual(before)
+      expect(state.notes).toEqual(indexBefore)
+    }
+    finally {
+      write.mockRestore()
+    }
+
+    expect(listMarkdownFiles()).toEqual(filesBefore)
+    resetNotesRuntimeCache()
+    expect(storage.getNoteById(id)).toMatchObject({
+      content: 'body',
+      folder: { id: source.id },
+      isDeleted: 0,
+      isFavorites: 0,
+      name: 'Moving',
+    })
+  })
+
   it('createNote with bad folderId throws FOLDER_NOT_FOUND', () => {
     const storage = createNotesNotesStorage()
     expect(() => storage.createNote({ name: 'Test', folderId: 99999 })).toThrow(

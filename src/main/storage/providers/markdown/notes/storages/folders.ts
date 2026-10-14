@@ -16,6 +16,7 @@ import {
   assertEntityFileWritable,
   throwCloudContentUnavailable,
 } from '../../runtime/shared/cloudGuards'
+import { persistOrRestore } from '../../runtime/shared/entityStorage'
 import { collectDescendantIds } from '../../runtime/shared/folderIndex'
 import {
   applyFolderParentAndOrder,
@@ -403,14 +404,22 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
       for (const note of notes) {
         if (note.folderId !== null && descendantIds.has(note.folderId)) {
           const previousFilePath = note.filePath
+          // name входит в snapshot: allowRenameOnConflict может его сменить.
+          const snapshot = {
+            folderId: note.folderId,
+            isDeleted: note.isDeleted,
+            name: note.name,
+            updatedAt: note.updatedAt,
+          }
           note.folderId = null
           note.isDeleted = 1
           note.updatedAt = Date.now()
-          persistNote(paths, state, note, previousFilePath, {
-            allowRenameOnConflict: true,
-            directoryEntriesCache,
-            folderPathMap,
-          })
+          persistOrRestore(note, snapshot, () =>
+            persistNote(paths, state, note, previousFilePath, {
+              allowRenameOnConflict: true,
+              directoryEntriesCache,
+              folderPathMap,
+            }))
         }
       }
 

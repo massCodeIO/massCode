@@ -1,4 +1,6 @@
+import path from 'node:path'
 import fs from 'fs-extra'
+import { rememberAppFileChange } from './appChanges'
 
 export type DirectoryEntriesCache = Map<string, string[]>
 
@@ -60,4 +62,30 @@ export function upsertDirectoryEntryInCache(
 
   nextEntries.push(fileName)
   directoryEntriesCache.set(directoryPath, nextEntries)
+}
+
+// Откат move из persist*, когда запись frontmatter по новому пути упала:
+// иначе файл со старым frontmatter остался бы в новом месте. false значит,
+// что вернуть файл не удалось, и он по-прежнему лежит по новому пути.
+export function tryMoveFileBack(
+  movedAbsolutePath: string,
+  originalAbsolutePath: string,
+  directoryEntriesCache?: DirectoryEntriesCache,
+): boolean {
+  try {
+    fs.moveSync(movedAbsolutePath, originalAbsolutePath, { overwrite: false })
+  }
+  catch {
+    return false
+  }
+
+  rememberAppFileChange(movedAbsolutePath)
+  rememberAppFileChange(originalAbsolutePath)
+  upsertDirectoryEntryInCache(
+    path.dirname(originalAbsolutePath),
+    path.basename(originalAbsolutePath),
+    directoryEntriesCache,
+  )
+
+  return true
 }

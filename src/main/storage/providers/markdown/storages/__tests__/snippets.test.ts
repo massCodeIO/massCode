@@ -261,6 +261,66 @@ describe('code snippets storage validations', () => {
     ).toEqual(['one', 'two'])
   })
 
+  it('moves the snippet file back when the write after rename or move fails', () => {
+    const folders = createFoldersStorage()
+    const storage = createSnippetsStorage()
+    const source = folders.createFolder({ name: 'Source', parentId: null })
+    const target = folders.createFolder({ name: 'Target', parentId: null })
+    const { id } = storage.createSnippet({
+      folderId: source.id,
+      name: 'Moving',
+    })
+    storage.createSnippetContent(id, {
+      label: 'Main',
+      language: 'text',
+      value: 'body',
+    })
+    const paths = getPaths(tempVaultPath)
+    const { snippets, state } = getRuntimeCache(paths)
+    const snippet = snippets.find(snippet => snippet.id === id)!
+    const before = structuredClone(snippet)
+    const indexBefore = structuredClone(state.snippets)
+    const listMarkdownFiles = () =>
+      (fs.readdirSync(paths.vaultPath, { recursive: true }) as string[])
+        .filter(file => file.endsWith('.md'))
+        .sort()
+    const filesBefore = listMarkdownFiles()
+    const write = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {
+      throw new Error('EACCES')
+    })
+
+    try {
+      expect(() =>
+        storage.updateSnippet(id, {
+          folderId: target.id,
+          isFavorites: 1,
+          name: 'Moved',
+        }),
+      ).toThrow('EACCES')
+      expect(() => storage.updateSnippet(id, { isDeleted: 1 })).toThrow(
+        'EACCES',
+      )
+      expect(() =>
+        storage.updateSnippet(id, { name: 'X', folderId: 99999 }),
+      ).toThrow('Folder not found')
+      expect(snippet).toEqual(before)
+      expect(state.snippets).toEqual(indexBefore)
+    }
+    finally {
+      write.mockRestore()
+    }
+
+    expect(listMarkdownFiles()).toEqual(filesBefore)
+    resetRuntimeCache()
+    expect(storage.getSnippetById(id)).toMatchObject({
+      contents: [{ value: 'body' }],
+      folder: { id: source.id },
+      isDeleted: 0,
+      isFavorites: 0,
+      name: 'Moving',
+    })
+  })
+
   it('updateSnippet with empty patch returns invalidInput', () => {
     const storage = createSnippetsStorage()
     const { id } = storage.createSnippet({ name: 'Test Snippet' })

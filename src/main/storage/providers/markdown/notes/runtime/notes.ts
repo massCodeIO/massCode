@@ -26,6 +26,7 @@ import { throwCloudContentUnavailable } from '../../runtime/shared/cloudGuards'
 import {
   getCachedDirectoryEntries,
   removeDirectoryEntryFromCache,
+  tryMoveFileBack,
   upsertDirectoryEntryInCache,
 } from '../../runtime/shared/directoryEntries'
 import {
@@ -810,11 +811,11 @@ export function persistNote(
   }
 
   const resolvedAbsolutePath = path.join(paths.notesRoot, resolvedPath)
+  const currentAbsolutePath = path.join(paths.notesRoot, currentFilePath)
   let moved = false
 
   // Move file if path changed
   if (currentFilePath && currentFilePath !== resolvedPath) {
-    const currentAbsolutePath = path.join(paths.notesRoot, currentFilePath)
     if (fs.pathExistsSync(currentAbsolutePath)) {
       fs.ensureDirSync(path.dirname(resolvedAbsolutePath))
       fs.moveSync(currentAbsolutePath, resolvedAbsolutePath, {
@@ -831,10 +832,12 @@ export function persistNote(
     }
   }
 
+  const previousNoteFilePath = note.filePath
   note.filePath = resolvedPath
 
   // Update state index
   const indexEntry = state.notes.find(n => n.id === note.id)
+  const previousIndexFilePath = indexEntry?.filePath
   if (indexEntry) {
     indexEntry.filePath = resolvedPath
   }
@@ -842,13 +845,39 @@ export function persistNote(
     state.notes.push({ id: note.id, filePath: resolvedPath })
   }
 
-  // Write content
-  writeNoteToFile(paths, note, {
-    skipIfUnavailable: options?.skipWriteIfUnavailable,
-    ...(moved && options?.sourceFileVerifiedLocal
-      ? { [trustedMovedLocalWrite]: true as const }
-      : {}),
-  })
+  try {
+    writeNoteToFile(paths, note, {
+      skipIfUnavailable: options?.skipWriteIfUnavailable,
+      ...(moved && options?.sourceFileVerifiedLocal
+        ? { [trustedMovedLocalWrite]: true as const }
+        : {}),
+    })
+  }
+  catch (error) {
+    // Индекс state сохраняется отложенно вместе с любой следующей мутацией,
+    // поэтому путь откатывается вслед за файлом. Если вернуть файл не
+    // удалось, runtime и индекс остаются на фактическом новом пути.
+    if (
+      !moved
+      || tryMoveFileBack(
+        resolvedAbsolutePath,
+        currentAbsolutePath,
+        directoryEntriesCache,
+      )
+    ) {
+      note.filePath = previousNoteFilePath
+      if (indexEntry) {
+        indexEntry.filePath = previousIndexFilePath!
+      }
+      else {
+        state.notes.splice(
+          state.notes.findIndex(n => n.id === note.id),
+          1,
+        )
+      }
+    }
+    throw error
+  }
   upsertDirectoryEntryInCache(
     path.dirname(resolvedAbsolutePath),
     path.basename(resolvedAbsolutePath),

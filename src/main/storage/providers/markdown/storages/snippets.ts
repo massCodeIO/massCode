@@ -332,23 +332,29 @@ export function createSnippetsStorage(): SnippetsStorage {
       }
 
       const movedToTrash
-        = updateResult.previousIsDeleted !== 1 && snippet.isDeleted === 1
+        = updateResult.snapshot.isDeleted !== 1 && snippet.isDeleted === 1
       const previousDirectory = normalizeDirectoryPath(
         path.posix.dirname(previousPath),
       )
       const nextDirectory = getSnippetTargetDirectory(state, snippet)
       const movedBetweenDirectories = previousDirectory !== nextDirectory
 
+      // filePath persistSnippet откатывает сам вместе с файлом.
+      const snapshot = {
+        ...updateResult.snapshot,
+        updatedAt: snippet.updatedAt,
+      }
       snippet.updatedAt = Date.now()
-      persistSnippet(paths, state, snippet, previousPath, {
-        allowRenameOnConflict: movedToTrash || movedBetweenDirectories,
-        // assertEntityFileWritable выше уже проверил source до mutation.
-        sourceFileVerifiedLocal: true,
-        // Перенос в trash не требует перезаписи frontmatter (isDeleted
-        // выводится из trash-каталога), поэтому недокачанный файл не должен
-        // блокировать удаление.
-        skipWriteIfUnavailable: movedToTrash,
-      })
+      persistOrRestore(snippet, snapshot, () =>
+        persistSnippet(paths, state, snippet, previousPath, {
+          allowRenameOnConflict: movedToTrash || movedBetweenDirectories,
+          // assertEntityFileWritable выше уже проверил source до mutation.
+          sourceFileVerifiedLocal: true,
+          // Перенос в trash не требует перезаписи frontmatter (isDeleted
+          // выводится из trash-каталога), поэтому недокачанный файл не должен
+          // блокировать удаление.
+          skipWriteIfUnavailable: movedToTrash,
+        }))
       saveState(paths, state)
       scheduleDockBadgeRefresh()
 

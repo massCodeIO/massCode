@@ -117,8 +117,15 @@ export function applyEntityUpdateFields<
 ): {
     hasAnyField: boolean
     pathMayChange: boolean
-    previousIsDeleted: number
+    snapshot: Pick<TEntity, UpdatableEntityField>
   } {
+  const snapshot = {
+    description: input.entity.description,
+    folderId: input.entity.folderId,
+    isDeleted: input.entity.isDeleted,
+    isFavorites: input.entity.isFavorites,
+    name: input.entity.name,
+  } as Pick<TEntity, UpdatableEntityField>
   const hasAnyField = (
     ['name', 'description', 'folderId', 'isFavorites', 'isDeleted'] as const
   ).some(field => hasInputField(input, field))
@@ -127,13 +134,24 @@ export function applyEntityUpdateFields<
     return {
       hasAnyField: false,
       pathMayChange: false,
-      previousIsDeleted: input.entity.isDeleted,
+      snapshot,
     }
   }
 
   assertEntityContentAvailable(input.entity)
 
-  const previousIsDeleted = input.entity.isDeleted
+  // Папка проверяется до мутаций: иначе name уже изменился бы в runtime, а
+  // обновление отклонилось.
+  const hasFolderField = hasInputField(input, 'folderId')
+  const nextFolderId = input.input.folderId ?? null
+  if (
+    hasFolderField
+    && nextFolderId !== null
+    && !input.folderExists(nextFolderId)
+  ) {
+    input.onMissingFolder(nextFolderId)
+  }
+
   let pathMayChange = false
 
   if (hasInputField(input, 'name')) {
@@ -145,12 +163,7 @@ export function applyEntityUpdateFields<
     input.entity.description = input.input.description ?? null
   }
 
-  if (hasInputField(input, 'folderId')) {
-    const nextFolderId = input.input.folderId ?? null
-    if (nextFolderId !== null && !input.folderExists(nextFolderId)) {
-      input.onMissingFolder(nextFolderId)
-    }
-
+  if (hasFolderField) {
     input.entity.folderId = nextFolderId
     pathMayChange = true
   }
@@ -173,7 +186,7 @@ export function applyEntityUpdateFields<
   return {
     hasAnyField: true,
     pathMayChange,
-    previousIsDeleted,
+    snapshot,
   }
 }
 

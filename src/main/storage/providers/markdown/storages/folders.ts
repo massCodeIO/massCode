@@ -30,6 +30,7 @@ import {
   getFileAvailability,
   markAppWrittenFileAsLocal,
 } from '../runtime/shared/cloudFiles'
+import { persistOrRestore } from '../runtime/shared/entityStorage'
 import {
   applyFolderParentAndOrder,
   assertFolderMoveTargetValid,
@@ -378,15 +379,23 @@ export function createFoldersStorage(): FoldersStorage {
               && sourceAvailability.exists
               && !sourceAvailability.isCloudPlaceholder
 
+          // name входит в snapshot: allowRenameOnConflict может его сменить.
+          const snapshot = {
+            folderId: snippet.folderId,
+            isDeleted: snippet.isDeleted,
+            name: snippet.name,
+            updatedAt: snippet.updatedAt,
+          }
           snippet.folderId = null
           snippet.isDeleted = 1
           snippet.updatedAt = Date.now()
-          persistSnippet(paths, state, snippet, previousPath, {
-            allowRenameOnConflict: true,
-            directoryEntriesCache,
-            skipWriteIfUnavailable: true,
-            sourceFileVerifiedLocal,
-          })
+          persistOrRestore(snippet, snapshot, () =>
+            persistSnippet(paths, state, snippet, previousPath, {
+              allowRenameOnConflict: true,
+              directoryEntriesCache,
+              skipWriteIfUnavailable: true,
+              sourceFileVerifiedLocal,
+            }))
         }
       })
 

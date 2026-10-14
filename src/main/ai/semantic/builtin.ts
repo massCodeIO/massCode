@@ -258,7 +258,7 @@ export async function downloadBuiltinModel(onProgress?: () => void) {
       return false
     stage = 'runtime'
     const [vector] = await embedLoaded(
-      [formatQuery(BUILTIN_MODEL.id, 'test')],
+      [formatQuery('test')],
       AbortSignal.timeout(TEST_TIMEOUT_MS),
     )
     if (run.cancelled)

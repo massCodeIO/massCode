@@ -10,8 +10,7 @@ const mocks = vi.hoisted(() => ({
   key: undefined as
   | {
     vault: string
-    source: 'provider' | 'builtin'
-    baseURL?: string
+    source: 'builtin'
     model: string
   }
   | undefined,
@@ -37,14 +36,7 @@ vi.mock('../../../store', () => ({
   store: { preferences: { get: () => '/vault' } },
 }))
 vi.mock('../../settings', () => ({
-  getAiSemanticSettings: () => ({
-    source: 'provider',
-    provider: {
-      kind: 'ollama',
-      baseURL: 'http://localhost:11434/v1',
-      model: 'embed',
-    },
-  }),
+  getAiSemanticSettings: () => ({ source: 'builtin' }),
 }))
 vi.mock('../builtin', async importOriginal => ({
   ...(await importOriginal<typeof import('../builtin')>()),
@@ -65,8 +57,7 @@ vi.mock('../../../storage', async () => {
 
 const key = {
   vault: '/vault',
-  source: 'provider' as const,
-  baseURL: 'http://localhost:11434/v1',
+  source: 'builtin' as const,
   model: 'embed',
 }
 function indexFile() {
@@ -154,7 +145,7 @@ describe('index lifecycle', () => {
       = await import('../vectorIndex')
     await syncIndex()
     mocks.key = undefined
-    await removeIndex('builtin')
+    await removeIndex()
     expect(fs.existsSync(indexFile())).toBe(false)
     expect((await semanticStatus()).index).toEqual({
       state: 'off',
@@ -178,7 +169,7 @@ describe('index lifecycle', () => {
       = await import('../vectorIndex')
     await syncIndex()
     mocks.key = undefined
-    await removeIndex('builtin')
+    await removeIndex()
     mocks.key = builtin
     // Опрос раз в секунду попадает на загрузку индекса с диска посреди прогона.
     const polls = [semanticStatus()]
@@ -213,7 +204,7 @@ describe('index lifecycle', () => {
     const run = syncIndex()
     await vi.waitFor(() => expect(release).toBeDefined())
     // Удаление сменит поколение: прогон начнётся заново и перечитает ещё не удалённый файл.
-    const removing = removeIndex('builtin')
+    const removing = removeIndex()
     release()
     await Promise.all([run, removing])
     expect(fs.existsSync(indexFile())).toBe(false)
@@ -221,77 +212,6 @@ describe('index lifecycle', () => {
     mocks.embed.mockClear()
     await restartIndex()
     expect(mocks.embed).toHaveBeenCalled()
-  })
-  it('keeps the index of another source that started while the built-in one was being removed', async () => {
-    mocks.key = builtin
-    const { readIndex, removeIndex, restartIndex, syncIndex } = await import(
-      '../vectorIndex'
-    )
-    await syncIndex()
-    mocks.vault.notes[0] = {
-      ...mocks.vault.notes[0],
-      sig: 'edited',
-      content: 'edited note about rollbacks',
-    }
-    let release!: () => void
-    mocks.embed.mockImplementationOnce(async (_key, texts) => {
-      await new Promise<void>((resolve) => {
-        release = resolve
-      })
-      return texts.map(() => Float32Array.from([1, 0]))
-    })
-    const run = syncIndex()
-    await vi.waitFor(() => expect(release).toBeDefined())
-    const removing = removeIndex('builtin')
-    // Пользователь переключился на провайдера, пока удаление ждёт выхода прогона.
-    mocks.key = { ...key }
-    const restarted = restartIndex()
-    release()
-    await Promise.all([run, restarted, removing])
-    expect((await readIndex())?.fingerprint).toMatchObject({
-      source: 'provider',
-      model: 'embed',
-    })
-    expect((await readIndex())?.complete).toBe(true)
-    expect(
-      JSON.parse(fs.readFileSync(indexFile(), 'utf8')).fingerprint.source,
-    ).toBe('provider')
-  })
-  it('keeps the cache of another source that was built while the file was being removed', async () => {
-    mocks.key = builtin
-    const { readIndex, removeIndex, restartIndex, syncIndex } = await import(
-      '../vectorIndex'
-    )
-    await syncIndex()
-    const fsp = (await import('node:fs/promises')).default
-    const rm = fsp.rm
-    let release!: () => void
-    const rmSpy = vi
-      .spyOn(fsp, 'rm')
-      .mockImplementationOnce(async (...args) => {
-        await new Promise<void>((resolve) => {
-          release = resolve
-        })
-        return rm(...args)
-      })
-    try {
-      const removing = removeIndex('builtin')
-      await vi.waitFor(() => expect(release).toBeDefined())
-      mocks.key = { ...key }
-      await restartIndex()
-      release()
-      await removing
-    }
-    finally {
-      rmSpy.mockRestore()
-    }
-    expect((await readIndex())?.fingerprint).toMatchObject({
-      source: 'provider',
-      model: 'embed',
-    })
-    expect(
-      JSON.parse(fs.readFileSync(indexFile(), 'utf8')).fingerprint.source,
-    ).toBe('provider')
   })
   it('shows the ready index at once after the source is switched off and back on', async () => {
     const { restartIndex, semanticStatus, syncIndex } = await import(
@@ -359,7 +279,7 @@ describe('index lifecycle', () => {
       indexed: 2,
     })
     mocks.key = undefined
-    await removeIndex('builtin')
+    await removeIndex()
     expect((await semanticStatus()).index.state).toBe('off')
     mocks.key = builtin
     const run = restartIndex()
@@ -447,13 +367,13 @@ describe('syncIndex', () => {
     )
     await syncIndex()
     expect(mocks.embed).toHaveBeenCalledTimes(1)
-    expect(embeddedTexts()).toEqual([
-      'One\nfirst note about deployments',
-      'Two\nsecond note about retries',
+    expect(embeddedTexts().toSorted()).toEqual([
+      'title: One | text: first note about deployments',
+      'title: Two | text: second note about retries',
     ])
     const saved = await loadIndex(indexFile())
     expect(saved?.fingerprint).toEqual({ ...key, dims: 2, chunking: 'v4' })
-    expect([...saved!.records.keys()]).toEqual(['note:1', 'note:2'])
+    expect([...saved!.records.keys()].toSorted()).toEqual(['note:1', 'note:2'])
     expect(saved!.complete).toBe(true)
     expect(saved!.records.get('note:1')).toMatchObject({
       // Второй чанк — название заметки: слишком короткое, без вектора.
@@ -556,7 +476,7 @@ describe('syncIndex', () => {
       done: 0,
       total: 3,
     })
-    expect(seen.refs).toEqual(['note:1', 'note:2'])
+    expect(seen.refs?.toSorted()).toEqual(['note:1', 'note:2'])
   })
   it('reports embedding failures and keeps the status readable', async () => {
     const { AiError } = await import('../../errors')
@@ -582,7 +502,7 @@ describe('syncIndex', () => {
     await restartIndex()
     expect(mocks.embed).toHaveBeenCalledTimes(2)
   })
-  it('splits builtin batches by the token budget but not provider batches', async () => {
+  it('splits batches by the token budget', async () => {
     // Три заметки в один чанк примерно по 800 оценённых токенов: в бюджет builtin помещаются только две.
     mocks.vault.notes = [1, 2, 3].map(id => ({
       id,
@@ -593,16 +513,11 @@ describe('syncIndex', () => {
     const { BATCH_LIMITS } = await import('../batching')
     mocks.key = { vault: '/vault', source: 'builtin', model: 'embeddinggemma' }
     await syncIndex()
-    expect(BATCH_LIMITS.builtin.tokens).toBeLessThan(3 * 800)
+    expect(BATCH_LIMITS.tokens).toBeLessThan(3 * 800)
     expect(mocks.embed.mock.calls.map(call => call[1].length)).toEqual([
       2,
       1,
     ])
-    vi.resetModules()
-    mocks.embed.mockClear()
-    mocks.key = { ...key, model: 'embed-2' }
-    await (await import('../vectorIndex')).syncIndex()
-    expect(mocks.embed.mock.calls.map(call => call[1].length)).toEqual([3])
   })
   it('keeps the index that a sync fills when another reader loads in parallel', async () => {
     await (await import('../vectorIndex')).syncIndex()
@@ -731,7 +646,7 @@ describe('semantic progress', () => {
       '../vectorIndex'
     )
     expect(semanticProgress()).toEqual({
-      source: 'provider',
+      source: 'builtin',
       builtin: expect.objectContaining({ state: expect.any(String) }),
       index: { state: 'idle' },
     })
@@ -828,7 +743,8 @@ describe('semantic progress', () => {
     expect([...(await readIndex())!.records.keys()]).toEqual(['note:1'])
     expect(embeddedTexts().join(' ')).toContain('other vault note')
   })
-  it('only refreshes the corpus of a newly selected vault for an embedding server', async () => {
+  it('only refreshes the corpus while the model is not ready', async () => {
+    mocks.key = undefined
     const { warmSemanticIndex } = await import('../vectorIndex')
     const { vaultCorpus } = await import('../corpus')
     warmSemanticIndex()
@@ -1022,11 +938,14 @@ describe('semantic progress', () => {
     expect(semanticProgress().index.state).toBe('error')
     mocks.key = { ...key, vault: '/other' }
     warmSemanticIndex()
-    expect(semanticProgress().index.state).toBe('idle')
-    expect(mocks.send).toHaveBeenLastCalledWith(
+    expect(semanticProgress().index.state).not.toBe('error')
+    expect(mocks.send).toHaveBeenCalledWith(
       'system:ai:semantic-progress',
       expect.objectContaining({ index: { state: 'idle' } }),
     )
-    expect(mocks.embed).toHaveBeenCalledTimes(1)
+    // Прогрев сразу индексирует новый vault встроенной моделью.
+    await syncIndex()
+    expect(semanticProgress().index.state).toBe('idle')
+    expect(mocks.embed).toHaveBeenCalledTimes(2)
   })
 })

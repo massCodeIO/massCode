@@ -1,7 +1,6 @@
 import type { AiResult } from '~/shared/ai'
 import type {
   AiSemanticConfigure,
-  AiSemanticProvider,
   AiSemanticSource,
   AiSemanticStatus,
 } from '~/shared/aiSemantic'
@@ -14,13 +13,7 @@ export function useAiSemanticSearch() {
   const { sonner } = useSonner()
   const status = ref<AiSemanticStatus>()
   const busy = ref(false)
-  const models = ref<string[]>([])
-  const refreshingModels = ref(false)
-  const sources = computed<AiSemanticSource[]>(() =>
-    status.value?.builtin.supported
-      ? ['off', 'builtin', 'provider']
-      : ['off', 'provider'],
-  )
+  const sources: AiSemanticSource[] = ['off', 'builtin']
   const builtinErrorText = computed(() => {
     const error = status.value?.builtin.error
     if (!error)
@@ -82,58 +75,12 @@ export function useAiSemanticSearch() {
       busy.value = false
     }
   }
-  // Автоматическое обновление молчит: сервер может быть ещё не запущен, ошибку покажет только ручной запрос.
-  async function refreshModels(silent = false) {
-    if (refreshingModels.value)
-      return
-    refreshingModels.value = true
-    try {
-      const result = (await ipc.invoke(
-        'system:ai:semantic-models',
-        null,
-      )) as AiResult<string[]>
-      if (result.ok)
-        models.value = result.data
-      else if (!silent)
-        sonner({ type: 'error', message: i18n.t(`ai.errors.${result.error}`) })
-    }
-    catch {
-      if (!silent)
-        sonner({ type: 'error', message: i18n.t('ai.errors.connection') })
-    }
-    finally {
-      refreshingModels.value = false
-    }
-  }
   async function selectSource(value: unknown) {
     if (typeof value !== 'string' || value === status.value?.source)
       return
-    const saved = await request('system:ai:semantic-configure', {
+    await request('system:ai:semantic-configure', {
       source: value as AiSemanticSource,
     })
-    if (saved && value === 'provider')
-      void refreshModels(true)
-  }
-  async function selectProvider(patch: Partial<AiSemanticProvider>) {
-    const current = status.value?.provider
-    if (!current)
-      return
-    const provider = { ...current, ...patch }
-    if (
-      provider.kind === current.kind
-      && provider.baseURL === current.baseURL
-      && provider.model === current.model
-    ) {
-      return
-    }
-    const saved = await request('system:ai:semantic-configure', {
-      source: 'provider',
-      provider,
-    })
-    if (saved && (patch.kind || patch.baseURL)) {
-      models.value = []
-      void refreshModels(true)
-    }
   }
   const downloadModel = () => request('system:ai:semantic-download')
   const cancelDownload = () => request('system:ai:semantic-cancel')
@@ -149,23 +96,15 @@ export function useAiSemanticSearch() {
       || status.value?.builtin.state === 'downloading',
     active => (active ? resume() : pause()),
   )
-  onMounted(async () => {
-    await load()
-    if (status.value?.source === 'provider')
-      void refreshModels(true)
-  })
+  onMounted(load)
 
   return {
     status,
     busy,
     sources,
-    models,
-    refreshingModels,
     indexText,
     builtinErrorText,
     selectSource,
-    selectProvider,
-    refreshModels,
     downloadModel,
     cancelDownload,
     removeModel,

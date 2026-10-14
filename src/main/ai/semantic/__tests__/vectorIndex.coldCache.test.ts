@@ -23,14 +23,13 @@ vi.mock('../../../store', () => ({
   store: { preferences: { get: () => '/vault' } },
 }))
 vi.mock('../../settings', () => ({
-  getAiSemanticSettings: () => ({ source: 'off', provider: {} }),
+  getAiSemanticSettings: () => ({ source: 'off' }),
 }))
 vi.mock('../embeddings', async importOriginal => ({
   ...(await importOriginal<typeof import('../embeddings')>()),
   currentSemanticKey: () => ({
     vault: '/vault',
-    source: 'provider',
-    baseURL: 'http://localhost',
+    source: 'builtin',
     model: 'embed',
   }),
   embedTexts: mocks.embed,

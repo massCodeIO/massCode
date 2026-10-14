@@ -14,6 +14,7 @@ import yaml from 'js-yaml'
 import { log } from '../../../../../utils'
 import { enqueueCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
+import { writeFileAtomicSync } from '../../runtime/shared/atomicWrite'
 import {
   getFileAvailability,
   markAppWrittenFileAsLocal,
@@ -372,7 +373,7 @@ export function writeRequestFile(
   }
 
   fs.ensureDirSync(path.dirname(absolutePath))
-  fs.writeFileSync(absolutePath, next, 'utf8')
+  writeFileAtomicSync(absolutePath, next)
   markAppWrittenFileAsLocal(absolutePath)
 }
 

@@ -684,6 +684,69 @@ describe('notes storage validations', () => {
     })
   })
 
+  it('keeps the note file on disk intact when the write fails midway', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Partial' })
+    storage.updateNoteContent(id, 'old body')
+    const paths = getNotesPaths(tempVaultPath)
+    const note = getNotesRuntimeCache(paths).notes.find(
+      note => note.id === id,
+    )!
+    const absolutePath = path.join(paths.notesRoot, note.filePath)
+    const rawBefore = fs.readFileSync(absolutePath, 'utf8')
+    const entriesBefore = fs.readdirSync(path.dirname(absolutePath)).sort()
+    const writeFileSync = fs.writeFileSync.bind(fs)
+    const write = vi
+      .spyOn(fs, 'writeFileSync')
+      .mockImplementation((file, data, options) => {
+        const text = String(data)
+        writeFileSync(file, text.slice(0, text.length / 2), options)
+        throw new Error('ENOSPC')
+      })
+
+    try {
+      expect(() => storage.updateNoteContent(id, 'new body')).toThrow('ENOSPC')
+    }
+    finally {
+      write.mockRestore()
+    }
+
+    expect(fs.readFileSync(absolutePath, 'utf8')).toBe(rawBefore)
+    expect(fs.readdirSync(path.dirname(absolutePath)).sort()).toEqual(
+      entriesBefore,
+    )
+  })
+
+  it('keeps the note file on disk intact when replacing it fails', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Rename Fails' })
+    storage.updateNoteContent(id, 'old body')
+    const paths = getNotesPaths(tempVaultPath)
+    const note = getNotesRuntimeCache(paths).notes.find(
+      note => note.id === id,
+    )!
+    const absolutePath = path.join(paths.notesRoot, note.filePath)
+    const rawBefore = fs.readFileSync(absolutePath, 'utf8')
+    const entriesBefore = fs.readdirSync(path.dirname(absolutePath)).sort()
+    const rename = vi.spyOn(fs, 'renameSync').mockImplementation(() => {
+      throw new Error('EIO')
+    })
+
+    try {
+      expect(() => storage.updateNoteContent(id, 'new body')).toThrow('EIO')
+    }
+    finally {
+      rename.mockRestore()
+    }
+
+    expect(fs.readFileSync(absolutePath, 'utf8')).toBe(rawBefore)
+    expect(fs.readdirSync(path.dirname(absolutePath)).sort()).toEqual(
+      entriesBefore,
+    )
+    resetNotesRuntimeCache()
+    expect(storage.getNoteById(id)).toMatchObject({ content: 'old body' })
+  })
+
   it('createNote with bad folderId throws FOLDER_NOT_FOUND', () => {
     const storage = createNotesNotesStorage()
     expect(() => storage.createNote({ name: 'Test', folderId: 99999 })).toThrow(

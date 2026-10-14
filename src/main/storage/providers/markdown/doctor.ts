@@ -38,6 +38,7 @@ import {
   TRASH_DIR_NAME,
   writeSpaceStateImmediate,
 } from './runtime'
+import { writeFileAtomicSync } from './runtime/shared/atomicWrite'
 import {
   getFileAvailability,
   primeDatalessChecks,
@@ -753,11 +754,7 @@ function applyDuplicateIdDecisions(
       }
 
       const source = fs.readFileSync(absolutePath, 'utf8')
-      fs.writeFileSync(
-        absolutePath,
-        replaceFrontmatterId(source, nextId()),
-        'utf8',
-      )
+      writeFileAtomicSync(absolutePath, replaceFrontmatterId(source, nextId()))
       appliedItems.push({
         ...item,
         status: 'applied',

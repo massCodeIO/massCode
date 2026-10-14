@@ -36,6 +36,7 @@ import {
   normalizeDirectoryPath,
 } from './paths'
 import { rememberAppFileChange } from './shared/appChanges'
+import { writeFileAtomicSync } from './shared/atomicWrite'
 import {
   getFileAvailability,
   markAppWrittenFileAsLocal,
@@ -602,7 +603,7 @@ export function writeSnippetToFile(
     }
   }
 
-  fs.writeFileSync(snippetPath, nextContent, 'utf8')
+  writeFileAtomicSync(snippetPath, nextContent)
   rememberAppFileChange(snippetPath)
   markAppWrittenFileAsLocal(snippetPath)
 }

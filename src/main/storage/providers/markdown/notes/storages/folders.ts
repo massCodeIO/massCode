@@ -25,6 +25,7 @@ import {
   getFolderPathsByDepth,
   getFoldersSortedByCreatedAt,
   getFoldersTreeSorted,
+  listUnmanagedFolderFiles,
   moveFolderDirectoryOnDisk,
   removeFolderPathsFromDisk,
   replaceSubtreePathPrefix,
@@ -95,6 +96,31 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
     getFoldersTree() {
       const { state } = getCache()
       return getFoldersTreeSorted(state.folders)
+    },
+
+    getUnmanagedFiles(id: number) {
+      const paths = resolvePaths()
+
+      // До сверки список заметок provisional и пуст: файлы настоящих
+      // заметок выглядели бы посторонними.
+      if (!isNotesVaultDiskReady(paths)) {
+        throwStorageError(
+          'VAULT_HYDRATING',
+          'Vault is still syncing, folder contents are not known yet',
+        )
+      }
+
+      const { state, notes } = getNotesRuntimeCache(paths)
+      const folderPath = buildNotesFolderPathMap(state).get(id)
+      if (!folderPath) {
+        return []
+      }
+
+      return listUnmanagedFolderFiles(
+        paths.notesRoot,
+        folderPath,
+        new Set(notes.map(note => note.filePath)),
+      )
     },
 
     createFolder(input: NoteFolderCreateInput) {

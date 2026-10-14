@@ -19,6 +19,7 @@ const tokenPreview = ref<string | null>(
 )
 const generatedToken = ref('')
 const mcpEnabled = ref(store.preferences.get('api.mcp.enabled') === true)
+const mcpAllowEdits = ref(store.preferences.get('api.mcp.allowEdits') === true)
 const mcpEndpoint = computed(() => `http://127.0.0.1:${apiPort.value}/mcp`)
 const { sonner } = useSonner()
 const { confirm } = useDialog()
@@ -38,6 +39,10 @@ watch(integrationsEnabled, (value) => {
 
 watch(mcpEnabled, (value) => {
   store.preferences.set('api.mcp.enabled', value)
+})
+
+watch(mcpAllowEdits, (value) => {
+  store.preferences.set('api.mcp.allowEdits', value)
 })
 
 async function copyMcpEndpoint() {
@@ -192,6 +197,15 @@ async function copyGeneratedToken() {
         />
         <template #description>
           {{ i18n.t("preferences:api.mcp.enabled.description") }}
+        </template>
+      </UiMenuFormItem>
+      <UiMenuFormItem :label="i18n.t('preferences:api.mcp.allowEdits.label')">
+        <Switch
+          :checked="mcpAllowEdits"
+          @update:checked="mcpAllowEdits = $event"
+        />
+        <template #description>
+          {{ i18n.t("preferences:api.mcp.allowEdits.description") }}
         </template>
       </UiMenuFormItem>
       <UiMenuFormItem :label="i18n.t('preferences:api.mcp.endpoint.label')">

@@ -72,6 +72,12 @@ export interface FoldersStorage {
   deleteFolder: (id: number) => { deleted: boolean }
   getFolders: () => FolderRecord[]
   getFoldersTree: () => FolderTreeRecord[]
+  /**
+   * Файлы в каталоге папки, которыми storage не управляет и которые удаление
+   * папки уничтожило бы. Неизвестная папка даёт []. До завершения сверки
+   * vault бросает VAULT_HYDRATING.
+   */
+  getUnmanagedFiles: (id: number) => string[]
   updateFolder: (id: number, input: FolderUpdateInput) => FolderUpdateResult
 }
 
@@ -343,6 +349,12 @@ export interface NotesFoldersStorage {
   deleteFolder: (id: number) => { deleted: boolean }
   getFolders: () => NotesFolderRecord[]
   getFoldersTree: () => NotesFolderTreeRecord[]
+  /**
+   * Файлы в каталоге папки, которыми storage не управляет и которые удаление
+   * папки уничтожило бы. Неизвестная папка даёт []. До завершения сверки
+   * vault бросает VAULT_HYDRATING.
+   */
+  getUnmanagedFiles: (id: number) => string[]
   updateFolder: (
     id: number,
     input: NoteFolderUpdateInput,

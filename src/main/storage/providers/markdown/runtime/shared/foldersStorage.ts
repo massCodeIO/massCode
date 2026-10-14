@@ -1,6 +1,7 @@
 import path from 'node:path'
 import fs from 'fs-extra'
 import { enqueueCloudDownload } from '../../cloudDownloads'
+import { LEGACY_FOLDER_META_FILE_NAME, META_FILE_NAME } from '../constants'
 import { assertVaultNotHydrating, throwStorageError } from '../validation'
 import { getFileAvailability } from './cloudFiles'
 import { throwCloudContentUnavailable } from './cloudGuards'
@@ -179,6 +180,61 @@ export function assertNoUnknownDomainFiles(
   }
 }
 
+// Метаданные папки и служебные файлы ОС: их потеря вместе с каталогом
+// безопасна, остальное при удалении папки пропало бы безвозвратно.
+const DISPOSABLE_FOLDER_FILE_NAMES = new Set([
+  META_FILE_NAME,
+  LEGACY_FOLDER_META_FILE_NAME,
+  '.DS_Store',
+  'Thumbs.db',
+  'desktop.ini',
+])
+
+/**
+ * Файлы в каталоге папки (рекурсивно), которые удаление папки уничтожило бы
+ * без следа: не известные записи и не служебные файлы. Пути относительно rootPath.
+ */
+export function listUnmanagedFolderFiles(
+  rootPath: string,
+  folderPath: string,
+  knownRelativeFilePaths: ReadonlySet<string>,
+): string[] {
+  const files: string[] = []
+  const queue = [path.join(rootPath, folderPath)]
+
+  while (queue.length > 0) {
+    const currentPath = queue.pop()!
+
+    let entries
+    try {
+      entries = fs.readdirSync(currentPath, { withFileTypes: true })
+    }
+    catch (error) {
+      // Отсутствующий каталог терять нечего; любая другая ошибка означает,
+      // что содержимое неизвестно, и пусть удаление не продолжается.
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        continue
+      }
+      throw error
+    }
+
+    for (const entry of entries) {
+      const absolutePath = path.join(currentPath, entry.name)
+      if (entry.isDirectory()) {
+        queue.push(absolutePath)
+      }
+      else if (!DISPOSABLE_FOLDER_FILE_NAMES.has(entry.name)) {
+        const relativePath = toPosixPath(path.relative(rootPath, absolutePath))
+        if (!knownRelativeFilePaths.has(relativePath)) {
+          files.push(relativePath)
+        }
+      }
+    }
+  }
+
+  return files.sort()
+}
+
 export function removeFolderPathsFromDisk(
   rootPath: string,
   folderPaths: string[],
@@ -217,8 +273,11 @@ export function assertFolderMoveTargetValid<TFolder extends FolderLike>(
     throwStorageError('FOLDER_NOT_FOUND', 'Parent folder not found')
   }
 
-  const descendants = collectDescendantIds(folders, folderId)
-  if (descendants.has(targetParentId)) {
+  // Папка-родитель самой себя выпала бы из дерева, а путь на диске зациклился бы.
+  if (
+    targetParentId === folderId
+    || collectDescendantIds(folders, folderId).has(targetParentId)
+  ) {
     throwStorageError(
       'INVALID_NAME',
       'Folder cannot be moved into its own subtree',

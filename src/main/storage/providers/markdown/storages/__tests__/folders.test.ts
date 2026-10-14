@@ -14,8 +14,20 @@ import {
 import { ensureStateFile } from '../../runtime/state'
 import { resetRuntimeCache } from '../../runtime/sync'
 import { createFoldersStorage } from '../folders'
+import { createSnippetsStorage } from '../snippets'
 
 let tempVaultPath = ''
+const vaultSync = vi.hoisted(() => ({ ready: true }))
+
+vi.mock('../../runtime/sync', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../runtime/sync')>()
+  return {
+    ...actual,
+    isCodeVaultDiskReady: (
+      paths: Parameters<typeof actual.isCodeVaultDiskReady>[0],
+    ) => vaultSync.ready && actual.isCodeVaultDiskReady(paths),
+  }
+})
 
 function makeSparsePlaceholder(absolutePath: string, size = 4096): void {
   fs.removeSync(absolutePath)
@@ -121,6 +133,7 @@ describe('code folders storage validations', () => {
   })
 
   afterEach(() => {
+    vaultSync.ready = true
     setDatalessProbeForTests(null)
     resetCloudFileExemptions()
     resetRuntimeCache()
@@ -166,6 +179,37 @@ describe('code folders storage validations', () => {
     expect(() => storage.updateFolder(id, { name: 'Target' })).toThrow(
       'NAME_CONFLICT',
     )
+  })
+
+  it('lists files in a folder directory that storage does not manage', () => {
+    const storage = createFoldersStorage()
+    const { id } = storage.createFolder({ name: 'Box' })
+    createSnippetsStorage().createSnippet({ name: 'Known', folderId: id })
+    const folderPath = path.join(getPaths(tempVaultPath).vaultPath, 'Box')
+    fs.ensureDirSync(path.join(folderPath, 'extra'))
+    fs.writeFileSync(path.join(folderPath, 'extra', 'photo.png'), '')
+    fs.writeFileSync(path.join(folderPath, 'notes.txt'), '')
+    for (const name of ['.DS_Store', 'Thumbs.db', 'desktop.ini']) {
+      fs.writeFileSync(path.join(folderPath, name), '')
+    }
+
+    expect(fs.readdirSync(folderPath)).toContain('.meta.yaml')
+    expect(storage.getUnmanagedFiles(id)).toEqual([
+      'Box/extra/photo.png',
+      'Box/notes.txt',
+    ])
+    expect(storage.getUnmanagedFiles(999)).toEqual([])
+
+    fs.removeSync(folderPath)
+    expect(storage.getUnmanagedFiles(id)).toEqual([])
+  })
+
+  it('refuses to list folder files while the vault is syncing', () => {
+    const storage = createFoldersStorage()
+    const { id } = storage.createFolder({ name: 'Box' })
+    vaultSync.ready = false
+
+    expect(() => storage.getUnmanagedFiles(id)).toThrow('VAULT_HYDRATING')
   })
 
   it('rejects reserved flat space names at root level', () => {

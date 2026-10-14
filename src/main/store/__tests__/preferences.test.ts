@@ -125,6 +125,20 @@ describe('preferences store sanitization', () => {
     persistedStateByName.preferences = { api: { port: 4321 } }
     const { default: preferences } = await import('../module/preferences')
     expect(preferences.get('api.mcp.enabled')).toBe(false)
+    expect(preferences.get('api.mcp.allowEdits')).toBe(false)
+  })
+
+  it.each([
+    [{ enabled: true }, true],
+    [{ enabled: false }, false],
+    [{ enabled: true, allowEdits: false }, false],
+    [{ enabled: false, allowEdits: true }, true],
+    [{ enabled: true, allowEdits: 'true' }, true],
+    [{ enabled: false, allowEdits: 'true' }, false],
+  ])('migrates MCP edit permission from %o', async (mcp, allowEdits) => {
+    persistedStateByName.preferences = { api: { mcp } }
+    const { default: preferences } = await import('../module/preferences')
+    expect(preferences.get('api.mcp.allowEdits')).toBe(allowEdits)
   })
 
   it.each(['locale', 'dd.MM.yyyy', 'MM/dd/yyyy', 'dd/MM/yyyy', 'yyyy-MM-dd'])(

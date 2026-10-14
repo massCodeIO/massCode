@@ -6,6 +6,7 @@ import { createMcpRoute } from './route'
 
 const context = vi.hoisted(() => ({
   enabled: true,
+  allowEdits: true,
   send: vi.fn(),
   snippets: {
     getSnippets: vi.fn(),
@@ -14,7 +15,17 @@ const context = vi.hoisted(() => ({
     createSnippet: vi.fn(),
     createSnippetContent: vi.fn(),
   },
-  requests: { getRequests: vi.fn(() => []) },
+  requests: {
+    getRequests: vi.fn(() => []),
+    getRequestById: vi.fn(),
+    updateRequest: vi.fn(),
+  },
+  folders: {
+    getFolders: vi.fn(),
+    createFolder: vi.fn(),
+    updateFolder: vi.fn(),
+    deleteFolder: vi.fn(),
+  },
   notes: {
     getNotes: vi.fn(),
     getNotesAsync: vi.fn(),
@@ -33,7 +44,10 @@ vi.mock('electron', () => ({
 vi.mock('../../store', () => ({
   store: {
     preferences: {
-      get: (key: string) => key === 'api.mcp.enabled' && context.enabled,
+      get: (key: string) =>
+        key === 'api.mcp.enabled'
+          ? context.enabled
+          : key === 'api.mcp.allowEdits' && context.allowEdits,
     },
   },
 }))
@@ -42,8 +56,8 @@ vi.mock('../integrations/auth', () => ({
     header === 'Bearer integration-token',
 }))
 vi.mock('../../storage', () => ({
-  useStorage: () => ({ snippets: context.snippets }),
-  useNotesStorage: () => ({ notes: context.notes }),
+  useStorage: () => ({ snippets: context.snippets, folders: context.folders }),
+  useNotesStorage: () => ({ notes: context.notes, folders: context.folders }),
   useHttpStorage: () => ({ requests: context.requests }),
 }))
 
@@ -100,6 +114,7 @@ const base = {
 beforeEach(() => {
   vi.resetAllMocks()
   context.enabled = true
+  context.allowEdits = true
   context.snippets.getSnippetsAsync.mockResolvedValue([
     {
       ...base,
@@ -147,8 +162,19 @@ describe('mCP protocol and tools', () => {
     ).toEqual([
       'search',
       'get_item',
+      'list_structure',
       'create_snippet',
       'create_note',
+      'update_snippet',
+      'update_note',
+      'trash_item',
+      'get_note_links',
+      'list_items',
+      'create_folder',
+      'update_folder',
+      'delete_folder',
+      'move_items',
+      'restore_item',
       'update_http_request',
       'preview_http_request',
       'list_http_history',
@@ -228,9 +254,9 @@ describe('mCP protocol and tools', () => {
 
   it('creates in Inbox with exact whitespace and broadcasts changes', async () => {
     const content = '  # title\n\n body  \n'
-    expect((await call('create_note', { name: 'Note', content })).data).toEqual(
-      { type: 'note', id: 12 },
-    )
+    expect(
+      (await call('create_note', { name: 'Note', content })).data,
+    ).toMatchObject({ type: 'note', id: 12, folderId: null, createdTags: [] })
     expect(context.notes.createNote).toHaveBeenCalledWith({
       name: 'Note',
       folderId: null,
@@ -238,7 +264,12 @@ describe('mCP protocol and tools', () => {
     expect(context.notes.updateNoteContent).toHaveBeenCalledWith(12, content)
     expect(
       (await call('create_snippet', { name: 'Code', content })).data,
-    ).toEqual({ type: 'snippet', id: 11 })
+    ).toMatchObject({
+      type: 'snippet',
+      id: 11,
+      folderId: null,
+      createdTags: [],
+    })
     expect(context.snippets.createSnippetContent).toHaveBeenCalledWith(11, {
       label: 'Code',
       language: 'plain_text',
@@ -324,6 +355,105 @@ describe('mCP protocol and tools', () => {
     expect(JSON.stringify(unavailable)).not.toContain('/private')
   })
 
+  it('explains invalid names with a machine-readable reason', async () => {
+    expect(
+      (await call('create_note', { name: 'a:b', content: '' })).data,
+    ).toMatchObject({
+      code: 'INVALID_NAME',
+      reason: 'invalidChars',
+      invalidChars: [':'],
+    })
+    expect(
+      (await call('create_snippet', { name: '.hidden', content: '' })).data,
+    ).toMatchObject({ code: 'INVALID_NAME', reason: 'leadingDot' })
+    expect(context.notes.createNote).not.toHaveBeenCalled()
+    expect(context.snippets.createSnippet).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['update_note', { id: 1, expectedRevision: 'r', patch: { content: 'x' } }],
+    [
+      'update_snippet',
+      { id: 1, expectedRevision: 'r', patch: { fragment: { content: 'x' } } },
+    ],
+    [
+      'update_http_request',
+      { id: 1, expectedRevision: 'r', patch: { url: 'x' } },
+    ],
+    ['trash_item', { type: 'note', id: 1, expectedRevision: 'r' }],
+    ['update_folder', { space: 'notes', id: 1, name: 'x' }],
+    ['delete_folder', { space: 'code', id: 1 }],
+    ['move_items', { space: 'notes', ids: [1], folderId: null }],
+    ['restore_item', { type: 'snippet', id: 1 }],
+  ])(
+    'rejects %s when editing is disabled without touching storage',
+    async (name, args) => {
+      context.allowEdits = false
+      const response = await call(name, args)
+      expect(response.isError).toBe(true)
+      expect(response.data.code).toBe('EDITING_DISABLED')
+      expect(context.notes.getNoteById).not.toHaveBeenCalled()
+      expect(context.snippets.getSnippetById).not.toHaveBeenCalled()
+      expect(context.requests.getRequests).not.toHaveBeenCalled()
+      expect(context.requests.getRequestById).not.toHaveBeenCalled()
+      expect(context.requests.updateRequest).not.toHaveBeenCalled()
+      for (const method of Object.values(context.folders)) {
+        expect(method).not.toHaveBeenCalled()
+      }
+      expect(context.send).not.toHaveBeenCalled()
+    },
+  )
+
+  it('creates folders while editing is disabled', async () => {
+    context.allowEdits = false
+    context.folders.createFolder.mockReturnValue({ id: 5 })
+    context.folders.getFolders.mockReturnValue([
+      { id: 5, name: 'New', parentId: null },
+    ])
+    const response = await call('create_folder', {
+      space: 'notes',
+      name: 'New',
+    })
+    expect(response.isError).toBeFalsy()
+    expect(response.data).toEqual({
+      space: 'notes',
+      id: 5,
+      name: 'New',
+      parentId: null,
+    })
+    expect(context.folders.createFolder).toHaveBeenCalledWith({
+      name: 'New',
+      parentId: null,
+    })
+    expect(context.send).toHaveBeenCalledWith('system:storage-synced')
+  })
+
+  it('notifies the UI after a successful update but not after CONFLICT', async () => {
+    const { contentRevision } = (
+      await call('get_item', { type: 'note', id: 1 })
+    ).data
+    expect(
+      (
+        await call('update_note', {
+          id: 1,
+          expectedRevision: 'stale',
+          patch: { content: 'x' },
+        })
+      ).data.code,
+    ).toBe('CONFLICT')
+    expect(context.notes.updateNoteContent).not.toHaveBeenCalled()
+    expect(context.send).not.toHaveBeenCalled()
+
+    const updated = await call('update_note', {
+      id: 1,
+      expectedRevision: contentRevision,
+      patch: { content: 'x' },
+    })
+    expect(updated.isError).toBeUndefined()
+    expect(context.notes.updateNoteContent).toHaveBeenCalledWith(1, 'x')
+    expect(context.send).toHaveBeenCalledWith('system:storage-synced')
+  })
+
   it('counts UTF-8 content across all snippet fragments', async () => {
     const contents = [
       {
@@ -371,7 +501,11 @@ describe('mCP protocol and tools', () => {
   it('applies the separate result JSON boundary including metadata', async () => {
     const item = { ...base, content: '', description: '' }
     const overhead = Buffer.byteLength(
-      JSON.stringify({ type: 'note', ...item }),
+      JSON.stringify({
+        type: 'note',
+        ...item,
+        contentRevision: 'x'.repeat(64),
+      }),
       'utf8',
     )
     item.description = 'x'.repeat(2 * 1024 * 1024 - overhead)

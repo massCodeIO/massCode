@@ -73,7 +73,7 @@ const PREFERENCES_DEFAULTS: PreferencesStore = {
   },
   api: {
     port: 4321,
-    mcp: { enabled: false },
+    mcp: { enabled: false, allowEdits: false },
     integrations: API_INTEGRATIONS_DEFAULTS,
   },
   storage: {
@@ -112,6 +112,19 @@ function sanitizeApiIntegrationsSettings(
       'tokenPreview',
       API_INTEGRATIONS_DEFAULTS.tokenPreview,
     ),
+  }
+}
+
+function sanitizeMcpSettings(value: unknown): PreferencesStore['api']['mcp'] {
+  const source = asRecord(value)
+  const enabled = source.enabled === true
+
+  return {
+    enabled,
+    // До появления настройки включённый MCP уже мог править HTTP-запросы,
+    // поэтому без сохранённого значения сохраняем прежнее поведение.
+    allowEdits:
+      typeof source.allowEdits === 'boolean' ? source.allowEdits : enabled,
   }
 }
 
@@ -351,7 +364,7 @@ function sanitizePreferences(value: unknown): PreferencesStore {
         'port',
         readNumber(source, 'apiPort', PREFERENCES_DEFAULTS.api.port),
       ),
-      mcp: { enabled: asRecord(apiSource.mcp).enabled === true },
+      mcp: sanitizeMcpSettings(apiSource.mcp),
       integrations: sanitizeApiIntegrationsSettings(apiSource.integrations),
     },
     storage: {

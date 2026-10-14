@@ -19,6 +19,7 @@ import {
   safely,
   storageFailure,
 } from './results'
+import { invalidNameFailure } from './vaultItems'
 
 export { getHttpItem, httpMetadata, searchHttpItems } from './httpItems'
 
@@ -91,7 +92,7 @@ export function registerHttpTools(server: McpServer) {
     'list_http_requests',
     {
       description:
-        'List saved HTTP request metadata without sending requests. Omit folderId for all HTTP requests; pass null for Inbox, or a collection/folder ID for its direct requests only (not nested folders). Excludes trash and WebSocket requests. Sorted by updatedAt descending, then ID ascending. Supports offset and limit (default 20, maximum 100); returns items, hasMore and nextOffset. Use get_item for full content.',
+        'List saved HTTP request metadata without sending requests. Omit folderId for all HTTP requests; pass null for Inbox, or a collection/folder ID for its direct requests only (not nested folders). Excludes WebSocket requests. status selects active requests (default) or Trash; use status trash to find request IDs for restore_item. Sorted by updatedAt descending, then ID ascending. Supports offset and limit (default 20, maximum 100); returns items, hasMore and nextOffset. Use get_item for full content.',
       inputSchema: {
         folderId: z
           .number()
@@ -100,6 +101,7 @@ export function registerHttpTools(server: McpServer) {
           .max(Number.MAX_SAFE_INTEGER)
           .nullable()
           .optional(),
+        status: z.enum(['active', 'trash']).default('active'),
         offset: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),
         limit: z.number().int().min(1).max(100).default(20),
       },
@@ -110,15 +112,22 @@ export function registerHttpTools(server: McpServer) {
         openWorldHint: false,
       },
     },
-    ({ folderId, offset, limit }) =>
+    ({ folderId, status, offset, limit }) =>
       safely(() => {
+        const isDeleted = status === 'trash' ? 1 : 0
         const items = useHttpStorage()
           .requests
           .getRequests({
-            isDeleted: 0,
-            ...(folderId === null ? { isInbox: 1 } : { folderId }),
+            isDeleted,
+            ...(folderId != null && { folderId }),
           })
-          .filter(item => !item.isDeleted && item.protocol !== 'websocket')
+          // Inbox фильтруем здесь: isInbox в storage отбрасывает корзину.
+          .filter(
+            item =>
+              item.isDeleted === isDeleted
+              && item.protocol !== 'websocket'
+              && (folderId !== null || item.folderId === null),
+          )
           .sort((a, b) => b.updatedAt - a.updatedAt || a.id - b.id)
         const page = items.slice(offset, offset + limit).map(httpMetadata)
         const hasMore = offset + page.length < items.length
@@ -144,8 +153,9 @@ export function registerHttpTools(server: McpServer) {
       },
     },
     ({ name }) => {
-      if (getEntryNameValidationIssue(name))
-        return failure('INVALID_NAME', 'The item name is invalid.')
+      const issue = getEntryNameValidationIssue(name)
+      if (issue)
+        return invalidNameFailure(issue)
       try {
         const { id } = useHttpStorage().folders.createFolder({
           name,
@@ -174,8 +184,9 @@ export function registerHttpTools(server: McpServer) {
       },
     },
     (input) => {
-      if (getEntryNameValidationIssue(input.name))
-        return failure('INVALID_NAME', 'The item name is invalid.')
+      const issue = getEntryNameValidationIssue(input.name)
+      if (issue)
+        return invalidNameFailure(issue)
       if (
         Buffer.byteLength(input.body ?? '', 'utf8')
         + Buffer.byteLength(input.description, 'utf8')

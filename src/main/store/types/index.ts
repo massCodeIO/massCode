@@ -281,6 +281,7 @@ export interface PreferencesStore {
     port: number
     mcp: {
       enabled: boolean
+      allowEdits: boolean
     }
     integrations: {
       enabled: boolean

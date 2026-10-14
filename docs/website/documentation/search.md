@@ -120,7 +120,7 @@ This searches Notes for `migration` inside the Development folder with the backe
 
 ## Search by meaning
 
-Search by words finds records that contain what you typed. With semantic search turned on, the palette also finds records related by meaning, for example a note about invoices when you search for `customer billing`. Results by words appear as you type. After a short pause, results by meaning are added below them; results already shown by words keep their order. While this happens, the footer shows **Searching by meaning...**.
+Search by words finds records that contain what you typed. With semantic search turned on, the palette also finds records related by meaning, even when the query is in another language. For example, `дорожная карта` (Russian for "roadmap") finds the **Orbit roadmap** note. Results by words appear as you type. After a short pause, results by meaning are added below them; results already shown by words keep their order. While this happens, the footer shows **Searching by meaning...**.
 
 <img class="screenshot" :src="withBase('/search-by-meaning.png')" alt="Command Palette finding the Orbit roadmap note by meaning for a query in another language">
 

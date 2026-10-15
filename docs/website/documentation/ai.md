@@ -7,7 +7,7 @@ description: "Ask the AI assistant to edit code, organize notes, run HTTP workfl
 
 Use your own AI provider or a local model to edit snippets, organize notes and work with HTTP requests. Edits apply directly unless you ask for a preview.
 
-<img :src="withBase('/http-ai.png')" alt="AI assistant reviewing an HTTP product request and suggesting additional response checks">
+<img class="screenshot" :src="withBase('/http-ai.png')" alt="AI assistant reviewing an HTTP product request and suggesting additional response checks">
 
 ## Connect a Provider
 
@@ -79,11 +79,11 @@ Ordinary edit requests apply directly. To review first, say “Show me the chang
 
 For example, ask the assistant to improve a retry helper and propose the changes for review:
 
-<img :src="withBase('/snippets-ai-2.png')" alt="AI assistant proposing improvements to a Python retry snippet with a Review changes button">
+<img class="screenshot" :src="withBase('/snippets-ai-2.png')" alt="AI assistant proposing improvements to a Python retry snippet with a Review changes button">
 
 Open **Review changes** to compare **Before** and **After**, then choose **Apply changes** or **Reject changes**.
 
-<img :src="withBase('/snippets-ai-3.png')" alt="Review changes dialog comparing the original retry snippet with the proposed improvements">
+<img class="screenshot" :src="withBase('/snippets-ai-3.png')" alt="Review changes dialog comparing the original retry snippet with the proposed improvements">
 
 If the source changed since the preview was prepared, ask for a fresh preview. Code or Markdown shown only in an answer does not change your records.
 

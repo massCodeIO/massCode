@@ -18,11 +18,11 @@ A collection is a top-level HTTP folder. Nested folders group related operations
 
 The Overview dashboard shows request and folder counts, a breakdown by method, recent request activity, and the last available run result. Click a recent request entry to inspect its saved snapshot. Use the description to record setup requirements, example values, and the intended run order.
 
-<img :src="withBase('/http-collection.png')" alt="Northstar Checkout collection overview with three passing runner steps and recent requests">
+<img class="screenshot" :src="withBase('/http-collection.png')" alt="Northstar Checkout collection overview with three passing runner steps and recent requests">
 
 Nested folders have the same shared-configuration editor. Save parent changes before sending child requests or preparing a runner snapshot: children use saved parent configuration. Request and collection names are saved separately from content drafts.
 
-<img :src="withBase('/http-collection-headers.png')" alt="Shared Northstar collection headers inherited by its requests">
+<img class="screenshot" :src="withBase('/http-collection-headers.png')" alt="Shared Northstar collection headers inherited by its requests">
 
 ## Inheritance
 

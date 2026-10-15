@@ -20,7 +20,7 @@ The initial order is oldest-created requests first within each folder, followed 
 
 The runner snapshots saved requests and the active environment when you open it. Later edits do not change that prepared run. Choose **Prepare new run** after completion to load the latest saved data.
 
-<img :src="withBase('/http-runner.png')" alt="Checkout runner with all three requests passing">
+<img class="screenshot" :src="withBase('/http-runner.png')" alt="Checkout runner with all three requests passing">
 
 For an API workflow, put `Login` first, extract its token, then run `Create item` and extract its ID before `Read item`. To run a smaller workflow, organize its requests into a dedicated folder.
 

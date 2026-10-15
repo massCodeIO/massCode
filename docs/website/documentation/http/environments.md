@@ -15,7 +15,7 @@ Regular environment variables are stored as plain text in your Markdown Vault, s
 
 Click the sliders icon beside **Environments** (the **Manage** tooltip), create an environment named `Practice`, and add `baseUrl` with the value `https://postman-echo.com`. Select Practice as active, then use <code v-pre>{{baseUrl}}/get</code> in a request. Regular environment edits are autosaved; you do not need to save a request to apply them. Create another environment when the same requests need a different server or credentials.
 
-<img :src="withBase('/http-envs.png')" alt="Environment manager showing reusable variables and a masked secret">
+<img class="screenshot" :src="withBase('/http-envs.png')" alt="Environment manager showing reusable variables and a masked secret">
 
 ## Variables
 

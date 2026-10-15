@@ -19,7 +19,7 @@ Use **Auth** on a request, collection, or nested folder to choose how it authent
 
 A top-level collection has no parent to inherit from. A nested folder or request can inherit, choose its own auth, or select None. Auth is one effective method, not a stack of the collection's and request's methods.
 
-<img :src="withBase('/http-auth-inheritance.png')" alt="Request Auth tab using Inherit from parent for the Northstar API">
+<img class="screenshot" :src="withBase('/http-auth-inheritance.png')" alt="Request Auth tab using Inherit from parent for the Northstar API">
 
 ## Reuse a secret token
 

@@ -60,7 +60,7 @@ Scripts run in separate contexts. Transfer data between phases with variables, n
 
 The supported logging methods are `console.log`, `console.info`, `console.warn`, `console.error`, and `console.clear`. They write to [Console](./debugging#console); an error log alone does not fail a test. Log non-sensitive identifiers and checkpoints, not credentials.
 
-<img :src="withBase('/http-scripts.png')" alt="Create order JavaScript script with two passing tests">
+<img class="screenshot" :src="withBase('/http-scripts.png')" alt="Create order JavaScript script with two passing tests">
 
 ## Execution and failure
 

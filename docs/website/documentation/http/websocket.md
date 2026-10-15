@@ -16,7 +16,7 @@ Choose **WebSocket** in the method/type selector beside the URL. Existing saved 
 
 For a server you control, use its documented URL and authentication; for example, `wss://your-api.example/events` is a placeholder, not a runnable service. A browser application's Socket.IO endpoint is not necessarily a plain WebSocket endpoint.
 
-<img :src="withBase('/http-websocket.png')" alt="Connected WebSocket request with its message log">
+<img class="screenshot" :src="withBase('/http-websocket.png')" alt="Connected WebSocket request with its message log">
 
 ## Variables and Authentication
 

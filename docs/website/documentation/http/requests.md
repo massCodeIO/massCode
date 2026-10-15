@@ -73,7 +73,7 @@ Select the payload format in **Body**. The editor keeps payload content in the r
 | **Binary** | Choose a local file to send as the entire payload, for APIs that expect raw bytes. |
 | **GraphQL** | Enter a query/mutation, JSON variables, and operation selection. See [GraphQL](./graphql). |
 
-<img :src="withBase('/http-json-body.png')" alt="JSON order payload with HTTP 201 response">
+<img class="screenshot" :src="withBase('/http-json-body.png')" alt="JSON order payload with HTTP 201 response">
 
 File selections reference files on this device; saving or syncing the request does not bundle the uploaded file into the vault. Reselect a file if its path is unavailable after moving machines or importing a collection. Generating a preview does not read local file contents.
 

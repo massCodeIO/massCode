@@ -31,7 +31,7 @@ Incomplete variables can be saved and reopened without losing their text. Duplic
 
 The query requires a `user(id: ID!)` field. Adjust the fields and arguments to match your API’s schema.
 
-<img :src="withBase('/http-graphql.png')" alt="GraphQL query, variables, and response in the HTTP editor">
+<img class="screenshot" :src="withBase('/http-graphql.png')" alt="GraphQL query, variables, and response in the HTTP editor">
 
 ## Variables, tests and scripts
 

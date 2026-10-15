@@ -17,7 +17,7 @@ If the lower panel is hidden, use the bottom-panel toggle in the top-right edito
 4. Use the copy action for the body or headers you need.
 5. Open **Test Results** for assertion and JavaScript test results. Extraction results appear separately and do not expose extracted values.
 
-<img :src="withBase('/http-params-response.png')" alt="Enabled query parameters and the JSON response for a product filter">
+<img class="screenshot" :src="withBase('/http-params-response.png')" alt="Enabled query parameters and the JSON response for a product filter">
 
 For request and redirect details, use [Console](./debugging#console).
 
@@ -37,7 +37,7 @@ GraphQL can return partial `data` together with `errors` under HTTP `200`. Check
 
 Open **History** in the request's lower panel to inspect earlier sends for that request. The collection **Overview** also shows its five most recent request entries. Select an entry in either surface to open its saved request and response snapshot, including headers, body, status, timing, and any saved error.
 
-<img :src="withBase('/http-history.png')" alt="Saved request and response snapshot with redacted credentials">
+<img class="screenshot" :src="withBase('/http-history.png')" alt="Saved request and response snapshot with redacted credentials">
 
 History is for inspection. Selecting an entry does not restore its request into the editor, change the current draft, or resend it. To reproduce a past request, edit the current request deliberately and send it again.
 

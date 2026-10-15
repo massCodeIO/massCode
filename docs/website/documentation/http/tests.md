@@ -20,7 +20,7 @@ For a login endpoint that returns `{ "token": "example-token" }`:
 
 ## Sources and Paths
 
-<img :src="withBase('/http-extraction.png')" alt="Successful lastOrderId extraction from the response id field">
+<img class="screenshot" :src="withBase('/http-extraction.png')" alt="Successful lastOrderId extraction from the response id field">
 
 JSON paths use JSON Pointer: `/user/id`, `/items/0/name`, or an empty path for the entire response. Escape `/` in a property name as `~1` and `~` as `~0`. Header names are case-insensitive. Extracted strings, numbers, and booleans become string variables; objects and arrays become JSON text.
 
@@ -30,7 +30,7 @@ Choose **Header** and a header name such as `X-Request-ID` to extract a response
 
 ## Assertion Operators
 
-<img :src="withBase('/http-assertions.png')" alt="Status and JSON assertions with two passing results">
+<img class="screenshot" :src="withBase('/http-assertions.png')" alt="Status and JSON assertions with two passing results">
 
 Assertions can check status, a JSON value, a header, or duration in milliseconds. Expected values use JSON: `200`, `true`, `null`, or a quoted string such as `"application/json"`.
 

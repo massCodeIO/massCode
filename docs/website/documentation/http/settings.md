@@ -13,7 +13,7 @@ A request's **Inherit** choice uses the current global setting. For numeric fiel
 
 Request transport settings take precedence over global defaults. Collection/folder auth and headers have their own [inheritance rules](./collections#inheritance); transport inheritance here refers to the global HTTP preferences.
 
-<img :src="withBase('/http-settings.png')" alt="Per-request transport settings and cookie jar control">
+<img class="screenshot" :src="withBase('/http-settings.png')" alt="Per-request transport settings and cookie jar control">
 
 ## Transport settings
 

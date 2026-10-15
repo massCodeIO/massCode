@@ -11,7 +11,7 @@ Use the HTTP **Console**, **Terminal**, and **Cookies** tools when the response 
 
 Open Console in the bottom dock, send a request, and select its network entry. Inspect the request URL, headers, body, response details, timing, and errors. Filter by text or log level, hide network entries to focus on scripts, and toggle timestamps. Switch to raw details when useful, copy a relevant entry, or copy the currently visible filtered log. The dock can be detached into a separate Console window when you need more room. Clear the log to start a focused debugging session.
 
-<img :src="withBase('/http-console.png')" alt="HTTP Console with an expanded network request">
+<img class="screenshot" :src="withBase('/http-console.png')" alt="HTTP Console with an expanded network request">
 
 Previews describe the draft before scripts run. Console records execution details, so use it to investigate interpolation, actual headers, cookies, and redirect behavior. Console is a bounded in-memory diagnostic log, not permanent request history; older or large entries can be removed or truncated.
 
@@ -61,7 +61,7 @@ Delete a row with its trash icon, or use **Clear all cookies** to empty the jar.
 
 The request's cookie toggle immediately enables/disables automatic jar use; it is saved separately from request content. An explicit `Cookie` header is separate from that toggle. If a request authenticates unexpectedly, inspect both its manual header and the jar.
 
-<img :src="withBase('/http-cookies.png')" alt="Cookies table with editable domain, path, expiry, and flags">
+<img class="screenshot" :src="withBase('/http-cookies.png')" alt="Cookies table with editable domain, path, expiry, and flags">
 
 ## Troubleshooting
 

@@ -7,9 +7,7 @@ description: "Learn the massCode HTTP workspace, send your first request, and bu
 
 The HTTP space is a local API workspace inside massCode. Send HTTP requests, inspect responses, organize collections, and reuse variables alongside your code snippets and notes. No massCode account is required.
 
-This guide describes the **5.11 interface**, including collection settings, scripts, tests, GraphQL, WebSocket, history, and debugging tools. Individual version markers identify features introduced after the original HTTP client.
-
-<img :src="withBase('/http-overview.png')" alt="HTTP workspace with Collections, Environments, Trash, and the Northstar collection overview">
+<img class="screenshot" :src="withBase('/http-overview.png')" alt="HTTP workspace with Collections, Environments, Trash, and the Northstar collection overview">
 
 ## Getting Started
 
@@ -27,7 +25,7 @@ Postman Echo returns details of the request it receives and requires no API key.
 
 **Send** uses your current draft. Saving is a separate action: changing the request name saves the name automatically, but other content needs **Save**. If you do not receive a response, check internet access and the URL, then use [Debugging](./debugging).
 
-<img :src="withBase('/http-first-request.png')" alt="Public Postman Echo GET request returning args.message with hello">
+<img class="screenshot" :src="withBase('/http-first-request.png')" alt="Public Postman Echo GET request returning args.message with hello">
 
 ### Turn it into a repeatable check
 

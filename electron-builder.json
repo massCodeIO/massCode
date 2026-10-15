@@ -31,12 +31,26 @@
     "category": "public.app-category.productivity",
     "hardenedRuntime": true,
     "notarize": true,
-    "files": ["!**/node_modules/onnxruntime-node/bin/napi-v6/{linux,win32}/**"]
+    "files": [
+      "build/renderer/**/*",
+      "build/main/**/*",
+      "build/shared/**/*",
+      "!build/**/*.map",
+      "!**/node_modules/onnxruntime-web/**",
+      "!**/node_modules/onnxruntime-node/bin/napi-v6/darwin/arm64/libonnxruntime.1.30.0.dylib",
+      "!**/node_modules/onnxruntime-node/bin/napi-v6/{linux,win32}/**"
+    ]
   },
   "win": {
     "target": ["nsis", "portable"],
     "icon": "build/icons/icon.ico",
     "files": [
+      "build/renderer/**/*",
+      "build/main/**/*",
+      "build/shared/**/*",
+      "!build/**/*.map",
+      "!**/node_modules/onnxruntime-web/**",
+      "!**/node_modules/onnxruntime-node/bin/napi-v6/darwin/arm64/libonnxruntime.1.30.0.dylib",
       "!**/node_modules/onnxruntime-node/bin/napi-v6/{darwin,linux}/**",
       "!**/node_modules/onnxruntime-node/bin/napi-v6/win32/arm64/**"
     ]
@@ -45,6 +59,12 @@
     "target": ["AppImage"],
     "icon": "build/icons/icon.png",
     "files": [
+      "build/renderer/**/*",
+      "build/main/**/*",
+      "build/shared/**/*",
+      "!build/**/*.map",
+      "!**/node_modules/onnxruntime-web/**",
+      "!**/node_modules/onnxruntime-node/bin/napi-v6/darwin/arm64/libonnxruntime.1.30.0.dylib",
       "!**/node_modules/onnxruntime-node/bin/napi-v6/{darwin,win32}/**",
       "!**/node_modules/onnxruntime-node/bin/napi-v6/linux/arm64/**"
     ]

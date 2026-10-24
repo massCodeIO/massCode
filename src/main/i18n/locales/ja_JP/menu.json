@@ -4,74 +4,95 @@
     "preferences": "環境設定",
     "devtools": "開発者ツール",
     "update": "アップデートを確認...",
-    "quit": "massCodeを終了",
-    "about": "massCodeについて",
-    "hide": "massCodeを隠す",
-    "mathNotebook": "数学ノートブック"
+    "quit": "massCode を終了",
+    "about": "massCode について",
+    "hide": "massCode を隠す",
+    "mathNotebook": "数式ノートブック"
   },
   "help": {
     "label": "ヘルプ",
     "website": "ウェブサイト",
     "documentation": "ドキュメント",
-    "viewInGitHub": "GitHubで表示",
+    "viewInGitHub": "GitHub で表示",
     "changeLog": "変更履歴",
     "reportIssue": "問題を報告",
     "giveStar": "スターを付ける",
     "extension": {
-      "vscode": "VS Code拡張機能",
-      "raycast": "Raycast拡張機能",
-      "alfred": "Alfred拡張機能"
+      "vscode": "VS Code 拡張機能",
+      "raycast": "Raycast 拡張機能",
+      "alfred": "Alfred 拡張機能"
     },
     "donate": {
-      "openCollective": "Open Collectiveで寄付",
-      "payPal": "PayPalで寄付",
-      "gumroad": "Gumroadで寄付（Visa、Mastercard等）"
+      "openCollective": "Open Collective で寄付",
+      "payPal": "PayPal で寄付",
+      "gumroad": "Gumroad で寄付 (Visa、Mastercard等)"
     },
     "twitter": "X",
     "devTools": "開発者ツールの切り替え"
   },
+  "file": {
+    "label": "ファイル",
+    "new": "新規"
+  },
   "view": {
+    "primarySidebar": "プライマリサイドバー",
+    "secondarySidebar": "セカンダリサイドバー",
     "label": "表示",
     "showSidebar": "サイドバーの表示/非表示",
-    "sortBy": {
-      "label": "スニペットの並び替え",
-      "dateModified": "更新日時",
-      "dateCreated": "作成日時",
-      "name": "名前"
-    },
-    "compactMode": "コンパクトモード",
     "layout": {
       "label": "レイアウト",
       "allPanels": "すべてのパネル",
       "listEditor": "リスト + エディタ",
       "editorOnly": "エディタのみ"
-    }
+    },
+    "sortBy": {
+      "label": "並べ替え基準",
+      "dateModified": "更新日時",
+      "dateCreated": "作成日時",
+      "name": "名前"
+    },
+    "sortOrder": {
+      "label": "並べ替え順",
+      "ascending": "昇順",
+      "descending": "降順"
+    },
+    "compactMode": "コンパクトリスト",
+    "hideCompletedTasks": "完了したタスクを隠す"
   },
   "edit": {
     "label": "編集",
+    "undo": "元に戻す",
+    "redo": "やり直し",
+    "cut": "切り取り",
+    "copy": "コピー",
+    "paste": "貼り付け",
+    "delete": "削除",
+    "selectAll": "すべて選択",
     "find": "検索"
   },
   "editor": {
     "label": "エディタ",
-    "copy": "スニペットをクリップボードにコピー",
+    "copySnippet": "スニペットをコピー",
+    "copyNote": "ノートをコピー",
     "format": "フォーマット",
-    "previewCode": "コードのプレビュー",
-    "previewScreenshot": "スクリーンショットのプレビュー",
-    "previewJson": "JSON プレビュー",
-    "fontSizeIncrease": "フォントサイズを大きく",
-    "fontSizeDecrease": "フォントサイズを小さく",
-    "fontSizeReset": "フォントサイズをリセット",
+    "normalizeTerminalOutput": "改行を正規化",
     "mode": "モード",
-    "modeRaw": "RAWデータ",
+    "modeRaw": "Raw",
     "modeLivePreview": "ライブプレビュー",
-    "modePreview": "プレビュー"
+    "modePreview": "プレビュー",
+    "previewCode": "コードをプレビュー",
+    "previewScreenshot": "スクリーンショットをプレビュー",
+    "previewJson": "JSON をプレビュー",
+    "sendRequest": "リクエストを送信",
+    "fontSizeIncrease": "フォントサイズを拡大",
+    "fontSizeDecrease": "フォントサイズを縮小",
+    "fontSizeReset": "フォントサイズをリセット"
   },
   "markdown": {
-    "label": "Markdown",
     "preview": "プレビュー",
-    "previewMarkdown": "Markdownのプレビュー",
+    "previewMarkdown": "Markdown をプレビュー",
     "presentationMode": "プレゼンテーションモード",
-    "previewMindmap": "マインドマップのプレビュー"
+    "previewMindmap": "マインドマップをプレビュー"
   },
   "history": {
     "label": "履歴",
@@ -83,10 +104,9 @@
   },
   "window": {
     "label": "ウィンドウ",
-    "minimize": "最小化"
-  },
-  "file": {
-    "label": "ファイル",
-    "new": "新規作成"
+    "minimize": "最小化",
+    "zoom": "ズーム",
+    "front": "すべてを最前面へ",
+    "close": "閉じる"
   }
 }

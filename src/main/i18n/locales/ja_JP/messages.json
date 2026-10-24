@@ -1,37 +1,146 @@
 {
   "confirm": {
-    "delete": "「{{name}}」を削除してもよろしいですか？",
-    "deletePermanently": "「{{name}}」を完全に削除してもよろしいですか？",
-    "deleteConfirmMultipleSnippets": "選択された{{count}}個のスニペットを完全に削除してもよろしいですか？",
-    "emptyTrash": "ゴミ箱内のすべてのスニペットを完全に削除してもよろしいですか？"
+    "delete": "「{{name}}」を削除しますか?",
+    "deleteVariable": "変数「{{name}}」を削除しますか?",
+    "deleteUnnamedVariable": "この変数を削除しますか?",
+    "unprotectHttpSecret": "「{{name}}」の保護を解除しますか?",
+    "deletePermanently": "「{{name}}」を完全に削除しますか?",
+    "deleteConfirmMultipleSnippets": "選択された{{count}}個のスニペットを完全に削除しますか?",
+    "emptyTrash": "ごみ箱内のすべてのスニペットを完全に削除しますか?",
+    "convertTaskToNote": "「{{name}}」をノートに戻しますか?",
+    "moveVaultOverwrite": [
+      "選択したディレクトリを上書きしますか?",
+      "選択したディレクトリは空ではありません。その内容は現在の Vault で上書きされます。"
+    ],
+    "vaultDoctorApply": [
+      "Vault の修正を適用しますか?",
+      "massCode は安全なメタデータの修正と選択された重複IDの判断を更新します。選択されていない競合はスキップされます。"
+    ]
   },
   "success": {
     "copied": "クリップボードにコピーしました",
-    "vaultLoaded": "Vault successfully loaded."
+    "vaultMoved": "Vault を移動しました。",
+    "vaultLoaded": "Vault を読み込みました。",
+    "licenseActivated": "ライセンスを有効化しました。massCode を支援していただきありがとうございます!",
+    "noteExported": "ノートをエクスポートしました。",
+    "noteFolderSiteExported": "ノートフォルダーを HTML サイトとしてエクスポートしました。",
+    "vaultDoctorApplied": "Vault ドクターが{{count}}件の修正を適用しました。",
+    "vaultDoctorClean": "Vault ドクターは問題を検出しませんでした。",
+    "artifactExported": "ファイルを保存しました"
   },
   "warning": {
     "noUndo": "この操作は取り消せません。",
-    "allSnippetsMoveToTrash": "このフォルダ内のすべてのスニペットはゴミ箱に移動されます。",
+    "httpSecretToPlainText": "その値は平文として環境に移動されるため、Vault に保存され、Vault と同期されます。",
+    "allSnippetsMoveToTrash": "このフォルダー内のすべてのスニペットはごみ箱に移動されます。",
+    "taskPropertiesRemoved": "タスクのステータス、優先度、期限が削除されます。",
     "deleteTag": "このタグを持つすべてのスニペットからタグが削除されます。",
-    "createDb": "別のフォルダを選択してください",
-    "htmlCssPreview": "結果を表示するにはHTMLフラグメントを追加してください。スタイリングにはCSSを、インタラクティブ性にはJavaScriptを追加してください。",
+    "createDb": "別のフォルダーを選択してください",
+    "htmlCssPreview": "結果を表示するには HTML フラグメントを追加してください。スタイリングには CSS を、インタラクティブ性には JavaScript を追加してください。",
     "codeBlockRenderer": [
-      "Codemirrorを使用する場合、コードブロックに設定する言語は",
-      "languagesの値の1つに対応している必要があります"
-    ]
+      "Codemirror を使用する場合、コードブロックに設定する言語は",
+      "languages の値の 1つに対応している必要があります"
+    ],
+    "vaultDoctorConflicts": "Vault: {{count}}件の同期競合に対処が必要です",
+    "vaultDoctorReview": "確認",
+    "vaultDoctorNotReady": "Vault はまだクラウドストレージと同期中です。しばらくしてから再度スキャンしてください。",
+    "cloudFileNotReady": "この項目はまだクラウドストレージから同期中です。しばらくしてから再度試してください。",
+    "noteExportIncomplete": "エクスポートは制限付きで保存されました: {{details}}",
+    "noteExportLoss": {
+      "mermaid": "図はソースとして保持されました",
+      "drawings": "描画のプレビューがありません",
+      "managedImages": "利用できない管理画像",
+      "remoteImages": "リモート画像がブロックされました",
+      "richFormatting": "エディタの書式は Markdown として保持されました",
+      "internalLinks": "内部リンクはテキストとして保持されました"
+    }
   },
   "error": {
+    "fragmentOrderFailed": "フラグメントの順序を保存できませんでした。もう一度試してください。",
+    "formatFailed": "フラグメントの整形または保存ができませんでした。",
+    "secretNameRequired": "値を保存する前にシークレットの名前を入力してください。",
+    "secretEnvironmentMissing": "この環境はもう存在しません。",
+    "secretEncryptionUnavailable": "シークレットを保存できません: このシステムでは OS の暗号化が利用できません。",
+    "secretSaveFailed": "シークレットの保存に失敗しました。",
+    "secretRevealFailed": "シークレットを読み取れませんでした。別の OS ユーザーによって保存された可能性があります。",
+    "entryNameEmpty": "名前は空にできません。",
+    "entryNameLeadingDot": "名前はドットで始めることはできません。",
+    "entryNameInvalidChars": "名前に次の文字は使用できません: {{- chars}}",
+    "entryNameTrailingDot": "名前はドットで終わることはできません。",
+    "entryNameWindowsReserved": "この名前は Windows では予約されています。",
+    "entryNameNoteConflict": "このフォルダーには同じ名前のノートが既に存在します。",
+    "entryNameSnippetConflict": "このフォルダーには同じ名前のスニペットが既に存在します。",
+    "entryNameRequestConflict": "このフォルダーには同じ名前のリクエストが既に存在します。",
+    "entryNameFolderConflict": "この階層には同じ名前のフォルダーが既に存在します。",
+    "vaultPathRequired": "Vault のパスが必要です。",
+    "licenseInvalid": "無効なライセンスキーです",
+    "noteExportFailed": "ノートのエクスポートに失敗しました。",
+    "noteFolderSiteExportFailed": "ノートフォルダーのエクスポートに失敗しました。",
+    "copyFailed": "クリップボードへのコピーに失敗しました。",
+    "httpEnvironment": {
+      "load": "環境の読み込みに失敗しました。",
+      "create": "環境の作成に失敗しました。",
+      "update": "環境の保存に失敗しました。変更は保存されていません。",
+      "delete": "環境の削除に失敗しました。",
+      "activate": "環境の切り替えに失敗しました。"
+    },
+    "artifactExportFailed": "ファイルを保存できませんでした"
   },
   "description": {
-    "storageVault": "ボールトディレクトリを選択してください。デバイス間で同期するには、iCloud Drive、Google Drive、またはDropboxのフォルダを選択してください。",
+    "storageVault": "Vault ディレクトリを選択してください。デバイス間で同期するには、iCloud Drive、Google Drive、または Dropbox のフォルダーを選択してください。",
     "language": "言語の変更を適用するには、アプリを再読み込みする必要があります。"
   },
   "special": {
     "unsponsored": "未スポンサー"
   },
+  "donations": {
+    "trigger": {
+      "copy": {
+        "code": "{{count}}件のスニペットをコピーしました 🚀",
+        "http": "{{count}}件の HTTP 項目をコピーしました 🚀",
+        "notes": "{{count}}件のノートをコピーしました 🚀",
+        "math": "{{count}}件の計算結果をコピーしました 🚀",
+        "tools": "{{count}}件のツール出力をコピーしました 🚀",
+        "drawings": "{{count}}件の描画項目をコピーしました 🚀"
+      },
+      "created": {
+        "code": "{{count}}件のスニペットを作成しました 🎉",
+        "http": "{{count}}件の HTTP リクエストを作成しました 🎉",
+        "notes": "{{count}}件のノートを作成しました 🎉",
+        "math": "{{count}}件のシートを作成しました 🎉",
+        "drawings": "{{count}}件の描画を作成しました 🎉"
+      },
+      "sent": {
+        "http": "{{count}}件の HTTP リクエストを送信しました 🚀"
+      },
+      "streak_7": {
+        "title": "7日連続 🔥"
+      },
+      "streak_30": {
+        "title": "massCode と1か月 🎊"
+      },
+      "streak_100": {
+        "title": "massCode と100日 🏆"
+      }
+    },
+    "body": {
+      "full": "こんにちは、Antonです 👋\nmassCode は私ひとりで開発・維持しています。お役に立てているなら、プロジェクトが成長し続けられるようご支援いただけると嬉しいです。",
+      "short": "massCode を楽しんでいますか? プロジェクトが成長し続けられるよう、ご支援をお願いします。"
+    },
+    "actions": {
+      "support": "支援する",
+      "dismiss": "今はしない"
+    }
+  },
   "release": {},
   "update": {
-    "available": "バージョン {{newVersion}} がダウンロード可能です。\n現在のバージョンは {{oldVersion}} です。",
-    "noAvailable": "現在利用可能なアップデートはありません。"
+    "available": "バージョン {{newVersion}} がダウンロード可能になりました。\n現在のバージョンは {{oldVersion}} です。",
+    "noAvailable": "現在利用可能なアップデートはありません。",
+    "downloading": "アップデート v{{version}} をバックグラウンドでダウンロードしています。準備ができ次第、再起動を促すメッセージが表示されます。",
+    "availableToast": "アップデートがあります",
+    "goToGitHub": "GitHub へ移動",
+    "downloaded": "アップデート v{{version}} の準備ができました。適用するには massCode を再起動してください。",
+    "restart": "再起動",
+    "whatsNewToast": "massCode v{{version}} の新機能を見る",
+    "releaseNotes": "リリースノート"
   }
 }

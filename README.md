@@ -63,6 +63,9 @@ massCode is free and open source. But building and maintaining a quality tool ta
 </p>
 
 <p align="center">
+  <a href="https://torsher.app/?ref=github/massCodeIO">
+    <img src='.github/assets/Torsher.svg' alt='Torsher — self-hosted media center for the TV'>
+  </a>
   <a href="https://mysigmail.com/?ref=github/massCodeIO">
     <img src='.github/assets/MySigMail.svg'>
   </a>

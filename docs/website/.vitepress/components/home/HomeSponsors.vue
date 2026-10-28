@@ -2,6 +2,10 @@
 import { ArrowUpRight, Heart } from 'lucide-vue-next'
 import { withBase } from 'vitepress'
 import sponsors from '../sponsors/sponsors.json'
+
+function logoSrc(path: string) {
+  return path.startsWith('/') ? withBase(path) : path
+}
 </script>
 
 <template>
@@ -26,10 +30,9 @@ import sponsors from '../sponsors/sponsors.json'
         rel="noopener sponsored"
         :aria-label="`${sponsor.name} (opens in a new tab)`"
       >
+        <!-- The homepage is always dark, even without the `.dark` class. -->
         <img
-          :src="
-            sponsor.img.startsWith('/') ? withBase(sponsor.img) : sponsor.img
-          "
+          :src="logoSrc(sponsor.imgDark ?? sponsor.img)"
           :alt="sponsor.name"
           loading="lazy"
         >

@@ -5,6 +5,7 @@ import sponsorsData from './sponsors.json'
 interface Sponsor {
   url: string
   img: string
+  imgDark?: string
   name: string
   text?: string
 }
@@ -115,7 +116,7 @@ onMounted(async () => {
       <h2>{{ title }} sponsors</h2>
       <div class="body">
         <a
-          v-for="{ img, url, name, text } of data[tier]"
+          v-for="{ img, imgDark, url, name, text } of data[tier]"
           :key="name"
           :href="url"
           target="_blank"
@@ -125,6 +126,13 @@ onMounted(async () => {
           <img
             :src="img"
             :alt="name"
+            :class="{ 'light-only': imgDark }"
+          >
+          <img
+            v-if="imgDark"
+            :src="imgDark"
+            :alt="name"
+            class="dark-only"
           >
           <div
             v-if="placement === 'sidebar' && text"
@@ -431,13 +439,23 @@ onMounted(async () => {
   color: var(--vp-c-text-3);
 }
 
-.dark .sponsors-item img {
+/* A logo with its own dark variant is already drawn for the dark theme. */
+.dark .sponsors-item img:not(.dark-only) {
   transition: all 0.2s;
   filter: grayscale(1) invert(1);
 }
 
 .dark .sponsors-item:hover img {
   filter: none;
+}
+
+.sponsors-item .dark-only,
+.dark .sponsors-item .light-only {
+  display: none;
+}
+
+.dark .sponsors-item .dark-only {
+  display: block;
 }
 
 @media (max-width: 767px) {

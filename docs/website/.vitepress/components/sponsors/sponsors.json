@@ -1,6 +1,13 @@
 {
   "special": [
     {
+      "name": "Torsher",
+      "url": "https://torsher.app?ref=masscode.io",
+      "img": "/torsher-logo.svg",
+      "imgDark": "/torsher-logo-dark.svg",
+      "text": "Self-Hosted Media Center for the TV"
+    },
+    {
       "name": "MySigMail",
       "url": "https://mysigmail.com?ref=masscode.io",
       "img": "https://cdn.mysigmail.com/signature/assets/logo.png",

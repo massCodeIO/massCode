@@ -55,7 +55,9 @@ jobs:
         with:
           switches: -rlptzv --delete --exclude=/.well-known/
           path: docs/website/.vitepress/dist/
-          remote_path: /var/www/masscode.io/public/
+          # rrsync на сервере ограничивает ключ каталогом сайта и отсчитывает
+          # путь от него: `/` здесь означает /var/www/masscode.io/public.
+          remote_path: /
           remote_host: ${{ secrets.DEPLOY_HOST }}
           remote_user: ${{ secrets.DEPLOY_USER }}
           remote_key: ${{ secrets.DEPLOY_SSH_KEY }}

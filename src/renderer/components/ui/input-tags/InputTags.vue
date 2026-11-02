@@ -115,6 +115,11 @@ function removeLastTag() {
 }
 
 function handleKeydown(e: KeyboardEvent) {
+  // Let the IME handle composition before interpreting keys as tag commands.
+  if (e.isComposing || e.keyCode === 229) {
+    return
+  }
+
   if (e.key === 'Escape') {
     e.preventDefault()
     inputValue.value = ''

@@ -100,48 +100,52 @@
       }
     },
     "textToUnicode": {
-      "label": "テキストからUnicode",
-      "description": "テキストをUnicodeに変換、またはその逆",
+      "label": "テキストから Unicode",
+      "description": "テキストを Unicode に変換、またはその逆",
       "modes": {
         "textToUnicode": "テキスト → Unicode",
         "unicodeToText": "Unicode → テキスト"
       }
     },
     "textToAscii": {
-      "label": "テキストからASCII Binary",
-      "description": "テキストをASCII binaryに変換、またはその逆",
+      "label": "テキストから ASCII バイナリ",
+      "description": "テキストを ASCII バイナリに変換、またはその逆",
       "modes": {
         "textToAscii": "テキスト → ASCII",
         "asciiToText": "ASCII → テキスト"
       }
     },
+    "lineBreakNormalizer": {
+      "label": "改行正規化",
+      "description": "ハード改行を削除し、貼り付けたターミナルテキストを正規化"
+    },
     "base64": {
-      "label": "Base64 Encoder / Decoder",
-      "description": "テキストをBase64にエンコード、またはデコード",
+      "label": "Base64 エンコード / デコード",
+      "description": "テキストを Base64 にエンコード、またはデコード",
       "modes": {
         "textToBase64": "テキスト → Base64",
         "base64ToText": "Base64 → テキスト"
       }
     },
     "jsonToYaml": {
-      "label": "JSONからYAML",
-      "description": "JSONをYAMLに変換、またはその逆",
+      "label": "JSON から YAML",
+      "description": "JSON を YAML に変換、またはその逆",
       "modes": {
         "jsonToYaml": "JSON → YAML",
         "yamlToJson": "YAML → JSON"
       }
     },
     "jsonToToml": {
-      "label": "JSONからTOML",
-      "description": "JSONをTOMLに変換、またはその逆",
+      "label": "JSON から TOML",
+      "description": "JSON を TOML に変換、またはその逆",
       "modes": {
         "jsonToToml": "JSON → TOML",
         "tomlToJson": "TOML → JSON"
       }
     },
     "jsonToXml": {
-      "label": "JSONからXML",
-      "description": "JSONをXMLに変換、またはその逆",
+      "label": "JSON から XML",
+      "description": "JSON を XML に変換、またはその逆",
       "modes": {
         "jsonToXml": "JSON → XML",
         "xmlToJson": "XML → JSON"
@@ -159,27 +163,27 @@
       "description": "テキストからハッシュを生成"
     },
     "hmac": {
-      "label": "HMACジェネレーター",
-      "description": "キーとメッセージから構成されるハッシュベースメッセージ認証コード（HMAC）を生成"
+      "label": "HMAC ジェネレーター",
+      "description": "キーとメッセージから構成されるハッシュベースメッセージ認証コード (HMAC) を生成"
     },
     "password": {
       "label": "パスワードジェネレーター",
       "description": "安全なパスワードを生成"
     },
     "uuid": {
-      "label": "UUIDジェネレーター",
-      "description": "汎用一意識別子（UUID）を生成"
+      "label": "UUID ジェネレーター",
+      "description": "汎用一意識別子 (UUID) を生成"
     }
   },
   "web": {
     "label": "ウェブ",
     "urlParser": {
-      "label": "URLパーサー",
-      "description": "URLをコンポーネントに解析"
+      "label": "URL パーサー",
+      "description": "URL をコンポーネントに解析"
     },
     "urlEncoder": {
       "label": "URL エンコード / デコード",
-      "description": "URLをエンコード、またはデコード",
+      "description": "URL をエンコード、またはデコード",
       "modes": {
         "urlEncode": "URL エンコード",
         "urlDecode": "URL デコード"
@@ -187,7 +191,26 @@
     },
     "slugify": {
       "label": "スラッグ化",
-      "description": "テキストをURL対応のスラッグに変換"
+      "description": "テキストを URL 対応のスラッグに変換"
+    }
+  },
+  "compare": {
+    "label": "比較",
+    "jsonDiff": {
+      "label": "JSON 差分",
+      "description": "2つの JSON ドキュメントの差分を比較して可視化します",
+      "original": "元データ",
+      "modified": "変更後",
+      "filters": {
+        "added": "追加",
+        "removed": "削除",
+        "modified": "変更"
+      },
+      "empty": "両方のフィールドに JSON を貼り付けると差分が表示されます",
+      "errors": {
+        "invalidJson": "無効な JSON です",
+        "diffFailed": "差分の計算に失敗しました"
+      }
     }
   },
   "form": {
@@ -195,9 +218,9 @@
     "output": "出力",
     "inputString": "入力文字列",
     "outputString": "出力文字列",
-    "inputUrl": "入力URL",
-    "outputUrl": "出力URL",
-    "parsedUrl": "解析されたURL",
+    "inputUrl": "入力 URL",
+    "outputUrl": "出力 URL",
+    "parsedUrl": "解析された URL",
     "splitQueryString": "クエリ文字列を分割",
     "key": "キー",
     "value": "値",

@@ -5,14 +5,71 @@
       "main": "メイン"
     },
     "label": "ストレージ",
+    "moveVault": "Vault を移動",
+    "movingVault": "Vault を移動しています...",
     "count": "カウント",
-    "vaultPath": "Vaultのパス"
+    "vaultPath": "Vault のパス",
+    "vaultDoctor": {
+      "label": "Vault ドクター",
+      "description": "Vault をスキャンして、メタデータの問題、同期の競合、安全な修復を検出します。",
+      "scan": {
+        "label": "Vault をチェック",
+        "action": "Vault をスキャン",
+        "scanning": "スキャンしています..."
+      },
+      "apply": {
+        "action": "修正を適用",
+        "applying": "適用しています..."
+      },
+      "summary": {
+        "safe": "安全な修正",
+        "conflicts": "競合",
+        "blocked": "ブロック",
+        "warnings": "警告"
+      },
+      "conflicts": "判断が必要",
+      "decisions": {
+        "duplicateId": "重複 ID: {{id}}",
+        "files": "ファイル: {{count}}",
+        "progress": "{{selected}}/{{total}} 解決済み",
+        "choose": "この ID を保持するファイルを 1つ選んでください。残りの{{count}}件には新しい一意の ID が割り当てられます。",
+        "original": "元ファイル",
+        "copy": "コピー",
+        "keepsId": "ID {{id}} を保持",
+        "newId": "新しい ID"
+      },
+      "reason": {
+        "merge-markers": "マージマーカー",
+        "invalid-frontmatter": "無効な frontmatter",
+        "conflicted-copy": "競合コピー"
+      },
+      "assetWarnings": {
+        "NOTES_LEGACY_ASSET": {
+          "message": "{{assetName}} はまだ旧ノートアセットフォルダーに保存されています。",
+          "recommendation": "Vault 全体を同期したままにして、移行完了後に再度スキャンしてください。"
+        },
+        "NOTES_ASSET_MIGRATION_PENDING": {
+          "message": "{{assetName}} は移行確認のためにローカルで利用できません。",
+          "recommendation": "アセットをローカルで利用可能にしてから、Vault を再度スキャンしてください。"
+        },
+        "NOTES_ASSET_DESTINATION_CONFLICT": {
+          "message": "{{assetName}} が旧ノートアセットフォルダーと現在のノートアセットフォルダーで異なります。",
+          "recommendation": "どちらかを削除する前に、両方のファイルを比較して正しいコピーを保持してください。"
+        },
+        "NOTES_ASSET_MISSING": {
+          "message": "{{assetName}} が両方のノートアセットフォルダーに見つかりません。",
+          "recommendation": "アセットを Vault に復元するか、ノートから参照を削除してください。"
+        }
+      },
+      "moreWarnings": "他 {{count}} 件の警告",
+      "warnings": "警告"
+    }
   },
   "editor": {
-    "label": "エディタ",
+    "label": "コードエディタ",
     "fontSize": {
       "label": "フォントサイズ",
-      "description": "コードエディタの基本フォントサイズ（ピクセル単位）。"
+      "description": "コードエディタの基本フォントサイズ (ピクセル単位)。"
     },
     "fontFamily": {
       "label": "フォントファミリー",
@@ -58,18 +115,18 @@
     }
   },
   "notesEditor": {
-    "label": "ノートエディタ",
+    "label": "ノート",
     "fontSize": {
       "label": "フォントサイズ",
-      "description": "ノートエディタの基本フォントサイズ（ピクセル単位）。"
+      "description": "ノートエディタの基本フォントサイズ (ピクセル単位)。"
     },
     "fontFamily": {
       "label": "テキストフォント",
-      "description": "CSSのfont-familyプロパティの値。代替フォントを指定するにはコンマを使用します。"
+      "description": "ノートエディタ用のテキストフォント。代替フォントを指定するにはコンマを使用してください。"
     },
     "codeFontFamily": {
       "label": "等幅フォント",
-      "description": "インラインコードおよびフェンスコードブロック用のフォント。"
+      "description": "ノートエディタのインラインコードおよびコードブロック用の等幅フォント。代替フォントを指定するにはコンマを使用してください。"
     },
     "lineHeight": {
       "label": "行の高さ",
@@ -84,15 +141,27 @@
     },
     "limitWidth": {
       "label": "幅の制限",
-      "description": "コンテンツを快適な読み取り幅（700px）に制限します。"
+      "description": "快適に読めるコンテンツの最大幅 (700px)。"
+    },
+    "wrapTables": {
+      "label": "表のセルを折り返す",
+      "description": "表のセル内のテキストを折り返して、幅の広い表をエディタ内に収めます。幅の狭い表は自然な幅を保ちます。"
     },
     "lineNumbers": {
       "label": "行番号",
-      "description": "ガターに行番号を表示します。RAWモードでのみ利用可能です。"
+      "description": "ガッターに行番号を表示します。Rawモードでのみ利用可能です。"
     }
   },
   "appearance": {
     "label": "外観",
+    "dockBadge": {
+      "label": "Dock アイコンカウンター",
+      "none": "表示しない",
+      "codeInbox": "コードの受信トレイ",
+      "notesInbox": "ノートの受信トレイ",
+      "tasksDue": "本日期限のタスク",
+      "permissionDenied": "macOS が Dock のカウンターをブロックしました。システム設定で massCode の通知とバッジを許可してください。署名されていない開発ビルドでは Dock バッジがサポートされない場合があります。"
+    },
     "theme": {
       "label": "テーマ",
       "builtIn": "組み込み",
@@ -100,10 +169,24 @@
       "themesDir": "テーマディレクトリ",
       "openDir": "テーマディレクトリを開く",
       "createTemplate": "テーマテンプレートを作成",
-      "dirDescription": "このフォルダーにJSON形式のテーマファイルを配置してください。",
+      "creatingTemplate": "作成しています...",
+      "templateCreated": "テーマテンプレートを作成しました。テーマディレクトリ内の JSON ファイルを開いて編集してください。",
+      "templateCreateError": "テーマテンプレートの作成に失敗しました",
+      "dirDescription": "カスタム JSON テーマファイル用のディレクトリ。",
       "light": "ライト",
       "dark": "ダーク",
       "system": "システム"
+    },
+    "dateFormat": {
+      "label": "日付の形式",
+      "preview": "例: {{date}}。インターフェース全体に適用されます。",
+      "options": {
+        "0": "アプリの言語に従う (デフォルト)",
+        "1": "DD.MM.YYYY",
+        "2": "MM/DD/YYYY",
+        "3": "DD/MM/YYYY",
+        "4": "YYYY-MM-DD"
+      }
     }
   },
   "language": {
@@ -113,11 +196,207 @@
     "label": "Markdown",
     "codeRenderer": "コードブロックレンダラー"
   },
+  "math": {
+    "label": "数式ノート",
+    "locale": {
+      "label": "地域",
+      "description": "数値と日付の表示形式。"
+    },
+    "decimalPlaces": {
+      "label": "小数点以下の桁数",
+      "description": "結果の小数点以下の最大桁数 (0–14)。"
+    },
+    "dateFormat": {
+      "label": "日付の形式",
+      "description": "結果で日付を表示する形式。"
+    },
+    "currencyRates": {
+      "label": "為替レート",
+      "description": "1時間キャッシュされます。",
+      "refresh": "更新",
+      "refreshing": "更新しています...",
+      "refreshed": "為替レートを更新しました",
+      "refreshError": "為替レートの更新に失敗しました"
+    },
+    "cryptoRates": {
+      "label": "暗号資産レート",
+      "description": "1時間キャッシュされます。レート制限: 10-30 リクエスト/分。",
+      "refresh": "更新",
+      "refreshing": "更新しています...",
+      "refreshed": "暗号資産レートを更新しました",
+      "rateLimited": "レート制限を超えました。しばらくしてから試してください。"
+    }
+  },
+  "tasks": {
+    "label": "タスク",
+    "autoCleanup": {
+      "label": "完了タスクを自動整理",
+      "description": "完了したタスクを定期的にごみ箱へ移動します。ごみ箱を空にするまでは残ります。",
+      "never": "しない",
+      "1d": "毎日",
+      "7d": "7日ごと",
+      "30d": "30日ごと"
+    },
+    "cleanupNow": {
+      "label": "今すぐ整理",
+      "button": "完了タスクをごみ箱へ移動",
+      "description": "完了したすべてのタスクを今すぐごみ箱へ移動します。"
+    }
+  },
+  "http": {
+    "history": {
+      "label": "リクエストごとの履歴件数",
+      "off": "保存しない",
+      "description": "リクエストごとに 10〜100 件の実行履歴を保持します。上限を下げると、次回の履歴読み込み時または送信時に古い履歴が削除されます。無効にすると新しい履歴は保存されず、既存の履歴は保持されます。",
+      "section": "履歴"
+    },
+    "label": "HTTP クライアント",
+    "wrapLines": {
+      "label": "行を折り返す",
+      "description": "HTTP プレビュー、リクエストボディ、レスポンスビューアの長い行を折り返します。"
+    },
+    "defaultPreviewFormat": {
+      "label": "デフォルトのプレビュー形式",
+      "description": "リクエストプレビューパネルでデフォルトで選択される形式。",
+      "http": "HTTP",
+      "curl": "cURL",
+      "fetch": "fetch",
+      "axios": "axios"
+    },
+    "autoSwitchToResponse": {
+      "label": "送信後にレスポンスを表示",
+      "description": "リクエストの開始時または完了時に、下部パネルをレスポンスに切り替えます。"
+    },
+    "sslCertificateVerification": {
+      "label": "SSL 証明書の検証",
+      "description": "HTTPS リクエスト送信時に SSL 証明書を検証します。オフにすると、無効な証明書や自己署名証明書を許可します。"
+    },
+    "transport": {
+      "label": "トランスポート",
+      "timeoutMs": "リクエストタイムアウト",
+      "maxResponseBytes": "最大レスポンスサイズ",
+      "maxRedirects": "最大リダイレクト数",
+      "followRedirects": "リダイレクトを自動的に追跡",
+      "skipCertificateVerification": "SSL 証明書の検証をスキップ",
+      "inherit": "アプリケーション設定を使用",
+      "legacy": "デフォルト",
+      "on": "オン",
+      "off": "オフ",
+      "timeoutMsHint": "リクエストがレスポンスを待つ時間を設定します。タイムアウトさせない場合は 0 に設定してください。",
+      "maxResponseBytesHint": "ダウンロードするレスポンスの最大サイズを設定します。サイズを問わずレスポンスをダウンロードする場合は 0 に設定してください。",
+      "maxRedirectsHint": "追跡するリダイレクトの最大数を設定します。リダイレクトを防ぐ場合は 0 に設定してください。",
+      "followRedirectsHint": "リダイレクトを自動的に追跡します。デフォルトでは、スクリプト付きリクエストと GraphQL ではオフです。",
+      "skipCertificateVerificationHint": "無効な SSL 証明書または自己署名 SSL 証明書を使用するサーバーへのリクエストを許可します。",
+      "invalid": "値は適用されていません。有効な非負の数値を入力してください。タイムアウトとリダイレクトは整数である必要があり、リダイレクトは 100 を超えることはできません。",
+      "ms": "ms",
+      "mb": "MB",
+      "protocolVersion": "HTTP バージョン",
+      "http1": "HTTP/1.1",
+      "http2": "HTTP/2",
+      "auto": "自動",
+      "protocolVersionHint": "HTTP バージョンを選択します。自動の場合は HTTPS 上で HTTP/2 をネゴシエートし、HTTP/1.1 にフォールバックします。HTTP/2 には HTTPS とサーバー側のサポートが必要です。デフォルト: HTTP/1.1。",
+      "encodeUrl": "URL を自動的にエンコード",
+      "encodeUrlHint": "URL 内のスペースと特殊文字をエンコードします。オフの場合は、既にエンコードされた URL とクエリパラメーターを入力してください。デフォルト: オン。",
+      "followOriginalHttpMethod": "元の HTTP メソッドを維持",
+      "followOriginalHttpMethodHint": "リダイレクトを追跡する際にメソッドとボディを維持します。オフの場合、POST 後の 301/302 および HEAD 以外の 303 では GET を使用します。デフォルト: 303 のみ GET に切り替え。",
+      "followAuthorizationHeader": "Authorization ヘッダーを転送",
+      "followAuthorizationHeaderHint": "リダイレクト先が別のオリジンの場合に Authorization を転送します。信頼できる宛先でのみ有効にしてください。デフォルト: オフ。",
+      "removeRefererHeaderOnRedirect": "リダイレクト時に Referer を削除",
+      "removeRefererHeaderOnRedirectHint": "リダイレクトを追跡する際に Referer ヘッダーを削除します。デフォルト: オフ。",
+      "HTTP2_HTTPS_REQUIRED": "HTTP/2 には HTTPS の URL が必要です。",
+      "HTTP2_NOT_NEGOTIATED": "サーバーが HTTP/2 をネゴシエートしませんでした。自動または HTTP/1.1 を選択してください。",
+      "HTTP_URL_ENCODING_REQUIRED": "URL エンコードがオフです。既にエンコードされた URL とクエリパラメーターを入力するか、自動エンコードを有効にしてください。",
+      "HTTP_REDIRECT_PROTOCOL": "リダイレクト URL は HTTP または HTTPS を使用する必要があります。",
+      "HTTP_REDIRECT_LIMIT": "リダイレクトの上限を超えました"
+    },
+    "interface": "インターフェース"
+  },
   "api": {
     "label": "API",
+    "mcp": {
+      "label": "MCP",
+      "enabled": {
+        "label": "MCP アクセスを有効にする",
+        "description": "API トークンを持つエージェントに、スニペット、ノート、HTTP リクエストの読み取り、作成、整理、およびアクティブな環境を使用した保存済みリクエストの送信を許可します。既存の項目の変更には以下のオプションが必要です。API 連携が有効になっている必要があります。"
+      },
+      "allowEdits": {
+        "label": "MCP による既存項目の変更を許可する",
+        "description": "エージェントに、既存のスニペット、ノート、HTTP リクエストの更新と移動、空のフォルダーの名前変更、移動、削除、項目のごみ箱への移動とごみ箱からの復元を許可します。項目が完全に削除されることはありません。"
+      },
+      "endpoint": {
+        "label": "サーバー URL",
+        "description": "この URL と上記の API トークンを使用して MCP クライアントを接続します。massCode を実行したままにしてください。API ポートを変更した後はアプリを再起動してください。"
+      },
+      "setup": "セットアップガイド"
+    },
     "port": {
-      "label": "APIポート",
-      "description": "APIサーバーのポート番号（アプリの再起動が必要です）。有効範囲：1024-65535。"
+      "label": "API ポート",
+      "description": "API サーバーのポート番号 (反映にはアプリの再起動が必要です)。有効範囲: 1024-65535。"
+    },
+    "integrations": {
+      "label": "連携",
+      "enabled": {
+        "label": "API 連携を有効にする",
+        "description": "外部のローカルクライアントに保護された連携エンドポイントの使用を許可します。"
+      },
+      "token": {
+        "label": "API トークン",
+        "description": "外部クライアントでこのトークンを使用します。完全なトークンは生成後にのみ表示されます。",
+        "empty": "トークンが生成されていません",
+        "generate": "トークンを生成",
+        "replace": "トークンを置き換え",
+        "replaceConfirm": "現在のトークンは直ちに無効になります。接続しているすべてのクライアントを新しいトークンで更新してください。",
+        "revoke": "トークンを無効化"
+      }
+    }
+  },
+  "supporter": {
+    "label": "サポーター",
+    "status": {
+      "label": "ステータス",
+      "active": "サポーターライセンスが有効です。",
+      "activeFor": "{{name}} のサポーターライセンスが有効です。",
+      "description": "massCode を支援していただきありがとうございます! 寄付の案内はオフになっています。"
+    },
+    "key": {
+      "label": "ライセンスキー",
+      "placeholder": "サポーターキーを貼り付けてください",
+      "activate": "有効化",
+      "description": "寄付後に受け取ったキーを貼り付けてください。有効化はオフラインで機能し、寄付の案内が表示されなくなります。"
+    },
+    "request": {
+      "label": "キーをまだお持ちでない場合",
+      "action": "キーをリクエスト",
+      "description": "これまでに何らかの方法で massCode へ寄付したことがある場合は、寄付の証明をメールでお送りいただければキーをお届けします。"
+    }
+  },
+  "updates": {
+    "label": "アップデート",
+    "autoUpdate": {
+      "label": "自動アップデート",
+      "description": "バックグラウンドでアップデートをダウンロードし、再起動時にインストールします。オフの場合は新しいバージョンの通知のみを行います。メジャーアップグレードには手動でのインストールが必要です。"
+    },
+    "version": {
+      "label": "現在のバージョン"
+    }
+  },
+  "about": {
+    "label": "massCode について",
+    "copyVersion": "バージョンをコピー",
+    "checkUpdates": "アップデートを確認",
+    "checkingUpdates": "確認しています…",
+    "website": "ウェブサイト",
+    "sourceCode": "ソースコード",
+    "reportIssue": "問題を報告",
+    "license": "ライセンス",
+    "support": "プロジェクトを支援",
+    "checkUpdatesFailed": "アップデートを確認できませんでした。massCode を再起動して再度試してください。",
+    "runtime": {
+      "electron": "Electron",
+      "chrome": "Chrome",
+      "node": "Node.js",
+      "v8": "V8",
+      "os": "OS"
     }
   }
 }

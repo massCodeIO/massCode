@@ -25,6 +25,7 @@ import {
   getGraphSceneNeighborhoodIds,
   getGraphSceneResetViewportTransform,
   getGraphSceneSeedTicks,
+  getGraphSceneZoom,
   shouldAutoResetGraphSceneViewport,
   shouldClearGraphSceneActiveNode,
   shouldOpenGraphSceneNodeOnPointerUp,
@@ -80,6 +81,29 @@ const sceneNodes = shallowRef<SceneNode[]>([])
 const activeNodeId = ref<number | null>(null)
 const { isDark } = useTheme()
 const zoom = ref(1)
+let fittedZoom = 1
+let textContext: CanvasRenderingContext2D | null = null
+const textWidths = new Map<string, number>()
+const labelFontFamily = computed(() =>
+  sceneSvgRef.value
+    ? getComputedStyle(sceneSvgRef.value).fontFamily
+    : 'sans-serif',
+)
+
+function measureLabelText(text: string, fontSize: number, isActive: boolean) {
+  textContext ??= document.createElement('canvas').getContext('2d')
+  const font = `${isActive ? 500 : 400} ${fontSize}px ${labelFontFamily.value}`
+  const key = `${font}:${text}`
+  const cached = textWidths.get(key)
+  if (cached !== undefined)
+    return cached
+  if (!textContext)
+    return text.length * fontSize
+  textContext.font = font
+  const width = textContext.measureText(text).width
+  textWidths.set(key, width)
+  return width
+}
 const pan = reactive({
   x: 0,
   y: 0,
@@ -146,6 +170,9 @@ const sceneLabels = computed(() =>
     nodes: sceneNodes.value,
     pan,
     zoom: zoom.value,
+    width: props.width,
+    height: props.height,
+    measureText: measureLabelText,
   }),
 )
 
@@ -314,6 +341,7 @@ function resetViewport() {
     width: props.width,
   })
 
+  fittedZoom = viewport.zoom
   zoom.value = viewport.zoom
   pan.x = viewport.panX
   pan.y = viewport.panY
@@ -324,14 +352,14 @@ function disableAutoResetViewport() {
 }
 
 function zoomIn() {
-  applyZoom((zoom.value + (props.compact ? 0.1 : 0.12)).toFixed(2), {
+  applyZoom(zoom.value * (props.compact ? 1.1 : 1.12), {
     x: props.width / 2,
     y: props.height / 2,
   })
 }
 
 function zoomOut() {
-  applyZoom((zoom.value - (props.compact ? 0.1 : 0.12)).toFixed(2), {
+  applyZoom(zoom.value * (props.compact ? 0.9 : 0.88), {
     x: props.width / 2,
     y: props.height / 2,
   })
@@ -373,19 +401,14 @@ function getGraphPosition(event: PointerEvent | WheelEvent) {
   }
 }
 
-function applyZoom(
-  nextZoomValue: string | number,
-  anchor: { x: number, y: number },
-) {
+function applyZoom(nextZoomValue: number, anchor: { x: number, y: number }) {
   disableAutoResetViewport()
 
-  const nextZoom = props.compact
-    ? Math.min(2.4, Math.max(0.58, Number(nextZoomValue)))
-    : Math.min(2.8, Math.max(0.35, Number(nextZoomValue)))
+  const nextZoom = getGraphSceneZoom(nextZoomValue, fittedZoom, props.compact)
   const graphX = (anchor.x - pan.x) / zoom.value
   const graphY = (anchor.y - pan.y) / zoom.value
 
-  zoom.value = Number(nextZoom.toFixed(2))
+  zoom.value = nextZoom
   pan.x = anchor.x - graphX * zoom.value
   pan.y = anchor.y - graphY * zoom.value
 }
@@ -594,6 +617,7 @@ function stopSimulation() {
 
 function initializeSimulation() {
   stopSimulation()
+  textWidths.clear()
 
   if (!props.nodes.length) {
     sceneNodes.value = []

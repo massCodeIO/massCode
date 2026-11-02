@@ -51,6 +51,9 @@ interface BuildGraphSceneLabelsOptions {
     y: number
   }
   zoom: number
+  width: number
+  height: number
+  measureText: (text: string, fontSize: number, isActive: boolean) => number
 }
 
 interface GetGraphSceneViewportTransformOptions {
@@ -76,40 +79,35 @@ interface ShouldAutoResetGraphSceneViewportOptions {
   isPanning: boolean
 }
 
-function wrapGraphSceneLabelText(text: string, maxCharactersPerLine: number) {
-  const normalized = text.trim().replace(/\s+/g, ' ')
-
-  if (!normalized) {
-    return []
-  }
-
-  const words = normalized.split(' ')
-  const lines: string[] = []
-  let currentLine = ''
-
-  words.forEach((word) => {
-    const nextLine = currentLine ? `${currentLine} ${word}` : word
-
-    if (currentLine && nextLine.length > maxCharactersPerLine) {
-      lines.push(currentLine)
-      currentLine = word
-      return
-    }
-
-    currentLine = nextLine
-  })
-
-  if (currentLine) {
-    lines.push(currentLine)
-  }
-
-  return lines
-}
-
-function getGraphSceneLabelHeight(
-  label: Pick<GraphSceneLabel, 'fontSize' | 'lineHeight' | 'lines'>,
+function wrapGraphSceneLabelText(
+  text: string,
+  maxWidth: number,
+  measure: (text: string) => number,
 ) {
-  return label.fontSize + (label.lines.length - 1) * label.lineHeight
+  const lines: string[] = []
+  let line = ''
+  for (const word of text.trim().split(/\s+/)) {
+    const candidate = line ? `${line} ${word}` : word
+    if (measure(candidate) <= maxWidth) {
+      line = candidate
+      continue
+    }
+    if (line) {
+      lines.push(line)
+      line = ''
+    }
+    // Long filenames and unbroken titles also need to fit the viewport.
+    for (const character of word) {
+      if (line && measure(line + character) > maxWidth) {
+        lines.push(line)
+        line = ''
+      }
+      line += character
+    }
+  }
+  if (line)
+    lines.push(line)
+  return lines
 }
 
 export function getGraphSceneSeedTicks(nodeCount: number) {
@@ -273,82 +271,136 @@ export function buildGraphSceneLabels(
     return []
   }
 
-  const labels = options.nodes
+  const candidates = options.nodes
     .filter(
       node =>
-        node.id === options.activeId || options.neighborIds.has(node.id),
+        node.id === options.activeId
+        || (!options.compact && options.neighborIds.has(node.id)),
     )
     .sort((left, right) => {
-      if (left.id === options.activeId) {
+      if (left.id === options.activeId)
         return -1
-      }
-
-      if (right.id === options.activeId) {
+      if (right.id === options.activeId)
         return 1
-      }
-
-      return right.incomingLinksCount - left.incomingLinksCount
+      return (
+        right.incomingLinksCount - left.incomingLinksCount || left.id - right.id
+      )
     })
-    .map((node) => {
-      const isActive = node.id === options.activeId
-      const radius = getGraphSceneDisplayedNodeRadius(
+  const labels: GraphSceneLabel[] = []
+  const occupied: {
+    left: number
+    top: number
+    right: number
+    bottom: number
+  }[] = []
+  const margin = 8
+
+  for (const node of candidates) {
+    const isActive = node.id === options.activeId
+    const fontSize = isActive ? (options.compact ? 15 : 20) : 15
+    const lineHeight = fontSize + (isActive ? 3 : 2)
+    const measure = (text: string) =>
+      options.measureText(text, fontSize, isActive)
+    const maxWidth = Math.max(
+      1,
+      Math.min(isActive ? 240 : 180, options.width - margin * 2),
+    )
+    const lines = wrapGraphSceneLabelText(node.name, maxWidth, measure)
+    if (!lines.length)
+      continue
+    const maxLines = Math.max(
+      1,
+      Math.floor((options.height - margin * 2) / lineHeight),
+    )
+    if (lines.length > maxLines) {
+      lines.length = maxLines
+      let last = lines[maxLines - 1]!
+      while (last && measure(`${last}…`) > maxWidth) last = last.slice(0, -1)
+      lines[maxLines - 1] = `${last}…`
+    }
+    const textWidth = Math.max(...lines.map(measure))
+    // Include descenders, not just the distance between SVG baselines.
+    const textHeight = lines.length * lineHeight
+    const radius
+      = getGraphSceneDisplayedNodeRadius(
         node.radius,
         node.id,
         options.activeId,
         options.neighborIds,
         options.compact,
+      ) * options.zoom
+    const nodeX = node.x * options.zoom + options.pan.x
+    const nodeY = node.y * options.zoom + options.pan.y
+    const isLeft = node.x < activeNode.x
+    const textAnchor = isActive ? 'middle' : isLeft ? 'end' : 'start'
+    let left = isActive
+      ? nodeX - textWidth / 2
+      : isLeft
+        ? nodeX - radius - 10 - textWidth
+        : nodeX + radius + 10
+    let top = isActive ? nodeY + radius + 8 : nodeY - textHeight / 2
+    if (isActive) {
+      if (top + textHeight > options.height - margin)
+        top = nodeY - radius - 8 - textHeight
+      left = Math.max(
+        margin,
+        Math.min(options.width - margin - textWidth, left),
       )
-      const fontSize = isActive
-        ? options.compact
-          ? 15
-          : 20
-        : options.compact
-          ? 13
-          : 15
-      const lineHeight = fontSize + (isActive ? 3 : 2)
-      const lines = wrapGraphSceneLabelText(
-        node.name,
-        isActive ? (options.compact ? 16 : 18) : options.compact ? 18 : 20,
+      top = Math.max(
+        margin,
+        Math.min(options.height - margin - textHeight, top),
       )
-      const label = {
-        fontSize,
-        id: node.id,
-        isActive,
-        lineHeight,
-        lines,
-      }
-      const textHeight = getGraphSceneLabelHeight(label)
-
-      if (isActive) {
-        return {
-          ...label,
-          textAnchor: 'middle' as const,
-          x: node.x * options.zoom + options.pan.x,
-          y:
-            (node.y + radius + (options.compact ? 14 : 20)) * options.zoom
-            + options.pan.y,
-        }
-      }
-
-      const dx = node.x - activeNode.x
-      const dy = node.y - activeNode.y
-      const horizontalGap = radius + (options.compact ? 7 : 10)
-      const centeredBaseline = node.y - textHeight / 2 + fontSize
-      const isLeft = dx < -(options.compact ? 4 : 6)
-
-      return {
-        ...label,
-        textAnchor: (isLeft ? 'end' : 'start') as const,
-        x:
-          (node.x + (isLeft ? -horizontalGap : horizontalGap)) * options.zoom
-          + options.pan.x,
-        y:
-          (centeredBaseline + (dy < 0 ? -1 : dy > 0 ? 1 : 0)) * options.zoom
-          + options.pan.y,
-      }
+    }
+    const bounds = {
+      left,
+      top,
+      right: left + textWidth,
+      bottom: top + textHeight,
+    }
+    if (
+      !isActive
+      && (bounds.left < margin
+        || bounds.top < margin
+        || bounds.right > options.width - margin
+        || bounds.bottom > options.height - margin
+        || occupied.some(
+          other =>
+            bounds.left < other.right + 4
+            && bounds.right + 4 > other.left
+            && bounds.top < other.bottom + 4
+            && bounds.bottom + 4 > other.top,
+        ))
+    ) {
+      continue
+    }
+    occupied.push(bounds)
+    labels.push({
+      id: node.id,
+      isActive,
+      fontSize,
+      lineHeight,
+      lines,
+      textAnchor,
+      x:
+        left
+        + (textAnchor === 'middle'
+          ? textWidth / 2
+          : textAnchor === 'end'
+            ? textWidth
+            : 0),
+      y: top + fontSize,
     })
-
+  }
   return labels
+}
+
+export function getGraphSceneZoom(
+  nextZoom: number,
+  fittedZoom: number,
+  compact: boolean,
+) {
+  const minimum = Math.min(compact ? 0.58 : 0.35, fittedZoom * 0.5)
+  return Math.min(compact ? 2.4 : 2.8, Math.max(minimum, nextZoom))
 }
 
 export function getGraphSceneViewportTransform(
@@ -365,13 +417,8 @@ export function getGraphSceneViewportTransform(
   const fittedZoom = options.compact
     ? Math.min(
         1.1,
-        Math.max(
-          0.72,
-          Math.min(
-            availableWidth / (options.bounds.width + 28),
-            availableHeight / (options.bounds.height + 28),
-          ),
-        ),
+        availableWidth / (options.bounds.width + 28),
+        availableHeight / (options.bounds.height + 28),
       )
     : Math.min(
         1.28,
@@ -383,7 +430,7 @@ export function getGraphSceneViewportTransform(
           ),
         ),
       )
-  const zoom = Number(fittedZoom.toFixed(2))
+  const zoom = options.compact ? fittedZoom : Number(fittedZoom.toFixed(2))
   const graphWidth = Math.max(0, options.bounds.maxX - options.bounds.minX)
   const graphHeight = Math.max(0, options.bounds.maxY - options.bounds.minY)
   const effectiveMinX

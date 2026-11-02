@@ -16,7 +16,7 @@ interface GraphSceneExposed {
   resetViewport: () => void
 }
 
-const props = defineProps<{
+defineProps<{
   graphPreview: NotesDashboardResponse['graphPreview']
 }>()
 
@@ -33,38 +33,6 @@ const graphSceneSize = computed(() => ({
   width: Math.max(320, Math.round(graphViewportWidth.value || 0)),
   height: Math.max(220, Math.round(graphViewportHeight.value || 0)),
 }))
-
-const previewGraph = computed(() => {
-  const connectedIds = new Set<number>()
-
-  props.graphPreview.edges.forEach((edge) => {
-    connectedIds.add(edge.source)
-    connectedIds.add(edge.target)
-  })
-
-  const prioritizedNodes = [...props.graphPreview.nodes]
-    .sort((left, right) => {
-      if (right.incomingLinksCount !== left.incomingLinksCount) {
-        return right.incomingLinksCount - left.incomingLinksCount
-      }
-
-      return left.name.localeCompare(right.name)
-    })
-    .filter(node => connectedIds.has(node.id))
-  const fallbackNodes = props.graphPreview.nodes.filter(
-    node => !connectedIds.has(node.id),
-  )
-  const nodes = [...prioritizedNodes, ...fallbackNodes].slice(0, 24)
-  const ids = new Set(nodes.map(node => node.id))
-  const edges = props.graphPreview.edges.filter(
-    edge => ids.has(edge.source) && ids.has(edge.target),
-  )
-
-  return {
-    edges,
-    nodes,
-  }
-})
 </script>
 
 <template>
@@ -76,7 +44,7 @@ const previewGraph = computed(() => {
     </Card.CardHeader>
     <Card.CardContent class="min-h-0 flex-1">
       <div
-        v-if="previewGraph.nodes.length"
+        v-if="graphPreview.nodes.length"
         class="relative overflow-hidden rounded-lg border"
         :style="{ backgroundColor: graphPalette.background }"
       >
@@ -103,8 +71,8 @@ const previewGraph = computed(() => {
           <NotesGraphScene
             ref="graphSceneRef"
             compact
-            :nodes="previewGraph.nodes"
-            :edges="previewGraph.edges"
+            :nodes="graphPreview.nodes"
+            :edges="graphPreview.edges"
             :width="graphSceneSize.width"
             :height="graphSceneSize.height"
             @node-click="openNoteInNotesWorkspace"

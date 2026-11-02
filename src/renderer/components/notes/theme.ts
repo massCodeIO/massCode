@@ -36,7 +36,7 @@ export function createNotesEditThemeStyles(
       // влево. min-width:0 заставляет контент всегда вписываться в scroller,
       // а широкие таблицы скроллятся внутри своего виджета.
       minWidth: '0',
-      ...(notesSettings.limitWidth
+      ...(notesSettings.limitWidth && !raw
         ? { maxWidth: '700px', margin: '0 auto' }
         : {}),
     },
@@ -67,7 +67,7 @@ export function createNotesEditThemeStyles(
     },
     '.cm-lineNumbers .cm-gutterElement': {
       padding: '0 3px 0 5px',
-      minWidth: '20px',
+      minWidth: 'calc(3ch + 8px)',
       textAlign: 'right',
       whiteSpace: 'nowrap',
     },

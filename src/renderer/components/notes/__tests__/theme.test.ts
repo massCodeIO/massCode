@@ -15,6 +15,33 @@ const settings: NotesEditorThemeSettings = {
 }
 
 describe('createNotesEditThemeStyles', () => {
+  it('keeps raw content independent of the display width setting', () => {
+    const limited = createNotesEditThemeStyles(true, settings)
+    const unlimited = createNotesEditThemeStyles(true, {
+      ...settings,
+      limitWidth: false,
+    })
+
+    expect(limited['.cm-content']).toEqual(unlimited['.cm-content'])
+    expect(limited['.cm-content']).not.toHaveProperty('maxWidth')
+    expect(limited['.cm-content']).not.toHaveProperty('margin')
+  })
+
+  it('limits and centers formatted content only when enabled', () => {
+    const limited = createNotesEditThemeStyles(false, settings)
+    const unlimited = createNotesEditThemeStyles(false, {
+      ...settings,
+      limitWidth: false,
+    })
+
+    expect(limited['.cm-content']).toMatchObject({
+      maxWidth: '700px',
+      margin: '0 auto',
+    })
+    expect(unlimited['.cm-content']).not.toHaveProperty('maxWidth')
+    expect(unlimited['.cm-content']).not.toHaveProperty('margin')
+  })
+
   it('keeps gutter metrics aligned with content in raw mode', () => {
     const styles = createNotesEditThemeStyles(true, settings)
 
@@ -42,7 +69,7 @@ describe('createNotesEditThemeStyles', () => {
 
     expect(styles['.cm-lineNumbers .cm-gutterElement']).toEqual({
       padding: '0 3px 0 5px',
-      minWidth: '20px',
+      minWidth: 'calc(3ch + 8px)',
       textAlign: 'right',
       whiteSpace: 'nowrap',
     })

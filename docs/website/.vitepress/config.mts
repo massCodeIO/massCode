@@ -3,6 +3,7 @@ import { version } from './_data/assets.json'
 
 const siteUrl = 'https://masscode.io'
 const siteTitle = 'massCode'
+const redditUrl = 'https://www.reddit.com/r/massCode/'
 const description = 'Free, open-source developer workspace for code snippets, Markdown notes, API requests, diagrams, calculations, and built-in developer tools.'
 const ogImage = `${siteUrl}/og-image.png`
 const gsv = 'h-rU1tSutO83wOyvi4syrk_XTvgennlUPkL6fMmq5cI'
@@ -141,6 +142,14 @@ export default defineConfig({
       { text: 'Documentation', link: '/documentation/' },
       { text: 'Compare', link: '/compare/' },
       { text: 'Blog', link: '/blog/' },
+      {
+        text: 'Community',
+        items: [
+          { text: 'GitHub Discussions', link: 'https://github.com/massCodeIO/massCode/discussions' },
+          { text: 'Reddit r/massCode', link: redditUrl },
+          { text: 'Report a bug', link: 'https://github.com/massCodeIO/massCode/issues/new/choose' },
+        ],
+      },
       { text: 'Sponsorship', link: '/sponsor/' },
       { text: 'Donate', link: '/donate/' },
       {
@@ -276,8 +285,8 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'twitter', link: 'https://twitter.com/anton_reshetov' },
       { icon: 'github', link: 'https://github.com/massCodeIO/massCode' },
+      { icon: 'reddit', link: redditUrl, ariaLabel: 'massCode on Reddit' },
     ],
 
     footer: {

@@ -23,7 +23,8 @@ A free, open-source developer workspace.
 <p align="center">
   <a href="https://github.com/massCodeIO/massCode/releases">Download</a> &nbsp;|&nbsp;
   <a href="https://masscode.io/documentation/">Documentation</a> &nbsp;|&nbsp;
-  <a href="https://github.com/massCodeIO/massCode/blob/master/CHANGELOG.md">Changelog</a>
+  <a href="https://github.com/massCodeIO/massCode/blob/master/CHANGELOG.md">Changelog</a> &nbsp;|&nbsp;
+  <a href="https://www.reddit.com/r/massCode/">Community</a>
 </p>
 
 <p align="center">
@@ -263,6 +264,7 @@ pnpm dev
 
 - News and updates on [X](https://x.com/anton_reshetov)
 - [Discussions](https://github.com/massCodeIO/massCode/discussions)
+- [Reddit · r/massCode](https://www.reddit.com/r/massCode/)
 
 ![](.github/assets/subscribe.gif)
 

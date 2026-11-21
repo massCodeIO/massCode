@@ -1,6 +1,15 @@
 import type { RewriteRule } from '../types'
 import { knownUnitTokens, TIME_UNIT_TOKEN_MAP } from '../constants'
 
+const decimalCommaTokens = new RegExp(
+  [
+    String.raw`"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'`,
+    String.raw`(?<![\p{L}\p{N}_$])[\p{L}_$][\p{L}\p{N}_$]*\s*\(|[[\]{}()]`,
+    String.raw`(?<![\w.])(\d{1,3}(?:\.\d{3})+|\d+),(\d+)(?=\b|[a-z%])`,
+  ].join('|'),
+  'giu',
+)
+
 function getDecimalSeparator(locale: string): string {
   return (
     new Intl.NumberFormat(locale)
@@ -32,17 +41,47 @@ export const decimalCommaNumbers: RewriteRule = {
   category: 'normalize',
   priority: 110,
   apply: (ctx) => {
-    if (getDecimalSeparator(ctx.locale) !== ',') {
+    if (!/\d,\d/.test(ctx.line)) {
       return null
     }
 
-    const line = ctx.line
-      .replace(
-        /\b(\d{1,3}(?:\.\d{3})+),(\d+)(?=\b|[a-z%])/gi,
-        (_, integer: string, fraction: string) =>
-          `${integer.replace(/\./g, '')}.${fraction}`,
-      )
-      .replace(/(?<![\w.])(\d+),(\d+)(?=\b|[a-z%])/gi, '$1.$2')
+    const preferDecimalComma = getDecimalSeparator(ctx.locale) === ','
+    // A comma can delimit arguments or array elements inside these containers.
+    const commaSeparators: boolean[] = []
+    const line = ctx.line.replace(
+      decimalCommaTokens,
+      (
+        token,
+        integer: string | undefined,
+        fraction: string | undefined,
+        offset: number,
+      ) => {
+        if (token.endsWith('(') || token === '[' || token === '{') {
+          const followsIndex
+            = token === '(' && /\]\s*$/.test(ctx.line.slice(0, offset))
+          commaSeparators.push(token !== '(' || followsIndex)
+        }
+        else if (token === ')' || token === ']' || token === '}') {
+          commaSeparators.pop()
+        }
+        else if (integer && fraction) {
+          const adjacentPunctuation
+            = ctx.line[offset - 1] === ','
+              || /[.,]/.test(ctx.line[offset + token.length] ?? '')
+          const couldBeGroupedInteger
+            = fraction.length === 3 && /^[1-9]\d{0,2}$/.test(integer)
+          const isUnambiguousDecimal
+            = !commaSeparators.at(-1)
+              && !adjacentPunctuation
+              && !couldBeGroupedInteger
+
+          if (preferDecimalComma || isUnambiguousDecimal) {
+            return `${integer.replace(/\./g, '')}.${fraction}`
+          }
+        }
+        return token
+      },
+    )
 
     if (line === ctx.line)
       return null

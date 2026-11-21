@@ -68,6 +68,47 @@ describe('arithmetic', () => {
   })
 })
 
+describe('localized math input', () => {
+  it.each(['en-US', 'es-ES'])(
+    'evaluates decimal commas and percent of with %s formatting',
+    (locale) => {
+      setFormatSettings(locale, 6, 'numeric')
+
+      const results = evalLines(
+        ['2,50 + 1,25', '1500,75 * 2', '1.234,56 + 1', '10 % de 200'].join(
+          '\n',
+        ),
+      )
+
+      expect(results.map(result => result.numericValue)).toEqual([
+        3.75,
+        3001.5,
+        1235.56,
+        20,
+      ])
+      expect(results[0].value).toBe(locale === 'en-US' ? '3.75' : '3,75')
+    },
+  )
+
+  it('uses the configured locale when a comma could group three digits', () => {
+    expect(evalLine('1,234 + 1').value).toBeNull()
+    expectValue('0,125 + 1', '1.125')
+
+    setFormatSettings('es-ES', 6, 'numeric')
+    expectValue('1,234 + 1', '2,234')
+  })
+
+  it('preserves argument and array separators in mixed expressions', () => {
+    expectValue('max(2,3) + (1,25 * 2)', '5.5')
+    expectValue('max([2,3]) + 1,25', '4.25')
+  })
+
+  it('preserves decimal commas inside function arguments in comma-decimal locales', () => {
+    setFormatSettings('es-ES', 6, 'numeric')
+    expectValue('log(0,5,2)', '-1')
+  })
+})
+
 describe('locale-aware full slash dates', () => {
   it('uses mdy parsing for en-US', () => {
     setFormatSettings('en-US', 6, 'numeric')
@@ -247,6 +288,9 @@ describe('percentage basic', () => {
   it('X + Y%', () => expectNumericClose('100 + 15%', 115))
   it('X - Y%', () => expectNumericClose('200 - 10%', 180))
   it('Y% of X', () => expectNumericClose('15% of 200', 30))
+  it('allows a space before the percent sign', () =>
+    expectValue('15 % of 200', '30'))
+  it('keeps modulo with the percent operator', () => expectValue('5 % 2', '1'))
 })
 
 describe('percentage advanced', () => {

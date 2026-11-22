@@ -13,10 +13,9 @@ import { createLineFormatter } from './math-engine/pipeline/format'
 
 export type { LineResult } from './math-engine/types'
 
-let activeCurrencyRates: Record<string, number> = {}
 let currencyServiceState: CurrencyServiceState = 'loading'
 let currencyUnavailableMessage = ''
-let math = createMathInstance(activeCurrencyRates)
+let math = createMathInstance(null)
 
 let activeLocale = 'en-US'
 let activeDecimalPlaces = 6
@@ -95,10 +94,14 @@ export function useMathEngine() {
           })
         }
       }
-      catch (error: any) {
+      catch (error) {
         results.push({
           value: null,
-          error: error.message || 'Error',
+          error: error instanceof Error ? error.message : String(error),
+          showError:
+            classification.features.hasAssignment
+            || /^(?:[+-]?(?:\d|\.\d)|[a-z_]\w*\s*\()/i.test(view.expression)
+            || /[+*/^%]|\s-\s/.test(view.expression),
           type: 'empty',
         })
         prevResult = undefined
@@ -112,8 +115,7 @@ export function useMathEngine() {
   function updateCurrencyRates(rates: Record<string, number>) {
     currencyServiceState = 'ready'
     currencyUnavailableMessage = ''
-    activeCurrencyRates = { ...rates }
-    math = createMathInstance(activeCurrencyRates)
+    math = createMathInstance(rates)
   }
 
   function setCurrencyServiceState(
@@ -122,10 +124,8 @@ export function useMathEngine() {
   ) {
     currencyServiceState = state
     currencyUnavailableMessage = state === 'unavailable' ? errorMessage : ''
-    if (state !== 'ready') {
-      activeCurrencyRates = {}
-      math = createMathInstance(activeCurrencyRates)
-    }
+    if (state !== 'ready')
+      math = createMathInstance(null)
   }
 
   function setFormatSettings(

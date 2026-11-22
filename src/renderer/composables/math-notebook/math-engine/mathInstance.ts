@@ -1,4 +1,5 @@
 import { all, create } from 'mathjs'
+import { SUPPORTED_CURRENCY_CODES } from './constants'
 
 function createUnitSafe(
   mathInstance: ReturnType<typeof create>,
@@ -13,7 +14,9 @@ function createUnitSafe(
   }
 }
 
-export function createMathInstance(currencyRates: Record<string, number>) {
+export function createMathInstance(
+  currencyRates: Record<string, number> | null,
+) {
   const mathInstance = create(all, {
     number: 'number',
     precision: 14,
@@ -171,6 +174,16 @@ export function createMathInstance(currencyRates: Record<string, number>) {
     definition: '1 frame/second',
     aliases: [],
   })
+
+  // Without rates, each currency has its own base unit. Local arithmetic
+  // still works, and converting between currencies cannot invent a rate.
+  if (!currencyRates) {
+    for (const code of SUPPORTED_CURRENCY_CODES) {
+      if (code !== 'USD')
+        createUnitSafe(mathInstance, code, { aliases: [code.toLowerCase()] })
+    }
+    return mathInstance
+  }
 
   for (const [code, rate] of Object.entries(currencyRates)) {
     if (code === 'USD')

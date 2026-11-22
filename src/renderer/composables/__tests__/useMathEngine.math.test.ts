@@ -101,11 +101,26 @@ describe('localized math input', () => {
   it('preserves argument and array separators in mixed expressions', () => {
     expectValue('max(2,3) + (1,25 * 2)', '5.5')
     expectValue('max([2,3]) + 1,25', '4.25')
+
+    setFormatSettings('es-ES', 6, 'numeric')
+    expectValue('max(2,3) + (1,25 * 2)', '5,5')
+    expectValue('max([2,3]) + 1,25', '4,25')
+    expectValue('max(2,3.5)', '3,5')
+    expectValue('max([2,3.5])', '3,5')
+    expectValue('pow(2,3)', '8')
+    expectValue('log(8,2)', '3')
   })
 
   it('preserves decimal commas inside function arguments in comma-decimal locales', () => {
     setFormatSettings('es-ES', 6, 'numeric')
     expectValue('log(0,5,2)', '-1')
+    expectValue('sqrt(2,25)', '1,5')
+    expectValue('max((1,25), 1)', '1,25')
+  })
+
+  it('accepts a grouped decimal copied from an en-US result', () => {
+    expectValue('3,001.5 + 1', '3,002.5')
+    expectValue('max(2,345.6)', '345.6')
   })
 })
 
@@ -273,10 +288,9 @@ describe('math functions', () => {
   it('sin(45 deg)', () => expectNumericClose('sin(45 deg)', 0.7071))
   it('sin 45°', () => expectNumericClose('sin 45°', 0.7071))
   it('cos(pi)', () => expectNumericClose('cos(pi)', -1))
-  it('log(100)', () => {
-    const result = evalLine('log(100)')
-    expect(result.error).toBeNull()
-    expect(result.value).not.toBeNull()
+  it('uses the natural logarithm unless a base is specified', () => {
+    expectValue('log(100)', '4.60517')
+    expectValue('log(100, 10)', '2')
   })
   it('ln(e)', () => expectNumericClose('ln(e)', 1))
   it('round(1 month in days)', () =>
@@ -291,6 +305,10 @@ describe('percentage basic', () => {
   it('allows a space before the percent sign', () =>
     expectValue('15 % of 200', '30'))
   it('keeps modulo with the percent operator', () => expectValue('5 % 2', '1'))
+  it.each(['200 + 10%3', '200 + 10% 3', '200 + 10 % 3', '200 + 10%(3)'])(
+    'does not rewrite modulo as a percentage increase in %s',
+    expression => expectValue(expression, '201'),
+  )
 })
 
 describe('percentage advanced', () => {

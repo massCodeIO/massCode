@@ -86,7 +86,8 @@ describe('hTTP runtime editor state', () => {
       const { registerLifecycleListener } = await import(
         '@/ipc/listeners/lifecycle'
       )
-      registerLifecycleListener()
+      const flushMathWrites = vi.fn(async () => {})
+      registerLifecycleListener(flushMathWrites)
       const listener = on.mock.calls[0]![1]
       if (choice === 'failed-save')
         saveCurrentRequest.mockResolvedValueOnce(false)
@@ -109,6 +110,9 @@ describe('hTTP runtime editor state', () => {
         )
       }
       await pending
+      expect(flushMathWrites).toHaveBeenCalledTimes(
+        choice === 'save' || choice === 'discard' ? 1 : 0,
+      )
       expect(send).toHaveBeenCalledWith('system:confirm-leave-result', {
         id: 42,
         allowed: choice === 'save' || choice === 'discard',

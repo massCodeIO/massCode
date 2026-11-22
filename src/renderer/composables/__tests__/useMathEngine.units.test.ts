@@ -123,6 +123,11 @@ describe('unit conversion', () => {
     expect(result.type).toBe('unit')
     expectNumericClose('100 km/h to mph', 62.14, 1)
   })
+
+  it('converts speed multiplied by time to distance', () => {
+    expect(evalLine('5 km/h * 2 hours').value).toBe('10 km')
+    expect(evalLine('2 hours * 5 mph').value).toBe('10 mile')
+  })
   it('10 knots to km/h', () => {
     expectNumericClose('10 knots to kmh', 18.52, 1)
   })

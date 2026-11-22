@@ -250,7 +250,7 @@ describe('timespans and laptimes', () => {
 describe('video timecode', () => {
   it('30 fps * 3 minutes', () => {
     const result = evalLine('30 fps * 3 minutes')
-    expect(result.type).toBe('unit')
+    expect(result).toMatchObject({ type: 'unit', value: '5,400 frames' })
   })
 
   it('timecode to frames: 00:30:10:00 @ 24 fps', () => {

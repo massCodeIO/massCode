@@ -43,7 +43,11 @@ const {
 } = useSnippets()
 const { hasBusyContentUpdates } = useSnippetUpdate()
 const { shouldSkipStorageSyncRefresh } = useStorageMutation()
-const { reloadFromDisk: reloadMathFromDisk } = useMathNotebook()
+const {
+  reloadFromDisk: reloadMathFromDisk,
+  markStale: markMathStale,
+  flushPendingWrites: flushMathWrites,
+} = useMathNotebook()
 const {
   reloadFromDisk: reloadDrawingsFromDisk,
   hasBusyDrawingUpdates,
@@ -103,6 +107,8 @@ async function refreshAfterStorageSync() {
   isNotesSpaceInitialized.value = false
   isHttpSpaceInitialized.value = false
   markDrawingsStale()
+  if (activeSpace !== 'math')
+    markMathStale()
 
   switch (activeSpace) {
     case 'math':
@@ -179,7 +185,7 @@ function scheduleStorageSyncRefresh(delayOverride?: number) {
 }
 
 export function registerSystemListeners() {
-  registerLifecycleListener()
+  registerLifecycleListener(flushMathWrites)
   ipc.on('system:deep-link', async (_, url: string) => {
     try {
       await handleDeepLink(url)

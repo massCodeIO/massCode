@@ -106,7 +106,10 @@ function openDocumentation() {
             <LoaderCircle class="h-3.5 w-3.5 animate-spin" />
           </template>
           <template v-else-if="result.error && result.showError">
-            <span class="truncate">
+            <span
+              class="truncate"
+              :title="result.error"
+            >
               {{ result.error }}
             </span>
           </template>

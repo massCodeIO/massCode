@@ -106,8 +106,11 @@ export function scheduleStateFlush(
   options?: { immediate?: boolean },
 ): void {
   const pendingContent = pendingStateWriteByPath.get(statePath)
-  if (pendingContent === content)
+  if (pendingContent === content) {
+    if (options?.immediate)
+      flushPath(statePath)
     return
+  }
 
   const persistedContent = getPersistedContent(statePath)
   if (persistedContent === content && pendingContent === undefined)

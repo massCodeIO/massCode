@@ -1,11 +1,10 @@
-import type { MathSheet } from '~/main/store/types'
+import type { MathNotebookChange, MathSheet } from '~/main/store/types'
 import { useDonations } from '@/composables/useDonations'
 import {
   markPersistedStorageMutation,
   markUserEdit,
 } from '@/composables/useStorageMutation'
 import { i18n, ipc } from '@/electron'
-import { useDebounceFn } from '@vueuse/core'
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -62,22 +61,69 @@ function clearCloudRetryTimer() {
   }
 }
 
-function persist() {
-  if (!hasAuthoritativeState) {
-    return
-  }
+let pendingChanges: MathNotebookChange[] = []
+let saveTimer: ReturnType<typeof setTimeout> | undefined
+let writing: Promise<void> | undefined
+let revision = 0
 
-  markPersistedStorageMutation()
-  ipc.invoke('spaces:math:write', {
-    sheets: JSON.parse(JSON.stringify(sheets.value)),
-    activeSheetId: activeSheetId.value,
-  })
+async function writePendingChanges() {
+  while (pendingChanges.length) {
+    const changes = pendingChanges
+    pendingChanges = []
+    try {
+      await ipc.invoke('spaces:math:write', changes)
+      markPersistedStorageMutation()
+    }
+    catch (error) {
+      pendingChanges = [...changes, ...pendingChanges]
+      throw error
+    }
+  }
 }
 
-const debouncedPersist = useDebounceFn(persist, 500)
+function flushPendingWrites(): Promise<void> {
+  clearTimeout(saveTimer)
+  writing ??= writePendingChanges().finally(() => {
+    writing = undefined
+  })
+  return writing
+}
+
+function persist(changes: MathNotebookChange[], debounce = false) {
+  if (!hasAuthoritativeState)
+    return
+
+  revision++
+  const previous = pendingChanges.at(-1)
+  const next = changes[0]
+  if (
+    debounce
+    && previous?.type === 'edit'
+    && next.type === 'edit'
+    && previous.id === next.id
+    && previous.fields.content !== undefined
+  ) {
+    pendingChanges.pop()
+  }
+  pendingChanges.push(...changes)
+  const flush = () => {
+    void flushPendingWrites().catch(console.error)
+  }
+  if (debounce) {
+    clearTimeout(saveTimer)
+    saveTimer = setTimeout(flush, 500)
+  }
+  else {
+    flush()
+  }
+}
 
 async function loadFromDisk() {
+  await flushPendingWrites()
+  const pendingRevision = revision
   const data = await ipc.invoke('spaces:math:read', null)
+  if (pendingRevision !== revision)
+    return
 
   // .state.yaml ещё не докачан из облака: ретраим чтение, пока main не
   // отдаст настоящий state (докачка уже поставлена в очередь).
@@ -100,6 +146,9 @@ async function loadFromDisk() {
 
 function resetMathNotebook() {
   clearCloudRetryTimer()
+  clearTimeout(saveTimer)
+  pendingChanges = []
+  revision++
   sheets.value = []
   activeSheetId.value = null
   initialized = false
@@ -120,6 +169,10 @@ export function useMathNotebook() {
 
   async function reloadFromDisk() {
     await loadFromDisk()
+  }
+
+  function markStale() {
+    initialized = false
   }
 
   function createSheet() {
@@ -143,7 +196,10 @@ export function useMathNotebook() {
     }
     sheets.value = [...sheets.value, sheet]
     activeSheetId.value = sheet.id
-    persist()
+    persist([
+      { type: 'create', sheet },
+      { type: 'select', id: sheet.id },
+    ])
 
     useDonations().incrementCreated('math')
 
@@ -159,11 +215,13 @@ export function useMathNotebook() {
     next.splice(index, 1)
     sheets.value = next
 
+    const changes: MathNotebookChange[] = [{ type: 'delete', id }]
     if (activeSheetId.value === id) {
       activeSheetId.value
         = next.length > 0 ? next[Math.min(index, next.length - 1)].id : null
+      changes.push({ type: 'select', id: activeSheetId.value })
     }
-    persist()
+    persist(changes)
   }
 
   function updateSheet(id: string, content: string) {
@@ -172,13 +230,16 @@ export function useMathNotebook() {
       markUserEdit()
       sheet.content = content
       sheet.updatedAt = Date.now()
-      debouncedPersist()
+      persist(
+        [{ type: 'edit', id, fields: { content, updatedAt: sheet.updatedAt } }],
+        true,
+      )
     }
   }
 
   function selectSheet(id: string) {
     activeSheetId.value = id
-    persist()
+    persist([{ type: 'select', id }])
   }
 
   function renameSheet(id: string, name: string) {
@@ -186,7 +247,9 @@ export function useMathNotebook() {
     if (sheet) {
       sheet.name = name
       sheet.updatedAt = Date.now()
-      persist()
+      persist([
+        { type: 'edit', id, fields: { name, updatedAt: sheet.updatedAt } },
+      ])
     }
   }
 
@@ -197,6 +260,8 @@ export function useMathNotebook() {
     isCloudSyncing,
     init,
     reloadFromDisk,
+    flushPendingWrites,
+    markStale,
     reset: resetMathNotebook,
     createSheet,
     deleteSheet,

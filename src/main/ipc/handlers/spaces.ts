@@ -1,4 +1,4 @@
-import type { MathNotebookStore } from '../../store/types'
+import type { MathNotebookChange, MathNotebookStore } from '../../store/types'
 import { ipcMain } from 'electron'
 import {
   createDrawing,
@@ -10,7 +10,6 @@ import {
   writeDrawing,
 } from '../../storage/providers/markdown/drawings'
 import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
-import { getFileAvailability } from '../../storage/providers/markdown/runtime/shared/cloudFiles'
 import { isCloudFileNotDownloadedError } from '../../storage/providers/markdown/runtime/shared/guardedRead'
 import {
   ensureSpaceDirectory,
@@ -18,7 +17,7 @@ import {
 } from '../../storage/providers/markdown/runtime/spaces'
 import {
   readSpaceState,
-  writeSpaceState,
+  writeSpaceStateImmediate,
 } from '../../storage/providers/markdown/runtime/spaceState'
 import { store } from '../../store'
 
@@ -26,6 +25,24 @@ import { store } from '../../store'
 // пустой store с флагом pending и ретраит чтение после докачки.
 interface MathNotebookReadResult extends MathNotebookStore {
   pending?: boolean
+}
+
+function readMathState(statePath: string): MathNotebookStore {
+  const state = readSpaceState<MathNotebookStore>(statePath, { fresh: true })
+  if (state) {
+    return {
+      sheets: Array.isArray(state.sheets) ? state.sheets : [],
+      activeSheetId: state.activeSheetId ?? null,
+    }
+  }
+
+  const legacy = {
+    sheets: store.mathNotebook.get('sheets') ?? [],
+    activeSheetId: store.mathNotebook.get('activeSheetId') ?? null,
+  }
+  if (legacy.sheets.length)
+    writeSpaceStateImmediate(statePath, legacy)
+  return legacy
 }
 
 export function registerSpacesHandlers() {
@@ -41,9 +58,8 @@ export function registerSpacesHandlers() {
     ensureSpaceDirectory(vaultPath, 'math')
     const statePath = getSpaceStatePath(vaultPath, 'math')
 
-    let state: MathNotebookStore | null
     try {
-      state = readSpaceState<MathNotebookStore>(statePath)
+      return readMathState(statePath)
     }
     catch (error) {
       if (!isCloudFileNotDownloadedError(error)) {
@@ -58,43 +74,40 @@ export function registerSpacesHandlers() {
         pending: true,
       } satisfies MathNotebookReadResult
     }
-
-    if (state) {
-      return {
-        sheets: Array.isArray(state.sheets) ? state.sheets : [],
-        activeSheetId: state.activeSheetId ?? null,
-      } satisfies MathNotebookStore
-    }
-
-    const legacy: MathNotebookStore = {
-      sheets: store.mathNotebook.get('sheets') ?? [],
-      activeSheetId: store.mathNotebook.get('activeSheetId') ?? null,
-    }
-
-    if (legacy.sheets.length > 0) {
-      writeSpaceState(statePath, legacy)
-    }
-
-    return legacy
   })
 
-  ipcMain.handle('spaces:math:write', (_, data: MathNotebookStore) => {
+  ipcMain.handle('spaces:math:write', (_, changes: MathNotebookChange[]) => {
     const vaultPath = getVaultPath()
-    if (!vaultPath) {
-      return
-    }
 
     ensureSpaceDirectory(vaultPath, 'math')
     const statePath = getSpaceStatePath(vaultPath, 'math')
+    const state = readMathState(statePath)
 
-    // Запись поверх недокачанного .state.yaml уничтожила бы облачную
-    // версию: до докачки писать некуда, renderer и так блокирует persist
-    // до первого успешного чтения.
-    if (getFileAvailability(statePath).isCloudPlaceholder) {
-      return
+    for (const change of changes) {
+      switch (change.type) {
+        case 'create':
+          if (!state.sheets.some(sheet => sheet.id === change.sheet.id))
+            state.sheets.push(change.sheet)
+          break
+        case 'edit': {
+          const sheet = state.sheets.find(sheet => sheet.id === change.id)
+          if (sheet)
+            Object.assign(sheet, change.fields)
+          break
+        }
+        case 'delete':
+          state.sheets = state.sheets.filter(sheet => sheet.id !== change.id)
+          break
+        case 'select':
+          state.activeSheetId = change.id
+          break
+      }
     }
 
-    writeSpaceState(statePath, data)
+    if (!state.sheets.some(sheet => sheet.id === state.activeSheetId))
+      state.activeSheetId = state.sheets[0]?.id ?? null
+
+    writeSpaceStateImmediate(statePath, state)
   })
 
   ipcMain.handle('spaces:drawings:list', () => {

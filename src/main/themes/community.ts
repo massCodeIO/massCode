@@ -558,8 +558,15 @@ export function createCommunityThemesService(deps: CommunityThemesServiceDeps) {
     return items
   }
 
-  async function fetchRemoteRegistry(): Promise<CommunityThemesCache> {
-    const response = await deps.fetchFn(deps.registryUrl, {
+  async function fetchRemoteRegistry(
+    bustCdnCache = false,
+  ): Promise<CommunityThemesCache> {
+    const url = bustCdnCache
+      ? `${deps.registryUrl}${deps.registryUrl.includes('?') ? '&' : '?'}t=${deps.now()}`
+      : deps.registryUrl
+
+    const response = await deps.fetchFn(url, {
+      cache: 'no-store',
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     })
 
@@ -601,7 +608,7 @@ export function createCommunityThemesService(deps: CommunityThemesServiceDeps) {
     }
 
     try {
-      const fresh = await fetchRemoteRegistry()
+      const fresh = await fetchRemoteRegistry(Boolean(options.forceRefresh))
 
       return {
         items: buildCatalogItems(fresh.themes, installed, true),

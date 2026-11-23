@@ -102,7 +102,7 @@ describe('community themes end-to-end flow (install A -> switch B -> update A ->
       now: () => 1_700_000_000_000,
       fetchFn: vi.fn<typeof fetch>(async (input) => {
         const url = String(input)
-        if (url.endsWith('/registry.json')) {
+        if (url.includes('/registry.json')) {
           const commit = registryVersion === 1 ? COMMIT_V1 : COMMIT_V2
           const shaA = registryVersion === 1 ? SHA_A_V1 : SHA_A_V2
           return new Response(

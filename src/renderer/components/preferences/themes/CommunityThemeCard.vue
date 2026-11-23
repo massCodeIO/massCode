@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/shadcn/button'
 import * as Tooltip from '@/components/ui/shadcn/tooltip'
 import { i18n, ipc } from '@/electron'
 import {
-  ArrowUpCircle,
   Check,
   Download,
   ExternalLink,
   Loader2,
   Paintbrush,
+  RefreshCw,
   Trash2,
 } from 'lucide-vue-next'
 
@@ -259,65 +259,80 @@ async function openThemeSource() {
 
       <!-- Actions -->
       <div class="flex items-center justify-between gap-2">
-        <div class="flex items-center gap-1.5">
+        <div class="flex min-w-0 items-center">
           <Button
             v-if="!isInstalled && item.registry"
             size="sm"
             variant="outline"
+            class="max-w-full"
             :disabled="busy"
             @click="emit('install', item)"
           >
             <Loader2
               v-if="busy"
-              class="mr-1 h-3.5 w-3.5 animate-spin"
+              class="mr-1 h-3.5 w-3.5 shrink-0 animate-spin"
             />
             <Download
               v-else
-              class="mr-1 h-3.5 w-3.5"
+              class="mr-1 h-3.5 w-3.5 shrink-0"
             />
-            {{ i18n.t("preferences:appearance.community.install") }}
+            <span class="truncate">
+              {{ i18n.t("preferences:appearance.community.install") }}
+            </span>
           </Button>
 
           <template v-else-if="isInstalled">
             <span
               v-if="isActive"
-              class="border-primary/30 bg-primary/15 text-primary inline-flex h-7 items-center gap-1.5 rounded-md border px-3 text-xs font-medium"
+              class="border-primary/30 bg-primary/15 text-primary inline-flex h-7 max-w-full items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium"
             >
-              <Check class="h-3.5 w-3.5" />
-              {{ i18n.t("preferences:appearance.community.active") }}
+              <Check class="h-3.5 w-3.5 shrink-0" />
+              <span class="truncate">
+                {{ i18n.t("preferences:appearance.community.active") }}
+              </span>
             </span>
             <Button
               v-else
               size="sm"
               variant="outline"
+              class="max-w-full"
               :disabled="busy"
               @click="emit('apply', item.id)"
             >
-              <Paintbrush class="mr-1 h-3.5 w-3.5" />
-              {{ i18n.t("preferences:appearance.community.apply") }}
-            </Button>
-
-            <Button
-              v-if="hasUpdate"
-              size="sm"
-              variant="default"
-              :disabled="busy"
-              @click="emit('update', item)"
-            >
-              <Loader2
-                v-if="busy"
-                class="mr-1 h-3.5 w-3.5 animate-spin"
-              />
-              <ArrowUpCircle
-                v-else
-                class="mr-1 h-3.5 w-3.5"
-              />
-              {{ i18n.t("preferences:appearance.community.update") }}
+              <Paintbrush class="mr-1 h-3.5 w-3.5 shrink-0" />
+              <span class="truncate">
+                {{ i18n.t("preferences:appearance.community.apply") }}
+              </span>
             </Button>
           </template>
         </div>
 
-        <div class="flex items-center gap-0.5">
+        <div class="flex shrink-0 items-center gap-1">
+          <Tooltip.TooltipProvider v-if="hasUpdate">
+            <Tooltip.Tooltip>
+              <Tooltip.TooltipTrigger as-child>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  class="text-primary hover:bg-primary/15 hover:text-primary h-7 w-7"
+                  :disabled="busy"
+                  :aria-label="
+                    i18n.t('preferences:appearance.community.update')
+                  "
+                  @click="emit('update', item)"
+                >
+                  <RefreshCw
+                    class="h-3.5 w-3.5"
+                    :class="{ 'animate-spin': busy }"
+                  />
+                </Button>
+              </Tooltip.TooltipTrigger>
+              <Tooltip.TooltipContent>
+                {{ i18n.t("preferences:appearance.community.update") }}
+              </Tooltip.TooltipContent>
+            </Tooltip.Tooltip>
+          </Tooltip.TooltipProvider>
+
           <Tooltip.TooltipProvider v-if="themeSourceUrl">
             <Tooltip.Tooltip>
               <Tooltip.TooltipTrigger as-child>

@@ -1,4 +1,9 @@
-import type { EvaluateClassifiedLineOptions, MathDeps } from './evaluateTypes'
+import type {
+  EvaluateClassifiedLineOptions,
+  EvaluatedLine,
+  MathDeps,
+} from './evaluateTypes'
+import { SUPPORTED_CURRENCY_CODES } from '../constants'
 import {
   evaluateBlockAggregate,
   evaluateInlineAggregate,
@@ -13,6 +18,11 @@ import {
 import { evaluateMathPath } from './evaluateMath'
 import { evaluatePrimaryIntent } from './evaluateRoutes'
 import { rewrite } from './rewrite'
+
+const currencyCodePattern = new RegExp(
+  `\\b(?:${SUPPORTED_CURRENCY_CODES.join('|')})\\b`,
+  'gi',
+)
 
 export function evaluateClassifiedLine(
   options: EvaluateClassifiedLineOptions,
@@ -89,7 +99,23 @@ export function evaluateClassifiedLine(
     }
   }
 
-  if (currencyServiceState !== 'ready' && classification.features.hasCurrency) {
+  const effectiveTrimmed = stripModifierSuffix(trimmed, classification)
+  const effectiveView = analysisNormalize(effectiveTrimmed)
+  const strippedView = {
+    ...view,
+    expression: stripModifierSuffix(view.expression, classification),
+  }
+  const processed = rewrite(strippedView, classification, activeLocale)
+
+  const currencyCodes
+    = currencyServiceState !== 'ready' && classification.features.hasCurrency
+      ? new Set(
+        processed
+          .match(currencyCodePattern)
+          ?.map(code => code.toUpperCase()),
+      )
+      : null
+  if (currencyCodes && currencyCodes.size > 1) {
     return {
       lineResult:
         currencyServiceState === 'loading'
@@ -104,9 +130,6 @@ export function evaluateClassifiedLine(
       resetPrev: true,
     }
   }
-
-  const effectiveTrimmed = stripModifierSuffix(trimmed, classification)
-  const effectiveView = analysisNormalize(effectiveTrimmed)
 
   if (
     hasUnsupportedModifierCombination(classification, effectiveView.normalized)
@@ -124,14 +147,14 @@ export function evaluateClassifiedLine(
   }
 
   if (hasAnyModifier(classification)) {
-    let processed = rewrite(effectiveView, classification, activeLocale)
-    if (processed.toLowerCase().endsWith('to multiplier')) {
-      processed = processed
-        .slice(0, processed.length - 'to multiplier'.length)
+    let modifierExpression = processed
+    if (modifierExpression.toLowerCase().endsWith('to multiplier')) {
+      modifierExpression = modifierExpression
+        .slice(0, modifierExpression.length - 'to multiplier'.length)
         .trim()
     }
 
-    const result = math.evaluate(processed, scope)
+    const result = math.evaluate(modifierExpression, scope)
     if (result !== undefined) {
       if (classification.modifiers.rounding) {
         const numericValue = getNumericValue(result)
@@ -173,12 +196,6 @@ export function evaluateClassifiedLine(
       }
     }
   }
-
-  const strippedView = {
-    ...view,
-    expression: stripModifierSuffix(view.expression, classification),
-  }
-  const processed = rewrite(strippedView, classification, activeLocale)
 
   const routedResult = evaluatePrimaryIntent(
     classification,

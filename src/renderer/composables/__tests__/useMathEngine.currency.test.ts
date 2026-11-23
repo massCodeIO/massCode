@@ -41,6 +41,20 @@ describe('currency', () => {
     expect(result.value).toContain('lb')
   })
 
+  it('evaluates same-currency arithmetic and an explicit rate without live rates', () => {
+    setCurrencyServiceState(
+      'unavailable',
+      'Currency rates service unavailable',
+    )
+    expect(evalLine('$30 + $15').value).toBe('45 USD')
+    expect(evalLine('30 EUR + 15 EUR').value).toBe('45 EUR')
+    expect(evalLine('50 EUR in USD at 1.05 USD/EUR').value).toBe('52.5 USD')
+    expect(evalLine('50 USD in EUR at 0.9 EUR/USD').value).toBe('45 EUR')
+    expect(evalLine('$30 + €15').error).toBe(
+      'Currency rates service unavailable',
+    )
+  })
+
   it('$ symbol', () => {
     const result = evalLine('$30')
     expect(result.type).toBe('unit')

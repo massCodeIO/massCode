@@ -319,6 +319,17 @@ export interface MathNotebookStore {
   activeSheetId: string | null
 }
 
+export type MathNotebookChange =
+  | { type: 'create', sheet: MathSheet }
+  | {
+    type: 'edit'
+    id: string
+    fields: Partial<Pick<MathSheet, 'content' | 'name'>> &
+      Pick<MathSheet, 'updatedAt'>
+  }
+  | { type: 'delete', id: string }
+  | { type: 'select', id: string | null }
+
 export interface CurrencyRatesCache {
   rates: Record<string, number>
   fetchedAt: number

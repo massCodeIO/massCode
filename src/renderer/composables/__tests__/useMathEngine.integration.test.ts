@@ -376,6 +376,16 @@ describe('error handling', () => {
     const result = evalLine('hello world')
     expect(result.error).not.toBeNull()
     expect(result.type).toBe('empty')
+    expect(result.showError).toBe(false)
+  })
+
+  it('shows calculation errors without affecting the next line', () => {
+    const results = evalLines('2+*3\n2 km + 3 s\n2 + 2')
+    expect(results.slice(0, 2).map(result => result.showError)).toEqual([
+      true,
+      true,
+    ])
+    expect(results[2].value).toBe('4')
   })
 
   it('division by zero', () => {

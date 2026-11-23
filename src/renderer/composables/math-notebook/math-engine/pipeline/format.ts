@@ -55,6 +55,12 @@ interface CreateLineFormatterOptions {
   dateFormat: DateFormatStyle
 }
 
+const distanceOrFrameUnit: Record<string, string> = {
+  fps: 'frame',
+  kmh: 'km',
+  mph: 'mile',
+}
+
 export function createLineFormatter(options: CreateLineFormatterOptions) {
   const { math, locale, decimalPlaces, dateFormat } = options
 
@@ -127,29 +133,29 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
           prefix: { value: number }
           power: number
         }>
-        const currencyUnit = units.find(
-          u =>
-            u.unit.base?.key?.includes('STUFF')
-            || SUPPORTED_CURRENCY_CODES.includes(u.unit.name),
-        )
         const timeUnit = units.find(u => u.unit.base?.key === 'TIME')
+        const otherUnit = units.find(u => u !== timeUnit)
+        if (timeUnit?.power === 1 && otherUnit?.power === 1) {
+          const targetUnit = distanceOrFrameUnit[otherUnit.unit.name]
+          if (targetUnit) {
+            return formatResult(
+              math.unit(result.toNumber(targetUnit), targetUnit),
+              overridePrecision,
+            )
+          }
+        }
         if (
-          currencyUnit
-          && timeUnit
-          && currencyUnit.power === 1
-          && timeUnit.power === 1
+          timeUnit?.power === 1
+          && otherUnit?.power === 1
+          && SUPPORTED_CURRENCY_CODES.includes(otherUnit.unit.name)
         ) {
           try {
             const rawValue = result.value as number
-            const currencyScale
-              = currencyUnit.unit.value * currencyUnit.prefix.value
+            const currencyScale = otherUnit.unit.value * otherUnit.prefix.value
             const timeScale = timeUnit.unit.value * timeUnit.prefix.value
             const currencyAmount
               = (rawValue / (currencyScale * timeScale)) * currencyScale
-            const simplified = math.unit(
-              currencyAmount,
-              currencyUnit.unit.name,
-            )
+            const simplified = math.unit(currencyAmount, otherUnit.unit.name)
             return {
               value: humanizeFormattedUnits(
                 math.format(simplified, {

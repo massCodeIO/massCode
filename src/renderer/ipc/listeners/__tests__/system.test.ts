@@ -65,6 +65,8 @@ async function setup(
       }),
     }),
     useMathNotebook: () => ({
+      markStale: vi.fn(),
+      flushPendingWrites: vi.fn(),
       reloadFromDisk: reloadMathFromDisk,
     }),
     useDrawings: () => ({

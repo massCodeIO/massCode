@@ -21,6 +21,8 @@ Standard math operators and parentheses.
 5 300          → 5,300
 ```
 
+Decimal commas work in expressions such as `2,50 + 1,25`. In functions and lists, commas normally separate arguments or items. In a region that uses decimal commas, wrap a decimal argument in parentheses to disambiguate it, as in `max((1,25), 1)`.
+
 ## Word Operators
 
 Use words instead of symbols.
@@ -79,9 +81,9 @@ $275 for the "Model 227"    → 275 USD
 ```
 5% on 200           → 210
 5% off 200          → 190
-50 as a % of 100    → 50%
-70 as a % on 20     → 250%
-20 as a % off 70    → 71.43%
+50 as a % of 100    → 50
+70 as a % on 20     → 250
+20 as a % off 70    → 71.428571
 5% of what is 6     → 120
 5% on what is 6     → 5.71
 5% off what is 6    → 6.32
@@ -90,11 +92,11 @@ $275 for the "Model 227"    → 275 USD
 ### Percentage change
 
 ```
-50 to 75 is what %       → 50%
-40 to 90 as %            → 125%
-180 is what % off 200    → 10%
-180 is what % on 150     → 20%
-20 is what % of 200      → 10%
+50 to 75 is what %       → 50
+40 to 90 as %            → 125
+180 is what % off 200    → 10
+180 is what % on 150     → 20
+20 is what % of 200      → 10
 ```
 
 ### Fractions & multipliers
@@ -111,8 +113,8 @@ $275 for the "Model 227"    → 275 USD
 ### Decimal/percentage conversion
 
 ```
-0.35 as %         → 35%
-20/200 as %       → 10%
+0.35 as %         → 35
+20/200 as %       → 10
 20% as dec        → 0.2
 50% to decimal    → 0.5
 ```
@@ -232,7 +234,8 @@ root 2 (8)     → 2.8284
 sin(45 deg)    → 0.7071
 sin 45°        → 0.7071
 cos(pi)        → -1
-log(100)       → 2
+log(100)       → 4.60517
+log(100, 10)   → 2
 log 2 (8)      → 3
 ln(e)          → 1
 abs(-42)       → 42
@@ -346,7 +349,7 @@ current timestamp               → (unix timestamp)
 January 1, 2020 to timestamp    → 1577836800
 fromunix(1446587186)            → 11/3/2015, ...
 1733823083000 to date           → (date)
-June 15, 2020 as iso8601        → 2020-06-15T00:00:00.000Z
+June 15, 2020 as iso8601        → 2020-06-15T00:00:00.000Z (if local time is UTC)
 2019-04-01T15:30:00 to date     → (date)
 ```
 
@@ -562,7 +565,7 @@ $999 (for iPhone)
 
 Math Notebook has configurable preferences:
 
-- **Locale** — 14 languages for number and date formatting
+- **Region** — Locale for number and date formatting
 - **Decimal places** — 0 to 14
 - **Date format** — Numeric, Short, Long
 - **Refresh buttons** for fiat and crypto exchange rates

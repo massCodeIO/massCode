@@ -144,7 +144,7 @@ describe('real-world developer document', () => {
       value: '1 day 16 hours',
     })
 
-    expect(results[36]).toMatchObject({ type: 'unit', value: '300 fps' })
+    expect(results[36]).toMatchObject({ type: 'unit', value: '18,000 frames' })
     expect(results[37]).toMatchObject({ type: 'unit', value: '43,200 frames' })
     expect(results[38]).toMatchObject({ type: 'assignment', value: '86,400' })
 

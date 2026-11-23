@@ -66,7 +66,7 @@ async function setup(results: IpcResults) {
     useHttpFolders: () => ({ getHttpFolders: loaded }),
     useHttpHistory: () => ({ getHttpHistory: loaded }),
     useHttpRequests: () => ({ getHttpRequests: loaded }),
-    useMathNotebook: () => ({ reset: vi.fn() }),
+    useMathNotebook: () => ({ reset: vi.fn(), flushPendingWrites: vi.fn() }),
     useNavigationHistory: () => ({ clearHistory }),
     useNoteFolders: () => ({ resetNoteFoldersState: vi.fn() }),
     useNotes: () => ({ clearNotesState: vi.fn(), getNotes: loaded }),

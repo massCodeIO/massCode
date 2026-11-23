@@ -96,6 +96,38 @@ describe('useMathNotebook', () => {
     notebook.updateSheet(sheetId!, '1 + 1')
 
     expect(markUserEdit).toHaveBeenCalledTimes(1)
+    await notebook.flushPendingWrites()
+  })
+
+  it('flushes the latest edit before refreshing and bypasses the debounce on exit', async () => {
+    const { useMathNotebook } = await import(
+      '../math-notebook/useMathNotebook'
+    )
+    const notebook = useMathNotebook()
+    const storedSheet = {
+      id: 'local-sheet',
+      name: 'Local',
+      content: '1 + 1',
+      createdAt: 1,
+      updatedAt: 1,
+    }
+    invoke.mockImplementation(async (channel, changes) => {
+      if (channel === 'spaces:math:write') {
+        for (const change of changes) Object.assign(storedSheet, change.fields)
+        return
+      }
+      return { sheets: [{ ...storedSheet }], activeSheetId: storedSheet.id }
+    })
+
+    await notebook.init()
+    notebook.updateSheet(storedSheet.id, '2 + 2')
+    await notebook.reloadFromDisk()
+    expect(notebook.activeSheet.value?.content).toBe('2 + 2')
+
+    notebook.updateSheet(storedSheet.id, '3 + 3')
+    expect(storedSheet.content).toBe('2 + 2')
+    await notebook.flushPendingWrites()
+    expect(storedSheet.content).toBe('3 + 3')
   })
 
   it('retries pending cloud read and blocks persist until state is loaded', async () => {
@@ -148,10 +180,9 @@ describe('useMathNotebook', () => {
 
       // Persist снова разрешён.
       notebook.selectSheet('remote-sheet')
-      expect(invoke).toHaveBeenCalledWith(
-        'spaces:math:write',
-        expect.objectContaining({ activeSheetId: 'remote-sheet' }),
-      )
+      expect(invoke).toHaveBeenCalledWith('spaces:math:write', [
+        { type: 'select', id: 'remote-sheet' },
+      ])
     }
     finally {
       vi.useRealTimers()

@@ -1,11 +1,16 @@
 import { httpRuntimeNavigation } from '@/composables/spaces/http/runtimeNavigation'
 import { ipc } from '@/electron'
 
-export function registerLifecycleListener() {
+export function registerLifecycleListener(
+  flushMathWrites: () => Promise<void>,
+) {
   ipc.on('system:confirm-leave', async (_, payload: { id: number }) => {
     let allowed = false
     try {
-      allowed = await httpRuntimeNavigation.confirmLeave()
+      if (await httpRuntimeNavigation.confirmLeave()) {
+        await flushMathWrites()
+        allowed = true
+      }
     }
     catch {
       allowed = false

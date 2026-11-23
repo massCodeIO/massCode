@@ -62,7 +62,8 @@ const { getHttpFolders } = useHttpFolders()
 const { getHttpRequests } = useHttpRequests()
 const { getHttpEnvironments } = useHttpEnvironments()
 const { getHttpHistory } = useHttpHistory()
-const { reset: resetMathNotebook } = useMathNotebook()
+const { reset: resetMathNotebook, flushPendingWrites: flushMathWrites }
+  = useMathNotebook()
 const { resetDrawings } = useDrawings()
 const { resetNoteFoldersState } = useNoteFolders()
 const { clearNotesState, getNotes } = useNotes()
@@ -312,6 +313,7 @@ async function openVaultStorage(
 
   let operationCompleted = false
   try {
+    await flushMathWrites()
     const result = await ipc.invoke<
       { vaultPath: string, expectedVault: string },
       VaultPathResponse
@@ -395,6 +397,7 @@ async function moveVaultStorage(
 
   let operationCompleted = false
   try {
+    await flushMathWrites()
     const result = await ipc.invoke<
       { targetPath: string, expectedVault: string },
       VaultPathResponse

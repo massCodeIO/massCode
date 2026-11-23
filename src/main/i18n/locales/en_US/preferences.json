@@ -177,6 +177,8 @@
       "active": "Active",
       "update": "Update",
       "uninstall": "Uninstall theme",
+      "byAuthor": "by {{author}}",
+      "viewOnGithub": "View theme on GitHub",
       "delisted": "Removed from registry",
       "installedToast": "Theme \"{{name}}\" installed and applied.",
       "updatedToast": "Theme \"{{name}}\" updated.",

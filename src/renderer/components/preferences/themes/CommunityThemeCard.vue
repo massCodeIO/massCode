@@ -87,8 +87,16 @@ const themeSourceUrl = computed(() => {
     return `${REGISTRY_BLOB_BASE_URL}/${props.item.registry.file}`
   }
 
-  return props.item.authorUrl ?? null
+  return null
 })
+
+async function openAuthorUrl() {
+  if (!props.item.authorUrl) {
+    return
+  }
+
+  await ipc.invoke('system:open-external', props.item.authorUrl)
+}
 
 async function openThemeSource() {
   if (!themeSourceUrl.value) {
@@ -213,13 +221,18 @@ async function openThemeSource() {
 
         <div class="flex flex-wrap items-center gap-1.5">
           <button
-            v-if="item.author && themeSourceUrl"
+            v-if="item.author && item.authorUrl"
             type="button"
-            class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs transition-colors"
-            @click="openThemeSource"
+            class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs transition-colors hover:underline"
+            @click="openAuthorUrl"
           >
-            <span class="truncate">{{ item.author }}</span>
-            <ExternalLink class="h-3 w-3 shrink-0" />
+            <span class="truncate">
+              {{
+                i18n.t("preferences:appearance.community.byAuthor", {
+                  author: item.author,
+                })
+              }}
+            </span>
           </button>
           <UiText
             v-else-if="item.author"
@@ -227,7 +240,11 @@ async function openThemeSource() {
             muted
             class="truncate"
           >
-            {{ item.author }}
+            {{
+              i18n.t("preferences:appearance.community.byAuthor", {
+                author: item.author,
+              })
+            }}
           </UiText>
 
           <Badge
@@ -300,27 +317,50 @@ async function openThemeSource() {
           </template>
         </div>
 
-        <Tooltip.TooltipProvider v-if="isInstalled">
-          <Tooltip.Tooltip>
-            <Tooltip.TooltipTrigger as-child>
-              <Button
-                size="icon"
-                variant="ghost"
-                class="text-muted-foreground hover:text-destructive h-7 w-7"
-                :disabled="busy"
-                :aria-label="
-                  i18n.t('preferences:appearance.community.uninstall')
-                "
-                @click="emit('uninstall', item)"
-              >
-                <Trash2 class="h-3.5 w-3.5" />
-              </Button>
-            </Tooltip.TooltipTrigger>
-            <Tooltip.TooltipContent>
-              {{ i18n.t("preferences:appearance.community.uninstall") }}
-            </Tooltip.TooltipContent>
-          </Tooltip.Tooltip>
-        </Tooltip.TooltipProvider>
+        <div class="flex items-center gap-0.5">
+          <Tooltip.TooltipProvider v-if="themeSourceUrl">
+            <Tooltip.Tooltip>
+              <Tooltip.TooltipTrigger as-child>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  class="text-muted-foreground hover:text-foreground h-7 w-7"
+                  :aria-label="
+                    i18n.t('preferences:appearance.community.viewOnGithub')
+                  "
+                  @click="openThemeSource"
+                >
+                  <ExternalLink class="h-3.5 w-3.5" />
+                </Button>
+              </Tooltip.TooltipTrigger>
+              <Tooltip.TooltipContent>
+                {{ i18n.t("preferences:appearance.community.viewOnGithub") }}
+              </Tooltip.TooltipContent>
+            </Tooltip.Tooltip>
+          </Tooltip.TooltipProvider>
+
+          <Tooltip.TooltipProvider v-if="isInstalled">
+            <Tooltip.Tooltip>
+              <Tooltip.TooltipTrigger as-child>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  class="text-muted-foreground hover:text-destructive h-7 w-7"
+                  :disabled="busy"
+                  :aria-label="
+                    i18n.t('preferences:appearance.community.uninstall')
+                  "
+                  @click="emit('uninstall', item)"
+                >
+                  <Trash2 class="h-3.5 w-3.5" />
+                </Button>
+              </Tooltip.TooltipTrigger>
+              <Tooltip.TooltipContent>
+                {{ i18n.t("preferences:appearance.community.uninstall") }}
+              </Tooltip.TooltipContent>
+            </Tooltip.Tooltip>
+          </Tooltip.TooltipProvider>
+        </div>
       </div>
     </div>
   </div>

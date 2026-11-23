@@ -175,6 +175,8 @@
       "active": "Активна",
       "update": "Обновить",
       "uninstall": "Удалить тему",
+      "byAuthor": "от {{author}}",
+      "viewOnGithub": "Открыть тему на GitHub",
       "delisted": "Снята с публикации",
       "installedToast": "Тема «{{name}}» установлена и применена.",
       "updatedToast": "Тема «{{name}}» обновлена.",

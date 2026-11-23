@@ -152,7 +152,7 @@ API keys are stored with operating-system encryption outside your vault and are 
 
 For local processing, use a model running on your computer. A local server address alone does not guarantee this: Ollama can also serve cloud-backed models. massCode does not automatically switch to a cloud provider when a local server is unavailable.
 
-[MCP](/documentation/mcp) connects external AI clients to your vault. It is separate from the built-in assistant and does not need to be enabled to use it.
+[MCP](/documentation/mcp/) connects external AI clients to your vault. It is separate from the built-in assistant and does not need to be enabled to use it.
 
 ## Troubleshooting
 

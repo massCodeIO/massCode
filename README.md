@@ -10,7 +10,7 @@ A free, open-source developer workspace.
 <p align="center">
   <strong>Snippets, notes, HTTP requests, calculations, drawings, and dev tools in one local-first app.</strong>
   <br>
-  Your workspace is stored locally as plain Markdown files.
+  Stored locally as plain Markdown files. Connect your coding agent via MCP to find snippets, read linked notes, and run saved HTTP requests.
 </p>
 
 <p align="center">
@@ -23,6 +23,7 @@ A free, open-source developer workspace.
 <p align="center">
   <a href="https://github.com/massCodeIO/massCode/releases">Download</a> &nbsp;|&nbsp;
   <a href="https://masscode.io/documentation/">Documentation</a> &nbsp;|&nbsp;
+  <a href="https://masscode.io/documentation/mcp/">MCP Setup</a> &nbsp;|&nbsp;
   <a href="https://github.com/massCodeIO/massCode/blob/master/CHANGELOG.md">Changelog</a> &nbsp;|&nbsp;
   <a href="https://www.reddit.com/r/massCode/">Community</a>
 </p>
@@ -75,6 +76,17 @@ massCode is free and open source. But building and maintaining a quality tool ta
 ## About
 
 Originally a snippet manager, massCode now brings together snippets, notes, HTTP requests, calculations, drawings, and developer tools in one desktop app, so everyday work stays in one place.
+
+## Local-First Workspace for AI Agents (MCP)
+
+Connect **Claude Code**, **Cursor**, **Codex**, or **VS Code Copilot** directly to your local massCode vault through the built-in MCP server. Your coding agent gets shared local context across every repository without moving your workspace to a cloud service:
+
+- **Shared local memory across repos** — search and read snippets, Markdown notes, and their `[[wiki-links]]` directly from your agent session.
+- **Live API toolbox** — create, preview, and run saved HTTP requests with your active environment and execution history, while secret values and cookies stay stored separately from the synced vault.
+- **Capture & organize safely** — save solutions back into folders with tags, protect updates with revision checks, and rely on Trash instead of permanent deletion.
+- **100% local-first** — the MCP server listens only on `127.0.0.1`, while snippets, notes, and saved requests stay plain `.md` files on disk (Git / iCloud / Syncthing friendly).
+
+See the [MCP Quickstart](https://masscode.io/documentation/mcp/) · [MCP Workflows](https://masscode.io/documentation/mcp/workflows.html) · [MCP Reference](https://masscode.io/documentation/mcp/reference.html).
 
 ## Features
 
@@ -186,18 +198,6 @@ Ask the built-in assistant to carry out tasks across Code, Notes, and HTTP using
 - Request a preview before edits, adjust a task while it runs, and undo changes that support Undo
 
 Cloud providers receive the context used for the task; use a model running on your computer for local processing. See the [AI Assistant guide](https://masscode.io/documentation/ai/) for setup and examples.
-
-### MCP Integration
-
-Connect Claude Code, Codex, Cursor, or VS Code Copilot to your massCode vault through the built-in MCP server.
-
-- Find and read snippets, notes, and saved HTTP requests from your coding agent
-- Save snippets and notes to folders with tags, and update them with protection against overwriting newer changes
-- Organize folders, move items, and send them to Trash or restore them when you allow changes to existing items
-- Organize and edit HTTP requests in collections
-- Preview and send requests using the active massCode environment, then inspect saved execution history
-
-See the [MCP setup guide](https://masscode.io/documentation/mcp/) to connect your agent.
 
 ## Markdown Vault
 

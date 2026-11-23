@@ -449,4 +449,40 @@ describe('communityThemesService', () => {
     expect(catalog.items[0].registry).toBeUndefined()
     expect(catalog.items[0].preview?.primary).toBe('#7aa2f7')
   })
+
+  it('reconciles exact SHA-256 matches on disk into installed while keeping custom files with different SHA-256 as conflicts', async () => {
+    // Exact registry bytes on disk, but installed metadata was reset/missing
+    writeFileSync(
+      path.join(themesDir, 'tokyo-night.json'),
+      THEME_A_V1_RAW,
+      'utf8',
+    )
+    storeState.installed = {}
+
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        makeJsonResponse(
+          makeRegistry(COMMIT_V1, [makeTokyoEntry(THEME_A_V1_SHA)]),
+        ),
+      )
+    const service = createService(fetchMock)
+
+    const catalog = await service.fetchCommunityThemes()
+    expect(catalog.items[0].status).toBe('installed')
+    expect(catalog.items[0].hasLocalConflict).toBe(false)
+    expect(storeState.installed['tokyo-night']?.sha256).toBe(THEME_A_V1_SHA)
+
+    // Custom file with different SHA-256 must NOT be reconciled
+    writeFileSync(
+      path.join(themesDir, 'tokyo-night.json'),
+      '{"name":"Custom","type":"dark"}\n',
+      'utf8',
+    )
+    storeState.installed = {}
+    const catalog2 = await service.fetchCommunityThemes()
+    expect(catalog2.items[0].status).toBe('available')
+    expect(catalog2.items[0].hasLocalConflict).toBe(true)
+    expect(storeState.installed['tokyo-night']).toBeUndefined()
+  })
 })

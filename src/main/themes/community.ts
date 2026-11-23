@@ -454,12 +454,27 @@ export function createCommunityThemesService(deps: CommunityThemesServiceDeps) {
   ): CommunityThemeItem[] {
     const items: CommunityThemeItem[] = []
     const catalogIds = new Set<string>()
+    let reconciledInstalled: Record<
+      string,
+      CommunityThemeInstalledMeta
+    > | null = null
 
     for (const entry of entries) {
       catalogIds.add(entry.id)
       const filePath = resolveThemeFilePath(deps.themesDir, entry.id)
       const localMeta = filePath ? readLocalThemeMeta(filePath) : null
-      const installedMeta = installed[entry.id]
+      let installedMeta = installed[entry.id]
+
+      // If app store metadata was reset or themes folder was synced from another machine,
+      // an exact SHA-256 match with the registry file proves it is this exact community theme.
+      if (localMeta && !installedMeta && localMeta.sha256 === entry.sha256) {
+        installedMeta = {
+          sha256: entry.sha256,
+          installedAt: deps.now(),
+        }
+        reconciledInstalled ??= { ...installed }
+        reconciledInstalled[entry.id] = installedMeta
+      }
 
       let status: CommunityThemeStatus = 'available'
       let hasLocalConflict = false
@@ -530,6 +545,10 @@ export function createCommunityThemesService(deps: CommunityThemesServiceDeps) {
         hasLocalModifications: localMeta.sha256 !== installedMeta.sha256,
         isDelisted: hasCatalog,
       })
+    }
+
+    if (reconciledInstalled) {
+      deps.storeAdapter.setInstalled(reconciledInstalled)
     }
 
     items.sort((a, b) =>

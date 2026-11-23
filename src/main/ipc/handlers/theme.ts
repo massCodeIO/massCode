@@ -44,9 +44,12 @@ const communityThemesService = createCommunityThemesService({
   storeAdapter: {
     getState: () => {
       const raw = store.app.get('communityThemes') as
-        | CommunityThemesStoreState
+        | Partial<CommunityThemesStoreState>
         | undefined
-      return raw ?? { cache: null, installed: {} }
+      return {
+        cache: raw?.cache ?? null,
+        installed: raw?.installed ? { ...raw.installed } : {},
+      }
     },
     setCache: (cache) => {
       store.app.set('communityThemes.cache', cache)

@@ -120,9 +120,7 @@ watch(
 )
 
 onMounted(() => {
-  if (!hasLoaded.value) {
-    void loadCatalog(false)
-  }
+  void loadCatalog(false)
 })
 </script>
 

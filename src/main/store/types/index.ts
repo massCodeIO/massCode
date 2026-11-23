@@ -272,6 +272,8 @@ export interface PreferencesStore {
   aiPromptHistoryLimit: number
   appearance: {
     theme: string
+    lightTheme: string
+    darkTheme: string
     dockBadgeSource: DockBadgeSource
     dateFormat: DateFormat
   }

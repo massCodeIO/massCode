@@ -10,6 +10,7 @@ import type {
   CommunityThemesCatalogResult,
   CommunityThemesStoreState,
   CommunityThemeStatus,
+  CommunityThemeSubmitResult,
   CommunityThemeUninstallPayload,
   CommunityThemeUninstallResult,
   ThemeFile,
@@ -28,6 +29,8 @@ import {
 
 export const COMMUNITY_THEMES_REPO = 'massCodeIO/masscode-themes'
 export const COMMUNITY_THEMES_REGISTRY_URL = `https://raw.githubusercontent.com/${COMMUNITY_THEMES_REPO}/main/registry.json`
+export const COMMUNITY_THEMES_SCHEMA_URL = `https://raw.githubusercontent.com/${COMMUNITY_THEMES_REPO}/main/schema/theme.schema.json`
+export const COMMUNITY_THEMES_NEW_FILE_URL = `https://github.com/${COMMUNITY_THEMES_REPO}/new/main/themes`
 export const COMMUNITY_THEMES_CACHE_TTL_MS = 1000 * 60 * 30
 const FETCH_TIMEOUT_MS = 10_000
 const THEME_FILE_EXT = '.json'
@@ -422,6 +425,40 @@ function readLocalThemeMeta(filePath: string): {
   catch {
     return null
   }
+}
+
+function toKebabCaseSlug(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+function resolveAnyLocalThemeFilePath(
+  themesDir: string,
+  id: string,
+): string | null {
+  const normalized = id.trim()
+  if (
+    !normalized
+    || normalized.includes('\0')
+    || normalized.includes('/')
+    || normalized.includes('\\')
+    || normalized === '.'
+    || normalized === '..'
+  ) {
+    return null
+  }
+
+  const filePath = path.resolve(themesDir, `${normalized}${THEME_FILE_EXT}`)
+  const relative = path.relative(themesDir, filePath)
+
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    return null
+  }
+
+  return filePath
 }
 
 export function createCommunityThemesService(deps: CommunityThemesServiceDeps) {
@@ -830,9 +867,73 @@ export function createCommunityThemesService(deps: CommunityThemesServiceDeps) {
     return { status: 'uninstalled' }
   }
 
+  function prepareCommunityThemeSubmission(
+    id: string,
+  ): CommunityThemeSubmitResult {
+    const filePath = resolveAnyLocalThemeFilePath(deps.themesDir, id)
+    if (!filePath || !existsSync(filePath)) {
+      return { ok: false, error: 'Theme file not found.' }
+    }
+
+    let rawObj: unknown
+    try {
+      rawObj = JSON.parse(readFileSync(filePath, 'utf8'))
+    }
+    catch {
+      return { ok: false, error: 'Theme file is not valid JSON.' }
+    }
+
+    if (!isRecord(rawObj)) {
+      return { ok: false, error: 'Theme file must be a JSON object.' }
+    }
+
+    // Normalize blank optional template fields before validation
+    const cleaned: Record<string, unknown> = { ...rawObj }
+    if (typeof cleaned.author === 'string' && !cleaned.author.trim()) {
+      delete cleaned.author
+    }
+    if (typeof cleaned.authorUrl === 'string' && !cleaned.authorUrl.trim()) {
+      delete cleaned.authorUrl
+    }
+    delete cleaned.$schema
+
+    let validated: ThemeFile
+    try {
+      validated = validateCommunityThemeJson(JSON.stringify(cleaned))
+    }
+    catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      }
+    }
+
+    const candidateSlug = isValidCommunityThemeId(id.trim())
+      ? id.trim()
+      : toKebabCaseSlug(id) || toKebabCaseSlug(validated.name)
+
+    if (!isValidCommunityThemeId(candidateSlug)) {
+      return {
+        ok: false,
+        error: `Theme ID "${candidateSlug || id}" cannot be used for submission (use kebab-case and avoid reserved names light/dark/auto).`,
+      }
+    }
+
+    const fileName = `${candidateSlug}${THEME_FILE_EXT}`
+    const formattedJson = `${JSON.stringify(validated, null, 2)}\n`
+    const url = `${COMMUNITY_THEMES_NEW_FILE_URL}?filename=${encodeURIComponent(fileName)}&value=${encodeURIComponent(formattedJson)}`
+
+    return {
+      ok: true,
+      fileName,
+      url,
+    }
+  }
+
   return {
     fetchCommunityThemes,
     installCommunityTheme,
     uninstallCommunityTheme,
+    prepareCommunityThemeSubmission,
   }
 }

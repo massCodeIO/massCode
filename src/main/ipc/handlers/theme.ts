@@ -5,6 +5,7 @@ import type {
   CommunityThemeListPayload,
   CommunityThemesCatalogResult,
   CommunityThemesStoreState,
+  CommunityThemeSubmitResult,
   CommunityThemeUninstallPayload,
   CommunityThemeUninstallResult,
   ThemeFile,
@@ -26,6 +27,7 @@ import {
   COMMUNITY_THEMES_CACHE_TTL_MS,
   COMMUNITY_THEMES_REGISTRY_URL,
   COMMUNITY_THEMES_REPO,
+  COMMUNITY_THEMES_SCHEMA_URL,
   createCommunityThemesService,
 } from '../../themes/community'
 import { importEsm, log } from '../../utils'
@@ -62,9 +64,11 @@ const communityThemesService = createCommunityThemesService({
 const THEME_FILE_EXT = '.json'
 const THEME_CHANGED_DEBOUNCE_MS = 250
 const THEME_TEMPLATE_BASE_NAME = 'new-theme'
-const THEME_TEMPLATE: ThemeFile = {
+const THEME_TEMPLATE: ThemeFile & { $schema: string } = {
+  $schema: COMMUNITY_THEMES_SCHEMA_URL,
   name: 'New Theme (Rose Pine)',
   author: '',
+  authorUrl: '',
   type: 'light',
   colors: {
     'primary': 'hsl(277, 22%, 57%)',
@@ -563,6 +567,14 @@ export function registerThemeHandlers() {
     async (_, payload) => {
       startThemeWatcher()
       return communityThemesService.uninstallCommunityTheme(payload)
+    },
+  )
+
+  ipcMain.handle<string, CommunityThemeSubmitResult>(
+    'theme:community-prepare-submit',
+    async (_, payload) => {
+      startThemeWatcher()
+      return communityThemesService.prepareCommunityThemeSubmission(payload)
     },
   )
 }

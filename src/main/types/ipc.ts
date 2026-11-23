@@ -102,6 +102,7 @@ type ThemeAction =
   | 'community-list'
   | 'community-install'
   | 'community-uninstall'
+  | 'community-prepare-submit'
 type SpacesAction =
   | `http:cookies:${
   | 'read'

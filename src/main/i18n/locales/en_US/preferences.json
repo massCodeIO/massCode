@@ -218,6 +218,8 @@
       "creatingTemplate": "Creating...",
       "templateCreated": "Theme template created. Open the JSON file in the themes directory and edit it.",
       "templateCreateError": "Failed to create theme template",
+      "submitToCommunity": "Submit to Community",
+      "submitError": "Failed to prepare theme for submission",
       "dirDescription": "Directory for custom JSON theme files.",
       "light": "Light",
       "dark": "Dark",

@@ -485,4 +485,62 @@ describe('communityThemesService', () => {
     expect(catalog2.items[0].hasLocalConflict).toBe(true)
     expect(storeState.installed['tokyo-night']).toBeUndefined()
   })
+
+  it('prepares a prefilled GitHub Web submission URL for valid local themes and rejects invalid ones', () => {
+    const service = createService(vi.fn<typeof fetch>())
+
+    // Valid template with empty author/authorUrl and $schema
+    writeFileSync(
+      path.join(themesDir, 'My Custom Theme.json'),
+      JSON.stringify({
+        $schema: 'https://example.com/schema.json',
+        name: 'My Custom Theme',
+        author: '',
+        authorUrl: '',
+        type: 'dark',
+        colors: {
+          background: '#1a1b26',
+          card: '#16161e',
+          foreground: '#c0caf5',
+          primary: '#7aa2f7',
+          border: '#292e42',
+        },
+      }),
+      'utf8',
+    )
+
+    const valid = service.prepareCommunityThemeSubmission('My Custom Theme')
+    expect(valid.ok).toBe(true)
+    if (valid.ok) {
+      expect(valid.fileName).toBe('my-custom-theme.json')
+      expect(valid.url).toContain(
+        'https://github.com/massCodeIO/masscode-themes/new/main/themes?filename=my-custom-theme.json&value=',
+      )
+      expect(decodeURIComponent(valid.url)).not.toContain('"$schema"')
+    }
+
+    // Invalid theme with legacy token -> rejected with clear error
+    writeFileSync(
+      path.join(themesDir, 'broken.json'),
+      JSON.stringify({
+        name: 'Broken',
+        type: 'dark',
+        colors: {
+          'background': '#000',
+          'card': '#111',
+          'foreground': '#fff',
+          'primary': '#0af',
+          'border': '#222',
+          'color-bg': '#000',
+        },
+      }),
+      'utf8',
+    )
+
+    const invalid = service.prepareCommunityThemeSubmission('broken')
+    expect(invalid.ok).toBe(false)
+    if (!invalid.ok) {
+      expect(invalid.error).toMatch(/legacy token/i)
+    }
+  })
 })

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { AcceptableValue } from 'reka-ui'
 import type { DockBadgeSource } from '~/main/store/types'
+import type { CommunityThemeSubmitResult } from '~/main/store/types/theme'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import * as Tabs from '@/components/ui/shadcn/tabs'
@@ -9,6 +10,7 @@ import { useDateFormat } from '@/composables/useDateFormat'
 import { useDockBadgePreference } from '@/composables/useDockBadgePreference'
 import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
+import { ExternalLink } from 'lucide-vue-next'
 import { DATE_FORMATS } from '~/shared/dateFormat'
 
 const { dateFormat, setDateFormat, formatDate } = useDateFormat()
@@ -17,7 +19,12 @@ const datePreview = new Date(2026, 10, 23)
 const { currentThemeId, customThemes, loadCustomThemes, setTheme } = useTheme()
 const { sonner } = useSonner()
 const isCreatingThemeTemplate = ref(false)
+const isSubmittingTheme = ref(false)
 const activeTab = ref<'general' | 'community'>('general')
+
+const isCustomThemeActive = computed(() => {
+  return customThemes.value.some(theme => theme.id === currentThemeId.value)
+})
 
 const { source: dockBadgeSource, setSource: setDockBadgeSource }
   = useDockBadgePreference()
@@ -119,6 +126,40 @@ async function createThemeTemplate() {
   }
   finally {
     isCreatingThemeTemplate.value = false
+  }
+}
+
+async function submitCurrentTheme() {
+  if (isSubmittingTheme.value || !isCustomThemeActive.value) {
+    return
+  }
+
+  isSubmittingTheme.value = true
+
+  try {
+    const result = await ipc.invoke<string, CommunityThemeSubmitResult>(
+      'theme:community-prepare-submit',
+      currentThemeId.value,
+    )
+
+    if (!result.ok) {
+      sonner({
+        message: result.error,
+        type: 'error',
+      })
+      return
+    }
+
+    await ipc.invoke('system:open-external', result.url)
+  }
+  catch {
+    sonner({
+      message: i18n.t('preferences:appearance.theme.submitError'),
+      type: 'error',
+    })
+  }
+  finally {
+    isSubmittingTheme.value = false
   }
 }
 
@@ -263,7 +304,7 @@ void loadCustomThemes()
               {{ i18n.t("preferences:appearance.theme.dirDescription") }}
             </template>
             <template #actions>
-              <div class="flex gap-2">
+              <div class="flex flex-wrap gap-2">
                 <Button
                   variant="outline"
                   @click="openThemesDir"
@@ -279,6 +320,15 @@ void loadCustomThemes()
                       ? i18n.t("preferences:appearance.theme.creatingTemplate")
                       : i18n.t("preferences:appearance.theme.createTemplate")
                   }}
+                </Button>
+                <Button
+                  v-if="isCustomThemeActive"
+                  variant="outline"
+                  :disabled="isSubmittingTheme"
+                  @click="submitCurrentTheme"
+                >
+                  {{ i18n.t("preferences:appearance.theme.submitToCommunity") }}
+                  <ExternalLink class="ml-1.5 h-3.5 w-3.5" />
                 </Button>
               </div>
             </template>

@@ -107,6 +107,17 @@ export interface CommunityThemeUninstallResult {
   localSha256?: string
 }
 
+export type CommunityThemeSubmitResult =
+  | {
+    ok: true
+    fileName: string
+    url: string
+  }
+  | {
+    ok: false
+    error: string
+  }
+
 export interface CommunityThemesCache {
   commit: string
   fetchedAt: number

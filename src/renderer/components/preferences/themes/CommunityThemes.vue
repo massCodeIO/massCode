@@ -15,7 +15,8 @@ import {
   WifiOff,
 } from 'lucide-vue-next'
 
-const REGISTRY_REPO_URL = 'https://github.com/massCodeIO/masscode-themes'
+const REGISTRY_CONTRIBUTE_URL
+  = 'https://github.com/massCodeIO/masscode-themes/blob/main/CONTRIBUTING.md'
 
 const { currentThemeId, customThemes } = useTheme()
 const {
@@ -107,7 +108,7 @@ const conflictConfirmLabel = computed(() => {
 })
 
 async function openRegistryRepo() {
-  await ipc.invoke('system:open-external', REGISTRY_REPO_URL)
+  await ipc.invoke('system:open-external', REGISTRY_CONTRIBUTE_URL)
 }
 
 watch(

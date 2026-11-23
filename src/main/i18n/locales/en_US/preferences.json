@@ -223,7 +223,11 @@
       "dirDescription": "Directory for custom JSON theme files.",
       "light": "Light",
       "dark": "Dark",
-      "system": "System"
+      "system": "System",
+      "systemLight": "Light Theme",
+      "systemDark": "Dark Theme",
+      "systemLightDescription": "Theme used when your system is in light mode.",
+      "systemDarkDescription": "Theme used when your system is in dark mode."
     },
     "dateFormat": {
       "label": "Date format",

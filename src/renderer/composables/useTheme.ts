@@ -32,13 +32,22 @@ const DROPPED_TOKENS = new Set(['color-button-hover'])
 const storedThemeId = String(
   store.preferences.get('appearance.theme') || 'auto',
 )
+const storedLightThemeId = String(
+  store.preferences.get('appearance.lightTheme') || 'light',
+)
+const storedDarkThemeId = String(
+  store.preferences.get('appearance.darkTheme') || 'dark',
+)
 
 const colorMode = useColorMode()
 const colorModeStore = colorMode.store
 const currentThemeId = ref(storedThemeId)
+const systemLightThemeId = ref(storedLightThemeId)
+const systemDarkThemeId = ref(storedDarkThemeId)
 const customThemes = ref<ThemeListItem[]>([])
 const resolvedThemeType = ref<ThemeType>('light')
 const currentCustomTheme = ref<ThemeFile | null>(null)
+const activeCustomThemeId = ref<string | null>(null)
 
 const isDark = computed(() => resolvedThemeType.value === 'dark')
 
@@ -54,19 +63,22 @@ function persistThemePreference(id: string): void {
   store.preferences.set('appearance.theme', id)
 }
 
+function persistSystemSlotPreference(type: ThemeType, id: string): void {
+  const key
+    = type === 'dark' ? 'appearance.darkTheme' : 'appearance.lightTheme'
+
+  if (store.preferences.get(key) === id) {
+    return
+  }
+
+  store.preferences.set(key, id)
+}
+
 function isBuiltInTheme(id: string): id is BuiltInThemeId {
   return BUILT_IN_THEMES.has(id as BuiltInThemeId)
 }
 
-function getBuiltInThemeType(id: BuiltInThemeId): ThemeType {
-  if (id === 'dark') {
-    return 'dark'
-  }
-
-  if (id === 'light') {
-    return 'light'
-  }
-
+function getSystemThemeType(): ThemeType {
   return colorMode.value === 'dark' ? 'dark' : 'light'
 }
 
@@ -162,12 +174,78 @@ function applyCustomThemeStyle(theme: ThemeFile): void {
   document.head.append(style)
 }
 
-function applyBuiltInTheme(id: BuiltInThemeId): void {
+function resetSystemSlotToBuiltIn(type: ThemeType): void {
+  if (type === 'dark') {
+    systemDarkThemeId.value = 'dark'
+    persistSystemSlotPreference('dark', 'dark')
+  }
+  else {
+    systemLightThemeId.value = 'light'
+    persistSystemSlotPreference('light', 'light')
+  }
+}
+
+function reconcileSystemSlots(): void {
+  if (systemLightThemeId.value !== 'light') {
+    const exists = customThemes.value.some(
+      theme =>
+        theme.id === systemLightThemeId.value && theme.type === 'light',
+    )
+    if (!exists) {
+      resetSystemSlotToBuiltIn('light')
+    }
+  }
+
+  if (systemDarkThemeId.value !== 'dark') {
+    const exists = customThemes.value.some(
+      theme => theme.id === systemDarkThemeId.value && theme.type === 'dark',
+    )
+    if (!exists) {
+      resetSystemSlotToBuiltIn('dark')
+    }
+  }
+}
+
+async function applySystemTheme(): Promise<void> {
+  colorModeStore.value = 'auto'
+  currentThemeId.value = 'auto'
+  persistThemePreference('auto')
+
+  const systemType = getSystemThemeType()
+  resolvedThemeType.value = systemType
+
+  const slotId
+    = systemType === 'dark' ? systemDarkThemeId.value : systemLightThemeId.value
+
+  if (slotId === systemType || isBuiltInTheme(slotId)) {
+    currentCustomTheme.value = null
+    activeCustomThemeId.value = null
+    removeCustomThemeStyle()
+    return
+  }
+
+  const theme = await ipc.invoke<string, ThemeFile | null>('theme:get', slotId)
+
+  if (!theme || theme.type !== systemType) {
+    resetSystemSlotToBuiltIn(systemType)
+    currentCustomTheme.value = null
+    activeCustomThemeId.value = null
+    removeCustomThemeStyle()
+    return
+  }
+
+  currentCustomTheme.value = theme
+  activeCustomThemeId.value = slotId
+  applyCustomThemeStyle(theme)
+}
+
+function applyFixedBuiltInTheme(id: 'light' | 'dark'): void {
   currentCustomTheme.value = null
+  activeCustomThemeId.value = null
   removeCustomThemeStyle()
 
   colorModeStore.value = id
-  resolvedThemeType.value = getBuiltInThemeType(id)
+  resolvedThemeType.value = id
   currentThemeId.value = id
 
   persistThemePreference(id)
@@ -183,6 +261,7 @@ async function applyCustomTheme(id: string): Promise<boolean> {
   colorModeStore.value = theme.type
   resolvedThemeType.value = theme.type
   currentCustomTheme.value = theme
+  activeCustomThemeId.value = id
   currentThemeId.value = id
 
   applyCustomThemeStyle(theme)
@@ -191,20 +270,55 @@ async function applyCustomTheme(id: string): Promise<boolean> {
   return true
 }
 
-function fallbackToAuto(): void {
-  applyBuiltInTheme('auto')
+async function fallbackToAuto(): Promise<void> {
+  await applySystemTheme()
 }
 
 async function setTheme(id: string): Promise<void> {
-  if (isBuiltInTheme(id)) {
-    applyBuiltInTheme(id)
+  if (id === 'auto') {
+    await applySystemTheme()
+    return
+  }
+
+  if (id === 'light' || id === 'dark') {
+    applyFixedBuiltInTheme(id)
     return
   }
 
   const isApplied = await applyCustomTheme(id)
 
   if (!isApplied) {
-    fallbackToAuto()
+    await fallbackToAuto()
+  }
+}
+
+async function setSystemLightTheme(id: string): Promise<void> {
+  const normalized = id.trim()
+  const target
+    = !normalized || normalized === 'auto' || normalized === 'dark'
+      ? 'light'
+      : normalized
+
+  systemLightThemeId.value = target
+  persistSystemSlotPreference('light', target)
+
+  if (currentThemeId.value === 'auto') {
+    await applySystemTheme()
+  }
+}
+
+async function setSystemDarkTheme(id: string): Promise<void> {
+  const normalized = id.trim()
+  const target
+    = !normalized || normalized === 'auto' || normalized === 'light'
+      ? 'dark'
+      : normalized
+
+  systemDarkThemeId.value = target
+  persistSystemSlotPreference('dark', target)
+
+  if (currentThemeId.value === 'auto') {
+    await applySystemTheme()
   }
 }
 
@@ -223,8 +337,14 @@ async function loadCustomThemes(): Promise<void> {
 
 async function handleThemesChanged(): Promise<void> {
   await loadCustomThemes()
+  reconcileSystemSlots()
 
   const selectedId = currentThemeId.value
+
+  if (selectedId === 'auto') {
+    await applySystemTheme()
+    return
+  }
 
   if (isBuiltInTheme(selectedId)) {
     return
@@ -233,7 +353,7 @@ async function handleThemesChanged(): Promise<void> {
   const exists = customThemes.value.some(theme => theme.id === selectedId)
 
   if (!exists) {
-    fallbackToAuto()
+    await fallbackToAuto()
     return
   }
 
@@ -266,19 +386,26 @@ const editorThemeName = computed(() => {
   const baseTheme
     = resolvedThemeType.value === 'dark' ? DARK_EDITOR_THEME : LIGHT_EDITOR_THEME
 
-  if (!isBuiltInTheme(currentThemeId.value)) {
-    const editorColors = currentCustomTheme.value?.editorColors
+  const editorColors = currentCustomTheme.value?.editorColors
 
-    if (hasCustomEditorColors(editorColors)) {
-      return `${baseTheme} masscode-custom`
-    }
+  if (hasCustomEditorColors(editorColors)) {
+    return `${baseTheme} masscode-custom`
   }
 
   return baseTheme
 })
 
+const activeThemeId = computed(() => {
+  if (currentThemeId.value === 'auto') {
+    return activeCustomThemeId.value ?? resolvedThemeType.value
+  }
+
+  return currentThemeId.value
+})
+
 async function initTheme(): Promise<void> {
   await loadCustomThemes()
+  reconcileSystemSlots()
   await setTheme(currentThemeId.value)
 }
 
@@ -289,8 +416,8 @@ function onThemeChanged() {
 watch(
   () => colorMode.value,
   () => {
-    if (isBuiltInTheme(currentThemeId.value)) {
-      resolvedThemeType.value = getBuiltInThemeType(currentThemeId.value)
+    if (currentThemeId.value === 'auto') {
+      void applySystemTheme()
     }
   },
 )
@@ -305,10 +432,15 @@ export function useTheme() {
 
   return {
     currentThemeId,
+    activeThemeId,
+    systemLightThemeId,
+    systemDarkThemeId,
     customThemes,
     resolvedThemeType,
     isDark,
     setTheme,
+    setSystemLightTheme,
+    setSystemDarkTheme,
     loadCustomThemes,
     editorThemeName,
   }

@@ -62,6 +62,8 @@ const PREFERENCES_DEFAULTS: PreferencesStore = {
   aiPromptHistoryLimit: AI_PROMPT_HISTORY_DEFAULT_LIMIT,
   appearance: {
     theme: 'auto',
+    lightTheme: 'light',
+    darkTheme: 'dark',
     dockBadgeSource: 'none',
     dateFormat: DEFAULT_DATE_FORMAT,
   },
@@ -328,6 +330,28 @@ function sanitizePreferences(value: unknown): PreferencesStore {
         'theme',
         readString(source, 'theme', PREFERENCES_DEFAULTS.appearance.theme),
       ),
+      lightTheme: (() => {
+        const value = readString(
+          appearanceSource,
+          'lightTheme',
+          PREFERENCES_DEFAULTS.appearance.lightTheme,
+        ).trim()
+        if (!value || value === 'auto' || value === 'dark') {
+          return PREFERENCES_DEFAULTS.appearance.lightTheme
+        }
+        return value
+      })(),
+      darkTheme: (() => {
+        const value = readString(
+          appearanceSource,
+          'darkTheme',
+          PREFERENCES_DEFAULTS.appearance.darkTheme,
+        ).trim()
+        if (!value || value === 'auto' || value === 'light') {
+          return PREFERENCES_DEFAULTS.appearance.darkTheme
+        }
+        return value
+      })(),
       dateFormat: readEnum(
         appearanceSource,
         'dateFormat',

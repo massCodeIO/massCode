@@ -16,11 +16,22 @@ import { DATE_FORMATS } from '~/shared/dateFormat'
 const { dateFormat, setDateFormat, formatDate } = useDateFormat()
 const datePreview = new Date(2026, 10, 23)
 
-const { currentThemeId, customThemes, loadCustomThemes, setTheme } = useTheme()
+const {
+  currentThemeId,
+  systemLightThemeId,
+  systemDarkThemeId,
+  customThemes,
+  loadCustomThemes,
+  setTheme,
+  setSystemLightTheme,
+  setSystemDarkTheme,
+} = useTheme()
 const { sonner } = useSonner()
 const isCreatingThemeTemplate = ref(false)
 const isSubmittingTheme = ref(false)
 const activeTab = ref<'general' | 'community'>('general')
+
+const isSystemThemeMode = computed(() => currentThemeId.value === 'auto')
 
 const isCustomThemeActive = computed(() => {
   return customThemes.value.some(theme => theme.id === currentThemeId.value)
@@ -77,6 +88,18 @@ const customLightThemes = computed(() => {
 async function onThemeChange(value: AcceptableValue) {
   if (typeof value === 'string') {
     await setTheme(value)
+  }
+}
+
+async function onSystemLightThemeChange(value: AcceptableValue) {
+  if (typeof value === 'string') {
+    await setSystemLightTheme(value)
+  }
+}
+
+async function onSystemDarkThemeChange(value: AcceptableValue) {
+  if (typeof value === 'string') {
+    await setSystemDarkTheme(value)
   }
 }
 
@@ -240,6 +263,94 @@ void loadCustomThemes()
                 </template>
               </Select.SelectContent>
             </Select.Select>
+          </UiMenuFormItem>
+
+          <UiMenuFormItem
+            v-if="isSystemThemeMode"
+            :label="i18n.t('preferences:appearance.theme.systemLight')"
+          >
+            <Select.Select
+              :model-value="systemLightThemeId"
+              @update:model-value="onSystemLightThemeChange"
+            >
+              <Select.SelectTrigger class="w-64">
+                <Select.SelectValue />
+              </Select.SelectTrigger>
+              <Select.SelectContent>
+                <Select.SelectGroup>
+                  <Select.SelectLabel>
+                    {{ i18n.t("preferences:appearance.theme.builtIn") }}
+                  </Select.SelectLabel>
+                  <Select.SelectItem value="light">
+                    {{ i18n.t("preferences:appearance.theme.light") }}
+                  </Select.SelectItem>
+                </Select.SelectGroup>
+
+                <template v-if="customLightThemes.length">
+                  <Select.SelectSeparator />
+                  <Select.SelectGroup>
+                    <Select.SelectLabel>
+                      {{ i18n.t("preferences:appearance.theme.custom") }}
+                    </Select.SelectLabel>
+                    <Select.SelectItem
+                      v-for="theme in customLightThemes"
+                      :key="theme.id"
+                      :value="theme.id"
+                    >
+                      {{ theme.name }}
+                    </Select.SelectItem>
+                  </Select.SelectGroup>
+                </template>
+              </Select.SelectContent>
+            </Select.Select>
+            <template #description>
+              {{
+                i18n.t("preferences:appearance.theme.systemLightDescription")
+              }}
+            </template>
+          </UiMenuFormItem>
+
+          <UiMenuFormItem
+            v-if="isSystemThemeMode"
+            :label="i18n.t('preferences:appearance.theme.systemDark')"
+          >
+            <Select.Select
+              :model-value="systemDarkThemeId"
+              @update:model-value="onSystemDarkThemeChange"
+            >
+              <Select.SelectTrigger class="w-64">
+                <Select.SelectValue />
+              </Select.SelectTrigger>
+              <Select.SelectContent>
+                <Select.SelectGroup>
+                  <Select.SelectLabel>
+                    {{ i18n.t("preferences:appearance.theme.builtIn") }}
+                  </Select.SelectLabel>
+                  <Select.SelectItem value="dark">
+                    {{ i18n.t("preferences:appearance.theme.dark") }}
+                  </Select.SelectItem>
+                </Select.SelectGroup>
+
+                <template v-if="customDarkThemes.length">
+                  <Select.SelectSeparator />
+                  <Select.SelectGroup>
+                    <Select.SelectLabel>
+                      {{ i18n.t("preferences:appearance.theme.custom") }}
+                    </Select.SelectLabel>
+                    <Select.SelectItem
+                      v-for="theme in customDarkThemes"
+                      :key="theme.id"
+                      :value="theme.id"
+                    >
+                      {{ theme.name }}
+                    </Select.SelectItem>
+                  </Select.SelectGroup>
+                </template>
+              </Select.SelectContent>
+            </Select.Select>
+            <template #description>
+              {{ i18n.t("preferences:appearance.theme.systemDarkDescription") }}
+            </template>
           </UiMenuFormItem>
 
           <UiMenuFormItem

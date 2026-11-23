@@ -210,7 +210,7 @@ Your snippets, notes, and HTTP requests live as plain `.md` files on disk with f
 
 ## Custom Themes
 
-Customize the app UI and editor syntax highlighting with JSON theme files. Supports light and dark themes with live reload. See the [theme docs](https://masscode.io/documentation/themes.html).
+Customize the app UI and editor syntax highlighting with JSON theme files, or browse and install themes in one click from the built-in [Community Themes Gallery](https://github.com/massCodeIO/masscode-themes). Supports light and dark themes with live reload and automatic OS light/dark theme pairing. See the [theme docs](https://masscode.io/documentation/themes.html).
 
 ## Contributions
 

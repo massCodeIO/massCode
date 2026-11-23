@@ -23,11 +23,12 @@ Custom themes let you adapt massCode to your workflow and visual preferences. Yo
 
 - Themes are stored in `~/.massCode/themes/` as JSON files.
 - Both light and dark theme types are supported.
+- When **System** theme mode is selected, you can pair any custom or community light theme with any dark theme to switch automatically with your OS appearance (falling back to built-in themes if a file is removed).
 - Theme files are watched in real time — edit the JSON, see the result instantly.
 
 ## Creating a Theme
 
-Create a new theme from **Settings** > **Appearance**. massCode generates a Rose Pine-based JSON template that you can use as a starting point and edit in real time.
+Create a new theme from **Settings** > **Appearance**. massCode generates a Rose Pine-based JSON template with `$schema` autocompletion that you can edit in real time. Once your custom theme is active, click **Submit to Community** to validate it and open a pre-filled Pull Request in [massCodeIO/masscode-themes](https://github.com/massCodeIO/masscode-themes).
 
 ## Community Themes
 

@@ -221,7 +221,11 @@
       "dirDescription": "Разместите JSON-файлы тем в этой папке.",
       "light": "Светлая",
       "dark": "Темная",
-      "system": "Системная"
+      "system": "Системная",
+      "systemLight": "Светлая тема",
+      "systemDark": "Тёмная тема",
+      "systemLightDescription": "Тема для светлого режима системы.",
+      "systemDarkDescription": "Тема для тёмного режима системы."
     },
     "dateFormat": {
       "label": "Формат даты",

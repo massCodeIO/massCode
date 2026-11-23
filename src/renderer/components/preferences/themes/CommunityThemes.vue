@@ -18,7 +18,7 @@ import {
 const REGISTRY_CONTRIBUTE_URL
   = 'https://github.com/massCodeIO/masscode-themes/blob/main/CONTRIBUTING.md'
 
-const { currentThemeId, customThemes } = useTheme()
+const { activeThemeId, customThemes } = useTheme()
 const {
   filteredItems,
   isLoading,
@@ -263,7 +263,7 @@ onMounted(() => {
         v-for="item in filteredItems"
         :key="item.id"
         :item="item"
-        :is-active="currentThemeId === item.id"
+        :is-active="activeThemeId === item.id"
         :busy="isBusy(item.id)"
         @install="installTheme"
         @update="updateTheme"

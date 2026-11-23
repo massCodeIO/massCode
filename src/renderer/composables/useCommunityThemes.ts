@@ -50,7 +50,8 @@ function isBusy(id: string): boolean {
 }
 
 export function useCommunityThemes() {
-  const { currentThemeId, loadCustomThemes, setTheme } = useTheme()
+  const { currentThemeId, activeThemeId, loadCustomThemes, setTheme }
+    = useTheme()
   const { sonner } = useSonner()
 
   const filteredItems = computed(() => {
@@ -153,9 +154,10 @@ export function useCommunityThemes() {
         })
       }
       else {
-        // Preserve active theme if updating an inactive theme
-        if (currentThemeId.value === item.id) {
-          await setTheme(item.id)
+        // Preserve active theme (and system mode) if updating an inactive theme
+        const resolvedActiveId = activeThemeId?.value ?? currentThemeId.value
+        if (resolvedActiveId === item.id) {
+          await setTheme(currentThemeId.value)
         }
         sonner({
           message: i18n.t('preferences:appearance.community.updatedToast', {

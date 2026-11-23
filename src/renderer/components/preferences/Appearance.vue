@@ -3,6 +3,7 @@ import type { AcceptableValue } from 'reka-ui'
 import type { DockBadgeSource } from '~/main/store/types'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
+import * as Tabs from '@/components/ui/shadcn/tabs'
 import { useSonner, useTheme } from '@/composables'
 import { useDateFormat } from '@/composables/useDateFormat'
 import { useDockBadgePreference } from '@/composables/useDockBadgePreference'
@@ -16,6 +17,7 @@ const datePreview = new Date(2026, 10, 23)
 const { currentThemeId, customThemes, loadCustomThemes, setTheme } = useTheme()
 const { sonner } = useSonner()
 const isCreatingThemeTemplate = ref(false)
+const activeTab = ref<'general' | 'community'>('general')
 
 const { source: dockBadgeSource, setSource: setDockBadgeSource }
   = useDockBadgePreference()
@@ -125,144 +127,168 @@ void loadCustomThemes()
 
 <template>
   <div>
-    <UiMenuFormSection :label="i18n.t('preferences:appearance.label')">
-      <UiMenuFormItem :label="i18n.t('preferences:appearance.theme.label')">
-        <Select.Select
-          :model-value="currentThemeId"
-          @update:model-value="onThemeChange"
-        >
-          <Select.SelectTrigger class="w-64">
-            <Select.SelectValue />
-          </Select.SelectTrigger>
-          <Select.SelectContent>
-            <Select.SelectGroup>
-              <Select.SelectLabel>
-                {{ i18n.t("preferences:appearance.theme.builtIn") }}
-              </Select.SelectLabel>
-              <Select.SelectItem
-                v-for="theme in builtInThemes"
-                :key="theme.id"
-                :value="theme.id"
-              >
-                {{ theme.label }}
-              </Select.SelectItem>
-            </Select.SelectGroup>
+    <Tabs.Tabs
+      v-model="activeTab"
+      class="space-y-4"
+    >
+      <Tabs.TabsList>
+        <Tabs.TabsTrigger value="general">
+          {{ i18n.t("preferences:appearance.tabs.general") }}
+        </Tabs.TabsTrigger>
+        <Tabs.TabsTrigger value="community">
+          {{ i18n.t("preferences:appearance.tabs.community") }}
+        </Tabs.TabsTrigger>
+      </Tabs.TabsList>
 
-            <template v-if="customThemes.length">
-              <Select.SelectSeparator />
+      <Tabs.TabsContent value="general">
+        <UiMenuFormSection :label="i18n.t('preferences:appearance.label')">
+          <UiMenuFormItem :label="i18n.t('preferences:appearance.theme.label')">
+            <Select.Select
+              :model-value="currentThemeId"
+              @update:model-value="onThemeChange"
+            >
+              <Select.SelectTrigger class="w-64">
+                <Select.SelectValue />
+              </Select.SelectTrigger>
+              <Select.SelectContent>
+                <Select.SelectGroup>
+                  <Select.SelectLabel>
+                    {{ i18n.t("preferences:appearance.theme.builtIn") }}
+                  </Select.SelectLabel>
+                  <Select.SelectItem
+                    v-for="theme in builtInThemes"
+                    :key="theme.id"
+                    :value="theme.id"
+                  >
+                    {{ theme.label }}
+                  </Select.SelectItem>
+                </Select.SelectGroup>
 
-              <Select.SelectGroup v-if="customDarkThemes.length">
-                <Select.SelectLabel>
-                  {{
-                    `${i18n.t("preferences:appearance.theme.custom")} · ${i18n.t("preferences:appearance.theme.dark")}`
-                  }}
-                </Select.SelectLabel>
+                <template v-if="customThemes.length">
+                  <Select.SelectSeparator />
+
+                  <Select.SelectGroup v-if="customDarkThemes.length">
+                    <Select.SelectLabel>
+                      {{
+                        `${i18n.t("preferences:appearance.theme.custom")} · ${i18n.t("preferences:appearance.theme.dark")}`
+                      }}
+                    </Select.SelectLabel>
+                    <Select.SelectItem
+                      v-for="theme in customDarkThemes"
+                      :key="theme.id"
+                      :value="theme.id"
+                    >
+                      {{ theme.name }}
+                    </Select.SelectItem>
+                  </Select.SelectGroup>
+
+                  <Select.SelectGroup v-if="customLightThemes.length">
+                    <Select.SelectLabel>
+                      {{
+                        `${i18n.t("preferences:appearance.theme.custom")} · ${i18n.t("preferences:appearance.theme.light")}`
+                      }}
+                    </Select.SelectLabel>
+                    <Select.SelectItem
+                      v-for="theme in customLightThemes"
+                      :key="theme.id"
+                      :value="theme.id"
+                    >
+                      {{ theme.name }}
+                    </Select.SelectItem>
+                  </Select.SelectGroup>
+                </template>
+              </Select.SelectContent>
+            </Select.Select>
+          </UiMenuFormItem>
+
+          <UiMenuFormItem
+            :label="i18n.t('preferences:appearance.dateFormat.label')"
+          >
+            <Select.Select
+              :model-value="dateFormat"
+              @update:model-value="setDateFormat"
+            >
+              <Select.SelectTrigger class="w-64">
+                <Select.SelectValue />
+              </Select.SelectTrigger>
+              <Select.SelectContent>
                 <Select.SelectItem
-                  v-for="theme in customDarkThemes"
-                  :key="theme.id"
-                  :value="theme.id"
+                  v-for="(option, index) in DATE_FORMATS"
+                  :key="option"
+                  :value="option"
                 >
-                  {{ theme.name }}
-                </Select.SelectItem>
-              </Select.SelectGroup>
-
-              <Select.SelectGroup v-if="customLightThemes.length">
-                <Select.SelectLabel>
                   {{
-                    `${i18n.t("preferences:appearance.theme.custom")} · ${i18n.t("preferences:appearance.theme.light")}`
+                    i18n.t(`preferences:appearance.dateFormat.options.${index}`)
                   }}
-                </Select.SelectLabel>
-                <Select.SelectItem
-                  v-for="theme in customLightThemes"
-                  :key="theme.id"
-                  :value="theme.id"
-                >
-                  {{ theme.name }}
                 </Select.SelectItem>
-              </Select.SelectGroup>
-            </template>
-          </Select.SelectContent>
-        </Select.Select>
-      </UiMenuFormItem>
-
-      <UiMenuFormItem
-        :label="i18n.t('preferences:appearance.dateFormat.label')"
-      >
-        <Select.Select
-          :model-value="dateFormat"
-          @update:model-value="setDateFormat"
-        >
-          <Select.SelectTrigger class="w-64">
-            <Select.SelectValue />
-          </Select.SelectTrigger>
-          <Select.SelectContent>
-            <Select.SelectItem
-              v-for="(option, index) in DATE_FORMATS"
-              :key="option"
-              :value="option"
-            >
-              {{ i18n.t(`preferences:appearance.dateFormat.options.${index}`) }}
-            </Select.SelectItem>
-          </Select.SelectContent>
-        </Select.Select>
-        <template #description>
-          {{
-            i18n.t("preferences:appearance.dateFormat.preview", {
-              date: formatDate(datePreview),
-              interpolation: { escapeValue: false },
-            })
-          }}
-        </template>
-      </UiMenuFormItem>
-
-      <UiMenuFormItem
-        v-if="isMac"
-        :label="i18n.t('preferences:appearance.dockBadge.label')"
-      >
-        <Select.Select
-          :model-value="dockBadgeSource"
-          @update:model-value="onDockBadgeSourceChange"
-        >
-          <Select.SelectTrigger class="w-64">
-            <Select.SelectValue />
-          </Select.SelectTrigger>
-          <Select.SelectContent>
-            <Select.SelectItem
-              v-for="option in dockBadgeOptions"
-              :key="option.id"
-              :value="option.id"
-            >
-              {{ option.label }}
-            </Select.SelectItem>
-          </Select.SelectContent>
-        </Select.Select>
-      </UiMenuFormItem>
-
-      <UiMenuFormItem :label="i18n.t('preferences:appearance.theme.themesDir')">
-        <template #description>
-          {{ i18n.t("preferences:appearance.theme.dirDescription") }}
-        </template>
-        <template #actions>
-          <div class="flex gap-2">
-            <Button
-              variant="outline"
-              @click="openThemesDir"
-            >
-              {{ i18n.t("preferences:appearance.theme.openDir") }}
-            </Button>
-            <Button
-              :disabled="isCreatingThemeTemplate"
-              @click="createThemeTemplate"
-            >
+              </Select.SelectContent>
+            </Select.Select>
+            <template #description>
               {{
-                isCreatingThemeTemplate
-                  ? i18n.t("preferences:appearance.theme.creatingTemplate")
-                  : i18n.t("preferences:appearance.theme.createTemplate")
+                i18n.t("preferences:appearance.dateFormat.preview", {
+                  date: formatDate(datePreview),
+                  interpolation: { escapeValue: false },
+                })
               }}
-            </Button>
-          </div>
-        </template>
-      </UiMenuFormItem>
-    </UiMenuFormSection>
+            </template>
+          </UiMenuFormItem>
+
+          <UiMenuFormItem
+            v-if="isMac"
+            :label="i18n.t('preferences:appearance.dockBadge.label')"
+          >
+            <Select.Select
+              :model-value="dockBadgeSource"
+              @update:model-value="onDockBadgeSourceChange"
+            >
+              <Select.SelectTrigger class="w-64">
+                <Select.SelectValue />
+              </Select.SelectTrigger>
+              <Select.SelectContent>
+                <Select.SelectItem
+                  v-for="option in dockBadgeOptions"
+                  :key="option.id"
+                  :value="option.id"
+                >
+                  {{ option.label }}
+                </Select.SelectItem>
+              </Select.SelectContent>
+            </Select.Select>
+          </UiMenuFormItem>
+
+          <UiMenuFormItem
+            :label="i18n.t('preferences:appearance.theme.themesDir')"
+          >
+            <template #description>
+              {{ i18n.t("preferences:appearance.theme.dirDescription") }}
+            </template>
+            <template #actions>
+              <div class="flex gap-2">
+                <Button
+                  variant="outline"
+                  @click="openThemesDir"
+                >
+                  {{ i18n.t("preferences:appearance.theme.openDir") }}
+                </Button>
+                <Button
+                  :disabled="isCreatingThemeTemplate"
+                  @click="createThemeTemplate"
+                >
+                  {{
+                    isCreatingThemeTemplate
+                      ? i18n.t("preferences:appearance.theme.creatingTemplate")
+                      : i18n.t("preferences:appearance.theme.createTemplate")
+                  }}
+                </Button>
+              </div>
+            </template>
+          </UiMenuFormItem>
+        </UiMenuFormSection>
+      </Tabs.TabsContent>
+
+      <Tabs.TabsContent value="community">
+        <PreferencesThemesCommunityThemes v-if="activeTab === 'community'" />
+      </Tabs.TabsContent>
+    </Tabs.Tabs>
   </div>
 </template>

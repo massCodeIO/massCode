@@ -208,9 +208,16 @@ export default defineConfig({
             { text: 'Sync', link: '/documentation/sync' },
             { text: 'Imports', link: '/documentation/imports' },
             { text: 'Clipper', link: '/documentation/clipper' },
-            { text: 'AI Assistant', link: '/documentation/ai' },
-            { text: 'MCP', link: '/documentation/mcp' },
             { text: 'Appearance', link: '/documentation/themes' },
+          ],
+        },
+        {
+          text: 'AI & MCP',
+          items: [
+            { text: 'AI Assistant', link: '/documentation/ai' },
+            { text: 'MCP Quickstart', link: '/documentation/mcp/' },
+            { text: 'MCP Workflows', link: '/documentation/mcp/workflows' },
+            { text: 'MCP Reference', link: '/documentation/mcp/reference' },
           ],
         },
         {

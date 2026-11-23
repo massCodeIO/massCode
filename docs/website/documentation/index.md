@@ -49,7 +49,7 @@ Use [AI Assistant](/documentation/ai) with your own provider or local model to e
 
 ## MCP
 
-Connect a coding agent through [MCP](/documentation/mcp) to search, read, save, and update snippets, notes, and HTTP requests. Save notes and snippets into folders with tags, organize folders, move, trash, and restore items, and follow note links. Create HTTP collections, preview and send requests, and inspect saved execution history.
+Connect Claude Code, Cursor, Codex, or VS Code Copilot to your local Markdown Vault through the built-in MCP server to work with snippets, linked notes, and saved HTTP requests. Start with the [MCP Quickstart](/documentation/mcp/), explore cross-space [MCP Workflows](/documentation/mcp/workflows), or browse the [MCP Reference](/documentation/mcp/reference).
 
 ## General Settings
 

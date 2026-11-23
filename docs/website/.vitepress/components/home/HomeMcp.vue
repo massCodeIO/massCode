@@ -19,11 +19,11 @@ import HomeCard from './HomeCard.vue'
   >
     <header>
       <h2 id="mcp-title">
-        Connect your external AI agent.
+        Connect your coding agent.
       </h2>
       <p>
-        Already working in an AI client? Let it find saved snippets, read
-        project notes, and run HTTP requests through MCP.
+        Using Claude Code, Cursor, Codex, or VS Code Copilot? Connect your agent
+        directly to your local Markdown vault via MCP.
       </p>
     </header>
     <HomeCard
@@ -31,12 +31,13 @@ import HomeCard from './HomeCard.vue'
       glow="right"
     >
       <div class="mcp-copy">
-        <h3>Bring your saved context into the conversation.</h3>
+        <h3>Local-first context across every repo.</h3>
         <p>
-          Reuse what you already know. Save the next useful solution back to
-          massCode.
+          Find saved snippets, follow linked project notes, run saved HTTP
+          requests with your active environment, and capture new solutions back
+          to massCode.
         </p>
-        <a :href="withBase('/documentation/mcp')">Connect your agent <ArrowRight
+        <a :href="withBase('/documentation/mcp/')">MCP setup guide <ArrowRight
           :size="16"
           aria-hidden="true"
         /></a>

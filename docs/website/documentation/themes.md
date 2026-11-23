@@ -28,3 +28,12 @@ Custom themes let you adapt massCode to your workflow and visual preferences. Yo
 ## Creating a Theme
 
 Create a new theme from **Settings** > **Appearance**. massCode generates a Rose Pine-based JSON template that you can use as a starting point and edit in real time.
+
+## Community Themes
+
+Browse and install themes created by the community directly in **Settings** > **Appearance** > **Community Themes**:
+
+- Preview theme palettes, filter by **Dark** / **Light** / **Installed**, and search by name or author.
+- Install and apply any theme in one click — themes are saved to `~/.massCode/themes/` and work with live reload.
+- Update or uninstall community themes directly from the gallery; local edits are protected with an explicit confirmation prompt before overwriting or deleting.
+- Want to share your own theme? Submit a Pull Request to [massCodeIO/masscode-themes](https://github.com/massCodeIO/masscode-themes).

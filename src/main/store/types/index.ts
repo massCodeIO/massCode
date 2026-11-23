@@ -1,5 +1,6 @@
 import type { DateFormat } from '../../../shared/dateFormat'
 import type { HttpRequestPreviewFormat } from '../../../shared/httpPreview'
+import type { CommunityThemesStoreState } from './theme'
 
 export type SpaceLayoutMode = 'all-panels' | 'list-editor' | 'editor-only'
 export type NotesEditorMode = 'raw' | 'livePreview' | 'preview'
@@ -181,6 +182,7 @@ export interface AppStore {
   math: {
     contentSort: ContentSortState
   }
+  communityThemes: CommunityThemesStoreState
   notifications: {
     lastNotifiedUpdateVersion: string
     lastWhatsNewVersion: string

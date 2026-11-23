@@ -152,6 +152,52 @@
   },
   "appearance": {
     "label": "Внешний вид",
+    "tabs": {
+      "general": "Основные",
+      "community": "Темы сообщества"
+    },
+    "community": {
+      "searchPlaceholder": "Поиск тем или авторов...",
+      "filters": {
+        "all": "Все",
+        "installed": "Установленные"
+      },
+      "refresh": "Обновить каталог",
+      "loading": "Загрузка тем сообщества...",
+      "offlineBadge": "Офлайн",
+      "offlineCached": "Нет связи с GitHub. Показаны кэшированные темы.",
+      "unavailableTitle": "Не удалось загрузить темы сообщества",
+      "unavailableDescription": "Проверьте подключение к интернету и попробуйте снова.",
+      "retry": "Повторить",
+      "empty": "По вашему фильтру темы не найдены.",
+      "install": "Установить",
+      "apply": "Применить",
+      "active": "Активна",
+      "update": "Обновить",
+      "uninstall": "Удалить тему",
+      "byAuthor": "от {{author}}",
+      "viewOnGithub": "Открыть тему на GitHub",
+      "delisted": "Снята с публикации",
+      "installedToast": "Тема «{{name}}» установлена и применена.",
+      "updatedToast": "Тема «{{name}}» обновлена.",
+      "uninstalledToast": "Тема «{{name}}» удалена.",
+      "installError": "Не удалось установить тему.",
+      "updateError": "Не удалось обновить тему.",
+      "uninstallError": "Не удалось удалить тему.",
+      "unmanagedError": "Этот файл темы не управляется галереей сообщества.",
+      "submitHint": "Хотите поделиться своей темой с сообществом?",
+      "submitAction": "Отправить тему",
+      "conflict": {
+        "overwriteTitle": "Перезаписать существующий файл темы?",
+        "uninstallTitle": "Удалить изменённый файл темы?",
+        "untrackedDescription": "В папке тем уже есть локальный файл для «{{name}}». Перезапись заменит ваш локальный файл.",
+        "modifiedDescription": "В теме «{{name}}» есть локальные правки. Продолжение перезапишет их версией из реестра.",
+        "uninstallModifiedDescription": "В теме «{{name}}» есть локальные правки. Удаление безвозвратно сотрёт изменённый файл.",
+        "confirmOverwrite": "Перезаписать",
+        "confirmDelete": "Удалить",
+        "cancel": "Отмена"
+      }
+    },
     "dockBadge": {
       "label": "Счётчик на иконке в Dock",
       "none": "Не показывать",
@@ -170,6 +216,8 @@
       "creatingTemplate": "Создание...",
       "templateCreated": "Шаблон темы создан. Откройте JSON-файл в директории тем и отредактируйте его.",
       "templateCreateError": "Не удалось создать шаблон темы",
+      "submitToCommunity": "Отправить в сообщество",
+      "submitError": "Не удалось подготовить тему к публикации",
       "dirDescription": "Разместите JSON-файлы тем в этой папке.",
       "light": "Светлая",
       "dark": "Темная",

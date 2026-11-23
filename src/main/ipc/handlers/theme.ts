@@ -1,5 +1,13 @@
 import type { ChokidarOptions, FSWatcher } from 'chokidar'
 import type {
+  CommunityThemeInstallPayload,
+  CommunityThemeInstallResult,
+  CommunityThemeListPayload,
+  CommunityThemesCatalogResult,
+  CommunityThemesStoreState,
+  CommunityThemeSubmitResult,
+  CommunityThemeUninstallPayload,
+  CommunityThemeUninstallResult,
   ThemeFile,
   ThemeListItem,
   ThemeType,
@@ -14,17 +22,53 @@ import {
   readFileSync,
   writeFileSync,
 } from 'fs-extra'
+import { store } from '../../store'
+import {
+  COMMUNITY_THEMES_CACHE_TTL_MS,
+  COMMUNITY_THEMES_REGISTRY_URL,
+  COMMUNITY_THEMES_REPO,
+  COMMUNITY_THEMES_SCHEMA_URL,
+  createCommunityThemesService,
+} from '../../themes/community'
 import { importEsm, log } from '../../utils'
 import '../../types'
 
 const THEMES_ROOT_DIR = path.join(homedir(), '.massCode')
 const THEMES_DIR = path.join(THEMES_ROOT_DIR, 'themes')
+
+const communityThemesService = createCommunityThemesService({
+  themesDir: THEMES_DIR,
+  registryUrl: COMMUNITY_THEMES_REGISTRY_URL,
+  rawBaseUrl: `https://raw.githubusercontent.com/${COMMUNITY_THEMES_REPO}`,
+  cacheTtlMs: COMMUNITY_THEMES_CACHE_TTL_MS,
+  fetchFn: (...args) => globalThis.fetch(...args),
+  now: () => Date.now(),
+  storeAdapter: {
+    getState: () => {
+      const raw = store.app.get('communityThemes') as
+        | Partial<CommunityThemesStoreState>
+        | undefined
+      return {
+        cache: raw?.cache ?? null,
+        installed: raw?.installed ? { ...raw.installed } : {},
+      }
+    },
+    setCache: (cache) => {
+      store.app.set('communityThemes.cache', cache)
+    },
+    setInstalled: (installed) => {
+      store.app.set('communityThemes.installed', installed)
+    },
+  },
+})
 const THEME_FILE_EXT = '.json'
 const THEME_CHANGED_DEBOUNCE_MS = 250
 const THEME_TEMPLATE_BASE_NAME = 'new-theme'
-const THEME_TEMPLATE: ThemeFile = {
+const THEME_TEMPLATE: ThemeFile & { $schema: string } = {
+  $schema: COMMUNITY_THEMES_SCHEMA_URL,
   name: 'New Theme (Rose Pine)',
   author: '',
+  authorUrl: '',
   type: 'light',
   colors: {
     'primary': 'hsl(277, 22%, 57%)',
@@ -501,4 +545,36 @@ export function registerThemeHandlers() {
     startThemeWatcher()
     return createThemeTemplate()
   })
+
+  ipcMain.handle<
+    CommunityThemeListPayload | null,
+    CommunityThemesCatalogResult
+  >('theme:community-list', async (_, payload) => {
+    startThemeWatcher()
+    return communityThemesService.fetchCommunityThemes(payload ?? {})
+  })
+
+  ipcMain.handle<CommunityThemeInstallPayload, CommunityThemeInstallResult>(
+    'theme:community-install',
+    async (_, payload) => {
+      startThemeWatcher()
+      return communityThemesService.installCommunityTheme(payload)
+    },
+  )
+
+  ipcMain.handle<CommunityThemeUninstallPayload, CommunityThemeUninstallResult>(
+    'theme:community-uninstall',
+    async (_, payload) => {
+      startThemeWatcher()
+      return communityThemesService.uninstallCommunityTheme(payload)
+    },
+  )
+
+  ipcMain.handle<string, CommunityThemeSubmitResult>(
+    'theme:community-prepare-submit',
+    async (_, payload) => {
+      startThemeWatcher()
+      return communityThemesService.prepareCommunityThemeSubmission(payload)
+    },
+  )
 }

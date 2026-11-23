@@ -15,6 +15,13 @@ import type {
   SpaceId,
   SpaceLayoutMode,
 } from '../types'
+import type {
+  CommunityThemeEntry,
+  CommunityThemeInstalledMeta,
+  CommunityThemePreview,
+  CommunityThemesCache,
+  CommunityThemesStoreState,
+} from '../types/theme'
 import Store from 'electron-store'
 import { LAYOUT_DEFAULTS } from '../constants'
 import {
@@ -93,6 +100,10 @@ const APP_STORE_DEFAULTS: AppStore = {
       sort: 'createdAt',
       order: 'DESC',
     },
+  },
+  communityThemes: {
+    cache: null,
+    installed: {},
   },
   notifications: {
     lastNotifiedUpdateVersion: '',
@@ -510,6 +521,130 @@ function sanitizeDrawingViewports(
   return result
 }
 
+function sanitizeCommunityThemePreview(
+  raw: unknown,
+): CommunityThemePreview | undefined {
+  if (!isRecord(raw)) {
+    return undefined
+  }
+
+  const background = typeof raw.background === 'string' ? raw.background : ''
+  const card = typeof raw.card === 'string' ? raw.card : ''
+  const foreground = typeof raw.foreground === 'string' ? raw.foreground : ''
+  const primary = typeof raw.primary === 'string' ? raw.primary : ''
+  const border = typeof raw.border === 'string' ? raw.border : ''
+
+  if (!background || !card || !foreground || !primary || !border) {
+    return undefined
+  }
+
+  return {
+    background,
+    card,
+    foreground,
+    primary,
+    border,
+    ...(typeof raw.accent === 'string' && raw.accent
+      ? { accent: raw.accent }
+      : {}),
+    ...(typeof raw.keyword === 'string' && raw.keyword
+      ? { keyword: raw.keyword }
+      : {}),
+    ...(typeof raw.string === 'string' && raw.string
+      ? { string: raw.string }
+      : {}),
+    ...(typeof raw.comment === 'string' && raw.comment
+      ? { comment: raw.comment }
+      : {}),
+  }
+}
+
+function sanitizeCommunityThemes(raw: unknown): CommunityThemesStoreState {
+  const source = asRecord(raw)
+  const cacheSource = isRecord(source.cache) ? source.cache : null
+  let cache: CommunityThemesCache | null = null
+
+  if (
+    cacheSource
+    && typeof cacheSource.commit === 'string'
+    && cacheSource.commit
+    && typeof cacheSource.fetchedAt === 'number'
+    && Number.isFinite(cacheSource.fetchedAt)
+    && Array.isArray(cacheSource.themes)
+  ) {
+    const themes: CommunityThemeEntry[] = []
+
+    for (const item of cacheSource.themes) {
+      if (!isRecord(item)) {
+        continue
+      }
+
+      if (
+        typeof item.id !== 'string'
+        || !item.id
+        || typeof item.name !== 'string'
+        || !item.name
+        || (item.type !== 'light' && item.type !== 'dark')
+        || typeof item.file !== 'string'
+        || !item.file
+        || typeof item.sha256 !== 'string'
+        || !item.sha256
+      ) {
+        continue
+      }
+
+      const preview = sanitizeCommunityThemePreview(item.preview)
+
+      themes.push({
+        id: item.id,
+        name: item.name,
+        ...(typeof item.author === 'string' && item.author
+          ? { author: item.author }
+          : {}),
+        ...(typeof item.authorUrl === 'string' && item.authorUrl
+          ? { authorUrl: item.authorUrl }
+          : {}),
+        type: item.type,
+        file: item.file,
+        sha256: item.sha256,
+        ...(preview ? { preview } : {}),
+      })
+    }
+
+    cache = {
+      commit: cacheSource.commit,
+      fetchedAt: cacheSource.fetchedAt,
+      themes,
+    }
+  }
+
+  const installedSource = asRecord(source.installed)
+  const installed: Record<string, CommunityThemeInstalledMeta> = {}
+
+  for (const [id, value] of Object.entries(installedSource)) {
+    if (!id || !isRecord(value)) {
+      continue
+    }
+
+    if (
+      typeof value.sha256 === 'string'
+      && value.sha256
+      && typeof value.installedAt === 'number'
+      && Number.isFinite(value.installedAt)
+    ) {
+      installed[id] = {
+        sha256: value.sha256,
+        installedAt: value.installedAt,
+      }
+    }
+  }
+
+  return {
+    cache,
+    installed,
+  }
+}
+
 function sanitizeAppStore(value: unknown): AppStore {
   const source = asRecord(value)
   const windowSource = asRecord(source.window)
@@ -792,6 +927,7 @@ function sanitizeAppStore(value: unknown): AppStore {
     math: {
       contentSort: sanitizeContentSort(asRecord(source.math).contentSort),
     },
+    communityThemes: sanitizeCommunityThemes(source.communityThemes),
     drawings: {
       contentSort: sanitizeContentSort(asRecord(source.drawings).contentSort),
       activeDrawingId:

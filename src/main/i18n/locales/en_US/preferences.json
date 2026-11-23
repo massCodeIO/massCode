@@ -154,6 +154,52 @@
   },
   "appearance": {
     "label": "Appearance",
+    "tabs": {
+      "general": "General",
+      "community": "Community Themes"
+    },
+    "community": {
+      "searchPlaceholder": "Search themes or authors...",
+      "filters": {
+        "all": "All",
+        "installed": "Installed"
+      },
+      "refresh": "Refresh catalog",
+      "loading": "Loading community themes...",
+      "offlineBadge": "Offline",
+      "offlineCached": "Unable to reach GitHub. Showing cached themes.",
+      "unavailableTitle": "Unable to load community themes",
+      "unavailableDescription": "Check your internet connection and try again.",
+      "retry": "Try again",
+      "empty": "No themes match your filter.",
+      "install": "Install",
+      "apply": "Apply",
+      "active": "Active",
+      "update": "Update",
+      "uninstall": "Uninstall theme",
+      "byAuthor": "by {{author}}",
+      "viewOnGithub": "View theme on GitHub",
+      "delisted": "Removed from registry",
+      "installedToast": "Theme \"{{name}}\" installed and applied.",
+      "updatedToast": "Theme \"{{name}}\" updated.",
+      "uninstalledToast": "Theme \"{{name}}\" uninstalled.",
+      "installError": "Failed to install theme.",
+      "updateError": "Failed to update theme.",
+      "uninstallError": "Failed to uninstall theme.",
+      "unmanagedError": "This theme file is not managed by the Community Gallery.",
+      "submitHint": "Want to share your own theme with the community?",
+      "submitAction": "Submit a theme",
+      "conflict": {
+        "overwriteTitle": "Overwrite existing theme file?",
+        "uninstallTitle": "Delete modified theme file?",
+        "untrackedDescription": "A local theme file for \"{{name}}\" already exists in your themes directory. Overwriting it will replace your local file.",
+        "modifiedDescription": "You have local edits in \"{{name}}\". Continuing will overwrite your changes with the latest version from the registry.",
+        "uninstallModifiedDescription": "You have local edits in \"{{name}}\". Deleting it will permanently remove your modified file.",
+        "confirmOverwrite": "Overwrite",
+        "confirmDelete": "Delete",
+        "cancel": "Cancel"
+      }
+    },
     "dockBadge": {
       "label": "Dock Icon Counter",
       "none": "Don't Show",
@@ -172,6 +218,8 @@
       "creatingTemplate": "Creating...",
       "templateCreated": "Theme template created. Open the JSON file in the themes directory and edit it.",
       "templateCreateError": "Failed to create theme template",
+      "submitToCommunity": "Submit to Community",
+      "submitError": "Failed to prepare theme for submission",
       "dirDescription": "Directory for custom JSON theme files.",
       "light": "Light",
       "dark": "Dark",

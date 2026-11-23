@@ -93,7 +93,15 @@ type FsAction =
   | 'import-markdown-folder'
   | 'pick-note-image'
   | 'notes-asset'
-type ThemeAction = 'list' | 'get' | 'open-dir' | 'create-template' | 'changed'
+type ThemeAction =
+  | 'list'
+  | 'get'
+  | 'open-dir'
+  | 'create-template'
+  | 'changed'
+  | 'community-list'
+  | 'community-install'
+  | 'community-uninstall'
 type SpacesAction =
   | `http:cookies:${
   | 'read'

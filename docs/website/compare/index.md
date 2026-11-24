@@ -1,6 +1,6 @@
 ---
 title: Compare massCode
-description: "Compare massCode with snippet managers, API clients, and task apps. Choose by storage, price, platforms, and migration needs."
+description: "Compare massCode with Obsidian, snippet managers, API clients, and task apps. Choose by storage, price, platforms, and migration needs."
 ---
 
 [Home](/) / Compare
@@ -13,6 +13,7 @@ This section helps you decide whether massCode fits your workflow, or whether an
 
 ## Snippet managers and developer workspaces
 
+- [massCode vs Obsidian](/compare/obsidian) — batteries-included open-source developer workspace vs extensible Markdown PKM
 - [massCode vs Pieces](/compare/pieces) — curated Markdown library vs on-device AI work memory
 - [massCode vs Cacher](/compare/cacher) — open-source local app vs team-oriented cloud SaaS
 - [massCode vs SnippetsLab](/compare/snippetslab) — cross-platform vs macOS-only
@@ -54,7 +55,8 @@ Build HTTP and GraphQL workflows, exchange WebSocket messages, and share authent
 - If you need a **full-featured cross-device task manager** with reminders, recurring tasks, mobile apps, and AI assists, look at Todoist or TickTick.
 - If you want a **paid Apple-only task manager** with a polished native UI, look at Things 3.
 - If you only need a **free Apple-built-in task app**, Apple Reminders is already on your devices.
-- If your notes already live in **Obsidian** and you want tasks scattered through that vault, look at the Obsidian Tasks plugin.
+- If you want a **general-purpose Markdown knowledge base** with mobile apps, official encrypted sync, and a massive plugin ecosystem, look at [Obsidian](/compare/obsidian).
+- If your notes already live in **Obsidian** and you want tasks scattered through that vault, look at the [Obsidian Tasks plugin](/compare/obsidian-tasks).
 - If you need a **free, open-source, cross-platform, local-first workspace** that goes beyond snippets — snippets, notes, tasks, HTTP requests, math, drawings, and dev tools in one app — that is where massCode fits.
 
 ## What you get with massCode

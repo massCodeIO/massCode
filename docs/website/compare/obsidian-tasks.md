@@ -13,7 +13,7 @@ The [Obsidian Tasks](https://github.com/obsidian-tasks-group/obsidian-tasks) plu
 - **Obsidian Tasks** turns standard markdown checkboxes (`- [ ]`) into queryable tasks. Metadata — due date, priority, recurrence — uses emojis (📅, ⏫, 🔁) or supported Dataview inline fields. Tasks can live in any note across your vault and are surfaced through query blocks. The plugin is MIT-licensed and free, and runs inside [Obsidian](https://obsidian.md), which is free for personal and commercial use.
 - **massCode** treats tasks as [notes with structured properties](/documentation/notes/tasks). A note has a `type: task` flag with `status`, `priority`, and `due` properties in its frontmatter. The whole note is the task; checklists inside the body are sub-items of that note. massCode is AGPL v3 and free.
 
-If you already live in Obsidian for note-taking and want tasks dispersed across that vault, Obsidian Tasks is the more natural fit. If you want a developer workspace where tasks share the app with snippets, HTTP requests, and dev tools, massCode is the more natural fit.
+If you already live in Obsidian for note-taking and want tasks dispersed across that vault, Obsidian Tasks is the more natural fit. If you want a developer workspace where tasks share the app with snippets, HTTP requests, and dev tools, massCode is the more natural fit. For the broader workspace comparison, see [massCode vs Obsidian](/compare/obsidian).
 
 [Try massCode](/download/) with one engineering note that needs a status and due date.
 
@@ -84,5 +84,6 @@ If you want to start moving Obsidian markdown into massCode, the Notes space has
 
 ## Related comparisons
 
+- [massCode vs Obsidian](/compare/obsidian)
 - [Markdown-first tasks for developers](/compare/markdown-first-tasks)
 - [massCode vs Todoist](/compare/todoist)

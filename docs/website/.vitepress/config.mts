@@ -181,6 +181,7 @@ export default defineConfig({
             { text: 'massCode vs SnippetsLab', link: '/compare/snippetslab' },
             { text: 'massCode vs Raycast Snippets', link: '/compare/raycast' },
             { text: 'massCode vs GitHub Gist', link: '/compare/github-gist' },
+            { text: 'massCode vs Obsidian', link: '/compare/obsidian' },
             { text: 'massCode vs Postman', link: '/compare/postman' },
             { text: 'massCode vs Bruno', link: '/compare/bruno' },
             { text: 'massCode vs Todoist', link: '/compare/todoist' },
